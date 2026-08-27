@@ -33,7 +33,7 @@ import { MatIconModule } from '@angular/material/icon';
       display: block;
       padding: 18px;
       border: 1px solid var(--mat-sys-outline-variant);
-      border-radius: 16px;
+      border-radius: var(--mat-sys-corner-large);
       background: var(--mat-sys-surface);
 
       @media (max-width: 700px) {
@@ -69,14 +69,14 @@ import { MatIconModule } from '@angular/material/icon';
 
     .pb-surface__title {
       margin: 0;
-      font-size: 0.9375rem;
+      font: var(--mat-sys-title-medium);
       font-weight: 600;
       color: var(--mat-sys-on-surface);
     }
 
     .pb-surface__hint {
       margin-inline-start: auto;
-      font-size: 0.75rem;
+      font: var(--mat-sys-body-small);
       color: var(--mat-sys-on-surface-variant);
     }
 

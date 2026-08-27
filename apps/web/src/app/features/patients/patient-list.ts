@@ -5,6 +5,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -66,8 +67,7 @@ const EMPTY_FILTERS: Filters = {
     MatMenuModule, MatProgressBarModule, MatTooltipModule,
     JalaliPipe, PersianNumberPipe, PersianCountPipe,
     TreatmentChips, EmptyState,
-    PbSearchField, PbSelectField, PbCheckboxField, PbButton,
-  ],
+    PbSearchField, PbSelectField, PbCheckboxField, PbButton, MatIconModule],
   templateUrl: './patient-list.html',
   styleUrl: './patient-list.scss',
 })

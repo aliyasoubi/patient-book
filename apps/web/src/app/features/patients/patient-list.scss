@@ -26,17 +26,17 @@
 
     h1 {
       margin: 0;
-      font-size: 1.5rem;
+      font: var(--mat-sys-headline-small);
       font-weight: 700;
 
       @media (max-width: 700px) {
-        font-size: 1.25rem;
+        font-size: var(--mat-sys-title-large-size);
       }
     }
   }
 
   &__count {
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
     white-space: nowrap;
   }
@@ -95,15 +95,16 @@
     min-width: 18px;
     height: 18px;
     padding-inline: 5px;
-    border-radius: 9px;
+    border-radius: var(--mat-sys-corner-small);
     background: var(--mat-sys-primary);
     color: var(--mat-sys-on-primary);
-    font-size: 0.6875rem;
+    font: var(--mat-sys-label-small);
     font-weight: 700;
+    letter-spacing: var(--mat-sys-label-small-tracking);
   }
 
   &__progress {
-    border-radius: 2px;
+    border-radius: var(--mat-sys-corner-extra-small);
   }
 
   &__paginator {
@@ -119,7 +120,7 @@
   gap: 16px;
   padding: 16px;
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 16px;
+  border-radius: var(--mat-sys-corner-large);
   background: var(--mat-sys-surface-container-low);
 
   &__row {
@@ -142,8 +143,9 @@
   }
 
   &__label {
-    font-size: 0.8125rem;
+    font: var(--mat-sys-label-large);
     font-weight: 600;
+    letter-spacing: var(--mat-sys-label-large-tracking);
     color: var(--mat-sys-on-surface-variant);
 
     small {
@@ -168,7 +170,7 @@
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 16px;
+  border-radius: var(--mat-sys-corner-large);
   background: var(--mat-sys-surface);
 }
 
@@ -178,14 +180,15 @@
 
   th {
     background: var(--mat-sys-surface-container-low);
+    font: var(--mat-sys-label-large);
     font-weight: 600;
-    font-size: 0.8125rem;
+    letter-spacing: var(--mat-sys-label-large-tracking);
     color: var(--mat-sys-on-surface-variant);
     white-space: nowrap;
   }
 
   td {
-    font-size: 0.875rem;
+    font: var(--mat-sys-body-medium);
     border-bottom-color: var(--mat-sys-outline-variant);
   }
 
@@ -221,7 +224,7 @@
     width: 34px;
     height: 34px;
     flex: 0 0 auto;
-    border-radius: 50%;
+    border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-surface-container-high);
     color: var(--mat-sys-on-surface-variant);
 
@@ -255,7 +258,7 @@
   }
 
   &__sub {
-    font-size: 0.75rem;
+    font: var(--mat-sys-body-small);
     color: var(--mat-sys-on-surface-variant);
     white-space: nowrap;
     overflow: hidden;
@@ -318,7 +321,7 @@
 .card {
   position: relative;
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 16px;
+  border-radius: var(--mat-sys-corner-large);
   background: var(--mat-sys-surface);
   transition: border-color 140ms ease;
 
@@ -360,7 +363,7 @@
     width: 40px;
     height: 40px;
     flex: 0 0 auto;
-    border-radius: 50%;
+    border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-surface-container-high);
     color: var(--mat-sys-on-surface-variant);
 
@@ -388,14 +391,14 @@
   }
 
   &__name {
-    font-size: 0.9375rem;
+    font: var(--mat-sys-title-medium);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   &__file {
-    font-size: 0.75rem;
+    font: var(--mat-sys-body-small);
     color: var(--mat-sys-on-surface-variant);
   }
 
@@ -412,7 +415,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 14px;
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
   }
 
@@ -431,10 +434,12 @@
     align-items: flex-start;
     gap: 6px;
     padding: 7px 10px;
-    border-radius: 10px;
+    border-radius: var(--mat-sys-corner-medium);
     background: var(--mat-sys-error-container);
     color: var(--mat-sys-on-error-container);
-    font-size: 0.75rem;
+    font-size: var(--mat-sys-body-small-size);
+    font-weight: var(--mat-sys-body-small-weight);
+    letter-spacing: var(--mat-sys-body-small-tracking);
     line-height: 1.6;
 
     .material-symbols-rounded {
@@ -453,7 +458,7 @@
     place-items: center;
     width: 44px;
     height: 44px;
-    border-radius: 50%;
+    border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-primary-container);
     color: var(--mat-sys-on-primary-container);
     text-decoration: none;

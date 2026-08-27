@@ -3,6 +3,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
@@ -36,8 +37,7 @@ import type { SelectOption, TextFieldOption } from '../../shared/ui';
   standalone: true,
   imports: [
     ReactiveFormsModule, MatButtonModule, MatProgressBarModule,
-    PbTextField, PbTextareaField, PbSelectField, PbDateField, PbButton, PbSurface,
-  ],
+    PbTextField, PbTextareaField, PbSelectField, PbDateField, PbButton, PbSurface, MatIconModule],
   templateUrl: './patient-form.html',
   styleUrl: './patient-form.scss',
 })

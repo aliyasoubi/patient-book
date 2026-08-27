@@ -1,7 +1,7 @@
 <div class="form-page">
   <header class="form-page__header">
     <button mat-icon-button type="button" (click)="cancel()" i18n-aria-label aria-label="بازگشت">
-      <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
     </button>
     <h1>{{ title() }}</h1>
   </header>
@@ -125,12 +125,12 @@
             [style.--tx-fg]="color(type.color).fg"
             [attr.aria-pressed]="isSelected(type.code)"
             (click)="toggleTreatment(type.code)">
-            <span class="material-symbols-rounded treatment__icon" aria-hidden="true">{{
+            <mat-icon class="treatment__icon" aria-hidden="true">{{
               type.icon
-            }}</span>
+            }}</mat-icon>
             <span class="treatment__label">{{ type.nameFa }}</span>
             @if (isSelected(type.code)) {
-              <span class="material-symbols-rounded treatment__check" aria-hidden="true">check</span>
+              <mat-icon class="treatment__check" aria-hidden="true">check</mat-icon>
             }
           </button>
         }

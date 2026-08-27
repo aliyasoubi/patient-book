@@ -20,17 +20,17 @@
 
     h1 {
       margin: 0 0 2px;
-      font-size: 1.5rem;
+      font: var(--mat-sys-headline-small);
       font-weight: 700;
 
       @media (max-width: 700px) {
-        font-size: 1.25rem;
+        font-size: var(--mat-sys-title-large-size);
       }
     }
 
     p {
       margin: 0;
-      font-size: 0.875rem;
+      font: var(--mat-sys-body-medium);
       color: var(--mat-sys-on-surface-variant);
     }
   }
@@ -56,7 +56,7 @@
   gap: 2px;
   padding: 16px;
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 18px;
+  border-radius: var(--mat-sys-corner-large);
   background: var(--mat-sys-surface);
   text-decoration: none;
   color: inherit;
@@ -76,13 +76,13 @@
   }
 
   &__value {
-    font-size: 1.75rem;
+    font-size: var(--mat-sys-headline-medium-size);
     font-weight: 700;
     line-height: 1.15;
   }
 
   &__label {
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
   }
 
@@ -116,7 +116,7 @@
 
 .panel__empty {
   margin: 0;
-  font-size: 0.875rem;
+  font: var(--mat-sys-body-medium);
   color: var(--mat-sys-on-surface-variant);
 }
 
@@ -140,7 +140,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -153,7 +153,7 @@
 
   &__track {
     height: 8px;
-    border-radius: 999px;
+    border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-surface-container-high);
     overflow: hidden;
   }
@@ -161,7 +161,7 @@
   &__fill {
     display: block;
     height: 100%;
-    border-radius: 999px;
+    border-radius: var(--mat-sys-corner-full);
     transition: width 500ms cubic-bezier(0.2, 0, 0, 1);
 
     &--primary {
@@ -170,7 +170,7 @@
   }
 
   &__value {
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     min-width: 3ch;
@@ -211,17 +211,17 @@
     justify-content: space-between;
     gap: 8px;
     margin-top: 10px;
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
 
     strong {
-      font-size: 1rem;
+      font: var(--mat-sys-title-medium);
       color: var(--mat-sys-on-surface);
     }
   }
 
   &__max {
-    font-size: 0.75rem;
+    font: var(--mat-sys-body-small);
   }
 }
 
@@ -230,7 +230,7 @@
   &__bar {
     display: flex;
     height: 12px;
-    border-radius: 999px;
+    border-radius: var(--mat-sys-corner-full);
     overflow: hidden;
     background: var(--mat-sys-surface-container-high);
   }
@@ -256,7 +256,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.8125rem;
+      font: var(--mat-sys-body-medium);
     }
 
     strong {
@@ -274,7 +274,7 @@
   &__dot {
     width: 10px;
     height: 10px;
-    border-radius: 50%;
+    border-radius: var(--mat-sys-corner-full);
     flex: 0 0 auto;
 
     &[data-gender='female'] { background: #ec407a; }
@@ -297,10 +297,10 @@
     align-items: center;
     gap: 9px;
     padding: 7px 9px;
-    border-radius: 10px;
+    border-radius: var(--mat-sys-corner-medium);
     text-decoration: none;
     color: inherit;
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
 
     &:hover {
       background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
@@ -336,7 +336,7 @@
     flex-direction: column;
     gap: 2px;
     padding: 14px;
-    border-radius: 14px;
+    border-radius: var(--mat-sys-corner-large);
     background: var(--mat-sys-surface-container-low);
     text-decoration: none;
     color: inherit;
@@ -352,13 +352,13 @@
   }
 
   &__value {
-    font-size: 1.5rem;
+    font-size: var(--mat-sys-headline-small-size);
     font-weight: 700;
     line-height: 1.2;
   }
 
   &__label {
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
     opacity: 0.85;
   }
 
@@ -367,7 +367,7 @@
     align-items: center;
     gap: 4px;
     margin-top: 6px;
-    font-size: 0.75rem;
+    font-size: var(--mat-sys-body-small-size);
     font-weight: 600;
 
     .material-symbols-rounded {

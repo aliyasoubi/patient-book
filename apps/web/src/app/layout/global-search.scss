@@ -27,7 +27,7 @@
     width: 28px;
     height: 28px;
     border: 0;
-    border-radius: 50%;
+    border-radius: var(--mat-sys-corner-full);
     background: none;
     color: var(--mat-sys-on-surface-variant);
     cursor: pointer;
@@ -44,10 +44,10 @@
   &__kbd {
     padding: 2px 7px;
     border: 1px solid var(--mat-sys-outline-variant);
-    border-radius: 6px;
+    border-radius: var(--mat-sys-corner-extra-small);
     color: var(--mat-sys-on-surface-variant);
-    font-family: inherit;
-    font-size: 0.6875rem;
+    font: var(--mat-sys-label-small);
+    letter-spacing: var(--mat-sys-label-small-tracking);
     direction: ltr;
     white-space: nowrap;
 
@@ -87,14 +87,14 @@
     &-meta {
       display: inline-flex;
       gap: 6px;
-      font-size: 0.75rem;
+      font: var(--mat-sys-body-small);
       color: var(--mat-sys-on-surface-variant);
     }
   }
 
   &__empty {
     color: var(--mat-sys-on-surface-variant);
-    font-size: 0.875rem;
+    font: var(--mat-sys-body-medium);
   }
 }
 

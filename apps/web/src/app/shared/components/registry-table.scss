@@ -12,7 +12,7 @@
     gap: 14px;
     padding: 12px 14px;
     border: 1px solid var(--mat-sys-outline-variant);
-    border-radius: 14px;
+    border-radius: var(--mat-sys-corner-large);
     background: var(--mat-sys-surface);
 
     @media (max-width: 640px) {
@@ -50,7 +50,7 @@
   }
 
   &__name {
-    font-size: 0.875rem;
+    font: var(--mat-sys-title-small);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -61,7 +61,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 5px;
-    font-size: 0.75rem;
+    font: var(--mat-sys-body-small);
     color: var(--mat-sys-primary);
     text-decoration: none;
     width: fit-content;
@@ -81,17 +81,18 @@
 
   &__match {
     padding: 1px 7px;
-    border-radius: 999px;
+    border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-surface-container-high);
     color: var(--mat-sys-on-surface-variant);
-    font-size: 0.6875rem;
+    font: var(--mat-sys-label-small);
+    letter-spacing: var(--mat-sys-label-small-tracking);
   }
 
   &__unlinked {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-size: 0.75rem;
+    font: var(--mat-sys-body-small);
     color: var(--mat-sys-tertiary);
 
     .material-symbols-rounded {
@@ -112,17 +113,18 @@
   }
 
   &__phone {
-    font-size: 0.8125rem;
+    font: var(--mat-sys-body-medium);
     color: var(--mat-sys-primary);
     text-decoration: none;
   }
 
   &__status {
     padding: 3px 10px;
-    border-radius: 999px;
+    border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-surface-container-high);
     color: var(--mat-sys-on-surface-variant);
-    font-size: 0.6875rem;
+    font: var(--mat-sys-label-small);
+    letter-spacing: var(--mat-sys-label-small-tracking);
     white-space: nowrap;
 
     &[data-status='active'] {

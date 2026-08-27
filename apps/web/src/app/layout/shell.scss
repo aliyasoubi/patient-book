@@ -51,13 +51,13 @@
     line-height: 1.35;
 
     strong {
-      font-size: 1rem;
+      font: var(--mat-sys-title-medium);
       font-weight: 700;
       color: var(--mat-sys-on-surface);
     }
 
     small {
-      font-size: 0.75rem;
+      font: var(--mat-sys-body-small);
       color: var(--mat-sys-on-surface-variant);
     }
   }
@@ -74,11 +74,11 @@
     align-items: center;
     gap: 14px;
     padding: 12px 16px;
-    border-radius: 999px;
+    border-radius: var(--mat-sys-corner-full);
     text-decoration: none;
     color: var(--mat-sys-on-surface-variant);
-    font-size: 0.9375rem;
-    font-weight: 500;
+    font: var(--mat-sys-label-large);
+    letter-spacing: var(--mat-sys-label-large-tracking);
     transition:
       background-color 180ms cubic-bezier(0.2, 0, 0, 1),
       color 180ms cubic-bezier(0.2, 0, 0, 1);
@@ -154,10 +154,10 @@
     place-items: center;
     width: 34px;
     height: 34px;
-    border-radius: 50%;
+    border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-primary-container);
     color: var(--mat-sys-on-primary-container);
-    font-size: 0.8125rem;
+    font-size: var(--mat-sys-label-large-size);
     font-weight: 700;
     line-height: 1;
   }
@@ -171,11 +171,11 @@
   line-height: 1.4;
 
   strong {
-    font-size: 0.9375rem;
+    font: var(--mat-sys-title-medium);
   }
 
   small {
-    font-size: 0.75rem;
+    font: var(--mat-sys-body-small);
     color: var(--mat-sys-on-surface-variant);
   }
 }
@@ -219,14 +219,14 @@
     background: none;
     text-decoration: none;
     color: var(--mat-sys-on-surface-variant);
-    font-family: inherit;
-    font-size: 0.6875rem;
+    font: var(--mat-sys-label-small);
+    letter-spacing: var(--mat-sys-label-small-tracking);
     cursor: pointer;
 
     &:focus-visible {
       outline: 2px solid var(--mat-sys-primary);
       outline-offset: 2px;
-      border-radius: 12px;
+      border-radius: var(--mat-sys-corner-medium);
     }
 
     &.is-active {
@@ -248,7 +248,7 @@
     place-items: center;
     width: 56px;
     height: 30px;
-    border-radius: 999px;
+    border-radius: var(--mat-sys-corner-full);
     transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1);
 
     .material-symbols-rounded {

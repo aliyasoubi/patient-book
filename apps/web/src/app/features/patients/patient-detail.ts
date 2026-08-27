@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -31,8 +32,7 @@ import type { AuditEntry } from '../../core/models/common.model';
   imports: [
     RouterLink, MatButtonModule, MatMenuModule, MatTabsModule,
     MatProgressBarModule, MatTooltipModule, MatDialogModule,
-    JalaliPipe, PersianNumberPipe, PbButton, PbSurface,
-  ],
+    JalaliPipe, PersianNumberPipe, PbButton, PbSurface, MatIconModule],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
 })

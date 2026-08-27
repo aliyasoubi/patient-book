@@ -1,7 +1,7 @@
 <div class="login">
   <div class="login__panel">
     <div class="login__brand">
-      <span class="material-symbols-rounded is-filled login__logo" aria-hidden="true">dentistry</span>
+      <mat-icon class="is-filled login__logo" aria-hidden="true">dentistry</mat-icon>
       <h1 i18n>دفترچه بیماران</h1>
       <p i18n>سامانه مدیریت پرونده‌های مطب دندانپزشکی</p>
     </div>
@@ -17,7 +17,7 @@
 
           @if (errorMessage(); as message) {
             <div class="login__error" role="alert">
-              <span class="material-symbols-rounded" aria-hidden="true">error</span>
+              <mat-icon aria-hidden="true">error</mat-icon>
               <span>{{ message }}</span>
             </div>
           }

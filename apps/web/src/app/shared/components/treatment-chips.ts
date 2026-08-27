@@ -55,11 +55,11 @@ import type { PatientTreatment } from '../../core/models/patient.model';
       gap: 5px;
       height: 26px;
       padding-inline: 8px;
-      border-radius: 999px;
+      border-radius: var(--mat-sys-corner-full);
       background: var(--chip-bg, var(--mat-sys-secondary-container));
       color: var(--chip-fg, var(--mat-sys-on-secondary-container));
-      font-size: 0.75rem;
-      font-weight: 500;
+      font: var(--mat-sys-label-medium);
+      letter-spacing: var(--mat-sys-label-medium-tracking);
       white-space: nowrap;
       cursor: default;
     }

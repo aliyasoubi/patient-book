@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -11,7 +12,7 @@ import { PbButton, PbTextField } from '../../shared/ui';
 @Component({
   selector: 'pb-login',
   standalone: true,
-  imports: [ReactiveFormsModule, MatCardModule, MatProgressBarModule, PbTextField, PbButton],
+  imports: [ReactiveFormsModule, MatCardModule, MatProgressBarModule, PbTextField, PbButton, MatIconModule],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -30,8 +31,7 @@ interface StatTile {
   standalone: true,
   imports: [
     RouterLink, MatProgressBarModule, MatTooltipModule,
-    PersianCountPipe, PersianNumberPipe, PbButton, PbSurface,
-  ],
+    PersianCountPipe, PersianNumberPipe, PbButton, PbSurface, MatIconModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

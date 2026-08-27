@@ -15,11 +15,11 @@
 
     h1 {
       margin: 0;
-      font-size: 1.375rem;
+      font: var(--mat-sys-title-large);
       font-weight: 700;
 
       @media (max-width: 700px) {
-        font-size: 1.125rem;
+        font-size: var(--mat-sys-title-medium-size);
       }
     }
   }
@@ -54,11 +54,11 @@
   gap: 9px;
   padding: 11px 13px;
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 14px;
+  border-radius: var(--mat-sys-corner-large);
   background: var(--mat-sys-surface);
   color: var(--mat-sys-on-surface);
-  font-family: inherit;
-  font-size: 0.8125rem;
+  font: var(--mat-sys-label-large);
+  letter-spacing: var(--mat-sys-label-large-tracking);
   text-align: start;
   cursor: pointer;
   transition:

@@ -43,17 +43,17 @@ import { Component, input } from '@angular/core';
 
     h1 {
       margin: 0;
-      font-size: 1.5rem;
+      font: var(--mat-sys-headline-small);
       font-weight: 700;
       color: var(--mat-sys-on-surface);
 
       @media (max-width: 700px) {
-        font-size: 1.25rem;
+        font-size: var(--mat-sys-title-large-size);
       }
     }
 
     .pb-page-header__count {
-      font-size: 0.8125rem;
+      font: var(--mat-sys-body-medium);
       color: var(--mat-sys-on-surface-variant);
       white-space: nowrap;
     }
@@ -61,7 +61,9 @@ import { Component, input } from '@angular/core';
     .pb-page-header__subtitle {
       margin: 4px 0 0;
       max-width: 68ch;
-      font-size: 0.8125rem;
+      font-size: var(--mat-sys-body-medium-size);
+      font-weight: var(--mat-sys-body-medium-weight);
+      letter-spacing: var(--mat-sys-body-medium-tracking);
       line-height: 1.8;
       color: var(--mat-sys-on-surface-variant);
     }

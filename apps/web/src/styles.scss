@@ -80,6 +80,21 @@ body {
   user-select: none;
 }
 
+/**
+ * `<mat-icon>` ships a fixed 24px square with `overflow: hidden`. That clips
+ * the larger icons here (the 52px empty-state mark, the 32px brand) and pads
+ * out the smaller ones, so tie the box to the font size instead: every icon is
+ * then exactly as large as the type around it asks for. Element + class keeps
+ * this ahead of Material's own `.mat-icon`, and behind the per-component sizes
+ * that view encapsulation gives an extra class to.
+ */
+mat-icon.material-symbols-rounded {
+  inline-size: 1em;
+  block-size: 1em;
+  line-height: 1;
+  overflow: visible;
+}
+
 /** Filled variant marks the active item — the M3 selection idiom. */
 .material-symbols-rounded.is-filled {
   font-variation-settings:
@@ -115,7 +130,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--mat-sys-outline-variant);
-  border-radius: 4px;
+  border-radius: var(--mat-sys-corner-extra-small);
 }
 
 ::-webkit-scrollbar-track {

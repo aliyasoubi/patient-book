@@ -7,7 +7,7 @@
     <!-- ── Hero ──────────────────────────────────────────────────── -->
     <header class="hero" [class.hero--archived]="p.isArchived">
       <a class="hero__back" routerLink="/patients" i18n-aria-label aria-label="بازگشت به فهرست بیماران">
-        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
       </a>
 
       <span class="hero__avatar" [attr.data-gender]="p.gender">{{ initials() }}</span>
@@ -16,23 +16,23 @@
         <h1>{{ p.fullName || unnamed }}</h1>
         <div class="hero__meta">
           <span class="hero__chip" i18n>
-            <span class="material-symbols-rounded" aria-hidden="true">folder</span>
+            <mat-icon aria-hidden="true">folder</mat-icon>
             پرونده <span class="ltr-nums">{{ p.fileNo }}</span>
           </span>
           <span class="hero__chip">
-            <span class="material-symbols-rounded" aria-hidden="true">{{ genderIcon(p.gender) }}</span>
+            <mat-icon aria-hidden="true">{{ genderIcon(p.gender) }}</mat-icon>
             {{ genderLabel(p.gender) }}
           </span>
           @if (p.age !== null) {
             <span class="hero__chip" i18n>
-              <span class="material-symbols-rounded" aria-hidden="true">cake</span>
+              <mat-icon aria-hidden="true">cake</mat-icon>
               {{ p.age | faNum }} سال
               <small>({{ p.birthDate | jalali: 'long' }})</small>
             </span>
           }
           @if (p.isArchived) {
             <span class="hero__chip hero__chip--archived" i18n>
-              <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+              <mat-icon aria-hidden="true">inventory_2</mat-icon>
               بایگانی شده
             </span>
           }
@@ -51,24 +51,24 @@
           </pb-button>
         }
         <button mat-icon-button type="button" [matMenuTriggerFor]="menu" i18n-aria-label aria-label="عملیات بیشتر">
-          <span class="material-symbols-rounded" aria-hidden="true">more_vert</span>
+          <mat-icon aria-hidden="true">more_vert</mat-icon>
         </button>
         <mat-menu #menu="matMenu" xPosition="before">
           @if (p.homePhone) {
             <a mat-menu-item [href]="'tel:' + p.homePhone">
-              <span class="material-symbols-rounded" aria-hidden="true">call</span>
+              <mat-icon aria-hidden="true">call</mat-icon>
               <span i18n>تماس با منزل</span>
             </a>
           }
           @if (auth.can('archivePatients')) {
             @if (p.isArchived) {
               <button mat-menu-item type="button" (click)="restore()">
-                <span class="material-symbols-rounded" aria-hidden="true">unarchive</span>
+                <mat-icon aria-hidden="true">unarchive</mat-icon>
                 <span i18n>خروج از بایگانی</span>
               </button>
             } @else {
               <button mat-menu-item type="button" (click)="archive()">
-                <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+                <mat-icon aria-hidden="true">inventory_2</mat-icon>
                 <span i18n>بایگانی پرونده</span>
               </button>
             }
@@ -80,7 +80,7 @@
     <!-- ── Alerts ────────────────────────────────────────────────── -->
     @if (p.medicalHistory) {
       <aside class="alert alert--medical" role="note">
-        <span class="material-symbols-rounded" aria-hidden="true">medical_information</span>
+        <mat-icon aria-hidden="true">medical_information</mat-icon>
         <div>
           <strong i18n>سابقه بیماری</strong>
           <p>{{ p.medicalHistory }}</p>
@@ -90,7 +90,7 @@
 
     @if (p.dataIssues.length > 0) {
       <aside class="alert alert--issues" role="note">
-        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <mat-icon aria-hidden="true">error</mat-icon>
         <div class="alert__body">
           <strong>{{ p.dataIssues.length | faNum }} مورد نیازمند بازبینی</strong>
           <p class="alert__note" i18n>
@@ -135,7 +135,7 @@
                 @for (row of detailRows(); track row.label) {
                   <div class="facts__row">
                     <dt>
-                      <span class="material-symbols-rounded" aria-hidden="true">{{ row.icon }}</span>
+                      <mat-icon aria-hidden="true">{{ row.icon }}</mat-icon>
                       {{ row.label }}
                     </dt>
                     <dd [class.ltr-nums]="row.ltr">{{ row.value }}</dd>
@@ -149,14 +149,14 @@
             <dl class="facts">
               <div class="facts__row">
                 <dt i18n>
-                  <span class="material-symbols-rounded" aria-hidden="true">event_available</span>
+                  <mat-icon aria-hidden="true">event_available</mat-icon>
                   اولین مراجعه
                 </dt>
                 <dd>{{ p.firstVisitAt | jalali: 'long' }}</dd>
               </div>
               <div class="facts__row">
                 <dt i18n>
-                  <span class="material-symbols-rounded" aria-hidden="true">event</span>
+                  <mat-icon aria-hidden="true">event</mat-icon>
                   آخرین مراجعه
                 </dt>
                 <dd>{{ p.lastVisitAt | jalali: 'long' }}</dd>
@@ -191,9 +191,9 @@
                   class="treatments__item"
                   [style.--tx-bg]="color(t.color).bg"
                   [style.--tx-fg]="color(t.color).fg">
-                  <span class="treatments__icon material-symbols-rounded" aria-hidden="true">{{
+                  <mat-icon class="treatments__icon" aria-hidden="true">{{
                     t.icon
-                  }}</span>
+                  }}</mat-icon>
                   <div class="treatments__body">
                     <strong>{{ t.nameFa }}</strong>
                     <span class="treatments__meta" i18n>
@@ -221,7 +221,7 @@
               <ul class="registry">
                 @for (c of p.implantCases; track c.id) {
                   <li i18n>
-                    <span class="material-symbols-rounded" aria-hidden="true">deployed_code</span>
+                    <mat-icon aria-hidden="true">deployed_code</mat-icon>
                     <span>شماره <span class="ltr-nums">{{ c.registryNo }}</span></span>
                     <span class="registry__status">{{ caseStatusLabel(c.status) }}</span>
                   </li>
@@ -241,7 +241,7 @@
               <ul class="registry">
                 @for (c of p.orthoCases; track c.id) {
                   <li i18n>
-                    <span class="material-symbols-rounded" aria-hidden="true">straighten</span>
+                    <mat-icon aria-hidden="true">straighten</mat-icon>
                     <span>شماره <span class="ltr-nums">{{ c.registryNo }}</span></span>
                     <span class="registry__status">{{ caseStatusLabel(c.status) }}</span>
                   </li>
@@ -275,7 +275,7 @@
                             <span class="timeline__field">{{ changeLabel(change[0]) }}</span>
                             @if (asChange(change[1]); as diff) {
                               <span class="timeline__from">{{ formatValue(diff.from) }}</span>
-                              <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+                              <mat-icon aria-hidden="true">arrow_back</mat-icon>
                               <span class="timeline__to">{{ formatValue(diff.to) }}</span>
                             } @else {
                               <span class="timeline__to">{{ formatValue(change[1]) }}</span>

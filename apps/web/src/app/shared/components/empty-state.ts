@@ -36,13 +36,15 @@ import { MatIconModule } from '@angular/material/icon';
     }
     .empty__title {
       margin: 0;
-      font-size: 1rem;
+      font: var(--mat-sys-title-medium);
       font-weight: 600;
       color: var(--mat-sys-on-surface);
     }
     .empty__hint {
       margin: 0;
-      font-size: 0.875rem;
+      font-size: var(--mat-sys-body-medium-size);
+      font-weight: var(--mat-sys-body-medium-weight);
+      letter-spacing: var(--mat-sys-body-medium-tracking);
       max-width: 42ch;
       line-height: 1.8;
     }

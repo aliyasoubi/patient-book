@@ -1,7 +1,7 @@
 <div class="account">
   <header class="account__header">
     <button mat-icon-button type="button" (click)="back()" i18n-aria-label aria-label="بازگشت">
-      <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
     </button>
     <h1 i18n>حساب کاربری</h1>
   </header>
@@ -9,7 +9,7 @@
   <pb-surface>
     <div class="identity">
       <span class="identity__avatar">
-        <span class="material-symbols-rounded" aria-hidden="true">person</span>
+        <mat-icon aria-hidden="true">person</mat-icon>
       </span>
       <div>
         <strong>{{ auth.user()?.fullName }}</strong>

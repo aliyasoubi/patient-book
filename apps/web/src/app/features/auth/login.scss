@@ -22,14 +22,14 @@
 
     h1 {
       margin: 8px 0 4px;
-      font-size: 1.5rem;
+      font: var(--mat-sys-headline-small);
       font-weight: 700;
       color: var(--mat-sys-on-surface);
     }
 
     p {
       margin: 0;
-      font-size: 0.875rem;
+      font: var(--mat-sys-body-medium);
       color: var(--mat-sys-on-surface-variant);
     }
   }
@@ -44,7 +44,7 @@
   &__card {
     position: relative;
     overflow: hidden;
-    border-radius: 20px;
+    border-radius: var(--mat-sys-corner-large);
     background: var(--mat-sys-surface);
   }
 
@@ -56,7 +56,7 @@
 
   &__title {
     margin: 4px 0 20px;
-    font-size: 1.125rem;
+    font-size: var(--mat-sys-title-medium-size);
     font-weight: 600;
   }
 
@@ -66,10 +66,12 @@
     gap: 10px;
     margin-bottom: 16px;
     padding: 12px 14px;
-    border-radius: 12px;
+    border-radius: var(--mat-sys-corner-medium);
     background: var(--mat-sys-error-container);
     color: var(--mat-sys-on-error-container);
-    font-size: 0.875rem;
+    font-size: var(--mat-sys-body-medium-size);
+    font-weight: var(--mat-sys-body-medium-weight);
+    letter-spacing: var(--mat-sys-body-medium-tracking);
     line-height: 1.6;
 
     .material-symbols-rounded {
@@ -83,14 +85,16 @@
 
     ::ng-deep .pb-btn {
       height: 48px;
-      font-size: 1rem;
+      font-size: var(--mat-sys-title-medium-size);
     }
   }
 
   &__footer {
     margin-top: 20px;
     text-align: center;
-    font-size: 0.75rem;
+    font-size: var(--mat-sys-body-small-size);
+    font-weight: var(--mat-sys-body-small-weight);
+    letter-spacing: var(--mat-sys-body-small-tracking);
     line-height: 1.8;
     color: var(--mat-sys-on-surface-variant);
   }

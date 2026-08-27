@@ -22,7 +22,7 @@
           [class.tile--warn]="tile.tone === 'warn' && tile.value > 0"
           [routerLink]="tile.link"
           [queryParams]="tile.queryParams ?? {}">
-          <span class="tile__icon material-symbols-rounded" aria-hidden="true">{{ tile.icon }}</span>
+          <mat-icon class="tile__icon" aria-hidden="true">{{ tile.icon }}</mat-icon>
           <span class="tile__value">{{ tile.value | faCount }}</span>
           <span class="tile__label">{{ tile.label }}</span>
         </a>
@@ -36,10 +36,7 @@
           @for (t of treatmentBars(); track t.code) {
             <li class="bars__row">
               <span class="bars__label">
-                <span
-                  class="bars__icon material-symbols-rounded"
-                  [style.color]="color(t.color).fg"
-                  aria-hidden="true">{{ t.icon }}</span>
+                <mat-icon class="bars__icon" [style.color]="color(t.color).fg" aria-hidden="true">{{ t.icon }}</mat-icon>
                 {{ t.nameFa }}
               </span>
               <span class="bars__track">
@@ -126,9 +123,9 @@
           @for (r of s.topReferrals; track r.id) {
             <li>
               <a [routerLink]="['/patients']" [queryParams]="{ referralSourceId: r.id }">
-                <span class="referrals__icon material-symbols-rounded" aria-hidden="true">{{
+                <mat-icon class="referrals__icon" aria-hidden="true">{{
                   referralKindIcon(r.kind)
-                }}</span>
+                }}</mat-icon>
                 <span class="referrals__name">{{ r.name }}</span>
                 <span class="referrals__count">{{ r.count | faCount }}</span>
               </a>
@@ -149,7 +146,7 @@
             <span class="recall__label" i18n>بیش از یک سال بدون مراجعه</span>
             <span class="recall__cta" i18n>
               مشاهده فهرست
-              <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
             </span>
           </a>
         </div>
