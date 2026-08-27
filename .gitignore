@@ -1,0 +1,84 @@
+# ── Patient data ───────────────────────────────────────────────────────
+data/*.xlsx
+data/*.xls
+data/*.csv
+data/*.json
+!data/.gitkeep
+
+# Database dumps carry the same records.
+*.sql
+*.dump
+*.sql.gz
+*.backup
+!apps/api/src/database/migrations/*.sql
+
+# ── Secrets ────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# ── Dependencies ───────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/install-state.gz
+
+# ── Build output ───────────────────────────────────────────────────────
+dist/
+build/
+out/
+out-tsc/
+tmp/
+.angular/
+*.tsbuildinfo
+.tsbuildinfo
+
+# ── Test & coverage ────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+junit.xml
+*.lcov
+
+# ── Logs ───────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Editors & OS ───────────────────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.history/
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Local tooling ──────────────────────────────────────────────────────
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+.npm/
+*.pid
+*.pid.lock

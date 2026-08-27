@@ -1,0 +1,105 @@
+:host {
+  display: block;
+}
+
+.search {
+  position: relative;
+  display: block;
+
+  &__field {
+    width: 100%;
+
+    // A search box in a toolbar should read as a field, not a form row.
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+
+  &__icon {
+    font-size: 20px;
+    margin-inline-end: 8px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__clear {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--mat-sys-on-surface-variant);
+    cursor: pointer;
+
+    &:hover {
+      background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
+    }
+
+    .material-symbols-rounded {
+      font-size: 18px;
+    }
+  }
+
+  &__kbd {
+    padding: 2px 7px;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 6px;
+    color: var(--mat-sys-on-surface-variant);
+    font-family: inherit;
+    font-size: 0.6875rem;
+    direction: ltr;
+    white-space: nowrap;
+
+    // Only useful where there is a physical keyboard.
+    @media (pointer: coarse) {
+      display: none;
+    }
+  }
+
+  &__progress {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+  }
+
+  &__option {
+    &-icon {
+      font-size: 20px;
+      color: var(--mat-sys-on-surface-variant);
+      margin-inline-end: 10px;
+    }
+
+    &-body {
+      display: inline-flex;
+      flex-direction: column;
+      line-height: 1.4;
+      min-width: 0;
+    }
+
+    &-name {
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &-meta {
+      display: inline-flex;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  &__empty {
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.875rem;
+  }
+}
+
+::ng-deep .search__option .mdc-list-item__primary-text {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}

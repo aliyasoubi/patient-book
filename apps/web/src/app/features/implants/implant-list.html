@@ -1,0 +1,51 @@
+<div class="registry-page">
+  <header class="registry-page__header">
+    <div>
+      <h1 i18n>دفتر ایمپلنت</h1>
+      <p class="registry-page__note" i18n>
+        شماره‌گذاری این دفتر مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره
+        نمی‌کند.
+      </p>
+    </div>
+    @if (!loading() && total() > 0) {
+      <span class="registry-page__count">{{ total() | faCount }} پرونده</span>
+    }
+  </header>
+
+  <div class="registry-page__toolbar">
+    <pb-search-field
+      class="registry-page__search"
+      [control]="search"
+      i18n-placeholder placeholder="جستجوی شماره یا نام…"
+      i18n-ariaLabel ariaLabel="جستجو در دفتر ایمپلنت" />
+
+    <pb-checkbox-field
+      [checked]="unlinkedOnly()"
+      (checkedChange)="toggleUnlinked($event)"
+      class="registry-page__filter"
+      i18n>
+      فقط بدون اتصال
+    </pb-checkbox-field>
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <pb-registry-table
+    [cases]="cases()"
+    icon="deployed_code"
+    [emptyTitle]="emptyTitle"
+    [emptyHint]="emptyHint()"
+    [canEdit]="false" />
+
+  @if (total() > 0) {
+    <mat-paginator
+      [length]="total()"
+      [pageIndex]="page() - 1"
+      [pageSize]="limit()"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      (page)="onPage($event)"
+      i18n-aria-label aria-label="صفحه‌بندی" />
+  }
+</div>

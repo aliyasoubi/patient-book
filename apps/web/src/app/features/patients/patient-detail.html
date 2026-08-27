@@ -1,0 +1,296 @@
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (patient(); as p) {
+  <div class="detail">
+    <!-- ── Hero ──────────────────────────────────────────────────── -->
+    <header class="hero" [class.hero--archived]="p.isArchived">
+      <a class="hero__back" routerLink="/patients" i18n-aria-label aria-label="بازگشت به فهرست بیماران">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+      </a>
+
+      <span class="hero__avatar" [attr.data-gender]="p.gender">{{ initials() }}</span>
+
+      <div class="hero__identity">
+        <h1>{{ p.fullName || unnamed }}</h1>
+        <div class="hero__meta">
+          <span class="hero__chip" i18n>
+            <span class="material-symbols-rounded" aria-hidden="true">folder</span>
+            پرونده <span class="ltr-nums">{{ p.fileNo }}</span>
+          </span>
+          <span class="hero__chip">
+            <span class="material-symbols-rounded" aria-hidden="true">{{ genderIcon(p.gender) }}</span>
+            {{ genderLabel(p.gender) }}
+          </span>
+          @if (p.age !== null) {
+            <span class="hero__chip" i18n>
+              <span class="material-symbols-rounded" aria-hidden="true">cake</span>
+              {{ p.age | faNum }} سال
+              <small>({{ p.birthDate | jalali: 'long' }})</small>
+            </span>
+          }
+          @if (p.isArchived) {
+            <span class="hero__chip hero__chip--archived" i18n>
+              <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+              بایگانی شده
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="hero__actions">
+        @if (p.mobile) {
+          <pb-button [href]="'tel:' + p.mobile" icon="call" class="hero__call">
+            <span class="hero__call-label" i18n>تماس</span>
+          </pb-button>
+        }
+        @if (auth.can('editPatients') && !p.isArchived) {
+          <pb-button variant="stroked" [routerLink]="['/patients', p.id, 'edit']" icon="edit">
+            <span class="hero__edit-label" i18n>ویرایش</span>
+          </pb-button>
+        }
+        <button mat-icon-button type="button" [matMenuTriggerFor]="menu" i18n-aria-label aria-label="عملیات بیشتر">
+          <span class="material-symbols-rounded" aria-hidden="true">more_vert</span>
+        </button>
+        <mat-menu #menu="matMenu" xPosition="before">
+          @if (p.homePhone) {
+            <a mat-menu-item [href]="'tel:' + p.homePhone">
+              <span class="material-symbols-rounded" aria-hidden="true">call</span>
+              <span i18n>تماس با منزل</span>
+            </a>
+          }
+          @if (auth.can('archivePatients')) {
+            @if (p.isArchived) {
+              <button mat-menu-item type="button" (click)="restore()">
+                <span class="material-symbols-rounded" aria-hidden="true">unarchive</span>
+                <span i18n>خروج از بایگانی</span>
+              </button>
+            } @else {
+              <button mat-menu-item type="button" (click)="archive()">
+                <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+                <span i18n>بایگانی پرونده</span>
+              </button>
+            }
+          }
+        </mat-menu>
+      </div>
+    </header>
+
+    <!-- ── Alerts ────────────────────────────────────────────────── -->
+    @if (p.medicalHistory) {
+      <aside class="alert alert--medical" role="note">
+        <span class="material-symbols-rounded" aria-hidden="true">medical_information</span>
+        <div>
+          <strong i18n>سابقه بیماری</strong>
+          <p>{{ p.medicalHistory }}</p>
+        </div>
+      </aside>
+    }
+
+    @if (p.dataIssues.length > 0) {
+      <aside class="alert alert--issues" role="note">
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <div class="alert__body">
+          <strong>{{ p.dataIssues.length | faNum }} مورد نیازمند بازبینی</strong>
+          <p class="alert__note" i18n>
+            این موارد هنگام انتقال از فایل اکسل شناسایی شدند. مقدار اصلی حفظ شده است.
+          </p>
+          <ul class="issues">
+            @for (issue of p.dataIssues; track issue.field) {
+              <li class="issues__item">
+                <div class="issues__text">
+                  <span>{{ issueMessage(issue) }}</span>
+                  <!-- Some messages already quote the offending value; only
+                       show the chip when it adds something. -->
+                  @if (issue.rawValue && !issueMessage(issue).includes(issue.rawValue)) {
+                    <code class="issues__raw">{{ issue.rawValue }}</code>
+                  }
+                </div>
+                @if (auth.can('editPatients')) {
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="resolveIssue(issue.field)"
+                    i18n-matTooltip matTooltip="بررسی شد؛ این هشدار را بردار">
+                    بررسی شد
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      </aside>
+    }
+
+    <!-- ── Tabs ──────────────────────────────────────────────────── -->
+    <mat-tab-group class="detail__tabs" animationDuration="200ms" (selectedTabChange)="loadHistory()">
+      <mat-tab i18n-label label="اطلاعات">
+        <div class="tab">
+          <pb-surface i18n-title title="مشخصات">
+            @if (detailRows().length === 0) {
+              <p class="card__empty" i18n>اطلاعات تکمیلی ثبت نشده است.</p>
+            } @else {
+              <dl class="facts">
+                @for (row of detailRows(); track row.label) {
+                  <div class="facts__row">
+                    <dt>
+                      <span class="material-symbols-rounded" aria-hidden="true">{{ row.icon }}</span>
+                      {{ row.label }}
+                    </dt>
+                    <dd [class.ltr-nums]="row.ltr">{{ row.value }}</dd>
+                  </div>
+                }
+              </dl>
+            }
+          </pb-surface>
+
+          <pb-surface i18n-title title="مراجعات">
+            <dl class="facts">
+              <div class="facts__row">
+                <dt i18n>
+                  <span class="material-symbols-rounded" aria-hidden="true">event_available</span>
+                  اولین مراجعه
+                </dt>
+                <dd>{{ p.firstVisitAt | jalali: 'long' }}</dd>
+              </div>
+              <div class="facts__row">
+                <dt i18n>
+                  <span class="material-symbols-rounded" aria-hidden="true">event</span>
+                  آخرین مراجعه
+                </dt>
+                <dd>{{ p.lastVisitAt | jalali: 'long' }}</dd>
+              </div>
+            </dl>
+          </pb-surface>
+
+          @if (p.notes) {
+            <pb-surface i18n-title title="یادداشت">
+              <p class="card__note">{{ p.notes }}</p>
+            </pb-surface>
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          درمان‌ها
+          @if (p.treatments.length) {
+            <span class="tab__badge">{{ p.treatments.length | faNum }}</span>
+          }
+        </ng-template>
+        <div class="tab">
+          @if (p.treatments.length === 0) {
+            <pb-surface>
+              <p class="card__empty" i18n>هنوز درمانی برای این بیمار ثبت نشده است.</p>
+            </pb-surface>
+          } @else {
+            <ul class="treatments">
+              @for (t of p.treatments; track t.id) {
+                <li
+                  class="treatments__item"
+                  [style.--tx-bg]="color(t.color).bg"
+                  [style.--tx-fg]="color(t.color).fg">
+                  <span class="treatments__icon material-symbols-rounded" aria-hidden="true">{{
+                    t.icon
+                  }}</span>
+                  <div class="treatments__body">
+                    <strong>{{ t.nameFa }}</strong>
+                    <span class="treatments__meta" i18n>
+                      @if (t.performedAt) {
+                        {{ t.performedAt | jalali: 'long' }}
+                      } @else {
+                        تاریخ ثبت نشده
+                      }
+                    </span>
+                    @if (t.notes) {
+                      <p class="treatments__note">{{ t.notes }}</p>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab i18n-label label="پرونده‌های تخصصی">
+        <div class="tab">
+          <pb-surface i18n-title title="دفتر ایمپلنت">
+            @if (p.implantCases?.length) {
+              <ul class="registry">
+                @for (c of p.implantCases; track c.id) {
+                  <li i18n>
+                    <span class="material-symbols-rounded" aria-hidden="true">deployed_code</span>
+                    <span>شماره <span class="ltr-nums">{{ c.registryNo }}</span></span>
+                    <span class="registry__status">{{ caseStatusLabel(c.status) }}</span>
+                  </li>
+                }
+              </ul>
+              <p class="card__hint" i18n>
+                شماره دفتر ایمپلنت مستقل از شماره پرونده اصلی است و ممکن است عدد یکسانی با پروندهٔ
+                بیمار دیگری داشته باشد.
+              </p>
+            } @else {
+              <p class="card__empty" i18n>پرونده ایمپلنتی برای این بیمار ثبت نشده است.</p>
+            }
+          </pb-surface>
+
+          <pb-surface i18n-title title="دفتر ارتودنسی">
+            @if (p.orthoCases?.length) {
+              <ul class="registry">
+                @for (c of p.orthoCases; track c.id) {
+                  <li i18n>
+                    <span class="material-symbols-rounded" aria-hidden="true">straighten</span>
+                    <span>شماره <span class="ltr-nums">{{ c.registryNo }}</span></span>
+                    <span class="registry__status">{{ caseStatusLabel(c.status) }}</span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="card__empty" i18n>پرونده ارتودنسی برای این بیمار ثبت نشده است.</p>
+            }
+          </pb-surface>
+        </div>
+      </mat-tab>
+
+      @if (auth.can('viewHistory')) {
+        <mat-tab i18n-label label="تاریخچه">
+          <div class="tab">
+            <pb-surface>
+              @if (history().length === 0) {
+                <p class="card__empty" i18n>تغییری ثبت نشده است.</p>
+              } @else {
+                <ol class="timeline">
+                  @for (entry of history(); track entry.id) {
+                    <li class="timeline__item">
+                      <span class="timeline__dot" [attr.data-action]="entry.action"></span>
+                      <div class="timeline__body">
+                        <div class="timeline__head" i18n>
+                          <strong>{{ actionLabel(entry.action) }}</strong>
+                          <span class="timeline__who">{{ entry.username ?? 'سیستم' }}</span>
+                        </div>
+                        @for (change of changeEntries(entry.changes); track change[0]) {
+                          <div class="timeline__change">
+                            <span class="timeline__field">{{ changeLabel(change[0]) }}</span>
+                            @if (asChange(change[1]); as diff) {
+                              <span class="timeline__from">{{ formatValue(diff.from) }}</span>
+                              <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+                              <span class="timeline__to">{{ formatValue(diff.to) }}</span>
+                            } @else {
+                              <span class="timeline__to">{{ formatValue(change[1]) }}</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ol>
+              }
+            </pb-surface>
+          </div>
+        </mat-tab>
+      }
+    </mat-tab-group>
+  </div>
+}

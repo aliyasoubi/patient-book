@@ -1,0 +1,151 @@
+<mat-sidenav-container class="shell" [hasBackdrop]="!isDesktop()">
+  <!--
+    Desktop rail / tablet drawer; on a phone the bottom bar replaces it.
+
+    The sidenav stays mounted at every breakpoint and switches to `over` mode
+    instead. Removing it from the DOM leaves MatSidenavContainer holding the
+    content margin it last computed, which squeezes the page to a ~110px column
+    on a phone.
+  -->
+  <mat-sidenav
+    class="shell__nav"
+    [mode]="isDesktop() ? 'side' : 'over'"
+    [opened]="isDesktop() || (drawerOpen() && !isHandset())"
+    [disableClose]="isDesktop()"
+    (closedStart)="closeDrawer()"
+    position="start">
+      <div class="nav">
+        <a class="nav__brand" routerLink="/dashboard" (click)="closeDrawer()">
+          <span class="nav__logo material-symbols-rounded is-filled" aria-hidden="true">dentistry</span>
+          <span class="nav__brand-text">
+            <strong i18n>دفترچه بیماران</strong>
+            <small i18n>مطب دندانپزشکی</small>
+          </span>
+        </a>
+
+        <nav class="nav__links" i18n-aria-label aria-label="بخش‌های اصلی">
+          @for (item of navItems(); track item.path) {
+            <a
+              class="nav__link"
+              [routerLink]="item.path"
+              routerLinkActive="is-active"
+              #rla="routerLinkActive"
+              (click)="closeDrawer()">
+              <span
+                class="material-symbols-rounded nav__icon"
+                [class.is-filled]="rla.isActive"
+                aria-hidden="true">{{ item.icon }}</span>
+              <span class="nav__label">{{ item.label }}</span>
+            </a>
+          }
+        </nav>
+
+        <div class="nav__footer">
+          <button
+            mat-button
+            class="nav__theme"
+            type="button"
+            (click)="theme.cycle()"
+            [matTooltip]="themeTooltip()">
+            <span class="material-symbols-rounded" aria-hidden="true">{{
+              theme.mode() === 'system' ? 'brightness_auto'
+                : theme.mode() === 'light' ? 'light_mode' : 'dark_mode'
+            }}</span>
+            <span i18n>حالت نمایش</span>
+          </button>
+        </div>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell__content">
+    <mat-toolbar class="topbar">
+      @if (!isDesktop() && !isHandset()) {
+        <button mat-icon-button type="button" (click)="toggleDrawer()" i18n-aria-label aria-label="باز کردن منو">
+          <span class="material-symbols-rounded" aria-hidden="true">menu</span>
+        </button>
+      }
+      @if (isHandset()) {
+        <span class="topbar__logo material-symbols-rounded is-filled" aria-hidden="true">dentistry</span>
+      }
+
+      <pb-global-search class="topbar__search" />
+
+      <span class="spacer"></span>
+
+      <button
+        mat-icon-button
+        type="button"
+        class="topbar__avatar-btn"
+        [matMenuTriggerFor]="userMenu"
+        i18n-aria-label aria-label="حساب کاربری">
+        <span class="topbar__avatar">{{ initials() }}</span>
+      </button>
+
+      <mat-menu #userMenu="matMenu" xPosition="before">
+        <div class="user-menu__header">
+          <strong>{{ auth.user()?.fullName }}</strong>
+          <small>{{ roleLabel() }}</small>
+        </div>
+        <a mat-menu-item routerLink="/settings/account">
+          <span class="material-symbols-rounded" aria-hidden="true">manage_accounts</span>
+          <span i18n>حساب کاربری</span>
+        </a>
+        @if (isHandset()) {
+          <button mat-menu-item type="button" (click)="theme.cycle()">
+            <span class="material-symbols-rounded" aria-hidden="true">contrast</span>
+            <span i18n>حالت نمایش</span>
+          </button>
+        }
+        <button mat-menu-item type="button" (click)="logout()">
+          <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+          <span i18n>خروج</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main class="page" [class.page--with-bottom-nav]="isHandset()">
+      <router-outlet />
+    </main>
+
+    <!-- Phone: bottom navigation. Thumb-reachable, unlike a top drawer. -->
+    @if (isHandset()) {
+      <nav class="bottom-nav" i18n-aria-label aria-label="بخش‌های اصلی">
+        @for (item of primaryNav(); track item.path) {
+          <a
+            class="bottom-nav__item"
+            [routerLink]="item.path"
+            routerLinkActive="is-active"
+            #rla="routerLinkActive">
+            <span class="bottom-nav__pill">
+              <span
+                class="material-symbols-rounded"
+                [class.is-filled]="rla.isActive"
+                aria-hidden="true">{{ item.icon }}</span>
+            </span>
+            <span class="bottom-nav__label">{{ item.label }}</span>
+          </a>
+        }
+        <button
+          class="bottom-nav__item"
+          type="button"
+          [matMenuTriggerFor]="moreMenu"
+          i18n-aria-label aria-label="بیشتر">
+          <span class="bottom-nav__pill">
+            <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
+          </span>
+          <span class="bottom-nav__label" i18n>بیشتر</span>
+        </button>
+        <mat-menu #moreMenu="matMenu">
+          @for (item of navItems(); track item.path) {
+            @if (!item.primary) {
+              <a mat-menu-item [routerLink]="item.path">
+                <span class="material-symbols-rounded" aria-hidden="true">{{ item.icon }}</span>
+                <span>{{ item.label }}</span>
+              </a>
+            }
+          }
+        </mat-menu>
+      </nav>
+    }
+  </mat-sidenav-content>
+</mat-sidenav-container>

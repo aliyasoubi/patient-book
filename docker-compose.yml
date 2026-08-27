@@ -1,0 +1,32 @@
+services:
+  db:
+    # Docker Hub's official image by default. Some networks can reach
+    # auth.docker.io but not registry-1.docker.io, where the layers live, and
+    # the pull then hangs rather than failing fast. Set POSTGRES_IMAGE to a
+    # mirror of the same image when that happens, e.g.
+    #   POSTGRES_IMAGE=public.ecr.aws/docker/library/postgres:17-alpine
+    image: ${POSTGRES_IMAGE:-postgres:17-alpine}
+    container_name: patient-book-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-dental}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dental_dev_pw}
+      POSTGRES_DB: ${DB_NAME:-patient_book}
+      # Persian sorting/comparison behaves correctly under a UTF-8 collation
+      LANG: fa_IR.utf8
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dental} -d ${DB_NAME:-patient_book}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

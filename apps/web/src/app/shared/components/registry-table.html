@@ -1,0 +1,54 @@
+@if (cases().length === 0) {
+  <pb-empty-state [icon]="icon()" [title]="emptyTitle()" [hint]="emptyHint()" />
+} @else {
+  <ul class="registry">
+    @for (c of cases(); track c.id) {
+      <li class="registry__row" [class.registry__row--unlinked]="!c.patientId">
+        <span class="registry__no">
+          <span class="material-symbols-rounded" aria-hidden="true">{{ icon() }}</span>
+          <span class="ltr-nums">{{ c.registryNo }}</span>
+        </span>
+
+        <div class="registry__body">
+          <strong class="registry__name">{{ c.recordedName || unnamed }}</strong>
+
+          @if (c.patient) {
+            <a class="registry__link" [routerLink]="['/patients', c.patient.id]" i18n>
+              <span class="material-symbols-rounded" aria-hidden="true">link</span>
+              <span>پرونده <span class="ltr-nums">{{ c.patient.fileNo }}</span></span>
+              @if (patientName(c) !== c.recordedName) {
+                <span class="registry__alias">({{ patientName(c) }})</span>
+              }
+              <span class="registry__match" [matTooltip]="matchMethodLabel(c.matchMethod)">
+                {{ matchMethodLabel(c.matchMethod) }}
+              </span>
+            </a>
+          } @else {
+            <span class="registry__unlinked" i18n-matTooltip matTooltip="این پرونده به هیچ بیماری در دفتر اصلی متصل نیست">
+              <span class="material-symbols-rounded" aria-hidden="true">link_off</span>
+              بدون اتصال به پرونده اصلی
+            </span>
+          }
+        </div>
+
+        <div class="registry__meta">
+          @if (c.mobile) {
+            <a class="registry__phone ltr-nums" [href]="'tel:' + c.mobile">{{ c.mobile }}</a>
+          }
+          <span class="registry__status" [attr.data-status]="c.status">
+            {{ statusLabel(c.status) }}
+          </span>
+          @if (canEdit()) {
+            <button
+              mat-icon-button
+              type="button"
+              (click)="edit.emit(c)"
+              i18n-aria-label aria-label="ویرایش پرونده">
+              <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+            </button>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+}

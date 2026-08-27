@@ -1,0 +1,57 @@
+<div class="login">
+  <div class="login__panel">
+    <div class="login__brand">
+      <span class="material-symbols-rounded is-filled login__logo" aria-hidden="true">dentistry</span>
+      <h1 i18n>دفترچه بیماران</h1>
+      <p i18n>سامانه مدیریت پرونده‌های مطب دندانپزشکی</p>
+    </div>
+
+    <mat-card class="login__card" appearance="outlined">
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate" class="login__progress" />
+      }
+
+      <mat-card-content>
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <h2 class="login__title" i18n>ورود به سیستم</h2>
+
+          @if (errorMessage(); as message) {
+            <div class="login__error" role="alert">
+              <span class="material-symbols-rounded" aria-hidden="true">error</span>
+              <span>{{ message }}</span>
+            </div>
+          }
+
+          <pb-text-field
+            [control]="form.controls.username"
+            i18n-label label="نام کاربری"
+            prefixIcon="person"
+            [ltr]="true"
+            nativeAutocomplete="username" />
+
+          <pb-text-field
+            [control]="form.controls.password"
+            i18n-label label="رمز عبور"
+            type="password"
+            prefixIcon="lock"
+            [ltr]="true"
+            nativeAutocomplete="current-password" />
+
+          <pb-button
+            variant="flat"
+            type="submit"
+            icon="login"
+            class="login__submit"
+            [fullWidth]="true"
+            [loading]="loading()"
+            [loadingText]="signInLabel"
+            i18n>
+            ورود
+          </pb-button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <p class="login__footer" i18n>اطلاعات بیماران محرمانه است. پس از پایان کار از سیستم خارج شوید.</p>
+  </div>
+</div>

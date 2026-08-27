@@ -1,0 +1,159 @@
+<div class="dash">
+  <header class="dash__header">
+    <div>
+      <h1>{{ greeting() }}</h1>
+      <p i18n>خلاصه‌ای از وضعیت پرونده‌های مطب</p>
+    </div>
+    @if (auth.can('editPatients')) {
+      <pb-button routerLink="/patients/new" icon="person_add" i18n>بیمار جدید</pb-button>
+    }
+  </header>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (stats(); as s) {
+    <!-- ── Headline tiles ──────────────────────────────────────── -->
+    <section class="tiles" i18n-aria-label aria-label="آمار کلی">
+      @for (tile of tiles(); track tile.label) {
+        <a
+          class="tile"
+          [class.tile--warn]="tile.tone === 'warn' && tile.value > 0"
+          [routerLink]="tile.link"
+          [queryParams]="tile.queryParams ?? {}">
+          <span class="tile__icon material-symbols-rounded" aria-hidden="true">{{ tile.icon }}</span>
+          <span class="tile__value">{{ tile.value | faCount }}</span>
+          <span class="tile__label">{{ tile.label }}</span>
+        </a>
+      }
+    </section>
+
+    <div class="dash__grid">
+      <!-- ── Treatments ────────────────────────────────────────── -->
+      <pb-surface class="panel--wide" i18n-title title="درمان‌های ثبت‌شده" i18n-hint hint="تعداد بیماران هر درمان">
+        <ul class="bars">
+          @for (t of treatmentBars(); track t.code) {
+            <li class="bars__row">
+              <span class="bars__label">
+                <span
+                  class="bars__icon material-symbols-rounded"
+                  [style.color]="color(t.color).fg"
+                  aria-hidden="true">{{ t.icon }}</span>
+                {{ t.nameFa }}
+              </span>
+              <span class="bars__track">
+                <span
+                  class="bars__fill"
+                  [style.width.%]="t.percent"
+                  [style.background]="color(t.color).fg"></span>
+              </span>
+              <span class="bars__value">{{ t.count | faCount }}</span>
+            </li>
+          }
+        </ul>
+      </pb-surface>
+
+      <!-- ── Growth ────────────────────────────────────────────── -->
+      <pb-surface i18n-title title="بیماران جدید" i18n-hint hint="۱۲ ماه گذشته">
+        @if (trend(); as t) {
+          <div class="trend">
+            <svg
+              class="trend__chart"
+              viewBox="0 0 100 32"
+              preserveAspectRatio="none"
+              role="img"
+              [attr.aria-label]="trendLabel(t.max)">
+              <path class="trend__area" [attr.d]="t.area" />
+              <path class="trend__line" [attr.d]="t.line" />
+            </svg>
+            <div class="trend__foot">
+              <span i18n>
+                <strong>{{ t.last.count | faCount }}</strong>
+                نفر در {{ t.last.month | faNum }}
+              </span>
+              <span class="trend__max">بیشینه {{ t.max | faCount }}</span>
+            </div>
+          </div>
+        } @else {
+          <p class="panel__empty" i18n>داده کافی برای نمودار وجود ندارد.</p>
+        }
+      </pb-surface>
+
+      <!-- ── Gender ────────────────────────────────────────────── -->
+      <pb-surface i18n-title title="ترکیب جنسیتی">
+        <div class="split">
+          <div class="split__bar" role="img" i18n-aria-label aria-label="نسبت بیماران بر اساس جنسیت">
+            @for (g of genderSplit(); track g.key) {
+              <span
+                class="split__seg"
+                [attr.data-gender]="g.key"
+                [style.width.%]="g.percent"
+                [matTooltip]="genderLabel(g.key) + ': ' + g.count"></span>
+            }
+          </div>
+          <ul class="split__legend">
+            @for (g of genderSplit(); track g.key) {
+              <li i18n>
+                <span class="split__dot" [attr.data-gender]="g.key"></span>
+                <span>{{ genderLabel(g.key) }}</span>
+                <strong>{{ g.count | faCount }}</strong>
+                <small>{{ g.percent | faNum }}٪</small>
+              </li>
+            }
+          </ul>
+        </div>
+      </pb-surface>
+
+      <!-- ── Age ───────────────────────────────────────────────── -->
+      <pb-surface i18n-title title="گروه‌های سنی">
+        <ul class="bars bars--compact">
+          @for (b of ageBars(); track b.band) {
+            <li class="bars__row">
+              <span class="bars__label">{{ ageBandLabel(b.band) }}</span>
+              <span class="bars__track">
+                <span class="bars__fill bars__fill--primary" [style.width.%]="b.percent"></span>
+              </span>
+              <span class="bars__value">{{ b.count | faCount }}</span>
+            </li>
+          }
+        </ul>
+      </pb-surface>
+
+      <!-- ── Referrals ─────────────────────────────────────────── -->
+      <pb-surface i18n-title title="نحوه آشنایی" i18n-hint hint="۱۰ مورد برتر">
+        <ul class="referrals">
+          @for (r of s.topReferrals; track r.id) {
+            <li>
+              <a [routerLink]="['/patients']" [queryParams]="{ referralSourceId: r.id }">
+                <span class="referrals__icon material-symbols-rounded" aria-hidden="true">{{
+                  referralKindIcon(r.kind)
+                }}</span>
+                <span class="referrals__name">{{ r.name }}</span>
+                <span class="referrals__count">{{ r.count | faCount }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </pb-surface>
+
+      <!-- ── Recall ────────────────────────────────────────────── -->
+      <pb-surface i18n-title title="پیگیری مراجعه">
+        <div class="recall">
+          <a class="recall__item" routerLink="/patients">
+            <span class="recall__value">{{ s.recentlyActive | faCount }}</span>
+            <span class="recall__label" i18n>مراجعه در ۶ ماه اخیر</span>
+          </a>
+          <a class="recall__item recall__item--warn" routerLink="/patients" [queryParams]="{ inactiveMonths: 12 }">
+            <span class="recall__value">{{ s.inactiveOverYear | faCount }}</span>
+            <span class="recall__label" i18n>بیش از یک سال بدون مراجعه</span>
+            <span class="recall__cta" i18n>
+              مشاهده فهرست
+              <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+            </span>
+          </a>
+        </div>
+      </pb-surface>
+    </div>
+  }
+</div>

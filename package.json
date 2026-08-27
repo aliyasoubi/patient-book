@@ -1,0 +1,31 @@
+{
+  "name": "patient-book",
+  "version": "1.0.0",
+  "private": true,
+  "description": "دفترچه بیماران — Patient book for a dental practice",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run start:dev --workspace=api",
+    "dev:web": "npm run start --workspace=web",
+    "build": "npm run build --workspace=api && npm run build --workspace=web",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "migration:run": "npm run migration:run --workspace=api",
+    "seed": "npm run seed --workspace=api",
+    "import": "npm run import --workspace=api",
+    "test": "npm run test --workspace=api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "@angular/localize": "^22.1.3"
+  }
+}

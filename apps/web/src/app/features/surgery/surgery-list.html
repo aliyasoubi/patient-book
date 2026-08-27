@@ -1,0 +1,135 @@
+<div class="surgery">
+  <header class="surgery__header">
+    <div>
+      <h1 i18n>لیست انتظار جراحی</h1>
+      <p class="surgery__note" i18n>
+        شماره‌های این فهرست به دفتر ایمپلنت اشاره دارند، نه به شماره پرونده اصلی بیمار.
+      </p>
+    </div>
+    @if (!loading() && total() > 0) {
+      <span class="surgery__count">{{ total() | faCount }} ردیف</span>
+    }
+  </header>
+
+  <div class="surgery__toolbar">
+    <pb-search-field
+      class="surgery__search"
+      [control]="search"
+      i18n-placeholder placeholder="جستجوی نام، شماره یا دندان…"
+      i18n-ariaLabel ariaLabel="جستجو در لیست جراحی" />
+
+    <mat-button-toggle-group
+      [value]="status()"
+      (valueChange)="setStatus($event)"
+      class="surgery__status-filter"
+      i18n-aria-label aria-label="فیلتر وضعیت">
+      <mat-button-toggle value="" i18n>همه</mat-button-toggle>
+      <mat-button-toggle value="scheduled" i18n>در انتظار</mat-button-toggle>
+      <mat-button-toggle value="completed" i18n>انجام شده</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <pb-checkbox-field [checked]="mismatchedOnly()" (checkedChange)="toggleMismatched($event)" i18n>
+      فقط موارد مغایرت نام
+    </pb-checkbox-field>
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (!loading() && items().length === 0) {
+    <pb-empty-state
+      icon="event_busy"
+      [title]="emptyTitle"
+      [hint]="emptyHint()" />
+  } @else {
+    <ul class="queue">
+      @for (item of items(); track item.id) {
+        <li class="queue__item" [class.queue__item--mismatch]="item.hasNameMismatch">
+          <div class="queue__date">
+            @if (item.surgeryDate) {
+              <span class="queue__date-value">{{ item.surgeryDate.jalali | faNum }}</span>
+            } @else {
+              <span class="queue__date-value queue__date-value--none" i18n>بدون تاریخ</span>
+            }
+            <span class="queue__status" [attr.data-status]="item.status">
+              {{ statusLabel(item.status) }}
+            </span>
+          </div>
+
+          <div class="queue__body">
+            <div class="queue__identity">
+              <strong>{{ item.recordedName || unnamed }}</strong>
+              @if (item.implantRegistryNo) {
+                <span class="queue__registry" i18n>
+                  دفتر ایمپلنت <span class="ltr-nums">{{ item.implantRegistryNo }}</span>
+                </span>
+              }
+              @if (item.patient) {
+                <a class="queue__patient" [routerLink]="['/patients', item.patient.id]" i18n>
+                  <span class="material-symbols-rounded" aria-hidden="true">link</span>
+                  پرونده <span class="ltr-nums">{{ item.patient.fileNo }}</span>
+                </a>
+              }
+            </div>
+
+            <!-- A reused register number is a patient-safety issue: the number
+                 on the list belongs to someone else in the implant book. -->
+            @if (item.hasNameMismatch) {
+              <p class="queue__warning" role="note">
+                <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+                <span i18n>
+                  شماره <span class="ltr-nums">{{ item.implantRegistryNo }}</span> در دفتر ایمپلنت به
+                  «{{ item.registeredName }}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.
+                </span>
+              </p>
+            }
+
+            <div class="queue__details">
+              @if (item.toothPosition) {
+                <span class="queue__detail">
+                  <span class="material-symbols-rounded" aria-hidden="true">dentistry</span>
+                  {{ item.toothPosition }}
+                </span>
+              }
+              @if (item.implantBrand) {
+                <span class="queue__brand">{{ item.implantBrand }}</span>
+              }
+              @if (item.abutmentType !== 'unknown') {
+                <span class="queue__detail">
+                  <span class="material-symbols-rounded" aria-hidden="true">hardware</span>
+                  {{ abutmentLabel(item.abutmentType) }}
+                </span>
+              }
+              @if (item.prosthesisDue) {
+                <span class="queue__detail" i18n>
+                  <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+                  پروتز: {{ item.prosthesisDue }}
+                </span>
+              }
+            </div>
+          </div>
+
+          @if (item.patient?.mobile) {
+            <a
+              class="queue__call"
+              [href]="'tel:' + item.patient!.mobile"
+              [attr.aria-label]="callLabel(item.recordedName)">
+              <span class="material-symbols-rounded" aria-hidden="true">call</span>
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (total() > 0) {
+    <mat-paginator
+      [length]="total()"
+      [pageIndex]="page() - 1"
+      [pageSize]="limit()"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      (page)="onPage($event)"
+      i18n-aria-label aria-label="صفحه‌بندی" />
+  }
+</div>

@@ -1,0 +1,377 @@
+.dash {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 24px 32px;
+  max-width: 1500px;
+  margin-inline: auto;
+
+  @media (max-width: 700px) {
+    padding: 14px 12px 24px;
+    gap: 14px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    h1 {
+      margin: 0 0 2px;
+      font-size: 1.5rem;
+      font-weight: 700;
+
+      @media (max-width: 700px) {
+        font-size: 1.25rem;
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+}
+
+/* ── Stat tiles ────────────────────────────────────────────────────── */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 18px;
+  background: var(--mat-sys-surface);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: var(--mat-sys-primary);
+    transform: translateY(-2px);
+  }
+
+  &__icon {
+    font-size: 24px;
+    color: var(--mat-sys-primary);
+    margin-bottom: 6px;
+  }
+
+  &__value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  &__label {
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  /** A non-zero review backlog is the one number that should demand attention. */
+  &--warn {
+    border-color: color-mix(in srgb, var(--mat-sys-error) 40%, transparent);
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+
+    .tile__icon {
+      color: var(--mat-sys-error);
+    }
+
+    .tile__label {
+      color: inherit;
+      opacity: 0.85;
+    }
+  }
+}
+
+/* ── Panels ────────────────────────────────────────────────────────── */
+// pb-surface owns the bordered-panel look and its title+hint header now;
+// this page only adds its own grid-span modifier and one body-content style.
+.panel--wide {
+  grid-column: span 2;
+
+  @media (max-width: 900px) {
+    grid-column: span 1;
+  }
+}
+
+.panel__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* ── Horizontal bars ───────────────────────────────────────────────── */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &__row {
+    display: grid;
+    grid-template-columns: minmax(96px, 132px) 1fr auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__icon {
+    font-size: 17px;
+    flex: 0 0 auto;
+  }
+
+  &__track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--mat-sys-surface-container-high);
+    overflow: hidden;
+  }
+
+  &__fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    transition: width 500ms cubic-bezier(0.2, 0, 0, 1);
+
+    &--primary {
+      background: var(--mat-sys-primary);
+    }
+  }
+
+  &__value {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 3ch;
+    text-align: end;
+  }
+
+  &--compact .bars__row {
+    grid-template-columns: minmax(70px, 88px) 1fr auto;
+  }
+}
+
+/* ── Trend sparkline ───────────────────────────────────────────────── */
+.trend {
+  &__chart {
+    width: 100%;
+    height: 76px;
+    display: block;
+    overflow: visible;
+  }
+
+  &__area {
+    fill: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+  }
+
+  &__line {
+    fill: none;
+    stroke: var(--mat-sys-primary);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    // Keep the stroke an even weight despite the non-uniform viewBox scaling.
+    vector-effect: non-scaling-stroke;
+  }
+
+  &__foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    strong {
+      font-size: 1rem;
+      color: var(--mat-sys-on-surface);
+    }
+  }
+
+  &__max {
+    font-size: 0.75rem;
+  }
+}
+
+/* ── Gender split ──────────────────────────────────────────────────── */
+.split {
+  &__bar {
+    display: flex;
+    height: 12px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--mat-sys-surface-container-high);
+  }
+
+  &__seg {
+    height: 100%;
+    transition: width 500ms cubic-bezier(0.2, 0, 0, 1);
+
+    &[data-gender='female'] { background: #ec407a; }
+    &[data-gender='male'] { background: #42a5f5; }
+    &[data-gender='unknown'] { background: var(--mat-sys-outline); }
+  }
+
+  &__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8125rem;
+    }
+
+    strong {
+      margin-inline-start: auto;
+      font-variant-numeric: tabular-nums;
+    }
+
+    small {
+      min-width: 4ch;
+      text-align: end;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  &__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+
+    &[data-gender='female'] { background: #ec407a; }
+    &[data-gender='male'] { background: #42a5f5; }
+    &[data-gender='unknown'] { background: var(--mat-sys-outline); }
+  }
+}
+
+/* ── Referral list ─────────────────────────────────────────────────── */
+.referrals {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 9px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.8125rem;
+
+    &:hover {
+      background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
+    }
+  }
+
+  &__icon {
+    font-size: 17px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__count {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── Recall ────────────────────────────────────────────────────────── */
+.recall {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--mat-sys-surface-container-low);
+    text-decoration: none;
+    color: inherit;
+
+    &:hover {
+      background: var(--mat-sys-surface-container);
+    }
+
+    &--warn {
+      background: var(--mat-sys-tertiary-container);
+      color: var(--mat-sys-on-tertiary-container);
+    }
+  }
+
+  &__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  &__label {
+    font-size: 0.8125rem;
+    opacity: 0.85;
+  }
+
+  &__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    .material-symbols-rounded {
+      font-size: 15px;
+    }
+  }
+}

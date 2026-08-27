@@ -1,0 +1,268 @@
+import { Injectable, inject } from '@angular/core';
+import { DateAdapter, MAT_DATE_LOCALE, MatDateFormats } from '@angular/material/core';
+import {
+  addDays,
+  addMonths,
+  addYears,
+  format,
+  getDate,
+  getDay,
+  getDaysInMonth,
+  getMonth,
+  getYear,
+  isValid,
+  newDate,
+  parse,
+  startOfDay,
+} from 'date-fns-jalali';
+
+/**
+ * Jalali month names, Farvardin through Esfand.
+ *
+ * Built on first use rather than at module load: a `$localize` tagged template
+ * evaluated during module initialisation runs before the runtime has loaded its
+ * translations, which silently pins the source locale.
+ */
+export function JALALI_MONTHS(): string[] {
+  return [
+    $localize`:@@month.farvardin:فروردین`,
+    $localize`:@@month.ordibehesht:اردیبهشت`,
+    $localize`:@@month.khordad:خرداد`,
+    $localize`:@@month.tir:تیر`,
+    $localize`:@@month.mordad:مرداد`,
+    $localize`:@@month.shahrivar:شهریور`,
+    $localize`:@@month.mehr:مهر`,
+    $localize`:@@month.aban:آبان`,
+    $localize`:@@month.azar:آذر`,
+    $localize`:@@month.dey:دی`,
+    $localize`:@@month.bahman:بهمن`,
+    $localize`:@@month.esfand:اسفند`,
+  ];
+}
+
+/**
+ * Weekday names indexed by the JavaScript day number (0 = Sunday), which is
+ * what `Date.getDay()` returns — not by the Persian week, which starts on
+ * Saturday. Getting this mapping backwards silently mislabels every column of
+ * the calendar header.
+ */
+function dayNamesLong(): string[] {
+  return [
+    $localize`:@@day.sunday:یکشنبه`,
+    $localize`:@@day.monday:دوشنبه`,
+    $localize`:@@day.tuesday:سه‌شنبه`,
+    $localize`:@@day.wednesday:چهارشنبه`,
+    $localize`:@@day.thursday:پنجشنبه`,
+    $localize`:@@day.friday:جمعه`,
+    $localize`:@@day.saturday:شنبه`,
+  ];
+}
+
+function dayNamesShort(): string[] {
+  return [
+    $localize`:@@dayShort.sunday:یک`,
+    $localize`:@@dayShort.monday:دو`,
+    $localize`:@@dayShort.tuesday:سه`,
+    $localize`:@@dayShort.wednesday:چهار`,
+    $localize`:@@dayShort.thursday:پنج`,
+    $localize`:@@dayShort.friday:جمعه`,
+    $localize`:@@dayShort.saturday:شنبه`,
+  ];
+}
+
+function dayNamesNarrow(): string[] {
+  return [
+    $localize`:@@dayNarrow.sunday:ی`,
+    $localize`:@@dayNarrow.monday:د`,
+    $localize`:@@dayNarrow.tuesday:س`,
+    $localize`:@@dayNarrow.wednesday:چ`,
+    $localize`:@@dayNarrow.thursday:پ`,
+    $localize`:@@dayNarrow.friday:ج`,
+    $localize`:@@dayNarrow.saturday:ش`,
+  ];
+}
+
+/** Saturday, in JavaScript's numbering. The Iranian week starts here. */
+const SATURDAY = 6;
+
+/**
+ * A `DateAdapter` that presents the Jalali (Shamsi) calendar while keeping the
+ * underlying value a plain `Date`.
+ *
+ * The practice records every date in Jalali, so the picker must count months
+ * the Jalali way — the first six have 31 days, the next five have 30, and
+ * Esfand has 29 or 30 depending on the leap year. Deriving those from the
+ * Gregorian date would be wrong roughly half the time.
+ */
+@Injectable()
+export class JalaliDateAdapter extends DateAdapter<Date> {
+  constructor() {
+    super();
+    this.setLocale(inject(MAT_DATE_LOCALE, { optional: true }) ?? 'fa-IR');
+  }
+
+  override getYear(date: Date): number {
+    return getYear(date);
+  }
+
+  override getMonth(date: Date): number {
+    return getMonth(date);
+  }
+
+  override getDate(date: Date): number {
+    return getDate(date);
+  }
+
+  override getDayOfWeek(date: Date): number {
+    return getDay(date);
+  }
+
+  override getMonthNames(style: 'long' | 'short' | 'narrow'): string[] {
+    // Persian month names have no conventional abbreviation; the full name is
+    // short enough to use at every size.
+    const months = JALALI_MONTHS();
+    return style === 'narrow' ? months.map((m) => m.slice(0, 3)) : months;
+  }
+
+  override getDateNames(): string[] {
+    // 31 slots: the picker asks for the maximum any month could hold.
+    return Array.from({ length: 31 }, (_, i) => this.toPersianNumerals(String(i + 1)));
+  }
+
+  override getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
+    if (style === 'long') return dayNamesLong();
+    if (style === 'short') return dayNamesShort();
+    return dayNamesNarrow();
+  }
+
+  override getYearName(date: Date): string {
+    return this.toPersianNumerals(String(getYear(date)));
+  }
+
+  override getFirstDayOfWeek(): number {
+    return SATURDAY;
+  }
+
+  override getNumDaysInMonth(date: Date): number {
+    return getDaysInMonth(date);
+  }
+
+  override clone(date: Date): Date {
+    return new Date(date.getTime());
+  }
+
+  /** `month` is 0-based, matching the rest of the adapter contract. */
+  override createDate(year: number, month: number, date: number): Date {
+    if (month < 0 || month > 11) {
+      throw Error(`Invalid Jalali month: ${month + 1}`);
+    }
+    if (date < 1) {
+      throw Error(`Invalid Jalali day: ${date}`);
+    }
+    const result = newDate(year, month, date);
+    // Guard against day 31 in a 30-day Jalali month rolling into the next one.
+    if (getMonth(result) !== month) {
+      throw Error(`Day ${date} does not exist in Jalali month ${month + 1}`);
+    }
+    return result;
+  }
+
+  override today(): Date {
+    return startOfDay(new Date());
+  }
+
+  /**
+   * Accept what a receptionist actually types: `1404/6/11`, `1404-06-11`, or
+   * the same with Persian digits.
+   */
+  override parse(value: unknown, _parseFormat?: unknown): Date | null {
+    if (value instanceof Date) return this.clone(value);
+    if (typeof value === 'number') return new Date(value);
+    if (typeof value !== 'string' || !value.trim()) return null;
+
+    const normalized = this.toLatinNumerals(value).trim().replace(/[-.]/g, '/');
+    const parts = normalized.split('/').filter(Boolean);
+    if (parts.length !== 3 || parts.some((p) => !/^\d+$/.test(p))) return this.invalid();
+
+    const [y, m, d] = parts.map(Number);
+    if (m < 1 || m > 12 || d < 1 || d > 31) return this.invalid();
+
+    const parsed = parse(
+      `${String(y).padStart(4, '0')}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`,
+      'yyyy/MM/dd',
+      new Date(),
+    );
+    return isValid(parsed) ? parsed : this.invalid();
+  }
+
+  override format(date: Date, displayFormat: string): string {
+    if (!this.isValid(date)) return '';
+    return this.toPersianNumerals(format(date, displayFormat));
+  }
+
+  override addCalendarYears(date: Date, years: number): Date {
+    return addYears(date, years);
+  }
+
+  override addCalendarMonths(date: Date, months: number): Date {
+    return addMonths(date, months);
+  }
+
+  override addCalendarDays(date: Date, days: number): Date {
+    return addDays(date, days);
+  }
+
+  /**
+   * Serialised form. Deliberately the **Jalali** `yyyy/MM/dd` string, because
+   * that is what the API stores and echoes back; emitting a Gregorian ISO
+   * string here would round-trip the wrong calendar.
+   */
+  override toIso8601(date: Date): string {
+    return format(date, 'yyyy/MM/dd');
+  }
+
+  override deserialize(value: unknown): Date | null {
+    if (typeof value === 'string' && value.includes('/')) return this.parse(value);
+    return super.deserialize(value);
+  }
+
+  override isDateInstance(obj: unknown): boolean {
+    return obj instanceof Date;
+  }
+
+  override isValid(date: Date): boolean {
+    return isValid(date);
+  }
+
+  override invalid(): Date {
+    return new Date(NaN);
+  }
+
+  // -- numerals ---------------------------------------------------------
+
+  /** Persian digits are what the practice reads on paper; use them on screen. */
+  private toPersianNumerals(input: string): string {
+    return input.replace(/[0-9]/g, (d) => String.fromCharCode(0x06f0 + Number(d)));
+  }
+
+  private toLatinNumerals(input: string): string {
+    return input.replace(/[۰-۹٠-٩]/g, (ch) => {
+      const code = ch.charCodeAt(0);
+      const base = code >= 0x06f0 ? 0x06f0 : 0x0660;
+      return String(code - base);
+    });
+  }
+}
+
+/** Display and parse formats for the Jalali picker. */
+export const JALALI_DATE_FORMATS: MatDateFormats = {
+  parse: {
+    dateInput: 'yyyy/MM/dd',
+  },
+  display: {
+    dateInput: 'yyyy/MM/dd',
+    monthYearLabel: 'MMMM yyyy',
+    dateA11yLabel: 'd MMMM yyyy',
+    monthYearA11yLabel: 'MMMM yyyy',
+  },
+};

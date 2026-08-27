@@ -1,0 +1,465 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 32px;
+  max-width: 1500px;
+  margin-inline: auto;
+
+  @media (max-width: 700px) {
+    padding: 14px 12px 24px;
+    gap: 12px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__heading {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+
+      @media (max-width: 700px) {
+        font-size: 1.25rem;
+      }
+    }
+  }
+
+  &__count {
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+    white-space: nowrap;
+  }
+
+  &__new {
+    gap: 6px;
+    flex: 0 0 auto;
+
+    @media (max-width: 560px) {
+      .list__new-label {
+        // Icon-only on the narrowest screens; the label crowds the title.
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+      min-width: 48px;
+      padding-inline: 12px;
+    }
+  }
+
+  &__toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  &__search {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__filter-btn {
+    flex: 0 0 auto;
+    height: 48px;
+    gap: 6px;
+
+    &.is-active {
+      border-color: var(--mat-sys-primary);
+      color: var(--mat-sys-primary);
+    }
+
+    @media (max-width: 560px) {
+      span:not(.material-symbols-rounded):not(.list__filter-badge) {
+        display: none;
+      }
+      min-width: 48px;
+      padding-inline: 12px;
+    }
+  }
+
+  &__filter-badge {
+    display: grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding-inline: 5px;
+    border-radius: 9px;
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+
+  &__progress {
+    border-radius: 2px;
+  }
+
+  &__paginator {
+    background: transparent;
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+/* ── Filter panel ──────────────────────────────────────────────────── */
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+  background: var(--mat-sys-surface-container-low);
+
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    &--checks {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 18px;
+    }
+  }
+
+  &__label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--mat-sys-on-surface-variant);
+
+    small {
+      font-weight: 400;
+      opacity: 0.8;
+    }
+  }
+
+  &__chips .chip-icon {
+    font-size: 16px;
+    margin-inline-end: 4px;
+  }
+
+  &__clear {
+    margin-inline-start: auto;
+    gap: 6px;
+    color: var(--mat-sys-error);
+  }
+}
+
+/* ── Desktop table ─────────────────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+  background: var(--mat-sys-surface);
+}
+
+.table {
+  width: 100%;
+  background: transparent;
+
+  th {
+    background: var(--mat-sys-surface-container-low);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+    white-space: nowrap;
+  }
+
+  td {
+    font-size: 0.875rem;
+    border-bottom-color: var(--mat-sys-outline-variant);
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background-color 140ms ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--mat-sys-primary) 6%, transparent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: -2px;
+    }
+
+    &--archived {
+      opacity: 0.55;
+    }
+  }
+
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding-block: 4px;
+  }
+
+  &__avatar {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface-variant);
+
+    .material-symbols-rounded {
+      font-size: 19px;
+    }
+
+    &[data-gender='female'] {
+      background: color-mix(in srgb, #e91e63 14%, transparent);
+      color: #c2185b;
+    }
+
+    &[data-gender='male'] {
+      background: color-mix(in srgb, #1e88e5 14%, transparent);
+      color: #1565c0;
+    }
+  }
+
+  &__name-block {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.4;
+    min-width: 0;
+  }
+
+  &__name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__sub {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__file {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__phone {
+    color: var(--mat-sys-primary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &--muted {
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  &__date {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__muted {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__flag {
+    display: inline-grid;
+    place-items: center;
+    color: var(--mat-sys-error);
+
+    .material-symbols-rounded {
+      font-size: 18px;
+    }
+  }
+
+  &__archived .material-symbols-rounded {
+    font-size: 18px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+/* ── Mobile cards ──────────────────────────────────────────────────── */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+  background: var(--mat-sys-surface);
+  transition: border-color 140ms ease;
+
+  &:active {
+    border-color: var(--mat-sys-primary);
+  }
+
+  &--archived {
+    opacity: 0.6;
+  }
+
+  &__link {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  /**
+   * Reserve room for the call button only on cards that have one — patients
+   * without a mobile number would otherwise carry a 60px hole.
+   */
+  &:has(.card__call) .card__link {
+    padding-inline-end: 62px;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  &__avatar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface-variant);
+
+    .material-symbols-rounded {
+      font-size: 22px;
+    }
+
+    &[data-gender='female'] {
+      background: color-mix(in srgb, #e91e63 14%, transparent);
+      color: #c2185b;
+    }
+
+    &[data-gender='male'] {
+      background: color-mix(in srgb, #1e88e5 14%, transparent);
+      color: #1565c0;
+    }
+  }
+
+  &__identity {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.45;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__name {
+    font-size: 0.9375rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__file {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__flag {
+    flex: 0 0 auto;
+    color: var(--mat-sys-error);
+
+    .material-symbols-rounded {
+      font-size: 20px;
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    .material-symbols-rounded {
+      font-size: 16px;
+    }
+  }
+
+  &__medical {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+    font-size: 0.75rem;
+    line-height: 1.6;
+
+    .material-symbols-rounded {
+      font-size: 16px;
+      flex: 0 0 auto;
+      margin-top: 1px;
+    }
+  }
+
+  &__call {
+    position: absolute;
+    inset-inline-end: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    text-decoration: none;
+
+    .material-symbols-rounded {
+      font-size: 21px;
+    }
+  }
+}

@@ -1,0 +1,91 @@
+export interface PageResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  pageCount: number;
+}
+
+export interface ApiError {
+  statusCode: number;
+  message: string;
+  errors?: string[];
+  path: string;
+  timestamp: string;
+}
+
+export type UserRole = 'admin' | 'dentist' | 'receptionist' | 'viewer';
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  fullName: string;
+  role: UserRole;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser;
+}
+
+export interface RegistryCase {
+  id: string;
+  registryNo: string;
+  patientId: string | null;
+  patient: { id: string; fileNo: string; firstName: string; lastName: string } | null;
+  recordedName: string;
+  matchMethod: 'exact' | 'fuzzy' | 'manual' | 'unmatched';
+  mobile: string | null;
+  homePhone: string | null;
+  status: 'active' | 'completed' | 'on_hold';
+  notes: string | null;
+}
+
+export interface SurgeryQueueItem {
+  id: string;
+  implantCaseId: string | null;
+  implantRegistryNo: string | null;
+  recordedName: string;
+  /** True when the register number has been reused for a different person. */
+  hasNameMismatch: boolean;
+  registeredName: string | null;
+  patient: { id: string; fileNo: string; fullName: string; mobile: string | null } | null;
+  surgeryDate: { jalali: string; iso: string; precision: string; raw?: string | null } | null;
+  toothPosition: string;
+  implantBrand: string | null;
+  abutmentType: 'cover' | 'healing' | 'both' | 'other' | 'unknown';
+  abutmentRaw: string | null;
+  prosthesisDue: string | null;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  notes: string | null;
+}
+
+export interface DashboardStats {
+  totals: {
+    patients: number;
+    archived: number;
+    implantCases: number;
+    orthoCases: number;
+    upcomingSurgeries: number;
+    needsReview: number;
+  };
+  gender: Array<{ key: string; count: number }>;
+  topTreatments: Array<{ code: string; nameFa: string; icon: string; color: string; count: number }>;
+  topReferrals: Array<{ id: string; name: string; kind: string; count: number }>;
+  newPatientsByMonth: Array<{ month: string; count: number }>;
+  ageBands: Array<{ band: string; count: number }>;
+  recentlyActive: number;
+  inactiveOverYear: number;
+}
+
+export interface AuditEntry {
+  id: string;
+  userId: string | null;
+  username: string | null;
+  action: string;
+  entity: string;
+  entityId: string | null;
+  changes: Record<string, { from?: unknown; to?: unknown } | unknown> | null;
+  createdAt: string;
+}

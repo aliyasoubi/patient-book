@@ -1,0 +1,52 @@
+<form class="search" (submit)="onSubmit($event)" role="search">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search__field">
+    <span class="material-symbols-rounded search__icon" matPrefix aria-hidden="true">search</span>
+    <input
+      #searchInput
+      matInput
+      type="search"
+      [formControl]="control"
+      [matAutocomplete]="auto"
+      i18n-placeholder placeholder="جستجوی نام، شماره پرونده، موبایل یا کد ملی…"
+      i18n-aria-label aria-label="جستجوی بیمار"
+      autocomplete="off"
+      enterkeyhint="search" />
+    @if (control.value) {
+      <button
+        matSuffix
+        type="button"
+        class="search__clear"
+        (click)="control.setValue('')"
+        i18n-aria-label aria-label="پاک کردن جستجو">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    } @else {
+      <kbd matSuffix class="search__kbd" aria-hidden="true">Ctrl K</kbd>
+    }
+  </mat-form-field>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" class="search__progress" />
+  }
+
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelect($event)" [displayWith]="displayEmpty">
+    @for (item of suggestions(); track item.id) {
+      <mat-option [value]="item" class="search__option">
+        <span class="material-symbols-rounded search__option-icon" aria-hidden="true">person</span>
+        <span class="search__option-body" i18n>
+          <span class="search__option-name">{{ item.fullName || 'بدون نام' }}</span>
+          <span class="search__option-meta">
+            <span class="ltr-nums">{{ item.fileNo }}</span>
+            @if (item.mobile) {
+              <span aria-hidden="true">·</span>
+              <span class="ltr-nums">{{ item.mobile }}</span>
+            }
+          </span>
+        </span>
+      </mat-option>
+    }
+    @if (control.value.trim().length >= 2 && suggestions().length === 0 && !loading()) {
+      <mat-option [disabled]="true" class="search__empty" i18n>بیماری با این مشخصات پیدا نشد</mat-option>
+    }
+  </mat-autocomplete>
+</form>

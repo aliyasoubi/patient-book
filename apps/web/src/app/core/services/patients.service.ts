@@ -1,0 +1,109 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { environment } from '../../../environments/environment';
+import { AuditEntry, PageResult } from '../models/common.model';
+import {
+  Patient,
+  PatientInput,
+  PatientSuggestion,
+  ReferralSource,
+  TreatmentType,
+} from '../models/patient.model';
+
+export interface PatientQuery {
+  q?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortDir?: 'ASC' | 'DESC';
+  gender?: string;
+  education?: string;
+  treatments?: string[];
+  referralSourceId?: string;
+  hasIssues?: boolean;
+  hasMedicalHistory?: boolean;
+  inactiveMonths?: number;
+  lastVisitFrom?: string;
+  lastVisitTo?: string;
+  includeArchived?: boolean;
+}
+
+@Injectable({ providedIn: 'root' })
+export class PatientsService {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/patients`;
+
+  list(query: PatientQuery): Observable<PageResult<Patient>> {
+    return this.http.get<PageResult<Patient>>(this.base, { params: toParams(query) });
+  }
+
+  get(id: string): Observable<Patient> {
+    return this.http.get<Patient>(`${this.base}/${id}`);
+  }
+
+  suggest(q: string): Observable<PatientSuggestion[]> {
+    return this.http.get<PatientSuggestion[]>(`${this.base}/suggest`, { params: { q } });
+  }
+
+  nextFileNo(): Observable<{ fileNo: string }> {
+    return this.http.get<{ fileNo: string }>(`${this.base}/next-file-no`);
+  }
+
+  create(input: PatientInput): Observable<Patient> {
+    return this.http.post<Patient>(this.base, input);
+  }
+
+  update(id: string, input: Partial<PatientInput>): Observable<Patient> {
+    return this.http.patch<Patient>(`${this.base}/${id}`, input);
+  }
+
+  archive(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  restore(id: string): Observable<Patient> {
+    return this.http.post<Patient>(`${this.base}/${id}/restore`, {});
+  }
+
+  /** Mark a flagged import warning as checked. */
+  resolveIssue(id: string, field: string): Observable<Patient> {
+    return this.http.patch<Patient>(`${this.base}/${id}/resolve-issue/${field}`, {});
+  }
+
+  history(id: string): Observable<AuditEntry[]> {
+    return this.http.get<AuditEntry[]>(`${this.base}/${id}/history`);
+  }
+
+  treatmentTypes(): Observable<TreatmentType[]> {
+    return this.http.get<TreatmentType[]>(`${environment.apiUrl}/treatment-types`);
+  }
+
+  referralSources(q?: string): Observable<ReferralSource[]> {
+    return this.http.get<ReferralSource[]>(`${environment.apiUrl}/referral-sources`, {
+      params: q ? { q } : {},
+    });
+  }
+}
+
+/**
+ * Build query params, dropping anything empty. An `undefined` filter must not
+ * reach the API as the string "undefined", which its validators would reject.
+ *
+ * Accepts any object of scalars/arrays — interface types have no index
+ * signature, so a bare `Record<string, unknown>` parameter would reject them.
+ */
+export function toParams(query: object): HttpParams {
+  let params = new HttpParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === null || value === '') continue;
+    if (Array.isArray(value)) {
+      if (value.length === 0) continue;
+      params = params.set(key, value.join(','));
+    } else {
+      params = params.set(key, String(value));
+    }
+  }
+  return params;
+}

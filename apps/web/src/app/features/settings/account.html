@@ -1,0 +1,67 @@
+<div class="account">
+  <header class="account__header">
+    <button mat-icon-button type="button" (click)="back()" i18n-aria-label aria-label="بازگشت">
+      <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+    </button>
+    <h1 i18n>حساب کاربری</h1>
+  </header>
+
+  <pb-surface>
+    <div class="identity">
+      <span class="identity__avatar">
+        <span class="material-symbols-rounded" aria-hidden="true">person</span>
+      </span>
+      <div>
+        <strong>{{ auth.user()?.fullName }}</strong>
+        <span class="identity__meta">
+          <span class="ltr-nums">{{ auth.user()?.username }}</span>
+          ·
+          {{ roleLabel(auth.role()) }}
+        </span>
+      </div>
+    </div>
+  </pb-surface>
+
+  <pb-surface icon="key" i18n-title title="تغییر رمز عبور">
+    <p class="panel__hint" i18n>
+      پس از تغییر رمز، همهٔ نشست‌های فعال روی سایر دستگاه‌ها بسته می‌شود و باید دوباره وارد شوید.
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pw-form">
+      <pb-text-field
+        [control]="form.controls.currentPassword"
+        i18n-label label="رمز عبور فعلی"
+        type="password"
+        [ltr]="true"
+        nativeAutocomplete="current-password"
+        [errorMessages]="currentPasswordErrors" />
+
+      <pb-text-field
+        [control]="form.controls.newPassword"
+        i18n-label label="رمز عبور جدید"
+        type="password"
+        [ltr]="true"
+        nativeAutocomplete="new-password"
+        i18n-hint hint="حداقل ۱۰ کاراکتر" />
+
+      <pb-text-field
+        [control]="form.controls.confirmPassword"
+        i18n-label label="تکرار رمز عبور جدید"
+        type="password"
+        [ltr]="true"
+        nativeAutocomplete="new-password" />
+
+      <div class="pw-form__actions">
+        <pb-button
+          variant="flat"
+          type="submit"
+          icon="save"
+          [loading]="saving()"
+          [loadingText]="savingLabel"
+          i18n>
+          تغییر رمز عبور
+        </pb-button>
+      </div>
+    </form>
+  </pb-surface>
+</div>

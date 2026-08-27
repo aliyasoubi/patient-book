@@ -1,0 +1,79 @@
+.account {
+  max-width: 620px;
+  margin-inline: auto;
+  padding: 16px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  @media (max-width: 700px) {
+    padding: 12px 12px 24px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    h1 {
+      margin: 0;
+      font-size: 1.375rem;
+      font-weight: 700;
+    }
+  }
+}
+
+// pb-surface owns the bordered-panel look and its icon+title header now;
+// only the hint paragraph beneath the title is still this page's own concern.
+.panel__hint {
+  margin: 0 0 18px;
+  font-size: 0.8125rem;
+  line-height: 1.85;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  &__avatar {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+
+    .material-symbols-rounded {
+      font-size: 25px;
+    }
+  }
+
+  strong {
+    display: block;
+    font-size: 0.9375rem;
+  }
+
+  &__meta {
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.pw-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  pb-text-field {
+    display: block;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+}

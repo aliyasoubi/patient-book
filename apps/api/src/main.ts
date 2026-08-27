@@ -1,0 +1,59 @@
+import 'reflect-metadata';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
+import compression from 'compression';
+
+import { AppModule } from './app.module';
+import { ValidationException } from './presentation/http/validation.exception';
+
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const config = app.get(ConfigService);
+  const port = config.get<number>('port')!;
+  const corsOrigin = config.get<string[]>('corsOrigin')!;
+  const isProd = config.get<string>('env') === 'production';
+
+  app.setGlobalPrefix('api');
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+  app.use(compression());
+  app.enableCors({ origin: corsOrigin, credentials: true });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      // Unknown fields are a client bug; failing loudly beats silently dropping
+      // a value someone believed they had saved.
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: false },
+      // Failures leave as codes keyed by field path, never as English prose:
+      // the client owns the wording so it can render Persian, or anything else.
+      exceptionFactory: (errors) => ValidationException.fromValidationErrors(errors),
+    }),
+  );
+
+  if (!isProd) {
+    const swagger = new DocumentBuilder()
+      .setTitle('Patient Book API')
+      .setDescription(
+        'API for a dental practice patient register. Errors return a stable ' +
+          '`code` plus `params`; all wording is the client\'s responsibility.',
+      )
+      .setVersion('1.0.0')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, swagger));
+  }
+
+  app.enableShutdownHooks();
+  await app.listen(port, '0.0.0.0');
+
+  const logger = new Logger('Bootstrap');
+  logger.log(`API listening on http://localhost:${port}/api`);
+  if (!isProd) logger.log(`Swagger at http://localhost:${port}/api/docs`);
+}
+
+void bootstrap();

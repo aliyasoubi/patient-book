@@ -1,0 +1,69 @@
+<div class="settings">
+  <h1 i18n>تنظیمات</h1>
+
+  <pb-surface icon="contrast" i18n-title title="ظاهر برنامه">
+    <p class="panel__hint" i18n>حالت «خودکار» از تنظیمات سیستم‌عامل پیروی می‌کند.</p>
+    <mat-button-toggle-group
+      [value]="theme.mode()"
+      (valueChange)="setTheme($event)"
+      i18n-aria-label aria-label="حالت نمایش">
+      <mat-button-toggle value="system" i18n>
+        <span class="material-symbols-rounded" aria-hidden="true">brightness_auto</span>
+        خودکار
+      </mat-button-toggle>
+      <mat-button-toggle value="light" i18n>
+        <span class="material-symbols-rounded" aria-hidden="true">light_mode</span>
+        روشن
+      </mat-button-toggle>
+      <mat-button-toggle value="dark" i18n>
+        <span class="material-symbols-rounded" aria-hidden="true">dark_mode</span>
+        تیره
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </pb-surface>
+
+  <pb-surface icon="account_circle" i18n-title title="حساب کاربری">
+    <div class="account-row">
+      <div>
+        <strong>{{ auth.user()?.fullName }}</strong>
+        <span class="account-row__meta">
+          {{ auth.user()?.username }} · {{ roleLabel(auth.role()) }}
+        </span>
+      </div>
+      <pb-button variant="stroked" routerLink="/settings/account" icon="key" i18n>
+        تغییر رمز عبور
+      </pb-button>
+    </div>
+  </pb-surface>
+
+  <pb-surface icon="dentistry" i18n-title title="انواع درمان">
+    <p class="panel__hint" i18n>فهرست درمان‌هایی که در پرونده بیماران قابل ثبت است.</p>
+    <ul class="catalogue">
+      @for (t of treatments(); track t.id) {
+        <li class="catalogue__item">
+          <span class="material-symbols-rounded" aria-hidden="true">{{ t.icon }}</span>
+          <span class="catalogue__name">{{ t.nameFa }}</span>
+          <code class="catalogue__code">{{ t.code }}</code>
+        </li>
+      }
+    </ul>
+  </pb-surface>
+
+  <pb-surface icon="share" i18n-title title="نحوه آشنایی">
+    <p class="panel__hint" i18n>پرتکرارترین منابع معرفی بیماران.</p>
+    <ul class="catalogue">
+      @for (r of referrals(); track r.id) {
+        <li class="catalogue__item">
+          <span class="material-symbols-rounded" aria-hidden="true">{{
+            referralKindIcon(r.kind)
+          }}</span>
+          <span class="catalogue__name">{{ r.name }}</span>
+          <span class="catalogue__kind">{{ referralKindLabel(r.kind) }}</span>
+          @if (r.patientCount) {
+            <span class="catalogue__count">{{ r.patientCount | faCount }}</span>
+          }
+        </li>
+      }
+    </ul>
+  </pb-surface>
+</div>

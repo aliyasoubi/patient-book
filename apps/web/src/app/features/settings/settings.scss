@@ -1,0 +1,104 @@
+.settings {
+  max-width: 900px;
+  margin-inline: auto;
+  padding: 20px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  @media (max-width: 700px) {
+    padding: 14px 12px 24px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+
+    @media (max-width: 700px) {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+// pb-surface owns the bordered-panel look and its icon+title header now.
+.panel__hint {
+  margin: 0 0 14px;
+  font-size: 0.8125rem;
+  line-height: 1.8;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+mat-button-toggle-group .material-symbols-rounded {
+  font-size: 17px;
+  margin-inline-end: 5px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  strong {
+    display: block;
+    font-size: 0.9375rem;
+  }
+
+  &__meta {
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.catalogue {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 6px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: var(--mat-sys-surface-container-low);
+    font-size: 0.8125rem;
+
+    > .material-symbols-rounded {
+      font-size: 18px;
+      color: var(--mat-sys-on-surface-variant);
+      flex: 0 0 auto;
+    }
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__code {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 0.6875rem;
+    color: var(--mat-sys-on-surface-variant);
+    direction: ltr;
+  }
+
+  &__kind,
+  &__count {
+    font-size: 0.6875rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__count {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}

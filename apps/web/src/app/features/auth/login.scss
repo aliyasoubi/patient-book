@@ -1,0 +1,102 @@
+.login {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 50% -20%,
+      color-mix(in srgb, var(--mat-sys-primary) 22%, transparent),
+      transparent 70%
+    ),
+    var(--mat-sys-surface-container-lowest);
+
+  &__panel {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  &__brand {
+    text-align: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 8px 0 4px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--mat-sys-on-surface);
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  &__logo {
+    font-size: 52px;
+    width: 52px;
+    height: 52px;
+    color: var(--mat-sys-primary);
+  }
+
+  &__card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    background: var(--mat-sys-surface);
+  }
+
+  &__progress {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+  }
+
+  &__title {
+    margin: 4px 0 20px;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  &__error {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+    font-size: 0.875rem;
+    line-height: 1.6;
+
+    .material-symbols-rounded {
+      font-size: 20px;
+      flex: 0 0 auto;
+    }
+  }
+
+  &__submit {
+    margin-top: 4px;
+
+    ::ng-deep .pb-btn {
+      height: 48px;
+      font-size: 1rem;
+    }
+  }
+
+  &__footer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 0.75rem;
+    line-height: 1.8;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+pb-text-field {
+  display: block;
+  margin-bottom: 4px;
+}

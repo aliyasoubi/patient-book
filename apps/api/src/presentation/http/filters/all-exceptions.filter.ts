@@ -1,0 +1,165 @@
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import { QueryFailedError } from 'typeorm';
+import type { Request, Response } from 'express';
+
+import { AppException } from '../../../application/errors/app.exception';
+import { DomainError, ErrorCode, ErrorParams } from '../../../domain';
+import { ErrorResponse, FieldError } from '../error-response';
+import { ValidationException } from '../validation.exception';
+
+/** Postgres SQLSTATE codes worth translating rather than leaking. */
+const PG_UNIQUE_VIOLATION = '23505';
+const PG_FOREIGN_KEY_VIOLATION = '23503';
+
+/**
+ * Normalises every failure into one {@link ErrorResponse}.
+ *
+ * Two rules hold here. Nothing user-facing is written in a natural language —
+ * clients get a code and render their own wording. And no driver-level detail
+ * escapes: a raw Postgres message would leak column names to the browser, so
+ * database errors are mapped to codes and the original is logged instead.
+ */
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger('Http');
+
+  catch(exception: unknown, host: ArgumentsHost): void {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    const resolved = this.resolve(exception);
+
+    if (resolved.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.logger.error(
+        `${request.method} ${request.url} -> ${resolved.statusCode} ${resolved.code}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
+    }
+
+    const body: ErrorResponse = {
+      ...resolved,
+      path: request.url,
+      timestamp: new Date().toISOString(),
+    };
+    response.status(resolved.statusCode).json(body);
+  }
+
+  private resolve(exception: unknown): Omit<ErrorResponse, 'path' | 'timestamp'> {
+    if (exception instanceof ValidationException) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        code: ErrorCode.ValidationFailed,
+        params: {},
+        message: 'Request validation failed',
+        fieldErrors: exception.fieldErrors,
+      };
+    }
+
+    if (exception instanceof AppException) {
+      return {
+        statusCode: exception.getStatus(),
+        code: exception.code,
+        params: exception.params,
+        message: exception.message,
+      };
+    }
+
+    // A domain rule that reached the transport layer unwrapped.
+    if (exception instanceof DomainError) {
+      const lifted = AppException.fromDomain(exception);
+      return {
+        statusCode: lifted.getStatus(),
+        code: lifted.code,
+        params: lifted.params,
+        message: exception.message,
+      };
+    }
+
+    if (exception instanceof QueryFailedError) {
+      return this.fromDatabase(exception);
+    }
+
+    if (exception instanceof HttpException) {
+      return this.fromHttp(exception);
+    }
+
+    return {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      code: ErrorCode.Unexpected,
+      params: {},
+      message: exception instanceof Error ? exception.message : 'Unexpected error',
+    };
+  }
+
+  private fromDatabase(
+    exception: QueryFailedError,
+  ): Omit<ErrorResponse, 'path' | 'timestamp'> {
+    const driverCode = (exception as QueryFailedError & { code?: string }).code;
+
+    if (driverCode === PG_UNIQUE_VIOLATION) {
+      return {
+        statusCode: HttpStatus.CONFLICT,
+        code: ErrorCode.ValidationFailed,
+        params: {},
+        message: 'Unique constraint violated',
+      };
+    }
+    if (driverCode === PG_FOREIGN_KEY_VIOLATION) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        code: ErrorCode.ValidationFailed,
+        params: {},
+        message: 'Referenced record is still in use',
+      };
+    }
+
+    this.logger.error(`Database error ${driverCode}: ${exception.message}`);
+    return {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      code: ErrorCode.Unexpected,
+      params: {},
+      message: 'Database error',
+    };
+  }
+
+  /**
+   * Framework-raised HttpExceptions — 401 from the auth guard, 429 from the
+   * throttler, 404 from an unmatched route. Mapped onto domain codes so the
+   * client has one vocabulary to render from.
+   */
+  private fromHttp(exception: HttpException): Omit<ErrorResponse, 'path' | 'timestamp'> {
+    const status = exception.getStatus();
+    const byStatus: Partial<Record<number, ErrorCode>> = {
+      [HttpStatus.UNAUTHORIZED]: ErrorCode.Unauthorized,
+      [HttpStatus.FORBIDDEN]: ErrorCode.Forbidden,
+      [HttpStatus.NOT_FOUND]: ErrorCode.NotFound,
+      [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RateLimited,
+      [HttpStatus.BAD_REQUEST]: ErrorCode.ValidationFailed,
+    };
+
+    const payload = exception.getResponse();
+    const params: ErrorParams = {};
+    let message = exception.message;
+    if (typeof payload === 'object' && payload !== null && 'message' in payload) {
+      const raw = (payload as { message?: string | string[] }).message;
+      message = Array.isArray(raw) ? raw.join('; ') : (raw ?? message);
+    }
+
+    return {
+      statusCode: status,
+      code: byStatus[status] ?? ErrorCode.Unexpected,
+      params,
+      message,
+    };
+  }
+}
+
+export type { FieldError };
