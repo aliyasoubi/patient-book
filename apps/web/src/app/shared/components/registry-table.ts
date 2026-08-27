@@ -1,6 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { caseStatusLabel, matchMethodLabel } from '../labels';
@@ -18,7 +19,7 @@ import type { RegistryCase } from '../../core/models/common.model';
 @Component({
   selector: 'pb-registry-table',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatTooltipModule, EmptyState],
+  imports: [RouterLink, MatButtonModule, MatTooltipModule, EmptyState, MatIconModule],
   templateUrl: './registry-table.html',
   styleUrl: './registry-table.scss',
 })

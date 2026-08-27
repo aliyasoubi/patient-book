@@ -1,6 +1,7 @@
 import { Component, input } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
 import { firstErrorMessage } from '../field-errors';
@@ -9,14 +10,14 @@ import { firstErrorMessage } from '../field-errors';
 @Component({
   selector: 'pb-textarea-field',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
   template: `
     <mat-form-field appearance="outline" [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'">
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
       @if (prefixIcon()) {
-        <span class="material-symbols-rounded" matPrefix aria-hidden="true">{{ prefixIcon() }}</span>
+        <mat-icon matIconPrefix aria-hidden="true">{{ prefixIcon() }}</mat-icon>
       }
       <textarea
         matInput

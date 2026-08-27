@@ -5,7 +5,7 @@
     @for (c of cases(); track c.id) {
       <li class="registry__row" [class.registry__row--unlinked]="!c.patientId">
         <span class="registry__no">
-          <span class="material-symbols-rounded" aria-hidden="true">{{ icon() }}</span>
+          <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
           <span class="ltr-nums">{{ c.registryNo }}</span>
         </span>
 
@@ -14,7 +14,7 @@
 
           @if (c.patient) {
             <a class="registry__link" [routerLink]="['/patients', c.patient.id]" i18n>
-              <span class="material-symbols-rounded" aria-hidden="true">link</span>
+              <mat-icon aria-hidden="true">link</mat-icon>
               <span>پرونده <span class="ltr-nums">{{ c.patient.fileNo }}</span></span>
               @if (patientName(c) !== c.recordedName) {
                 <span class="registry__alias">({{ patientName(c) }})</span>
@@ -25,7 +25,7 @@
             </a>
           } @else {
             <span class="registry__unlinked" i18n-matTooltip matTooltip="این پرونده به هیچ بیماری در دفتر اصلی متصل نیست">
-              <span class="material-symbols-rounded" aria-hidden="true">link_off</span>
+              <mat-icon aria-hidden="true">link_off</mat-icon>
               بدون اتصال به پرونده اصلی
             </span>
           }
@@ -44,7 +44,7 @@
               type="button"
               (click)="edit.emit(c)"
               i18n-aria-label aria-label="ویرایش پرونده">
-              <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+              <mat-icon aria-hidden="true">edit</mat-icon>
             </button>
           }
         </div>

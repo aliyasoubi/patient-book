@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -19,8 +20,7 @@ const MIN_QUERY_LENGTH = 2;
   standalone: true,
   imports: [
     ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatAutocompleteModule, MatProgressBarModule,
-  ],
+    MatAutocompleteModule, MatProgressBarModule, MatIconModule],
   templateUrl: './global-search.html',
   styleUrl: './global-search.scss',
 })

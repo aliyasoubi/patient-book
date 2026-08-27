@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
@@ -12,7 +13,7 @@ import type { ReferralSource, TreatmentType } from '../../core/models/patient.mo
 @Component({
   selector: 'pb-settings',
   standalone: true,
-  imports: [MatButtonToggleModule, PersianCountPipe, PbButton, PbSurface],
+  imports: [MatButtonToggleModule, PersianCountPipe, PbButton, PbSurface, MatIconModule],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
 })

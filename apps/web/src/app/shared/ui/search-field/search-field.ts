@@ -2,6 +2,7 @@ import { Component, input } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
 /**
@@ -16,10 +17,10 @@ import { MatInputModule } from '@angular/material/input';
 @Component({
   selector: 'pb-search-field',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule],
   template: `
     <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pb-search-field">
-      <span class="material-symbols-rounded" matPrefix aria-hidden="true">search</span>
+      <mat-icon matIconPrefix aria-hidden="true">search</mat-icon>
       <input
         matInput
         type="search"
@@ -29,12 +30,12 @@ import { MatInputModule } from '@angular/material/input';
         enterkeyhint="search" />
       @if (control().value) {
         <button
-          matSuffix
+          matIconSuffix
           mat-icon-button
           type="button"
           (click)="control().setValue('')"
           [attr.aria-label]="clearLabel()">
-          <span class="material-symbols-rounded" aria-hidden="true">close</span>
+          <mat-icon aria-hidden="true">close</mat-icon>
         </button>
       }
     </mat-form-field>

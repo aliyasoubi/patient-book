@@ -1,23 +1,35 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
 import { RouterLink, type Params } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
+import { MatButtonModule, type MatButtonAppearance } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 export type ButtonVariant = 'flat' | 'stroked' | 'text';
 export type ButtonRouterLink = string | readonly unknown[];
 
+/** The app's vocabulary, in Material 3's terms. */
+const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
+  flat: 'filled',
+  stroked: 'outlined',
+  text: 'text',
+};
+
 /**
  * Every action button in the app — submit, cancel, "new patient", "sign in".
  *
- * Angular Material's button variants (`mat-flat-button`, `mat-stroked-button`,
- * `mat-button`) are attribute directives matched at template-compile time, so
- * one component cannot switch between them by binding an attribute at
- * runtime — hence the literal branches below, each wearing the real Material
- * directive. This is still one component from the call site's point of view:
- * `<pb-button variant="stroked">`, not several different tags to remember, and
- * the one place to change what "every submit button" looks like or how it
- * shows a loading state.
+ * Material 22 exposes the button's appearance as a real input (`matButton`),
+ * so one element covers every variant; earlier versions matched each variant
+ * as its own attribute directive at compile time, which is why this used to
+ * be six near-identical branches.
+ *
+ * The icon is written directly inside the anchor and the button rather than
+ * routed through the label's `ng-template`. Material decides which of its
+ * content slots an element belongs to from the static markup, so an icon
+ * arriving through `ngTemplateOutlet` lands in the generic slot and loses the
+ * leading-edge spacing that belongs to the icon slot. That costs one repeated
+ * block, which is why only the label — the part that carries projected
+ * content, and so can exist only once — still goes through the template.
  *
  * Passing `routerLink` or `href` renders an `<a>` instead of a `<button>` — a
  * "New patient" action or a "Call" link is a real navigation the user can
@@ -28,79 +40,56 @@ export type ButtonRouterLink = string | readonly unknown[];
 @Component({
   selector: 'pb-button',
   standalone: true,
-  imports: [MatButtonModule, MatProgressSpinnerModule, NgTemplateOutlet, RouterLink],
+  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, NgTemplateOutlet, RouterLink],
   host: {
     '[class.pb-button--full]': 'fullWidth()',
   },
   template: `
     @if (isLink()) {
-      @switch (variant()) {
-        @case ('stroked') {
-          <a mat-stroked-button [routerLink]="routerLink()" [attr.href]="href()" [queryParams]="queryParams()" class="pb-btn" [class.pb-btn--full]="fullWidth()">
-            <ng-container [ngTemplateOutlet]="content" />
-          </a>
+      <a
+        [matButton]="appearance()"
+        [routerLink]="routerLink()"
+        [attr.href]="href()"
+        [queryParams]="queryParams()"
+        class="pb-btn"
+        [class.pb-btn--full]="fullWidth()">
+        @if (loading()) {
+          <mat-progress-spinner
+            mode="indeterminate"
+            diameter="18"
+            strokeWidth="2.5"
+            class="pb-btn__spinner"
+            aria-hidden="true" />
+        } @else if (icon()) {
+          <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
         }
-        @case ('text') {
-          <a mat-button [routerLink]="routerLink()" [attr.href]="href()" [queryParams]="queryParams()" class="pb-btn" [class.pb-btn--full]="fullWidth()">
-            <ng-container [ngTemplateOutlet]="content" />
-          </a>
-        }
-        @default {
-          <a mat-flat-button [routerLink]="routerLink()" [attr.href]="href()" [queryParams]="queryParams()" class="pb-btn" [class.pb-btn--full]="fullWidth()">
-            <ng-container [ngTemplateOutlet]="content" />
-          </a>
-        }
-      }
+        <ng-container [ngTemplateOutlet]="label" />
+      </a>
     } @else {
-      @switch (variant()) {
-        @case ('stroked') {
-          <button
-            mat-stroked-button
-            [type]="type()"
-            [disabled]="isDisabled()"
-            class="pb-btn"
-            [class.pb-btn--full]="fullWidth()">
-            <ng-container [ngTemplateOutlet]="content" />
-          </button>
+      <button
+        [matButton]="appearance()"
+        [type]="type()"
+        [disabled]="isDisabled()"
+        class="pb-btn"
+        [class.pb-btn--full]="fullWidth()">
+        @if (loading()) {
+          <mat-progress-spinner
+            mode="indeterminate"
+            diameter="18"
+            strokeWidth="2.5"
+            class="pb-btn__spinner"
+            aria-hidden="true" />
+        } @else if (icon()) {
+          <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
         }
-        @case ('text') {
-          <button
-            mat-button
-            [type]="type()"
-            [disabled]="isDisabled()"
-            class="pb-btn"
-            [class.pb-btn--full]="fullWidth()">
-            <ng-container [ngTemplateOutlet]="content" />
-          </button>
-        }
-        @default {
-          <button
-            mat-flat-button
-            [type]="type()"
-            [disabled]="isDisabled()"
-            class="pb-btn"
-            [class.pb-btn--full]="fullWidth()">
-            <ng-container [ngTemplateOutlet]="content" />
-          </button>
-        }
-      }
+        <ng-container [ngTemplateOutlet]="label" />
+      </button>
     }
 
-    <ng-template #content>
-      @if (loading()) {
-        <mat-progress-spinner
-          mode="indeterminate"
-          diameter="18"
-          strokeWidth="2.5"
-          class="pb-btn__spinner"
-          aria-hidden="true" />
-        @if (loadingText()) {
-          <span>{{ loadingText() }}</span>
-        }
+    <ng-template #label>
+      @if (loading() && loadingText()) {
+        <span>{{ loadingText() }}</span>
       } @else {
-        @if (icon()) {
-          <span class="material-symbols-rounded pb-btn__icon" aria-hidden="true">{{ icon() }}</span>
-        }
         <ng-content />
       }
     </ng-template>
@@ -110,11 +99,11 @@ export type ButtonRouterLink = string | readonly unknown[];
      * A plain inline box, not \`display: contents\`. Contents-display hosts
      * expose their children directly to the parent's layout, which sounds
      * appealing for a thin wrapper — but combined with the comment-node
-     * anchors Angular's control flow (@switch/@if) leaves in the DOM, it
-     * produced a real bug here: the flex-laid-out button pair in the form's
-     * action row collapsed onto each other, one of them measuring a negative
-     * x position. A normal inline-block host has no such surprise and still
-     * sizes to its content.
+     * anchors Angular's control flow (@if) leaves in the DOM, it produced a
+     * real bug here: the flex-laid-out button pair in the form's action row
+     * collapsed onto each other, one of them measuring a negative x position.
+     * A normal inline-block host has no such surprise and still sizes to its
+     * content.
      */
     :host {
       display: inline-block;
@@ -123,17 +112,12 @@ export type ButtonRouterLink = string | readonly unknown[];
       display: block;
       width: 100%;
     }
-    .pb-btn {
-      gap: 8px;
-    }
     .pb-btn--full {
       width: 100%;
     }
-    .pb-btn__icon {
-      font-size: 20px;
-    }
     .pb-btn__spinner {
       display: inline-flex;
+      margin-inline-end: 8px;
       /* Spins in place of the icon; Material tints it via currentColor. */
       ::ng-deep circle {
         stroke: currentColor;
@@ -158,6 +142,7 @@ export class PbButton {
   /** Renders an `<a>` to a plain URL — `tel:`, `mailto:`, an external link. */
   readonly href = input<string | null>(null);
 
+  protected readonly appearance = computed(() => APPEARANCE[this.variant()]);
   protected readonly isDisabled = computed(() => this.disabled() || this.loading());
   protected readonly isLink = computed(() => this.routerLink() !== null || this.href() !== null);
 }

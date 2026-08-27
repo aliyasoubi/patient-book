@@ -67,7 +67,7 @@
               }
               @if (item.patient) {
                 <a class="queue__patient" [routerLink]="['/patients', item.patient.id]" i18n>
-                  <span class="material-symbols-rounded" aria-hidden="true">link</span>
+                  <mat-icon aria-hidden="true">link</mat-icon>
                   پرونده <span class="ltr-nums">{{ item.patient.fileNo }}</span>
                 </a>
               }
@@ -77,7 +77,7 @@
                  on the list belongs to someone else in the implant book. -->
             @if (item.hasNameMismatch) {
               <p class="queue__warning" role="note">
-                <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+                <mat-icon aria-hidden="true">warning</mat-icon>
                 <span i18n>
                   شماره <span class="ltr-nums">{{ item.implantRegistryNo }}</span> در دفتر ایمپلنت به
                   «{{ item.registeredName }}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.
@@ -88,7 +88,7 @@
             <div class="queue__details">
               @if (item.toothPosition) {
                 <span class="queue__detail">
-                  <span class="material-symbols-rounded" aria-hidden="true">dentistry</span>
+                  <mat-icon aria-hidden="true">dentistry</mat-icon>
                   {{ item.toothPosition }}
                 </span>
               }
@@ -97,13 +97,13 @@
               }
               @if (item.abutmentType !== 'unknown') {
                 <span class="queue__detail">
-                  <span class="material-symbols-rounded" aria-hidden="true">hardware</span>
+                  <mat-icon aria-hidden="true">hardware</mat-icon>
                   {{ abutmentLabel(item.abutmentType) }}
                 </span>
               }
               @if (item.prosthesisDue) {
                 <span class="queue__detail" i18n>
-                  <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+                  <mat-icon aria-hidden="true">schedule</mat-icon>
                   پروتز: {{ item.prosthesisDue }}
                 </span>
               }
@@ -115,7 +115,7 @@
               class="queue__call"
               [href]="'tel:' + item.patient!.mobile"
               [attr.aria-label]="callLabel(item.recordedName)">
-              <span class="material-symbols-rounded" aria-hidden="true">call</span>
+              <mat-icon aria-hidden="true">call</mat-icon>
             </a>
           }
         </li>

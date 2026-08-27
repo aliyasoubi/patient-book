@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 
 /**
  * The bordered, rounded panel every page is built from — a form section, a
@@ -10,11 +11,12 @@ import { Component, input } from '@angular/core';
 @Component({
   selector: 'pb-surface',
   standalone: true,
+  imports: [MatIconModule],
   template: `
     @if (title()) {
       <header class="pb-surface__header">
         @if (icon()) {
-          <span class="material-symbols-rounded pb-surface__icon" aria-hidden="true">{{ icon() }}</span>
+          <mat-icon class="pb-surface__icon" aria-hidden="true">{{ icon() }}</mat-icon>
         }
         <h2 class="pb-surface__title">{{ title() }}</h2>
         @if (hint()) {

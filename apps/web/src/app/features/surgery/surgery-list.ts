@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
@@ -22,8 +23,7 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
     ReactiveFormsModule, RouterLink,
     MatButtonToggleModule, MatPaginatorModule,
     MatProgressBarModule, EmptyState, PersianCountPipe, PersianNumberPipe,
-    PbSearchField, PbCheckboxField,
-  ],
+    PbSearchField, PbCheckboxField, MatIconModule],
   templateUrl: './surgery-list.html',
   styleUrl: './surgery-list.scss',
 })

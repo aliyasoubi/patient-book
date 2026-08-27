@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { treatmentColor } from '../labels';
 import type { PatientTreatment } from '../../core/models/patient.model';
@@ -13,7 +14,7 @@ import type { PatientTreatment } from '../../core/models/patient.model';
 @Component({
   selector: 'pb-treatment-chips',
   standalone: true,
-  imports: [MatTooltipModule],
+  imports: [MatTooltipModule, MatIconModule],
   template: `
     @if (treatments().length === 0) {
       <span class="empty">—</span>
@@ -25,7 +26,7 @@ import type { PatientTreatment } from '../../core/models/patient.model';
             [style.--chip-bg]="color(t.color).bg"
             [style.--chip-fg]="color(t.color).fg"
             [matTooltip]="t.nameFa">
-            <span class="material-symbols-rounded chip__icon" aria-hidden="true">{{ t.icon }}</span>
+            <mat-icon class="chip__icon" aria-hidden="true">{{ t.icon }}</mat-icon>
             @if (showLabels()) {
               <span class="chip__label">{{ t.nameFa }}</span>
             }

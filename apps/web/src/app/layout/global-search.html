@@ -1,6 +1,6 @@
 <form class="search" (submit)="onSubmit($event)" role="search">
   <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search__field">
-    <span class="material-symbols-rounded search__icon" matPrefix aria-hidden="true">search</span>
+    <mat-icon class="search__icon" matIconPrefix aria-hidden="true">search</mat-icon>
     <input
       #searchInput
       matInput
@@ -13,12 +13,12 @@
       enterkeyhint="search" />
     @if (control.value) {
       <button
-        matSuffix
+        matIconSuffix
         type="button"
         class="search__clear"
         (click)="control.setValue('')"
         i18n-aria-label aria-label="پاک کردن جستجو">
-        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+        <mat-icon aria-hidden="true">close</mat-icon>
       </button>
     } @else {
       <kbd matSuffix class="search__kbd" aria-hidden="true">Ctrl K</kbd>
@@ -32,7 +32,7 @@
   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelect($event)" [displayWith]="displayEmpty">
     @for (item of suggestions(); track item.id) {
       <mat-option [value]="item" class="search__option">
-        <span class="material-symbols-rounded search__option-icon" aria-hidden="true">person</span>
+        <mat-icon class="search__option-icon" aria-hidden="true">person</mat-icon>
         <span class="search__option-body" i18n>
           <span class="search__option-name">{{ item.fullName || 'بدون نام' }}</span>
           <span class="search__option-meta">

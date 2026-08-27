@@ -8,15 +8,15 @@
       (valueChange)="setTheme($event)"
       i18n-aria-label aria-label="حالت نمایش">
       <mat-button-toggle value="system" i18n>
-        <span class="material-symbols-rounded" aria-hidden="true">brightness_auto</span>
+        <mat-icon aria-hidden="true">brightness_auto</mat-icon>
         خودکار
       </mat-button-toggle>
       <mat-button-toggle value="light" i18n>
-        <span class="material-symbols-rounded" aria-hidden="true">light_mode</span>
+        <mat-icon aria-hidden="true">light_mode</mat-icon>
         روشن
       </mat-button-toggle>
       <mat-button-toggle value="dark" i18n>
-        <span class="material-symbols-rounded" aria-hidden="true">dark_mode</span>
+        <mat-icon aria-hidden="true">dark_mode</mat-icon>
         تیره
       </mat-button-toggle>
     </mat-button-toggle-group>
@@ -41,7 +41,7 @@
     <ul class="catalogue">
       @for (t of treatments(); track t.id) {
         <li class="catalogue__item">
-          <span class="material-symbols-rounded" aria-hidden="true">{{ t.icon }}</span>
+          <mat-icon aria-hidden="true">{{ t.icon }}</mat-icon>
           <span class="catalogue__name">{{ t.nameFa }}</span>
           <code class="catalogue__code">{{ t.code }}</code>
         </li>
@@ -54,9 +54,9 @@
     <ul class="catalogue">
       @for (r of referrals(); track r.id) {
         <li class="catalogue__item">
-          <span class="material-symbols-rounded" aria-hidden="true">{{
+          <mat-icon aria-hidden="true">{{
             referralKindIcon(r.kind)
-          }}</span>
+          }}</mat-icon>
           <span class="catalogue__name">{{ r.name }}</span>
           <span class="catalogue__kind">{{ referralKindLabel(r.kind) }}</span>
           @if (r.patientCount) {

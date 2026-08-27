@@ -3,6 +3,7 @@ import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
 import { firstErrorMessage } from '../field-errors';
@@ -29,15 +30,14 @@ export interface TextFieldOption {
   standalone: true,
   imports: [
     ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatAutocompleteModule, MatButtonModule,
-  ],
+    MatAutocompleteModule, MatButtonModule, MatIconModule],
   template: `
     <mat-form-field appearance="outline" [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'">
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
       @if (prefixIcon()) {
-        <span class="material-symbols-rounded" matPrefix aria-hidden="true">{{ prefixIcon() }}</span>
+        <mat-icon matIconPrefix aria-hidden="true">{{ prefixIcon() }}</mat-icon>
       }
       <!--
         Two branches rather than one input with a conditional binding:
@@ -85,15 +85,15 @@ export interface TextFieldOption {
 
       @if (type() === 'password') {
         <button
-          matSuffix
+          matIconSuffix
           mat-icon-button
           type="button"
           (click)="revealed.set(!revealed())"
           [attr.aria-label]="revealed() ? hideLabel() : revealLabel()"
           [attr.aria-pressed]="revealed()">
-          <span class="material-symbols-rounded" aria-hidden="true">{{
+          <mat-icon aria-hidden="true">{{
             revealed() ? 'visibility_off' : 'visibility'
-          }}</span>
+          }}</mat-icon>
         </button>
       }
 

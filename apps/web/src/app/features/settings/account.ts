@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -32,7 +33,7 @@ function passwordsMatch(group: AbstractControl): null {
 @Component({
   selector: 'pb-account',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, PbTextField, PbButton, PbSurface],
+  imports: [ReactiveFormsModule, MatButtonModule, PbTextField, PbButton, PbSurface, MatIconModule],
   templateUrl: './account.html',
   styleUrl: './account.scss',
 })

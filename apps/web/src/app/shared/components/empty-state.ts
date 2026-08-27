@@ -1,12 +1,14 @@
 import { Component, input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 
 /** Shared "nothing here" placeholder, so every list explains itself the same way. */
 @Component({
   selector: 'pb-empty-state',
   standalone: true,
+  imports: [MatIconModule],
   template: `
     <div class="empty">
-      <span class="material-symbols-rounded empty__icon" aria-hidden="true">{{ icon() }}</span>
+      <mat-icon class="empty__icon" aria-hidden="true">{{ icon() }}</mat-icon>
       <p class="empty__title">{{ title() }}</p>
       @if (hint()) {
         <p class="empty__hint">{{ hint() }}</p>

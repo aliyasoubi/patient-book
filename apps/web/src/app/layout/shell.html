@@ -16,7 +16,7 @@
     position="start">
       <div class="nav">
         <a class="nav__brand" routerLink="/dashboard" (click)="closeDrawer()">
-          <span class="nav__logo material-symbols-rounded is-filled" aria-hidden="true">dentistry</span>
+          <mat-icon class="nav__logo is-filled" aria-hidden="true">dentistry</mat-icon>
           <span class="nav__brand-text">
             <strong i18n>دفترچه بیماران</strong>
             <small i18n>مطب دندانپزشکی</small>
@@ -31,10 +31,7 @@
               routerLinkActive="is-active"
               #rla="routerLinkActive"
               (click)="closeDrawer()">
-              <span
-                class="material-symbols-rounded nav__icon"
-                [class.is-filled]="rla.isActive"
-                aria-hidden="true">{{ item.icon }}</span>
+              <mat-icon class="nav__icon" [class.is-filled]="rla.isActive" aria-hidden="true">{{ item.icon }}</mat-icon>
               <span class="nav__label">{{ item.label }}</span>
             </a>
           }
@@ -47,10 +44,10 @@
             type="button"
             (click)="theme.cycle()"
             [matTooltip]="themeTooltip()">
-            <span class="material-symbols-rounded" aria-hidden="true">{{
+            <mat-icon aria-hidden="true">{{
               theme.mode() === 'system' ? 'brightness_auto'
                 : theme.mode() === 'light' ? 'light_mode' : 'dark_mode'
-            }}</span>
+            }}</mat-icon>
             <span i18n>حالت نمایش</span>
           </button>
         </div>
@@ -61,11 +58,11 @@
     <mat-toolbar class="topbar">
       @if (!isDesktop() && !isHandset()) {
         <button mat-icon-button type="button" (click)="toggleDrawer()" i18n-aria-label aria-label="باز کردن منو">
-          <span class="material-symbols-rounded" aria-hidden="true">menu</span>
+          <mat-icon aria-hidden="true">menu</mat-icon>
         </button>
       }
       @if (isHandset()) {
-        <span class="topbar__logo material-symbols-rounded is-filled" aria-hidden="true">dentistry</span>
+        <mat-icon class="topbar__logo is-filled" aria-hidden="true">dentistry</mat-icon>
       }
 
       <pb-global-search class="topbar__search" />
@@ -87,17 +84,17 @@
           <small>{{ roleLabel() }}</small>
         </div>
         <a mat-menu-item routerLink="/settings/account">
-          <span class="material-symbols-rounded" aria-hidden="true">manage_accounts</span>
+          <mat-icon aria-hidden="true">manage_accounts</mat-icon>
           <span i18n>حساب کاربری</span>
         </a>
         @if (isHandset()) {
           <button mat-menu-item type="button" (click)="theme.cycle()">
-            <span class="material-symbols-rounded" aria-hidden="true">contrast</span>
+            <mat-icon aria-hidden="true">contrast</mat-icon>
             <span i18n>حالت نمایش</span>
           </button>
         }
         <button mat-menu-item type="button" (click)="logout()">
-          <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+          <mat-icon aria-hidden="true">logout</mat-icon>
           <span i18n>خروج</span>
         </button>
       </mat-menu>
@@ -117,10 +114,7 @@
             routerLinkActive="is-active"
             #rla="routerLinkActive">
             <span class="bottom-nav__pill">
-              <span
-                class="material-symbols-rounded"
-                [class.is-filled]="rla.isActive"
-                aria-hidden="true">{{ item.icon }}</span>
+              <mat-icon [class.is-filled]="rla.isActive" aria-hidden="true">{{ item.icon }}</mat-icon>
             </span>
             <span class="bottom-nav__label">{{ item.label }}</span>
           </a>
@@ -131,7 +125,7 @@
           [matMenuTriggerFor]="moreMenu"
           i18n-aria-label aria-label="بیشتر">
           <span class="bottom-nav__pill">
-            <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
+            <mat-icon aria-hidden="true">more_horiz</mat-icon>
           </span>
           <span class="bottom-nav__label" i18n>بیشتر</span>
         </button>
@@ -139,7 +133,7 @@
           @for (item of navItems(); track item.path) {
             @if (!item.primary) {
               <a mat-menu-item [routerLink]="item.path">
-                <span class="material-symbols-rounded" aria-hidden="true">{{ item.icon }}</span>
+                <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
                 <span>{{ item.label }}</span>
               </a>
             }

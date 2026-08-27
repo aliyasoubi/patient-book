@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -47,8 +48,7 @@ function navItems(): NavItem[] {
     RouterOutlet, RouterLink, RouterLinkActive,
     MatSidenavModule, MatToolbarModule, MatButtonModule,
     MatListModule, MatMenuModule, MatTooltipModule,
-    GlobalSearch,
-  ],
+    GlobalSearch, MatIconModule],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
