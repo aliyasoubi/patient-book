@@ -3,10 +3,15 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { RegistryService } from '../../core/services/registry.service';
 import { AuthService } from '../../core/services/auth.service';
-import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import {
+  formatPersianCount,
+  PersianCountPipe,
+  PersianNumberPipe,
+} from '../../shared/pipes/persian-number.pipe';
 import {
   ageBandLabel,
   genderLabel,
@@ -39,12 +44,14 @@ interface StatTile {
     PbSurface,
     PbPageHeader,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
   private readonly registry = inject(RegistryService);
+  private readonly i18n = inject(TranslateService);
   protected readonly auth = inject(AuthService);
 
   protected readonly genderLabel = genderLabel;
@@ -58,15 +65,16 @@ export class Dashboard {
   protected readonly stats = signal<DashboardStats | null>(null);
 
   protected readonly greeting = computed(() => {
+    this.i18n.currentLang();
     const hour = new Date().getHours();
     const name = this.auth.user()?.fullName ?? '';
     const part =
       hour < 12
-        ? $localize`:@@greeting.morning:صبح بخیر`
+        ? this.i18n.instant('greeting.morning')
         : hour < 17
-          ? $localize`:@@greeting.afternoon:ظهر بخیر`
-          : $localize`:@@greeting.evening:عصر بخیر`;
-    return name ? $localize`:@@greeting.withName:${part}:part:، ${name}:name:` : part;
+          ? this.i18n.instant('greeting.afternoon')
+          : this.i18n.instant('greeting.evening');
+    return name ? this.i18n.instant('greeting.withName', { part, name }) : part;
   });
 
   protected readonly tiles = computed<StatTile[]>(() => {
@@ -74,21 +82,21 @@ export class Dashboard {
     if (!s) return [];
     const tiles: StatTile[] = [
       {
-        label: $localize`:@@tile.patients:کل بیماران`,
+        label: 'tile.patients',
         value: s.totals.patients,
         icon: 'groups',
         link: '/patients',
         tone: 'neutral',
       },
       {
-        label: $localize`:@@tile.implants:پرونده‌های ایمپلنت`,
+        label: 'tile.implants',
         value: s.totals.implantCases,
         icon: 'deployed_code',
         link: '/implants',
         tone: 'neutral',
       },
       {
-        label: $localize`:@@tile.upcomingSurgeries:جراحی‌های پیش‌رو`,
+        label: 'tile.upcomingSurgeries',
         value: s.totals.upcomingSurgeries,
         icon: 'event_available',
         link: '/surgery',
@@ -96,7 +104,7 @@ export class Dashboard {
         tone: 'neutral',
       },
       {
-        label: $localize`:@@tile.needsReview:نیازمند بازبینی`,
+        label: 'tile.needsReview',
         value: s.totals.needsReview,
         icon: 'error',
         link: '/patients',
@@ -147,7 +155,13 @@ export class Dashboard {
 
   /** Screen-reader description of the sparkline. */
   protected trendLabel(max: number): string {
-    return $localize`:@@dashboard.trendAria:روند بیماران جدید، بیشینه ${max}:max: نفر در ماه`;
+    return this.i18n.instant('dashboard.trendAria', { max });
+  }
+
+  protected genderTooltip(gender: string, count: number): string {
+    const label = this.i18n.instant(genderLabel(gender));
+    const formattedCount = formatPersianCount(count);
+    return this.i18n.instant('dashboard.genderCount', { gender: label, count: formattedCount });
   }
 
   constructor() {

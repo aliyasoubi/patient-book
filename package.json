@@ -21,12 +21,10 @@
     "seed": "npm run seed --workspace=api",
     "import": "npm run import --workspace=api",
     "test": "npm run test --workspace=api -- --runInBand && npm run test --workspace=web -- --watch=false",
-    "test:e2e": "npm run test:e2e --workspace=api"
+    "test:e2e": "npm run test:e2e --workspace=api",
+    "i18n:check": "npm run i18n:check --workspace=web"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
-  },
-  "dependencies": {
-    "@angular/localize": "^22.1.3"
   }
 }

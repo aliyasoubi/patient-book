@@ -1,29 +1,24 @@
 <div class="registry-page">
   <pb-page-header
-    i18n-title
-    title="دفتر ارتودنسی"
-    i18n-subtitle
-    subtitle="شماره‌گذاری این دفتر مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره نمی‌کند."
-    [count]="!loading() && total() > 0 ? (total() | faCount) + ' پرونده' : null"
+    [title]="'ortho.title' | translate"
+    [subtitle]="'registry.independentNumberNotice' | translate"
+    [count]="countLabel()"
   />
 
   <div class="registry-page__toolbar">
     <pb-search-field
       class="registry-page__search"
       [control]="search"
-      i18n-placeholder
-      placeholder="جستجوی شماره یا نام…"
-      i18n-ariaLabel
-      ariaLabel="جستجو در دفتر ارتودنسی"
+      [placeholder]="'registry.searchPlaceholder' | translate"
+      [ariaLabel]="'ortho.searchAria' | translate"
     />
 
     <pb-checkbox-field
       [checked]="unlinkedOnly()"
       (checkedChange)="toggleUnlinked($event)"
       class="registry-page__filter"
-      i18n
     >
-      فقط بدون اتصال
+      {{ 'registry.unlinkedOnly' | translate }}
     </pb-checkbox-field>
   </div>
 
@@ -34,7 +29,7 @@
   <pb-registry-table
     [cases]="cases()"
     icon="straighten"
-    [emptyTitle]="emptyTitle"
+    [emptyTitle]="'ortho.emptyTitle' | translate"
     [emptyHint]="emptyHint()"
     [canEdit]="false"
   />
@@ -46,8 +41,7 @@
       [pageSize]="limit()"
       [pageSizeOptions]="[10, 25, 50, 100]"
       (page)="onPage($event)"
-      i18n-aria-label
-      aria-label="صفحه‌بندی"
+      [attr.aria-label]="'common.pagination' | translate"
     />
   }
 </div>

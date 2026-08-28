@@ -1,4 +1,5 @@
 import type { ValidationErrors } from '@angular/forms';
+import type { TranslateService } from '@ngx-translate/core';
 
 /**
  * Default wording for the validator error keys used across this app's forms.
@@ -16,34 +17,34 @@ import type { ValidationErrors } from '@angular/forms';
  * patterns) is passed per call site via the field's `errorMessages` input,
  * which takes priority over this default.
  */
-function defaultMessage(key: string, error: unknown): string | null {
+function defaultMessage(key: string, error: unknown, i18n: TranslateService): string | null {
   switch (key) {
     case 'required':
-      return $localize`:@@field.required:این مقدار الزامی است`;
+      return i18n.instant('field.required');
     case 'maxlength': {
       const e = error as { requiredLength: number };
-      return $localize`:@@field.maxlength:حداکثر ${e.requiredLength}:max: کاراکتر مجاز است`;
+      return i18n.instant('field.maxlength', { max: e.requiredLength });
     }
     case 'minlength': {
       const e = error as { requiredLength: number };
-      return $localize`:@@field.minlength:حداقل ${e.requiredLength}:min: کاراکتر لازم است`;
+      return i18n.instant('field.minlength', { min: e.requiredLength });
     }
     case 'pattern':
-      return $localize`:@@field.patternInvalid:قالب واردشده معتبر نیست`;
+      return i18n.instant('field.patternInvalid');
     case 'email':
-      return $localize`:@@field.emailInvalid:ایمیل معتبر نیست`;
+      return i18n.instant('field.emailInvalid');
 
     // Domain validators shared by more than one form (see shared/validators.ts).
     case 'mobile':
-      return $localize`:@@field.mobileInvalid:شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد`;
+      return i18n.instant('field.mobileInvalid');
     case 'nationalIdLength':
-      return $localize`:@@field.nationalIdLength:کد ملی باید ۱۰ رقم باشد`;
+      return i18n.instant('field.nationalIdLength');
     case 'nationalIdInvalid':
-      return $localize`:@@field.nationalIdInvalid:کد ملی معتبر نیست (رقم کنترل نادرست است)`;
+      return i18n.instant('field.nationalIdInvalid');
     case 'jalaliDate':
-      return $localize`:@@field.jalaliDateInvalid:تاریخ شمسی معتبری نیست`;
+      return i18n.instant('field.jalaliDateInvalid');
     case 'mismatch':
-      return $localize`:@@field.mismatch:دو مقدار وارد شده یکسان نیستند`;
+      return i18n.instant('field.mismatch');
 
     // A server rejection: the message was already rendered by
     // ApiErrorTranslator and stashed as the error's own value.
@@ -64,10 +65,11 @@ function defaultMessage(key: string, error: unknown): string | null {
  */
 export function firstErrorMessage(
   errors: ValidationErrors | null,
+  i18n: TranslateService,
   overrides: Readonly<Record<string, string>> = {},
 ): string | null {
   if (!errors) return null;
   const key = Object.keys(errors)[0];
   if (!key) return null;
-  return overrides[key] ?? defaultMessage(key, errors[key]) ?? null;
+  return overrides[key] ?? defaultMessage(key, errors[key], i18n) ?? null;
 }

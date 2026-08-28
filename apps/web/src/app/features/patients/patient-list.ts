@@ -13,11 +13,12 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PatientsService, PatientQuery } from '../../core/services/patients.service';
 import { AuthService } from '../../core/services/auth.service';
 import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
-import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { TreatmentChips } from '../../shared/components/treatment-chips';
 import { EmptyState } from '../../shared/components/empty-state';
 import {
@@ -41,10 +42,10 @@ import type { EducationLevel, Gender } from '../../core/models/patient.model';
 
 /** `inactiveMonths` filter choices. Kept as strings — see PbSelectField. */
 const INACTIVE_MONTHS_OPTIONS: SelectOption[] = [
-  { value: '6', label: $localize`:@@filter.inactive6m:۶ ماه` },
-  { value: '12', label: $localize`:@@filter.inactive1y:۱ سال` },
-  { value: '24', label: $localize`:@@filter.inactive2y:۲ سال` },
-  { value: '36', label: $localize`:@@filter.inactive3y:۳ سال` },
+  { value: '6', label: 'filter.inactive6m', translate: true },
+  { value: '12', label: 'filter.inactive1y', translate: true },
+  { value: '24', label: 'filter.inactive2y', translate: true },
+  { value: '36', label: 'filter.inactive3y', translate: true },
 ];
 
 interface Filters {
@@ -83,7 +84,6 @@ const EMPTY_FILTERS: Filters = {
     MatTooltipModule,
     JalaliPipe,
     PersianNumberPipe,
-    PersianCountPipe,
     TreatmentChips,
     EmptyState,
     PbSearchField,
@@ -93,6 +93,7 @@ const EMPTY_FILTERS: Filters = {
     PbAvatar,
     PbPageHeader,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './patient-list.html',
   styleUrl: './patient-list.scss',
@@ -102,21 +103,20 @@ export class PatientList {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly breakpoints = inject(BreakpointObserver);
+  private readonly i18n = inject(TranslateService);
   protected readonly auth = inject(AuthService);
 
-  protected readonly educationLabel = educationLabel;
-  protected readonly educationLevels = EDUCATION_LEVELS;
   protected readonly genderFilterOptions: SelectOption[] = GENDERS.map((g) => ({
     value: g,
     label: genderLabel(g),
+    translate: true,
   }));
   protected readonly educationFilterOptions: SelectOption[] = EDUCATION_LEVELS.map((level) => ({
     value: level,
     label: educationLabel(level),
+    translate: true,
   }));
   protected readonly inactiveMonthsOptions = INACTIVE_MONTHS_OPTIONS;
-  protected readonly allLabel = $localize`:@@filter.all:همه`;
-  protected readonly noPreferenceLabel = $localize`:@@filter.noPreference:مهم نیست`;
 
   /** Card layout below this width; the table needs the horizontal room. */
   protected readonly isCompact = toSignal(
@@ -138,6 +138,13 @@ export class PatientList {
   protected readonly loading = signal(false);
   protected readonly patients = signal<Patient[]>([]);
   protected readonly total = signal(0);
+  protected readonly countLabel = computed(() => {
+    const total = this.total();
+    if (this.loading() || total === 0) return null;
+    this.i18n.currentLang();
+    const count = formatPersianCount(total);
+    return this.i18n.instant('count.records', { count });
+  });
   protected readonly treatmentTypes = signal<TreatmentType[]>([]);
 
   /** Debounced so typing does not fire a request per keystroke. */
@@ -171,14 +178,6 @@ export class PatientList {
       (f.inactiveMonths ? 1 : 0) +
       (f.includeArchived ? 1 : 0)
     );
-  });
-
-  protected readonly rangeLabel = computed(() => {
-    const total = this.total();
-    if (total === 0) return '';
-    const from = (this.page() - 1) * this.limit() + 1;
-    const to = Math.min(this.page() * this.limit(), total);
-    return $localize`:@@pagination.range:${from}:from:–${to}:to: از ${total}:total:`;
   });
 
   constructor() {
@@ -294,24 +293,18 @@ export class PatientList {
     this.searchControl.setValue('');
   }
 
-  /** Tooltip for the review-needed flag on a row. */
-  /** Shown where a patient record carries no name at all. */
-  protected readonly unnamed = $localize`:@@patient.unnamed:بدون نام`;
-
   protected issueTooltip(count: number): string {
-    return $localize`:@@patients.issueCount:${count}:count: مورد نیازمند بازبینی`;
+    return this.i18n.instant('patients.issueCount', { count });
   }
 
   protected callLabel(name: string): string {
-    return $localize`:@@action.callPerson:تماس با ${name}:name:`;
+    return this.i18n.instant('action.callPerson', { name });
   }
-
-  protected readonly emptyTitle = $localize`:@@patients.emptyTitle:بیماری پیدا نشد`;
 
   protected emptyHint(): string {
     return this.searchControl.value || this.activeFilterCount() > 0
-      ? $localize`:@@patients.emptyHintFiltered:عبارت جستجو یا فیلترها را تغییر دهید.`
-      : $localize`:@@patients.emptyHintNone:هنوز پرونده‌ای ثبت نشده است.`;
+      ? this.i18n.instant('patients.emptyHintFiltered')
+      : this.i18n.instant('patients.emptyHintNone');
   }
 
   protected open(patient: Patient): void {
@@ -319,8 +312,7 @@ export class PatientList {
   }
 
   /**
-   * Exposed as methods rather than maps: a `*matRowDef` template local is typed
-   * `any`, and a `$localize` template must be evaluated at call time.
+   * Exposed as methods rather than maps because a `*matRowDef` local is `any`.
    */
   protected readonly genderLabel = genderLabel;
   protected readonly genderIcon = genderIcon;

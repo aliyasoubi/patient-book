@@ -1,7 +1,9 @@
 <div class="dash">
-  <pb-page-header [title]="greeting()" i18n-subtitle subtitle="خلاصه‌ای از وضعیت پرونده‌های مطب">
+  <pb-page-header [title]="greeting()" [subtitle]="'dashboard.subtitle' | translate">
     @if (auth.can('editPatients')) {
-      <pb-button routerLink="/patients/new" icon="person_add" i18n>بیمار جدید</pb-button>
+      <pb-button routerLink="/patients/new" icon="person_add">{{
+        'dashboard.newPatient' | translate
+      }}</pb-button>
     }
   </pb-page-header>
 
@@ -11,7 +13,7 @@
 
   @if (stats(); as s) {
     <!-- ── Headline tiles ──────────────────────────────────────── -->
-    <section class="tiles" i18n-aria-label aria-label="آمار کلی">
+    <section class="tiles" [attr.aria-label]="'dashboard.overallStats' | translate">
       @for (tile of tiles(); track tile.label) {
         <a
           class="tile"
@@ -21,7 +23,7 @@
         >
           <mat-icon class="tile__icon" aria-hidden="true">{{ tile.icon }}</mat-icon>
           <span class="tile__value">{{ tile.value | faCount }}</span>
-          <span class="tile__label">{{ tile.label }}</span>
+          <span class="tile__label">{{ tile.label | translate }}</span>
         </a>
       }
     </section>
@@ -30,10 +32,8 @@
       <!-- ── Treatments ────────────────────────────────────────── -->
       <pb-surface
         class="panel--wide"
-        i18n-title
-        title="درمان‌های ثبت‌شده"
-        i18n-hint
-        hint="تعداد بیماران هر درمان"
+        [title]="'dashboard.treatmentsTitle' | translate"
+        [hint]="'dashboard.treatmentsHint' | translate"
       >
         <ul class="bars">
           @for (t of treatmentBars(); track t.code) {
@@ -58,7 +58,10 @@
       </pb-surface>
 
       <!-- ── Growth ────────────────────────────────────────────── -->
-      <pb-surface i18n-title title="بیماران جدید" i18n-hint hint="۱۲ ماه گذشته">
+      <pb-surface
+        [title]="'dashboard.newPatientsTitle' | translate"
+        [hint]="'dashboard.lastTwelveMonths' | translate"
+      >
         @if (trend(); as t) {
           <div class="trend">
             <svg
@@ -72,43 +75,40 @@
               <path class="trend__line" [attr.d]="t.line" />
             </svg>
             <div class="trend__foot">
-              <span i18n>
-                <strong>{{ t.last.count | faCount }}</strong>
-                نفر در {{ t.last.month | faNum }}
-              </span>
-              <span class="trend__max">بیشینه {{ t.max | faCount }}</span>
+              <span>{{
+                'dashboard.monthCount'
+                  | translate: { count: (t.last.count | faCount), month: (t.last.month | faNum) }
+              }}</span>
+              <span class="trend__max">{{
+                'dashboard.maximum' | translate: { count: (t.max | faCount) }
+              }}</span>
             </div>
           </div>
         } @else {
-          <p class="panel__empty" i18n>داده کافی برای نمودار وجود ندارد.</p>
+          <p class="panel__empty">{{ 'dashboard.noChartData' | translate }}</p>
         }
       </pb-surface>
 
       <!-- ── Gender ────────────────────────────────────────────── -->
-      <pb-surface i18n-title title="ترکیب جنسیتی">
+      <pb-surface [title]="'dashboard.genderTitle' | translate">
         <div class="split">
-          <div
-            class="split__bar"
-            role="img"
-            i18n-aria-label
-            aria-label="نسبت بیماران بر اساس جنسیت"
-          >
+          <div class="split__bar" role="img" [attr.aria-label]="'dashboard.genderAria' | translate">
             @for (g of genderSplit(); track g.key) {
               <span
                 class="split__seg"
                 [attr.data-gender]="g.key"
                 [style.width.%]="g.percent"
-                [matTooltip]="genderLabel(g.key) + ': ' + g.count"
+                [matTooltip]="genderTooltip(g.key, g.count)"
               ></span>
             }
           </div>
           <ul class="split__legend">
             @for (g of genderSplit(); track g.key) {
-              <li i18n>
+              <li>
                 <span class="split__dot" [attr.data-gender]="g.key"></span>
-                <span>{{ genderLabel(g.key) }}</span>
+                <span>{{ genderLabel(g.key) | translate }}</span>
                 <strong>{{ g.count | faCount }}</strong>
-                <small>{{ g.percent | faNum }}٪</small>
+                <small>{{ g.percent | faNum }}{{ 'common.percentSign' | translate }}</small>
               </li>
             }
           </ul>
@@ -116,11 +116,11 @@
       </pb-surface>
 
       <!-- ── Age ───────────────────────────────────────────────── -->
-      <pb-surface i18n-title title="گروه‌های سنی">
+      <pb-surface [title]="'dashboard.ageGroups' | translate">
         <ul class="bars bars--compact">
           @for (b of ageBars(); track b.band) {
             <li class="bars__row">
-              <span class="bars__label">{{ ageBandLabel(b.band) }}</span>
+              <span class="bars__label">{{ ageBandLabel(b.band) | translate }}</span>
               <span class="bars__track">
                 <span class="bars__fill bars__fill--primary" [style.width.%]="b.percent"></span>
               </span>
@@ -131,7 +131,10 @@
       </pb-surface>
 
       <!-- ── Referrals ─────────────────────────────────────────── -->
-      <pb-surface i18n-title title="نحوه آشنایی" i18n-hint hint="۱۰ مورد برتر">
+      <pb-surface
+        [title]="'dashboard.referralsTitle' | translate"
+        [hint]="'dashboard.topTen' | translate"
+      >
         <ul class="referrals">
           @for (r of s.topReferrals; track r.id) {
             <li>
@@ -148,11 +151,11 @@
       </pb-surface>
 
       <!-- ── Recall ────────────────────────────────────────────── -->
-      <pb-surface i18n-title title="پیگیری مراجعه">
+      <pb-surface [title]="'dashboard.recallTitle' | translate">
         <div class="recall">
           <a class="recall__item" routerLink="/patients">
             <span class="recall__value">{{ s.recentlyActive | faCount }}</span>
-            <span class="recall__label" i18n>مراجعه در ۶ ماه اخیر</span>
+            <span class="recall__label">{{ 'dashboard.recentSixMonths' | translate }}</span>
           </a>
           <a
             class="recall__item recall__item--warn"
@@ -160,9 +163,9 @@
             [queryParams]="{ inactiveMonths: 12 }"
           >
             <span class="recall__value">{{ s.inactiveOverYear | faCount }}</span>
-            <span class="recall__label" i18n>بیش از یک سال بدون مراجعه</span>
-            <span class="recall__cta" i18n>
-              مشاهده فهرست
+            <span class="recall__label">{{ 'dashboard.inactiveOverYear' | translate }}</span>
+            <span class="recall__cta">
+              {{ 'dashboard.viewList' | translate }}
               <mat-icon aria-hidden="true">arrow_back</mat-icon>
             </span>
           </a>

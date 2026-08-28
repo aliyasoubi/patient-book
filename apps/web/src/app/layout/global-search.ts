@@ -16,6 +16,7 @@ import {
 import { PatientsService } from '../core/services/patients.service';
 import type { PatientSuggestion } from '../core/models/patient.model';
 import { PbSearchField, type SearchFieldOption } from '../shared/ui';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /** Below this, a Persian query is too broad to be worth a round trip. */
 const MIN_QUERY_LENGTH = 2;
@@ -23,13 +24,14 @@ const MIN_QUERY_LENGTH = 2;
 @Component({
   selector: 'pb-global-search',
   standalone: true,
-  imports: [PbSearchField],
+  imports: [PbSearchField, TranslatePipe],
   templateUrl: './global-search.html',
   styleUrl: './global-search.scss',
 })
 export class GlobalSearch {
   private readonly patients = inject(PatientsService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(TranslateService);
 
   private readonly searchField = viewChild<PbSearchField>('searchField');
 
@@ -67,17 +69,16 @@ export class GlobalSearch {
     { initialValue: [] as PatientSuggestion[] },
   );
 
-  protected readonly searchOptions = computed<SearchFieldOption[]>(() =>
-    this.suggestions().map((item) => ({
+  protected readonly searchOptions = computed<SearchFieldOption[]>(() => {
+    this.i18n.currentLang();
+    return this.suggestions().map((item) => ({
       value: item.id,
-      label: item.fullName || $localize`:@@patient.unnamed:بدون نام`,
+      label: item.fullName || this.i18n.instant('patient.unnamed'),
       meta: item.fileNo,
       supporting: item.mobile,
       icon: 'person',
-    })),
-  );
-
-  protected readonly emptyMessage = $localize`:@@globalSearch.empty:بیماری با این مشخصات پیدا نشد`;
+    }));
+  });
 
   /** Ctrl/Cmd+K focuses the search from anywhere, as staff expect. */
   @HostListener('document:keydown', ['$event'])

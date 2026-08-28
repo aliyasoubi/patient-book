@@ -7,10 +7,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { RegistryService } from '../../core/services/registry.service';
 import { EmptyState } from '../../shared/components/empty-state';
-import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
 import { PbCheckboxField, PbPageHeader, PbSearchField, PbStatusChip } from '../../shared/ui';
 import type { SurgeryQueueItem } from '../../core/models/common.model';
@@ -25,19 +26,20 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
     MatPaginatorModule,
     MatProgressBarModule,
     EmptyState,
-    PersianCountPipe,
     PersianNumberPipe,
     PbSearchField,
     PbCheckboxField,
     PbPageHeader,
     PbStatusChip,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './surgery-list.html',
   styleUrl: './surgery-list.scss',
 })
 export class SurgeryList {
   private readonly registry = inject(RegistryService);
+  private readonly i18n = inject(TranslateService);
   protected readonly abutmentLabel = abutmentLabel;
   protected readonly statusLabel = surgeryStatusLabel;
 
@@ -50,6 +52,13 @@ export class SurgeryList {
   protected readonly loading = signal(false);
   protected readonly items = signal<SurgeryQueueItem[]>([]);
   protected readonly total = signal(0);
+  protected readonly countLabel = computed(() => {
+    const total = this.total();
+    if (this.loading() || total === 0) return null;
+    this.i18n.currentLang();
+    const count = formatPersianCount(total);
+    return this.i18n.instant('count.rows', { count });
+  });
 
   /** Rows whose register number has been reused for someone else. */
   protected readonly mismatchCount = computed(
@@ -103,18 +112,12 @@ export class SurgeryList {
       });
   }
 
-  protected readonly unnamed = $localize`:@@patient.unnamed:بدون نام`;
-
   protected callLabel(name: string): string {
-    return $localize`:@@action.callPerson:تماس با ${name}:name:`;
+    return this.i18n.instant('action.callPerson', { name });
   }
 
-  protected readonly emptyTitle = $localize`:@@surgery.emptyTitle:ردیفی در لیست جراحی نیست`;
-
   protected emptyHint(): string {
-    return this.search.value || this.status()
-      ? $localize`:@@filters.changeThem:فیلترها را تغییر دهید.`
-      : '';
+    return this.search.value || this.status() ? this.i18n.instant('filters.changeThem') : '';
   }
 
   protected setStatus(value: '' | 'scheduled' | 'completed' | 'cancelled'): void {

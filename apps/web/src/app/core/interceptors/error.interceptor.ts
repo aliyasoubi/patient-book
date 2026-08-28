@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, throwError } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 import { ApiErrorTranslator } from '../i18n/api-error.translator';
 
@@ -20,6 +21,7 @@ const HANDLED_BY_CALLER = new Set([400, 401, 404, 409, 422]);
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const snackBar = inject(MatSnackBar);
   const translator = inject(ApiErrorTranslator);
+  const i18n = inject(TranslateService);
 
   return next(req).pipe(
     catchError((error: unknown) => {
@@ -27,7 +29,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         !(error instanceof HttpErrorResponse) || !HANDLED_BY_CALLER.has(error.status);
 
       if (shouldReport) {
-        snackBar.open(translator.translate(error), $localize`:@@action.dismiss:بستن`, {
+        snackBar.open(translator.translate(error), i18n.instant('action.dismiss'), {
           duration: 6000,
           horizontalPosition: 'center',
           verticalPosition: 'bottom',

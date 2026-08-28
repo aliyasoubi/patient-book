@@ -1,14 +1,13 @@
 <div class="account">
   <pb-page-header
-    i18n-title
-    title="حساب کاربری"
-    [backLabel]="auth.user()?.mustChangePassword ? null : backLabel"
+    [title]="'account.title' | translate"
+    [backLabel]="auth.user()?.mustChangePassword ? null : ('common.back' | translate)"
     (back)="back()"
   />
 
   @if (auth.user()?.mustChangePassword) {
-    <p class="password-required" role="alert" i18n>
-      برای ادامه کار و دسترسی به پرونده‌ها، ابتدا رمز عبور موقت خود را تغییر دهید.
+    <p class="password-required" role="alert">
+      {{ 'account.temporaryPasswordRequired' | translate }}
     </p>
   }
 
@@ -20,43 +19,37 @@
         <span class="identity__meta">
           <span class="ltr-nums">{{ auth.user()?.username }}</span>
           ·
-          {{ roleLabel(auth.role()) }}
+          {{ roleLabel(auth.role()) | translate }}
         </span>
       </div>
     </div>
   </pb-surface>
 
-  <pb-surface icon="key" i18n-title title="تغییر رمز عبور">
-    <p class="panel__hint" i18n>
-      پس از تغییر رمز، همهٔ نشست‌های فعال روی سایر دستگاه‌ها بسته می‌شود و باید دوباره وارد شوید.
-    </p>
+  <pb-surface icon="key" [title]="'account.changePassword' | translate">
+    <p class="panel__hint">{{ 'account.sessionsWarning' | translate }}</p>
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pw-form">
       <pb-text-field
         [control]="form.controls.currentPassword"
-        i18n-label
-        label="رمز عبور فعلی"
+        [label]="'account.currentPassword' | translate"
         type="password"
         [ltr]="true"
         nativeAutocomplete="current-password"
-        [errorMessages]="currentPasswordErrors"
+        [errorMessages]="currentPasswordErrors()"
       />
 
       <pb-text-field
         [control]="form.controls.newPassword"
-        i18n-label
-        label="رمز عبور جدید"
+        [label]="'account.newPassword' | translate"
         type="password"
         [ltr]="true"
         nativeAutocomplete="new-password"
-        i18n-hint
-        hint="حداقل ۱۰ کاراکتر"
+        [hint]="'account.newPasswordHint' | translate"
       />
 
       <pb-text-field
         [control]="form.controls.confirmPassword"
-        i18n-label
-        label="تکرار رمز عبور جدید"
+        [label]="'account.confirmPassword' | translate"
         type="password"
         [ltr]="true"
         nativeAutocomplete="new-password"
@@ -68,10 +61,9 @@
           type="submit"
           icon="save"
           [loading]="saving()"
-          [loadingText]="savingLabel"
-          i18n
+          [loadingText]="'account.savingLabel' | translate"
         >
-          تغییر رمز عبور
+          {{ 'account.changePassword' | translate }}
         </pb-button>
       </div>
     </form>

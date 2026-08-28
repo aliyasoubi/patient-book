@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
@@ -19,6 +20,7 @@ import { PbButton, PbTextField } from '../../shared/ui';
     PbTextField,
     PbButton,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
@@ -32,8 +34,6 @@ export class Login {
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly signInLabel = $localize`:@@login.signingIn:در حال ورود…`;
-
   protected readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.maxLength(64)]],
     password: ['', [Validators.required, Validators.maxLength(128)]],

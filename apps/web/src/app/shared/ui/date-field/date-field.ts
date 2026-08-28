@@ -1,8 +1,9 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { TranslateService } from '@ngx-translate/core';
 
 import { firstErrorMessage } from '../field-errors';
 
@@ -17,7 +18,10 @@ import { firstErrorMessage } from '../field-errors';
   standalone: true,
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatDatepickerModule],
   template: `
-    <mat-form-field appearance="outline" [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'">
+    <mat-form-field
+      appearance="outline"
+      [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'"
+    >
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -25,7 +29,8 @@ import { firstErrorMessage } from '../field-errors';
         matInput
         [matDatepicker]="picker"
         [formControl]="control()"
-        [placeholder]="placeholder()" />
+        [placeholder]="placeholder()"
+      />
       <mat-datepicker-toggle matIconSuffix [for]="picker" />
       <mat-datepicker #picker [startView]="startView()" />
       @if (hint() && !errorText()) {
@@ -37,11 +42,16 @@ import { firstErrorMessage } from '../field-errors';
     </mat-form-field>
   `,
   styles: `
-    :host { display: block; }
-    mat-form-field { width: 100%; }
+    :host {
+      display: block;
+    }
+    mat-form-field {
+      width: 100%;
+    }
   `,
 })
 export class PbDateField {
+  private readonly i18n = inject(TranslateService);
   readonly control = input.required<FormControl<Date | null>>();
   readonly label = input('');
   readonly placeholder = input('');
@@ -51,6 +61,6 @@ export class PbDateField {
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
 
   protected errorText(): string | null {
-    return firstErrorMessage(this.control().errors, this.errorMessages());
+    return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
   }
 }

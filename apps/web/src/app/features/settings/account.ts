@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { roleLabel } from '../../shared/labels';
@@ -31,7 +32,15 @@ function passwordsMatch(group: AbstractControl): null {
 @Component({
   selector: 'pb-account',
   standalone: true,
-  imports: [ReactiveFormsModule, PbTextField, PbButton, PbSurface, PbAvatar, PbPageHeader],
+  imports: [
+    ReactiveFormsModule,
+    PbTextField,
+    PbButton,
+    PbSurface,
+    PbAvatar,
+    PbPageHeader,
+    TranslatePipe,
+  ],
   templateUrl: './account.html',
   styleUrl: './account.scss',
 })
@@ -41,15 +50,15 @@ export class Account {
   private readonly snackBar = inject(MatSnackBar);
   protected readonly auth = inject(AuthService);
   private readonly errors = inject(ApiErrorTranslator);
+  private readonly i18n = inject(TranslateService);
 
   protected readonly roleLabel = roleLabel;
   protected readonly saving = signal(false);
-  protected readonly savingLabel = $localize`:@@account.savingLabel:در حال ذخیره…`;
-  protected readonly backLabel = $localize`:@@action.back:بازگشت`;
 
-  protected readonly currentPasswordErrors = {
-    wrong: $localize`:@@account.currentPasswordWrong:رمز عبور فعلی نادرست است`,
-  };
+  protected readonly currentPasswordErrors = computed(() => {
+    this.i18n.currentLang();
+    return { wrong: this.i18n.instant('account.currentPasswordWrong') };
+  });
 
   protected readonly form = this.fb.nonNullable.group(
     {
@@ -72,8 +81,8 @@ export class Account {
       next: () => {
         this.saving.set(false);
         this.snackBar.open(
-          $localize`:@@account.passwordChanged:رمز عبور تغییر کرد. برای امنیت، از همه دستگاه‌ها خارج شدید.`,
-          $localize`:@@action.dismiss:بستن`,
+          this.i18n.instant('account.passwordChanged'),
+          this.i18n.instant('action.dismiss'),
           { duration: 7000 },
         );
         // Changing the password revokes every session, this one included.
@@ -84,7 +93,7 @@ export class Account {
         if (error instanceof HttpErrorResponse && error.status === 401) {
           this.form.controls.currentPassword.setErrors({ wrong: true });
         }
-        this.snackBar.open(this.errors.translate(error), $localize`:@@action.dismiss:بستن`);
+        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'));
       },
     });
   }

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { DateAdapter, MAT_DATE_LOCALE, MatDateFormats } from '@angular/material/core';
+import { TranslateService } from '@ngx-translate/core';
 import {
   addDays,
   addMonths,
@@ -16,29 +17,20 @@ import {
   startOfDay,
 } from 'date-fns-jalali';
 
-/**
- * Jalali month names, Farvardin through Esfand.
- *
- * Built on first use rather than at module load: a `$localize` tagged template
- * evaluated during module initialisation runs before the runtime has loaded its
- * translations, which silently pins the source locale.
- */
-export function JALALI_MONTHS(): string[] {
-  return [
-    $localize`:@@month.farvardin:فروردین`,
-    $localize`:@@month.ordibehesht:اردیبهشت`,
-    $localize`:@@month.khordad:خرداد`,
-    $localize`:@@month.tir:تیر`,
-    $localize`:@@month.mordad:مرداد`,
-    $localize`:@@month.shahrivar:شهریور`,
-    $localize`:@@month.mehr:مهر`,
-    $localize`:@@month.aban:آبان`,
-    $localize`:@@month.azar:آذر`,
-    $localize`:@@month.dey:دی`,
-    $localize`:@@month.bahman:بهمن`,
-    $localize`:@@month.esfand:اسفند`,
-  ];
-}
+export const JALALI_MONTH_KEYS = [
+  'month.farvardin',
+  'month.ordibehesht',
+  'month.khordad',
+  'month.tir',
+  'month.mordad',
+  'month.shahrivar',
+  'month.mehr',
+  'month.aban',
+  'month.azar',
+  'month.dey',
+  'month.bahman',
+  'month.esfand',
+] as const;
 
 /**
  * Weekday names indexed by the JavaScript day number (0 = Sunday), which is
@@ -46,41 +38,7 @@ export function JALALI_MONTHS(): string[] {
  * Saturday. Getting this mapping backwards silently mislabels every column of
  * the calendar header.
  */
-function dayNamesLong(): string[] {
-  return [
-    $localize`:@@day.sunday:یکشنبه`,
-    $localize`:@@day.monday:دوشنبه`,
-    $localize`:@@day.tuesday:سه‌شنبه`,
-    $localize`:@@day.wednesday:چهارشنبه`,
-    $localize`:@@day.thursday:پنجشنبه`,
-    $localize`:@@day.friday:جمعه`,
-    $localize`:@@day.saturday:شنبه`,
-  ];
-}
-
-function dayNamesShort(): string[] {
-  return [
-    $localize`:@@dayShort.sunday:یک`,
-    $localize`:@@dayShort.monday:دو`,
-    $localize`:@@dayShort.tuesday:سه`,
-    $localize`:@@dayShort.wednesday:چهار`,
-    $localize`:@@dayShort.thursday:پنج`,
-    $localize`:@@dayShort.friday:جمعه`,
-    $localize`:@@dayShort.saturday:شنبه`,
-  ];
-}
-
-function dayNamesNarrow(): string[] {
-  return [
-    $localize`:@@dayNarrow.sunday:ی`,
-    $localize`:@@dayNarrow.monday:د`,
-    $localize`:@@dayNarrow.tuesday:س`,
-    $localize`:@@dayNarrow.wednesday:چ`,
-    $localize`:@@dayNarrow.thursday:پ`,
-    $localize`:@@dayNarrow.friday:ج`,
-    $localize`:@@dayNarrow.saturday:ش`,
-  ];
-}
+const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 /** Saturday, in JavaScript's numbering. The Iranian week starts here. */
 const SATURDAY = 6;
@@ -96,6 +54,8 @@ const SATURDAY = 6;
  */
 @Injectable()
 export class JalaliDateAdapter extends DateAdapter<Date> {
+  private readonly i18n = inject(TranslateService);
+
   constructor() {
     super();
     this.setLocale(inject(MAT_DATE_LOCALE, { optional: true }) ?? 'fa-IR');
@@ -120,7 +80,7 @@ export class JalaliDateAdapter extends DateAdapter<Date> {
   override getMonthNames(style: 'long' | 'short' | 'narrow'): string[] {
     // Persian month names have no conventional abbreviation; the full name is
     // short enough to use at every size.
-    const months = JALALI_MONTHS();
+    const months = JALALI_MONTH_KEYS.map((key) => this.i18n.instant(key));
     return style === 'narrow' ? months.map((m) => m.slice(0, 3)) : months;
   }
 
@@ -130,9 +90,8 @@ export class JalaliDateAdapter extends DateAdapter<Date> {
   }
 
   override getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
-    if (style === 'long') return dayNamesLong();
-    if (style === 'short') return dayNamesShort();
-    return dayNamesNarrow();
+    const prefix = style === 'long' ? 'day' : style === 'short' ? 'dayShort' : 'dayNarrow';
+    return WEEKDAYS.map((day) => this.i18n.instant(`${prefix}.${day}`));
   }
 
   override getYearName(date: Date): string {

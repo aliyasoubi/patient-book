@@ -3,15 +3,12 @@
     #searchField
     [control]="control"
     [compact]="true"
-    shortcut="Ctrl K"
     [loading]="loading()"
     [options]="searchOptions()"
     [showEmpty]="displayEmpty()"
-    [emptyMessage]="emptyMessage"
+    [emptyMessage]="'globalSearch.empty' | translate"
     (optionSelected)="onSelect($event)"
-    i18n-placeholder
-    placeholder="جستجوی نام، شماره پرونده، موبایل یا کد ملی…"
-    i18n-ariaLabel
-    ariaLabel="جستجوی بیمار"
+    [placeholder]="'globalSearch.placeholder' | translate"
+    [ariaLabel]="'globalSearch.aria' | translate"
   />
 </form>

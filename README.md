@@ -35,12 +35,12 @@ Run both apps:
 npm run dev
 ```
 
-| Service | URL |
-| --- | --- |
-| Web app | http://localhost:4200 |
-| API | http://localhost:3000/api |
+| Service            | URL                              |
+| ------------------ | -------------------------------- |
+| Web app            | http://localhost:4200            |
+| API                | http://localhost:3000/api        |
 | Database readiness | http://localhost:3000/api/health |
-| API docs (Swagger) | http://localhost:3000/api/docs |
+| API docs (Swagger) | http://localhost:3000/api/docs   |
 
 Sign in with the credentials from `SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD`.
 The first administrator is required to replace the seed password before the API
@@ -109,10 +109,10 @@ each register's number in its own `registryNo` column with no foreign key to
 `manual`, `unmatched`) and unmatched rows stay visible in the UI rather than
 being guessed at.
 
-| Sheet | Rows | Linked exactly | Linked by name | Left unlinked |
-| --- | ---: | ---: | ---: | ---: |
-| بیماران ایمپلنت | 277 | 246 | 5 | 26 |
-| بیماران ارتو | 140 | 47 | 1 | 92 |
+| Sheet           | Rows | Linked exactly | Linked by name | Left unlinked |
+| --------------- | ---: | -------------: | -------------: | ------------: |
+| بیماران ایمپلنت |  277 |            246 |              5 |            26 |
+| بیماران ارتو    |  140 |             47 |              1 |            92 |
 
 Most unlinked ortho rows have no name in the source at all (only 61 of 140 do).
 
@@ -263,17 +263,17 @@ Persian sentence frozen into the database at import time.
 
 ### Data model
 
-| Table | Purpose |
-| --- | --- |
-| `patients` | The main register. Soft-deleted, never destroyed. |
-| `treatment_types` | The 13 procedures, seeded from the sheet's columns. |
-| `patient_treatments` | Join, with room for a date and note the sheet never had. |
-| `referral_sources` | نحوه آشنایی, deduplicated on its Persian-folded form. |
-| `implant_cases` | Implant register — **its own numbering**. |
-| `ortho_cases` | Ortho register — **its own numbering**. |
-| `surgery_queue` | Second-stage surgery list, linked to the implant register. |
-| `users` | Staff accounts. |
-| `audit_logs` | Append-only record of who changed what. |
+| Table                | Purpose                                                    |
+| -------------------- | ---------------------------------------------------------- |
+| `patients`           | The main register. Soft-deleted, never destroyed.          |
+| `treatment_types`    | The 13 procedures, seeded from the sheet's columns.        |
+| `patient_treatments` | Join, with room for a date and note the sheet never had.   |
+| `referral_sources`   | نحوه آشنایی, deduplicated on its Persian-folded form.      |
+| `implant_cases`      | Implant register — **its own numbering**.                  |
+| `ortho_cases`        | Ortho register — **its own numbering**.                    |
+| `surgery_queue`      | Second-stage surgery list, linked to the implant register. |
+| `users`              | Staff accounts.                                            |
+| `audit_logs`         | Append-only record of who changed what.                    |
 
 ### Security
 
@@ -304,51 +304,43 @@ Persian sentence frozen into the database at import time.
 
 ## Internationalisation
 
-All user-facing text goes through Angular's built-in i18n (`@angular/localize`).
-Nothing a user reads is hard-coded in a component, and the API contributes no
-wording at all.
+All user-facing text is resolved at runtime by `@ngx-translate` from
+`apps/web/public/i18n/fa.json`. Nothing a user reads is hard-coded in an
+application template or component, and the API contributes no wording at all.
 
-**Source locale is Persian.** The app is authored in the language its users
-speak, so templates read naturally and adding English later is a translation
-job rather than a rewrite.
-
-Templates mark text with `i18n`:
+Templates use stable, semantic keys:
 
 ```html
-<h2 i18n="@@login.title">ورود به سیستم</h2>
+<h2>{{ 'auth.heading' | translate }}</h2>
 ```
 
-TypeScript uses `$localize`, with stable ids so a reworded string keeps its
-translation:
+TypeScript services resolve the same keys when they need messages for errors,
+dialogs, snackbars, route titles, or Material controls:
 
 ```ts
-protected readonly unnamed = $localize`:@@patient.unnamed:بدون نام`;
+return this.i18n.instant("error.fileNumberTaken", { fileNo });
 ```
 
-Label helpers are **functions, not constants** — a `$localize` template
-evaluated at module load runs before the runtime has its translations, which
-silently pins the source locale.
+Enum label helpers return translation keys, while dynamic practice data such as
+treatment and referral names remains data and is not translated as interface
+copy.
 
 ### Adding a language
 
-```bash
-npm run i18n:extract --workspace=web
+Copy `apps/web/public/i18n/fa.json` to `en.json`, preserve its key structure and
+placeholders, and translate only the values. Then switch at runtime:
+
+```ts
+translate.use("en");
 ```
 
-That writes `apps/web/src/locale/messages.xlf` (440 messages, with stable
-ids). Translate it to `messages.en.xlf`, then register the locale in
-`apps/web/angular.json`:
+The loader reads `public/i18n/<language>.json`, so adding a language does not
+require rebuilding templates or producing a separate Angular bundle. A language
+selector should also update the document's `lang` and `dir` attributes.
 
-```json
-"i18n": {
-  "sourceLocale": { "code": "fa", "baseHref": "/" },
-  "locales": { "en": { "translation": "src/locale/messages.en.xlf" } }
-}
-```
-
-`ng build` then emits one bundle per locale under `dist/web/<locale>/`. Serve
-whichever the practice needs; there is no runtime cost and no locale switcher to
-maintain.
+`npm run i18n:check` validates the JSON, rejects missing keys, and fails if
+Persian UI literals, visible English template copy, legacy `i18n` markers, or
+`$localize` calls are reintroduced.
 
 ### What the API contributes
 
@@ -357,7 +349,7 @@ Nothing. It returns `ERR_FILE_NUMBER_TAKEN` with `{ fileNo: "11559" }`, and
 «شماره پرونده ۱۱۵۵۹ قبلاً ثبت شده است». Swagger summaries and developer messages
 are English, because their audience is developers.
 
-The one deliberate exception is *data*: worksheet names, seeded treatment names
+The one deliberate exception is _data_: worksheet names, seeded treatment names
 and the seeded administrator's display name stay Persian, because they are
 values the practice owns rather than labels the app chose.
 
@@ -393,18 +385,18 @@ them.
 
 ## Commands
 
-| Command | Does |
-| --- | --- |
-| `npm run dev` | API and web app together |
-| `npm run dev:api` / `npm run dev:web` | Either one alone |
-| `npm run build` | Production build of both |
-| `npm test` | API and web unit tests (no database needed) |
-| `npm run test:e2e` | API readiness test (requires PostgreSQL) |
-| `npm run i18n:extract -w web` | Regenerate the message catalogue |
-| `npm run migration:run` / `migration:revert` | Schema |
-| `npm run seed` | Treatment catalogue + admin account |
-| `npm run import -- [file] [--force]` | Load the workbook |
-| `npm run db:up` / `db:down` | Postgres via Docker |
+| Command                                      | Does                                             |
+| -------------------------------------------- | ------------------------------------------------ |
+| `npm run dev`                                | API and web app together                         |
+| `npm run dev:api` / `npm run dev:web`        | Either one alone                                 |
+| `npm run build`                              | Production build of both                         |
+| `npm test`                                   | API and web unit tests (no database needed)      |
+| `npm run test:e2e`                           | API readiness test (requires PostgreSQL)         |
+| `npm run i18n:check`                         | Validate JSON keys and reject hard-coded UI text |
+| `npm run migration:run` / `migration:revert` | Schema                                           |
+| `npm run seed`                               | Treatment catalogue + admin account              |
+| `npm run import -- [file] [--force]`         | Load the workbook                                |
+| `npm run db:up` / `db:down`                  | Postgres via Docker                              |
 
 ---
 

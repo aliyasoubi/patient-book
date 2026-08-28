@@ -3,8 +3,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    // Brings the global `$localize` declaration into scope.
-    "types": ["@angular/localize"],
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
@@ -17,7 +15,6 @@
     "module": "preserve"
   },
   "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true
   },

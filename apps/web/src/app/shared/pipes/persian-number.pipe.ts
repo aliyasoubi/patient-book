@@ -1,5 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
+export function formatPersianNumber(value: string | number): string {
+  return String(value).replace(/[0-9]/g, (digit) => String.fromCharCode(0x06f0 + Number(digit)));
+}
+
+export function formatPersianCount(value: number): string {
+  return formatPersianNumber(value.toLocaleString('en-US'));
+}
+
 /**
  * Render digits in Persian numerals (۰۱۲۳…), which is what the practice reads
  * on its paper charts. Applied to counts and dates; deliberately *not* applied
@@ -9,7 +17,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class PersianNumberPipe implements PipeTransform {
   transform(value: string | number | null | undefined): string {
     if (value === null || value === undefined || value === '') return '';
-    return String(value).replace(/[0-9]/g, (d) => String.fromCharCode(0x06f0 + Number(d)));
+    return formatPersianNumber(value);
   }
 }
 
@@ -18,8 +26,6 @@ export class PersianNumberPipe implements PipeTransform {
 export class PersianCountPipe implements PipeTransform {
   transform(value: number | null | undefined): string {
     if (value === null || value === undefined) return '—';
-    return value
-      .toLocaleString('en-US')
-      .replace(/[0-9]/g, (d) => String.fromCharCode(0x06f0 + Number(d)));
+    return formatPersianCount(value);
   }
 }

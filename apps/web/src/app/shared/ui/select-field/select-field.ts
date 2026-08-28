@@ -1,13 +1,16 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { firstErrorMessage } from '../field-errors';
 
 export interface SelectOption {
   value: string;
   label: string;
+  /** Resolve `label` as an i18n key. Dynamic API-provided labels leave this false. */
+  translate?: boolean;
 }
 
 /**
@@ -26,9 +29,12 @@ export interface SelectOption {
 @Component({
   selector: 'pb-select-field',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatSelectModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatSelectModule, TranslatePipe],
   template: `
-    <mat-form-field appearance="outline" [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'">
+    <mat-form-field
+      appearance="outline"
+      [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'"
+    >
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -39,19 +45,24 @@ export interface SelectOption {
             <mat-option value="">{{ anyLabel() }}</mat-option>
           }
           @for (option of options(); track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            <mat-option [value]="option.value">
+              {{ option.translate ? (option.label | translate) : option.label }}
+            </mat-option>
           }
         </mat-select>
       } @else {
         <mat-select
           [value]="value()"
           [placeholder]="placeholder()"
-          (selectionChange)="onSelectionChange($event)">
+          (selectionChange)="onSelectionChange($event)"
+        >
           @if (anyLabel()) {
             <mat-option value="">{{ anyLabel() }}</mat-option>
           }
           @for (option of options(); track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            <mat-option [value]="option.value">
+              {{ option.translate ? (option.label | translate) : option.label }}
+            </mat-option>
           }
         </mat-select>
       }
@@ -65,11 +76,16 @@ export interface SelectOption {
     </mat-form-field>
   `,
   styles: `
-    :host { display: block; }
-    mat-form-field { width: 100%; }
+    :host {
+      display: block;
+    }
+    mat-form-field {
+      width: 100%;
+    }
   `,
 })
 export class PbSelectField {
+  private readonly i18n = inject(TranslateService);
   /** Bind inside a reactive form. Omit and use `value`/`valueChange` otherwise. */
   readonly control = input<FormControl<string> | null>(null);
   readonly value = input<string>('');
@@ -85,7 +101,7 @@ export class PbSelectField {
 
   protected errorText(): string | null {
     const ctrl = this.control();
-    return ctrl ? firstErrorMessage(ctrl.errors, this.errorMessages()) : null;
+    return ctrl ? firstErrorMessage(ctrl.errors, this.i18n, this.errorMessages()) : null;
   }
 
   protected onSelectionChange(event: MatSelectChange): void {

@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
@@ -20,6 +21,7 @@ import type { ReferralSource, TreatmentType } from '../../core/models/patient.mo
     PbSurface,
     PbPageHeader,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',

@@ -1,10 +1,11 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { firstErrorMessage } from '../field-errors';
 
@@ -29,10 +30,19 @@ export interface TextFieldOption {
   selector: 'pb-text-field',
   standalone: true,
   imports: [
-    ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatAutocompleteModule, MatButtonModule, MatIconModule],
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatButtonModule,
+    MatIconModule,
+    TranslatePipe,
+  ],
   template: `
-    <mat-form-field appearance="outline" [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'">
+    <mat-form-field
+      appearance="outline"
+      [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'"
+    >
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -59,7 +69,8 @@ export interface TextFieldOption {
           [attr.autocomplete]="nativeAutocomplete()"
           [class.ltr-input]="ltr()"
           [attr.dir]="ltr() ? 'ltr' : null"
-          [matAutocomplete]="auto" />
+          [matAutocomplete]="auto"
+        />
         <mat-autocomplete #auto="matAutocomplete">
           @for (option of options() ?? []; track option.value) {
             <mat-option [value]="option.value">
@@ -80,7 +91,8 @@ export interface TextFieldOption {
           [attr.inputmode]="inputmode() || null"
           [attr.autocomplete]="nativeAutocomplete()"
           [class.ltr-input]="ltr()"
-          [attr.dir]="ltr() ? 'ltr' : null" />
+          [attr.dir]="ltr() ? 'ltr' : null"
+        />
       }
 
       @if (type() === 'password') {
@@ -89,11 +101,12 @@ export interface TextFieldOption {
           mat-icon-button
           type="button"
           (click)="revealed.set(!revealed())"
-          [attr.aria-label]="revealed() ? hideLabel() : revealLabel()"
-          [attr.aria-pressed]="revealed()">
-          <mat-icon aria-hidden="true">{{
-            revealed() ? 'visibility_off' : 'visibility'
-          }}</mat-icon>
+          [attr.aria-label]="
+            (revealed() ? 'action.hidePassword' : 'action.showPassword') | translate
+          "
+          [attr.aria-pressed]="revealed()"
+        >
+          <mat-icon aria-hidden="true">{{ revealed() ? 'visibility_off' : 'visibility' }}</mat-icon>
         </button>
       }
 
@@ -125,6 +138,7 @@ export interface TextFieldOption {
   `,
 })
 export class PbTextField {
+  private readonly i18n = inject(TranslateService);
   readonly control = input.required<FormControl<string>>();
   readonly label = input('');
   readonly type = input<'text' | 'email' | 'tel' | 'password' | 'number' | 'search'>('text');
@@ -143,15 +157,12 @@ export class PbTextField {
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
 
   protected readonly revealed = signal(false);
-  protected readonly revealLabel = () => $localize`:@@action.showPassword:نمایش رمز`;
-  protected readonly hideLabel = () => $localize`:@@action.hidePassword:پنهان کردن رمز`;
-
   protected readonly visibleType = computed(() =>
     this.type() === 'password' && this.revealed() ? 'text' : this.type(),
   );
   protected readonly hasAutocomplete = computed(() => this.options() !== null);
 
   protected errorText(): string | null {
-    return firstErrorMessage(this.control().errors, this.errorMessages());
+    return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
   }
 }

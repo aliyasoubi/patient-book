@@ -2,25 +2,21 @@ import type { EducationLevel, Gender } from '../core/models/patient.model';
 import type { UserRole } from '../core/models/common.model';
 
 /**
- * Display text for the enum values the API speaks.
+ * Translation keys for the enum values the API speaks.
  *
  * The API sends stable keys — `female`, `bachelor`, `on_hold` — and never
- * wording, so every label a user reads is defined here and extracted by
- * `$localize` along with the rest of the app's text.
- *
- * Built lazily through functions rather than as module-level constants: a
- * `$localize` tagged template evaluated at module load runs before the runtime
- * has its translations, which silently pins the source locale.
+ * wording. The actual copy lives in `public/i18n/*.json`; keeping only stable
+ * keys here makes these mappings reusable by templates and runtime services.
  */
 
 export function genderLabel(gender: Gender | string): string {
   switch (gender) {
     case 'female':
-      return $localize`:@@gender.female:زن`;
+      return 'gender.female';
     case 'male':
-      return $localize`:@@gender.male:مرد`;
+      return 'gender.male';
     default:
-      return $localize`:@@gender.unknown:نامشخص`;
+      return 'gender.unknown';
   }
 }
 
@@ -37,25 +33,25 @@ export function genderIcon(gender: Gender | string): string {
 export function educationLabel(level: EducationLevel | string): string {
   switch (level) {
     case 'none':
-      return $localize`:@@education.none:بی‌سواد`;
+      return 'education.none';
     case 'primary':
-      return $localize`:@@education.primary:زیر دیپلم`;
+      return 'education.primary';
     case 'diploma':
-      return $localize`:@@education.diploma:دیپلم`;
+      return 'education.diploma';
     case 'associate':
-      return $localize`:@@education.associate:فوق دیپلم`;
+      return 'education.associate';
     case 'bachelor':
-      return $localize`:@@education.bachelor:کارشناسی`;
+      return 'education.bachelor';
     case 'master':
-      return $localize`:@@education.master:کارشناسی ارشد`;
+      return 'education.master';
     case 'doctorate':
-      return $localize`:@@education.doctorate:دکتری`;
+      return 'education.doctorate';
     case 'student':
-      return $localize`:@@education.student:محصل / دانشجو`;
+      return 'education.student';
     case 'other':
-      return $localize`:@@education.other:سایر`;
+      return 'education.other';
     default:
-      return $localize`:@@education.unknown:نامشخص`;
+      return 'education.unknown';
   }
 }
 
@@ -78,17 +74,17 @@ export const GENDERS: readonly Gender[] = ['female', 'male', 'unknown'];
 export function referralKindLabel(kind: string): string {
   switch (kind) {
     case 'patient':
-      return $localize`:@@referral.patient:معرفی بیمار`;
+      return 'referral.patient';
     case 'professional':
-      return $localize`:@@referral.professional:معرفی همکار`;
+      return 'referral.professional';
     case 'social':
-      return $localize`:@@referral.social:شبکه‌های اجتماعی`;
+      return 'referral.social';
     case 'website':
-      return $localize`:@@referral.website:وب‌سایت`;
+      return 'referral.website';
     case 'advertising':
-      return $localize`:@@referral.advertising:تبلیغات`;
+      return 'referral.advertising';
     default:
-      return $localize`:@@referral.other:سایر`;
+      return 'referral.other';
   }
 }
 
@@ -108,63 +104,63 @@ export function referralKindIcon(kind: string): string {
 export function roleLabel(role: UserRole | string | null): string {
   switch (role) {
     case 'admin':
-      return $localize`:@@role.admin:مدیر سیستم`;
+      return 'role.admin';
     case 'dentist':
-      return $localize`:@@role.dentist:دندانپزشک`;
+      return 'role.dentist';
     case 'receptionist':
-      return $localize`:@@role.receptionist:پذیرش`;
+      return 'role.receptionist';
     default:
-      return $localize`:@@role.viewer:فقط مشاهده`;
+      return 'role.viewer';
   }
 }
 
 export function caseStatusLabel(status: string): string {
   switch (status) {
     case 'active':
-      return $localize`:@@caseStatus.active:در جریان`;
+      return 'caseStatus.active';
     case 'completed':
-      return $localize`:@@caseStatus.completed:تکمیل شده`;
+      return 'caseStatus.completed';
     default:
-      return $localize`:@@caseStatus.onHold:متوقف`;
+      return 'caseStatus.onHold';
   }
 }
 
 export function surgeryStatusLabel(status: string): string {
   switch (status) {
     case 'scheduled':
-      return $localize`:@@surgeryStatus.scheduled:در انتظار`;
+      return 'surgeryStatus.scheduled';
     case 'completed':
-      return $localize`:@@surgeryStatus.completed:انجام شده`;
+      return 'surgeryStatus.completed';
     default:
-      return $localize`:@@surgeryStatus.cancelled:لغو شده`;
+      return 'surgeryStatus.cancelled';
   }
 }
 
 export function abutmentLabel(type: string): string {
   switch (type) {
     case 'cover':
-      return $localize`:@@abutment.cover:کاور اسکرو`;
+      return 'abutment.cover';
     case 'healing':
-      return $localize`:@@abutment.healing:هیلینگ`;
+      return 'abutment.healing';
     case 'both':
-      return $localize`:@@abutment.both:کاور و هیلینگ`;
+      return 'abutment.both';
     case 'other':
-      return $localize`:@@abutment.other:سایر`;
+      return 'abutment.other';
     default:
-      return $localize`:@@abutment.unknown:نامشخص`;
+      return 'abutment.unknown';
   }
 }
 
 export function matchMethodLabel(method: string): string {
   switch (method) {
     case 'exact':
-      return $localize`:@@match.exact:تطبیق دقیق نام`;
+      return 'match.exact';
     case 'fuzzy':
-      return $localize`:@@match.fuzzy:تطبیق تقریبی نام`;
+      return 'match.fuzzy';
     case 'manual':
-      return $localize`:@@match.manual:اتصال دستی`;
+      return 'match.manual';
     default:
-      return $localize`:@@match.unmatched:بدون اتصال`;
+      return 'match.unmatched';
   }
 }
 
@@ -175,19 +171,19 @@ export function matchMethodLabel(method: string): string {
 export function ageBandLabel(band: string): string {
   switch (band) {
     case 'under_13':
-      return $localize`:@@ageBand.under13:زیر ۱۳`;
+      return 'ageBand.under13';
     case '13_19':
-      return $localize`:@@ageBand.13to19:۱۳ تا ۱۹`;
+      return 'ageBand.13to19';
     case '20_29':
-      return $localize`:@@ageBand.20to29:۲۰ تا ۲۹`;
+      return 'ageBand.20to29';
     case '30_39':
-      return $localize`:@@ageBand.30to39:۳۰ تا ۳۹`;
+      return 'ageBand.30to39';
     case '40_49':
-      return $localize`:@@ageBand.40to49:۴۰ تا ۴۹`;
+      return 'ageBand.40to49';
     case '50_64':
-      return $localize`:@@ageBand.50to64:۵۰ تا ۶۴`;
+      return 'ageBand.50to64';
     default:
-      return $localize`:@@ageBand.65plus:۶۵ به بالا`;
+      return 'ageBand.65plus';
   }
 }
 

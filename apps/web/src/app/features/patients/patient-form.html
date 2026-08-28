@@ -1,5 +1,9 @@
 <div class="form-page">
-  <pb-page-header [title]="title()" i18n-backLabel backLabel="بازگشت" (back)="cancel()" />
+  <pb-page-header
+    [title]="title() | translate"
+    [backLabel]="'common.back' | translate"
+    (back)="cancel()"
+  />
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />
@@ -7,137 +11,138 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
     <!-- ── Identity ──────────────────────────────────────────────── -->
-    <pb-surface icon="badge" i18n-title title="هویت بیمار">
+    <pb-surface icon="badge" [title]="'patientForm.identity' | translate">
       <div class="grid">
         <pb-text-field
           [control]="form.controls.fileNo"
-          i18n-label
-          label="شماره پرونده"
+          [label]="'patientForm.fileNumber' | translate"
           prefixIcon="folder"
           [ltr]="true"
           inputmode="numeric"
         />
 
-        <pb-text-field [control]="form.controls.firstName" i18n-label label="نام" />
+        <pb-text-field
+          [control]="form.controls.firstName"
+          [label]="'patientForm.firstName' | translate"
+        />
 
-        <pb-text-field [control]="form.controls.lastName" i18n-label label="نام خانوادگی" />
+        <pb-text-field
+          [control]="form.controls.lastName"
+          [label]="'patientForm.lastName' | translate"
+        />
 
-        <pb-text-field [control]="form.controls.fatherName" i18n-label label="نام پدر" />
+        <pb-text-field
+          [control]="form.controls.fatherName"
+          [label]="'patientForm.fatherName' | translate"
+        />
 
         <pb-text-field
           [control]="form.controls.nationalId"
-          i18n-label
-          label="کد ملی"
+          [label]="'patientForm.nationalId' | translate"
           [ltr]="true"
           inputmode="numeric"
           [maxlength]="10"
-          i18n-hint
-          hint="۱۰ رقم"
+          [hint]="'patientForm.tenDigits' | translate"
         />
 
         <pb-select-field
           [control]="form.controls.gender"
           [options]="genderOptions"
-          i18n-label
-          label="جنسیت"
+          [label]="'patientForm.gender' | translate"
         />
 
         <pb-date-field
           [control]="form.controls.birthDate"
-          i18n-label
-          label="تاریخ تولد"
+          [label]="'patientForm.birthDate' | translate"
           startView="multi-year"
-          i18n-placeholder
-          placeholder="۱۳۶۸/۰۵/۱۲"
-          i18n-hint
-          hint="تاریخ شمسی"
+          [placeholder]="'patientForm.birthDatePlaceholder' | translate"
+          [hint]="'patientForm.jalaliDate' | translate"
         />
       </div>
     </pb-surface>
 
     <!-- ── Contact ───────────────────────────────────────────────── -->
-    <pb-surface icon="contact_phone" i18n-title title="اطلاعات تماس">
+    <pb-surface icon="contact_phone" [title]="'patientForm.contact' | translate">
       <div class="grid">
         <pb-text-field
           [control]="form.controls.mobile"
-          i18n-label
-          label="شماره موبایل"
+          [label]="'patientForm.mobile' | translate"
           prefixIcon="smartphone"
           [ltr]="true"
           inputmode="tel"
           [maxlength]="11"
-          i18n-hint
-          hint="مثال: ۰۹۱۲۱۲۳۴۵۶۷"
+          [hint]="'patientForm.mobileHint' | translate"
         />
 
         <pb-text-field
           [control]="form.controls.homePhone"
-          i18n-label
-          label="تلفن منزل"
+          [label]="'patientForm.homePhone' | translate"
           prefixIcon="call"
           [ltr]="true"
           inputmode="tel"
-          [errorMessages]="homePhoneErrors"
+          [errorMessages]="homePhoneErrors()"
         />
 
         <pb-textarea-field
           class="grid__full"
           [control]="form.controls.homeAddress"
-          i18n-label
-          label="آدرس منزل"
+          [label]="'patientForm.homeAddress' | translate"
           [rows]="2"
         />
 
         <pb-textarea-field
           class="grid__full"
           [control]="form.controls.workAddress"
-          i18n-label
-          label="آدرس محل کار"
+          [label]="'patientForm.workAddress' | translate"
           [rows]="2"
         />
       </div>
     </pb-surface>
 
     <!-- ── Background ────────────────────────────────────────────── -->
-    <pb-surface icon="badge" i18n-title title="اطلاعات تکمیلی">
+    <pb-surface icon="badge" [title]="'patientForm.additional' | translate">
       <div class="grid">
-        <pb-text-field [control]="form.controls.occupation" i18n-label label="شغل" />
+        <pb-text-field
+          [control]="form.controls.occupation"
+          [label]="'patientForm.occupation' | translate"
+        />
 
         <pb-select-field
           [control]="form.controls.education"
           [options]="educationOptions"
-          i18n-label
-          label="تحصیلات"
+          [label]="'patientForm.education' | translate"
         />
 
         <pb-text-field
           [control]="form.controls.referralSourceName"
-          i18n-label
-          label="نحوه آشنایی"
+          [label]="'patientForm.referral' | translate"
           [options]="referralMatches()"
-          i18n-hint
-          hint="در صورت نبود، مورد جدید ساخته می‌شود"
+          [hint]="'patientForm.newReferralHint' | translate"
         />
 
-        <pb-date-field [control]="form.controls.firstVisitAt" i18n-label label="اولین مراجعه" />
+        <pb-date-field
+          [control]="form.controls.firstVisitAt"
+          [label]="'patientForm.firstVisit' | translate"
+        />
 
-        <pb-date-field [control]="form.controls.lastVisitAt" i18n-label label="آخرین مراجعه" />
+        <pb-date-field
+          [control]="form.controls.lastVisitAt"
+          [label]="'patientForm.lastVisit' | translate"
+        />
 
         <pb-textarea-field
           class="grid__full"
           [control]="form.controls.medicalHistory"
-          i18n-label
-          label="سابقه بیماری قبلی"
+          [label]="'patientForm.medicalHistory' | translate"
           [rows]="2"
           prefixIcon="medical_information"
-          i18n-placeholder
-          placeholder="مثال: فشار خون، دیابت، مصرف داروی رقیق‌کننده خون"
+          [placeholder]="'patientForm.medicalHistoryPlaceholder' | translate"
         />
       </div>
     </pb-surface>
 
     <!-- ── Treatments ────────────────────────────────────────────── -->
-    <pb-surface icon="dentistry" i18n-title title="درمان‌های انجام‌شده">
+    <pb-surface icon="dentistry" [title]="'patientForm.treatments' | translate">
       <div class="treatments">
         @for (type of treatmentTypes(); track type.id) {
           <button
@@ -160,29 +165,28 @@
     </pb-surface>
 
     <!-- ── Notes ─────────────────────────────────────────────────── -->
-    <pb-surface icon="edit_note" i18n-title title="یادداشت">
+    <pb-surface icon="edit_note" [title]="'patientForm.notesSection' | translate">
       <pb-textarea-field
         class="grid__full"
         [control]="form.controls.notes"
-        i18n-label
-        label="یادداشت داخلی"
+        [label]="'patientForm.internalNotes' | translate"
         [rows]="3"
       />
     </pb-surface>
 
     <!-- ── Actions ───────────────────────────────────────────────── -->
     <div class="actions">
-      <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()" i18n>
-        انصراف
+      <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
+        {{ 'common.cancel' | translate }}
       </pb-button>
       <pb-button
         variant="flat"
         type="submit"
         icon="save"
         [loading]="saving()"
-        [loadingText]="savingLabel"
+        [loadingText]="'patientForm.savingLabel' | translate"
       >
-        {{ submitLabel() }}
+        {{ submitLabel() | translate }}
       </pb-button>
     </div>
   </form>

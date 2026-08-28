@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { caseStatusLabel, matchMethodLabel } from '../labels';
 import { EmptyState } from './empty-state';
@@ -20,14 +21,22 @@ import type { RegistryCase } from '../../core/models/common.model';
 @Component({
   selector: 'pb-registry-table',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatTooltipModule, EmptyState, PbStatusChip, MatIconModule],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatTooltipModule,
+    EmptyState,
+    PbStatusChip,
+    MatIconModule,
+    TranslatePipe,
+  ],
   templateUrl: './registry-table.html',
   styleUrl: './registry-table.scss',
 })
 export class RegistryTable {
   readonly cases = input.required<RegistryCase[]>();
   readonly icon = input('deployed_code');
-  readonly emptyTitle = input($localize`:@@registry.emptyDefault:پرونده‌ای یافت نشد`);
+  readonly emptyTitle = input('');
   readonly emptyHint = input('');
   readonly canEdit = input(false);
 
@@ -35,8 +44,6 @@ export class RegistryTable {
 
   protected readonly statusLabel = caseStatusLabel;
   protected readonly matchMethodLabel = matchMethodLabel;
-
-  protected readonly unnamed = $localize`:@@patient.unnamed:بدون نام`;
 
   protected patientName(c: RegistryCase): string {
     if (!c.patient) return '';

@@ -1,13 +1,9 @@
 <div class="list">
   <!-- ── Header ────────────────────────────────────────────────── -->
-  <pb-page-header
-    i18n-title
-    title="بیماران"
-    [count]="!loading() && total() > 0 ? (total() | faCount) + ' پرونده' : null"
-  >
+  <pb-page-header [title]="'patients.title' | translate" [count]="countLabel()">
     @if (auth.can('editPatients')) {
       <pb-button routerLink="/patients/new" icon="person_add" class="list__new">
-        <span class="list__new-label" i18n>بیمار جدید</span>
+        <span class="list__new-label">{{ 'patients.new' | translate }}</span>
       </pb-button>
     }
   </pb-page-header>
@@ -17,10 +13,8 @@
     <pb-search-field
       class="list__search"
       [control]="searchControl"
-      i18n-placeholder
-      placeholder="نام، شماره پرونده، موبایل، کد ملی یا آدرس…"
-      i18n-ariaLabel
-      ariaLabel="جستجو در بیماران"
+      [placeholder]="'patients.searchPlaceholder' | translate"
+      [ariaLabel]="'patients.searchAria' | translate"
     />
 
     <button
@@ -32,7 +26,7 @@
       [attr.aria-expanded]="filtersOpen()"
     >
       <mat-icon aria-hidden="true">tune</mat-icon>
-      <span i18n>فیلترها</span>
+      <span>{{ 'common.filters' | translate }}</span>
       @if (activeFilterCount() > 0) {
         <span class="list__filter-badge">{{ activeFilterCount() | faNum }}</span>
       }
@@ -41,44 +35,46 @@
 
   <!-- ── Filter panel ──────────────────────────────────────────── -->
   @if (filtersOpen()) {
-    <section class="filters" i18n-aria-label aria-label="فیلترها">
+    <section class="filters" [attr.aria-label]="'common.filters' | translate">
       <div class="filters__row">
         <pb-select-field
           class="filters__field"
-          i18n-label
-          label="جنسیت"
+          [label]="'patients.genderFilter' | translate"
           [options]="genderFilterOptions"
-          [anyLabel]="allLabel"
+          [anyLabel]="'filter.all' | translate"
           [value]="filters().gender"
           (valueChange)="updateFilter('gender', $any($event))"
         />
 
         <pb-select-field
           class="filters__field"
-          i18n-label
-          label="تحصیلات"
+          [label]="'patients.educationFilter' | translate"
           [options]="educationFilterOptions"
-          [anyLabel]="allLabel"
+          [anyLabel]="'filter.all' | translate"
           [value]="filters().education"
           (valueChange)="updateFilter('education', $any($event))"
         />
 
         <pb-select-field
           class="filters__field"
-          i18n-label
-          label="بدون مراجعه از"
+          [label]="'patients.inactiveSince' | translate"
           [options]="inactiveMonthsOptions"
-          [anyLabel]="noPreferenceLabel"
+          [anyLabel]="'filter.noPreference' | translate"
           [value]="inactiveMonthsValue()"
           (valueChange)="updateInactiveMonths($event)"
         />
       </div>
 
       <div class="filters__group">
-        <span class="filters__label"
-          >درمان‌ها <small>(بیمارانی که همهٔ موارد انتخابی را داشته‌اند)</small></span
+        <span class="filters__label">
+          {{ 'patients.treatmentsFilter' | translate }}
+          <small>({{ 'patients.treatmentsFilterHint' | translate }})</small>
+        </span>
+        <mat-chip-listbox
+          multiple
+          class="filters__chips"
+          [attr.aria-label]="'patients.treatmentFilterAria' | translate"
         >
-        <mat-chip-listbox multiple class="filters__chips" i18n-aria-label aria-label="فیلتر درمان">
           @for (type of treatmentTypes(); track type.id) {
             <mat-chip-option
               [selected]="filters().treatments.includes(type.code)"
@@ -95,23 +91,20 @@
         <pb-checkbox-field
           [checked]="filters().hasIssues"
           (checkedChange)="updateFilter('hasIssues', $event)"
-          i18n
         >
-          نیازمند بازبینی داده
+          {{ 'patients.needsReview' | translate }}
         </pb-checkbox-field>
         <pb-checkbox-field
           [checked]="filters().hasMedicalHistory"
           (checkedChange)="updateFilter('hasMedicalHistory', $event)"
-          i18n
         >
-          دارای سابقه بیماری
+          {{ 'patients.hasMedicalHistory' | translate }}
         </pb-checkbox-field>
         <pb-checkbox-field
           [checked]="filters().includeArchived"
           (checkedChange)="updateFilter('includeArchived', $event)"
-          i18n
         >
-          شامل بایگانی
+          {{ 'patients.includeArchived' | translate }}
         </pb-checkbox-field>
 
         @if (activeFilterCount() > 0) {
@@ -121,9 +114,8 @@
             (click)="clearFilters()"
             icon="filter_alt_off"
             class="filters__clear"
-            i18n
           >
-            پاک کردن فیلترها
+            {{ 'patients.clearFilters' | translate }}
           </pb-button>
         }
       </div>
@@ -136,10 +128,14 @@
 
   <!-- ── Results ───────────────────────────────────────────────── -->
   @if (!loading() && patients().length === 0) {
-    <pb-empty-state icon="person_search" [title]="emptyTitle" [hint]="emptyHint()">
+    <pb-empty-state
+      icon="person_search"
+      [title]="'patients.emptyTitle' | translate"
+      [hint]="emptyHint()"
+    >
       @if (searchControl.value || activeFilterCount() > 0) {
-        <pb-button variant="stroked" type="button" (click)="clearSearch(); clearFilters()" i18n>
-          پاک کردن جستجو و فیلترها
+        <pb-button variant="stroked" type="button" (click)="clearSearch(); clearFilters()">
+          {{ 'patients.clearSearchAndFilters' | translate }}
         </pb-button>
       }
     </pb-empty-state>
@@ -156,11 +152,14 @@
                 [icon]="genderIcon(patient.gender)"
               />
               <div class="card__identity">
-                <strong class="card__name">{{ patient.fullName || unnamed }}</strong>
-                <span class="card__file" i18n>
-                  پرونده <span class="ltr-nums">{{ patient.fileNo }}</span>
+                <strong class="card__name">{{
+                  patient.fullName || ('patient.unnamed' | translate)
+                }}</strong>
+                <span class="card__file">
+                  {{ 'patients.file' | translate: { fileNo: patient.fileNo } }}
                   @if (patient.age !== null) {
-                    <span aria-hidden="true">·</span> {{ patient.age | faNum }} سال
+                    <span aria-hidden="true">·</span>
+                    {{ 'patients.yearsOld' | translate: { age: (patient.age | faNum) } }}
                   }
                 </span>
               </div>
@@ -219,23 +218,28 @@
         class="table"
       >
         <ng-container matColumnDef="fileNo">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="fileNo" i18n>شماره پرونده</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="fileNo">
+            {{ 'patients.fileNumber' | translate }}
+          </th>
           <td mat-cell *matCellDef="let p">
             <span class="ltr-nums table__file">{{ p.fileNo }}</span>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="lastName" i18n>نام بیمار</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="lastName">
+            {{ 'patients.patientName' | translate }}
+          </th>
           <td mat-cell *matCellDef="let p">
             <div class="table__identity">
               <pb-avatar size="small" [tone]="p.gender" [icon]="genderIcon(p.gender)" />
               <div class="table__name-block">
-                <span class="table__name">{{ p.fullName || unnamed }}</span>
-                <span class="table__sub" i18n>
-                  {{ genderLabel(p.gender) }}
+                <span class="table__name">{{ p.fullName || ('patient.unnamed' | translate) }}</span>
+                <span class="table__sub">
+                  {{ genderLabel(p.gender) | translate }}
                   @if (p.fatherName) {
-                    <span aria-hidden="true">·</span> فرزند {{ p.fatherName }}
+                    <span aria-hidden="true">·</span>
+                    {{ 'patients.childOf' | translate: { name: p.fatherName } }}
                   }
                 </span>
               </div>
@@ -245,7 +249,7 @@
                 </span>
               }
               @if (p.isArchived) {
-                <span class="table__archived" i18n-matTooltip matTooltip="بایگانی شده">
+                <span class="table__archived" [matTooltip]="'patients.archived' | translate">
                   <mat-icon aria-hidden="true">inventory_2</mat-icon>
                 </span>
               }
@@ -254,7 +258,7 @@
         </ng-container>
 
         <ng-container matColumnDef="contact">
-          <th mat-header-cell *matHeaderCellDef i18n>تماس</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'patients.contact' | translate }}</th>
           <td mat-cell *matCellDef="let p">
             @if (p.mobile) {
               <a
@@ -273,7 +277,9 @@
         </ng-container>
 
         <ng-container matColumnDef="age">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="birthDate" i18n>سن</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="birthDate">
+            {{ 'patients.age' | translate }}
+          </th>
           <td mat-cell *matCellDef="let p">
             @if (p.age !== null) {
               <span>{{ p.age | faNum }}</span>
@@ -284,47 +290,52 @@
         </ng-container>
 
         <ng-container matColumnDef="treatments">
-          <th mat-header-cell *matHeaderCellDef i18n>درمان‌ها</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'patients.treatments' | translate }}</th>
           <td mat-cell *matCellDef="let p">
             <pb-treatment-chips [treatments]="p.treatments" [max]="4" />
           </td>
         </ng-container>
 
         <ng-container matColumnDef="lastVisit">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="lastVisitAt" i18n>آخرین مراجعه</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="lastVisitAt">
+            {{ 'patients.lastVisit' | translate }}
+          </th>
           <td mat-cell *matCellDef="let p">
             <span class="table__date">{{ p.lastVisitAt | jalali }}</span>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef i18n-aria-label aria-label="عملیات"></th>
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [attr.aria-label]="'patients.operations' | translate"
+          ></th>
           <td mat-cell *matCellDef="let p">
             <button
               mat-icon-button
               type="button"
               [matMenuTriggerFor]="rowMenu"
               (click)="$event.stopPropagation()"
-              i18n-aria-label
-              aria-label="عملیات پرونده"
+              [attr.aria-label]="'patients.recordOperations' | translate"
             >
               <mat-icon aria-hidden="true">more_vert</mat-icon>
             </button>
             <mat-menu #rowMenu="matMenu">
               <a mat-menu-item [routerLink]="['/patients', p.id]">
                 <mat-icon aria-hidden="true">visibility</mat-icon>
-                <span i18n>مشاهده پرونده</span>
+                <span>{{ 'patients.viewRecord' | translate }}</span>
               </a>
               @if (auth.can('editPatients')) {
                 <a mat-menu-item [routerLink]="['/patients', p.id, 'edit']">
                   <mat-icon aria-hidden="true">edit</mat-icon>
-                  <span i18n>ویرایش</span>
+                  <span>{{ 'common.edit' | translate }}</span>
                 </a>
               }
               @if (p.mobile) {
                 <a mat-menu-item [href]="'tel:' + p.mobile">
                   <mat-icon aria-hidden="true">call</mat-icon>
-                  <span i18n>تماس</span>
+                  <span>{{ 'common.call' | translate }}</span>
                 </a>
               }
             </mat-menu>
@@ -353,8 +364,7 @@
       [pageSize]="limit()"
       [pageSizeOptions]="[10, 25, 50, 100]"
       (page)="onPage($event)"
-      i18n-aria-label
-      aria-label="صفحه‌بندی"
+      [attr.aria-label]="'common.pagination' | translate"
     />
   }
 </div>

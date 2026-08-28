@@ -19,12 +19,12 @@
       <a class="nav__brand" routerLink="/dashboard" (click)="closeDrawer()">
         <mat-icon class="nav__logo is-filled" aria-hidden="true">dentistry</mat-icon>
         <span class="nav__brand-text">
-          <strong i18n>دفترچه بیماران</strong>
-          <small i18n>مطب دندانپزشکی</small>
+          <strong>{{ 'app.title' | translate }}</strong>
+          <small>{{ 'app.subtitle' | translate }}</small>
         </span>
       </a>
 
-      <nav class="nav__links" i18n-aria-label aria-label="بخش‌های اصلی">
+      <nav class="nav__links" [attr.aria-label]="'app.mainSections' | translate">
         @for (item of navItems(); track item.path) {
           <a
             class="nav__link"
@@ -36,7 +36,7 @@
             <mat-icon class="nav__icon" [class.is-filled]="rla.isActive" aria-hidden="true">{{
               item.icon
             }}</mat-icon>
-            <span class="nav__label">{{ item.label }}</span>
+            <span class="nav__label">{{ item.label | translate }}</span>
           </a>
         }
       </nav>
@@ -47,7 +47,7 @@
           class="nav__theme"
           type="button"
           (click)="theme.cycle()"
-          [matTooltip]="themeTooltip()"
+          [matTooltip]="themeTooltip() | translate"
         >
           <mat-icon aria-hidden="true">{{
             theme.mode() === 'system'
@@ -56,7 +56,7 @@
                 ? 'light_mode'
                 : 'dark_mode'
           }}</mat-icon>
-          <span i18n>حالت نمایش</span>
+          <span>{{ 'app.displayMode' | translate }}</span>
         </button>
       </div>
     </div>
@@ -69,8 +69,7 @@
           mat-icon-button
           type="button"
           (click)="toggleDrawer()"
-          i18n-aria-label
-          aria-label="باز کردن منو"
+          [attr.aria-label]="'app.openMenu' | translate"
         >
           <mat-icon aria-hidden="true">menu</mat-icon>
         </button>
@@ -88,8 +87,7 @@
         type="button"
         class="topbar__avatar-btn"
         [matMenuTriggerFor]="userMenu"
-        i18n-aria-label
-        aria-label="حساب کاربری"
+        [attr.aria-label]="'app.userAccount' | translate"
       >
         <pb-avatar size="small" tone="primary" [name]="auth.user()?.fullName ?? ''" />
       </button>
@@ -99,22 +97,22 @@
           <pb-avatar size="medium" tone="primary" [name]="auth.user()?.fullName ?? ''" />
           <span class="user-menu__identity">
             <strong>{{ auth.user()?.fullName }}</strong>
-            <small>{{ roleLabel() }}</small>
+            <small>{{ roleLabel() | translate }}</small>
           </span>
         </div>
         <a mat-menu-item routerLink="/settings/account">
           <mat-icon aria-hidden="true">manage_accounts</mat-icon>
-          <span i18n>حساب کاربری</span>
+          <span>{{ 'app.userAccount' | translate }}</span>
         </a>
         @if (isHandset()) {
           <button mat-menu-item type="button" (click)="theme.cycle()">
             <mat-icon aria-hidden="true">contrast</mat-icon>
-            <span i18n>حالت نمایش</span>
+            <span>{{ 'app.displayMode' | translate }}</span>
           </button>
         }
         <button mat-menu-item type="button" (click)="logout()">
           <mat-icon aria-hidden="true">logout</mat-icon>
-          <span i18n>خروج</span>
+          <span>{{ 'app.logout' | translate }}</span>
         </button>
       </mat-menu>
     </mat-toolbar>
@@ -125,7 +123,7 @@
 
     <!-- Phone: bottom navigation. Thumb-reachable, unlike a top drawer. -->
     @if (isHandset()) {
-      <nav class="bottom-nav" i18n-aria-label aria-label="بخش‌های اصلی">
+      <nav class="bottom-nav" [attr.aria-label]="'app.mainSections' | translate">
         @for (item of primaryNav(); track item.path) {
           <a
             class="bottom-nav__item"
@@ -138,27 +136,26 @@
                 item.icon
               }}</mat-icon>
             </span>
-            <span class="bottom-nav__label">{{ item.label }}</span>
+            <span class="bottom-nav__label">{{ item.label | translate }}</span>
           </a>
         }
         <button
           class="bottom-nav__item"
           type="button"
           [matMenuTriggerFor]="moreMenu"
-          i18n-aria-label
-          aria-label="بیشتر"
+          [attr.aria-label]="'app.more' | translate"
         >
           <span class="bottom-nav__pill">
             <mat-icon aria-hidden="true">more_horiz</mat-icon>
           </span>
-          <span class="bottom-nav__label" i18n>بیشتر</span>
+          <span class="bottom-nav__label">{{ 'app.more' | translate }}</span>
         </button>
         <mat-menu #moreMenu="matMenu">
           @for (item of navItems(); track item.path) {
             @if (!item.primary) {
               <a mat-menu-item [routerLink]="item.path">
                 <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
-                <span>{{ item.label }}</span>
+                <span>{{ item.label | translate }}</span>
               </a>
             }
           }

@@ -1,5 +1,9 @@
 @if (cases().length === 0) {
-  <pb-empty-state [icon]="icon()" [title]="emptyTitle()" [hint]="emptyHint()" />
+  <pb-empty-state
+    [icon]="icon()"
+    [title]="emptyTitle() || ('registry.emptyDefault' | translate)"
+    [hint]="emptyHint()"
+  />
 } @else {
   <ul class="registry">
     @for (c of cases(); track c.id) {
@@ -10,32 +14,28 @@
         </span>
 
         <div class="registry__body">
-          <strong class="registry__name">{{ c.recordedName || unnamed }}</strong>
+          <strong class="registry__name">{{
+            c.recordedName || ('patient.unnamed' | translate)
+          }}</strong>
 
           @if (c.patient) {
-            <a class="registry__link" [routerLink]="['/patients', c.patient.id]" i18n>
+            <a class="registry__link" [routerLink]="['/patients', c.patient.id]">
               <mat-icon aria-hidden="true">link</mat-icon>
-              <span
-                >پرونده <span class="ltr-nums">{{ c.patient.fileNo }}</span></span
-              >
+              <span>{{ 'registry.patientFile' | translate: { fileNo: c.patient.fileNo } }}</span>
               @if (patientName(c) !== c.recordedName) {
                 <span class="registry__alias">({{ patientName(c) }})</span>
               }
               <pb-status-chip
                 class="registry__match"
-                [matTooltip]="matchMethodLabel(c.matchMethod)"
+                [matTooltip]="matchMethodLabel(c.matchMethod) | translate"
               >
-                {{ matchMethodLabel(c.matchMethod) }}
+                {{ matchMethodLabel(c.matchMethod) | translate }}
               </pb-status-chip>
             </a>
           } @else {
-            <span
-              class="registry__unlinked"
-              i18n-matTooltip
-              matTooltip="این پرونده به هیچ بیماری در دفتر اصلی متصل نیست"
-            >
+            <span class="registry__unlinked" [matTooltip]="'registry.unlinkedTooltip' | translate">
               <mat-icon aria-hidden="true">link_off</mat-icon>
-              بدون اتصال به پرونده اصلی
+              <span>{{ 'registry.unlinked' | translate }}</span>
             </span>
           }
         </div>
@@ -45,15 +45,14 @@
             <a class="registry__phone ltr-nums" [href]="'tel:' + c.mobile">{{ c.mobile }}</a>
           }
           <pb-status-chip [tone]="c.status === 'active' ? 'success' : 'neutral'">
-            {{ statusLabel(c.status) }}
+            {{ statusLabel(c.status) | translate }}
           </pb-status-chip>
           @if (canEdit()) {
             <button
               mat-icon-button
               type="button"
               (click)="edit.emit(c)"
-              i18n-aria-label
-              aria-label="ویرایش پرونده"
+              [attr.aria-label]="'registry.editRecord' | translate"
             >
               <mat-icon aria-hidden="true">edit</mat-icon>
             </button>

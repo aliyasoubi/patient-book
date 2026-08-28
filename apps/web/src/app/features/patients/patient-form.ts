@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PatientsService } from '../../core/services/patients.service';
 import {
@@ -52,6 +53,7 @@ import { applyPatientDateChanges } from './patient-form.utils';
     PbSurface,
     PbPageHeader,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './patient-form.html',
   styleUrl: './patient-form.scss',
@@ -63,6 +65,7 @@ export class PatientForm {
   private readonly snackBar = inject(MatSnackBar);
   private readonly dateAdapter = inject<DateAdapter<Date>>(DateAdapter);
   private readonly errors = inject(ApiErrorTranslator);
+  private readonly i18n = inject(TranslateService);
 
   /** Present when editing; absent on `/patients/new`. */
   readonly id = input<string | undefined>(undefined);
@@ -74,16 +77,19 @@ export class PatientForm {
   protected readonly genderOptions: SelectOption[] = GENDERS.map((g) => ({
     value: g,
     label: genderLabel(g),
+    translate: true,
   }));
   protected readonly educationOptions: SelectOption[] = EDUCATION_LEVELS.map((level) => ({
     value: level,
     label: educationLabel(level),
+    translate: true,
   }));
 
   /** Overrides the generic "pattern" wording with one specific to this field. */
-  protected readonly homePhoneErrors = {
-    pattern: $localize`:@@field.homePhoneInvalid:شماره تلفن معتبر نیست`,
-  };
+  protected readonly homePhoneErrors = computed(() => {
+    this.i18n.currentLang();
+    return { pattern: this.i18n.instant('field.homePhoneInvalid') };
+  });
 
   protected readonly saving = signal(false);
   protected readonly loading = signal(false);
@@ -94,16 +100,11 @@ export class PatientForm {
 
   protected readonly isEdit = computed(() => !!this.id());
   protected readonly title = computed(() =>
-    this.isEdit()
-      ? $localize`:@@patientForm.editTitle:ویرایش پرونده بیمار`
-      : $localize`:@@patientForm.createTitle:ثبت بیمار جدید`,
+    this.isEdit() ? 'patientForm.editTitle' : 'patientForm.createTitle',
   );
   protected readonly submitLabel = computed(() =>
-    this.isEdit()
-      ? $localize`:@@patientForm.saveLabel:ذخیره تغییرات`
-      : $localize`:@@patientForm.createLabel:ثبت پرونده`,
+    this.isEdit() ? 'patientForm.saveLabel' : 'patientForm.createLabel',
   );
-  protected readonly savingLabel = $localize`:@@patientForm.savingLabel:در حال ذخیره…`;
 
   protected readonly form = this.fb.nonNullable.group({
     fileNo: ['', [Validators.required, Validators.pattern(/^\d{1,24}$/)]],
@@ -282,9 +283,9 @@ export class PatientForm {
         this.saving.set(false);
         this.snackBar.open(
           this.isEdit()
-            ? $localize`:@@patientForm.saved:تغییرات ذخیره شد.`
-            : $localize`:@@patientForm.created:پرونده بیمار ثبت شد.`,
-          $localize`:@@action.dismiss:بستن`,
+            ? this.i18n.instant('patientForm.saved')
+            : this.i18n.instant('patientForm.created'),
+          this.i18n.instant('action.dismiss'),
         );
         void this.router.navigate(['/patients', patient.id]);
       },
@@ -331,7 +332,7 @@ export class PatientForm {
       this.form.controls[target].setErrors({ server: message });
       this.form.controls[target].markAsTouched();
     }
-    this.snackBar.open(message, $localize`:@@action.dismiss:بستن`, { duration: 6000 });
+    this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 6000 });
   }
 
   protected cancel(): void {

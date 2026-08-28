@@ -1,8 +1,9 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { TranslateService } from '@ngx-translate/core';
 
 import { firstErrorMessage } from '../field-errors';
 
@@ -12,7 +13,10 @@ import { firstErrorMessage } from '../field-errors';
   standalone: true,
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
   template: `
-    <mat-form-field appearance="outline" [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'">
+    <mat-form-field
+      appearance="outline"
+      [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'"
+    >
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -24,7 +28,8 @@ import { firstErrorMessage } from '../field-errors';
         [formControl]="control()"
         [rows]="rows()"
         [placeholder]="placeholder()"
-        [attr.maxlength]="maxlength()"></textarea>
+        [attr.maxlength]="maxlength()"
+      ></textarea>
       @if (hint() && !errorText()) {
         <mat-hint>{{ hint() }}</mat-hint>
       }
@@ -34,11 +39,16 @@ import { firstErrorMessage } from '../field-errors';
     </mat-form-field>
   `,
   styles: `
-    :host { display: block; }
-    mat-form-field { width: 100%; }
+    :host {
+      display: block;
+    }
+    mat-form-field {
+      width: 100%;
+    }
   `,
 })
 export class PbTextareaField {
+  private readonly i18n = inject(TranslateService);
   readonly control = input.required<FormControl<string>>();
   readonly label = input('');
   readonly prefixIcon = input<string | null>(null);
@@ -49,6 +59,6 @@ export class PbTextareaField {
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
 
   protected errorText(): string | null {
-    return firstErrorMessage(this.control().errors, this.errorMessages());
+    return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
   }
 }

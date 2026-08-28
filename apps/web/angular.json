@@ -35,14 +35,8 @@
               "src/styles.scss"
             ],
             "stylePreprocessorOptions": {
-              "includePaths": [
-                "../../node_modules"
-              ]
-            },
-            "localize": true,
-            "polyfills": [
-              "@angular/localize/init"
-            ]
+              "includePaths": ["../../node_modules"]
+            }
           },
           "configurations": {
             "production": {
@@ -86,13 +80,6 @@
         "test": {
           "builder": "@angular/build:unit-test"
         }
-      },
-      "i18n": {
-        "sourceLocale": {
-          "code": "fa",
-          "baseHref": "/"
-        },
-        "locales": {}
       }
     }
   }

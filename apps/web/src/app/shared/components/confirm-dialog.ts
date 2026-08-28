@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslatePipe } from '@ngx-translate/core';
 
 export interface ConfirmData {
   title: string;
@@ -14,7 +15,7 @@ export interface ConfirmData {
 @Component({
   selector: 'pb-confirm-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [MatDialogModule, MatButtonModule, TranslatePipe],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <mat-dialog-content>
@@ -22,15 +23,16 @@ export interface ConfirmData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button type="button" (click)="ref.close(false)">
-        {{ data.cancelLabel ?? defaultCancel }}
+        {{ data.cancelLabel ?? ('action.cancel' | translate) }}
       </button>
       <button
         mat-flat-button
         type="button"
         [class.confirm--danger]="data.tone === 'warn'"
         (click)="ref.close(true)"
-        cdkFocusInitial>
-        {{ data.confirmLabel ?? defaultConfirm }}
+        cdkFocusInitial
+      >
+        {{ data.confirmLabel ?? ('action.confirm' | translate) }}
       </button>
     </mat-dialog-actions>
   `,
@@ -56,15 +58,15 @@ export interface ConfirmData {
       --mat-button-filled-container-color: var(--mat-sys-error);
       --mat-button-filled-label-text-color: var(--mat-sys-on-error);
       --mat-button-filled-state-layer-color: var(--mat-sys-on-error);
-      --mat-button-filled-ripple-color:
-          color-mix(in srgb, var(--mat-sys-on-error) 12%, transparent);
+      --mat-button-filled-ripple-color: color-mix(
+        in srgb,
+        var(--mat-sys-on-error) 12%,
+        transparent
+      );
     }
   `,
 })
 export class ConfirmDialog {
   protected readonly ref = inject<MatDialogRef<ConfirmDialog, boolean>>(MatDialogRef);
   protected readonly data = inject<ConfirmData>(MAT_DIALOG_DATA);
-
-  protected readonly defaultCancel = $localize`:@@action.cancel:انصراف`;
-  protected readonly defaultConfirm = $localize`:@@action.confirm:تأیید`;
 }

@@ -10,6 +10,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { map } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
 import { ThemeService } from '../core/services/theme.service';
@@ -28,39 +29,38 @@ export interface NavItem {
 }
 
 /**
- * Built on demand rather than as a module constant: a `$localize` template
- * evaluated at module load runs before the runtime has its translations.
+ * Stable translation keys are resolved by the template at runtime.
  */
 function navItems(): NavItem[] {
   return [
     {
       path: '/dashboard',
-      label: $localize`:@@nav.dashboard:داشبورد`,
+      label: 'nav.dashboard',
       icon: 'dashboard',
       primary: true,
     },
-    { path: '/patients', label: $localize`:@@nav.patients:بیماران`, icon: 'groups', primary: true },
+    { path: '/patients', label: 'nav.patients', icon: 'groups', primary: true },
     {
       path: '/surgery',
-      label: $localize`:@@nav.surgery:لیست جراحی`,
+      label: 'nav.surgery',
       icon: 'event_available',
       primary: true,
     },
     {
       path: '/implants',
-      label: $localize`:@@nav.implants:دفتر ایمپلنت`,
+      label: 'nav.implants',
       icon: 'deployed_code',
       primary: true,
     },
     {
       path: '/ortho',
-      label: $localize`:@@nav.ortho:دفتر ارتودنسی`,
+      label: 'nav.ortho',
       icon: 'straighten',
       primary: false,
     },
     {
       path: '/settings',
-      label: $localize`:@@nav.settings:تنظیمات`,
+      label: 'nav.settings',
       icon: 'settings',
       primary: false,
     },
@@ -83,6 +83,7 @@ function navItems(): NavItem[] {
     GlobalSearch,
     PbAvatar,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
@@ -125,11 +126,11 @@ export class Shell {
   protected themeTooltip(): string {
     switch (this.theme.mode()) {
       case 'light':
-        return $localize`:@@theme.tooltipLight:حالت نمایش: روشن`;
+        return 'theme.tooltipLight';
       case 'dark':
-        return $localize`:@@theme.tooltipDark:حالت نمایش: تیره`;
+        return 'theme.tooltipDark';
       default:
-        return $localize`:@@theme.tooltipSystem:حالت نمایش: خودکار`;
+        return 'theme.tooltipSystem';
     }
   }
 

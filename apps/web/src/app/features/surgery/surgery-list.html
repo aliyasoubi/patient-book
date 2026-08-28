@@ -1,36 +1,31 @@
 <div class="surgery">
   <pb-page-header
-    i18n-title
-    title="لیست انتظار جراحی"
-    i18n-subtitle
-    subtitle="شماره‌های این فهرست به دفتر ایمپلنت اشاره دارند، نه به شماره پرونده اصلی بیمار."
-    [count]="!loading() && total() > 0 ? (total() | faCount) + ' ردیف' : null"
+    [title]="'surgery.title' | translate"
+    [subtitle]="'surgery.subtitle' | translate"
+    [count]="countLabel()"
   />
 
   <div class="surgery__toolbar">
     <pb-search-field
       class="surgery__search"
       [control]="search"
-      i18n-placeholder
-      placeholder="جستجوی نام، شماره یا دندان…"
-      i18n-ariaLabel
-      ariaLabel="جستجو در لیست جراحی"
+      [placeholder]="'surgery.searchPlaceholder' | translate"
+      [ariaLabel]="'surgery.searchAria' | translate"
     />
 
     <mat-button-toggle-group
       [value]="status()"
       (valueChange)="setStatus($event)"
       class="surgery__status-filter"
-      i18n-aria-label
-      aria-label="فیلتر وضعیت"
+      [attr.aria-label]="'surgery.statusFilter' | translate"
     >
-      <mat-button-toggle value="" i18n>همه</mat-button-toggle>
-      <mat-button-toggle value="scheduled" i18n>در انتظار</mat-button-toggle>
-      <mat-button-toggle value="completed" i18n>انجام شده</mat-button-toggle>
+      <mat-button-toggle value="">{{ 'surgery.all' | translate }}</mat-button-toggle>
+      <mat-button-toggle value="scheduled">{{ 'surgery.scheduled' | translate }}</mat-button-toggle>
+      <mat-button-toggle value="completed">{{ 'surgery.completed' | translate }}</mat-button-toggle>
     </mat-button-toggle-group>
 
-    <pb-checkbox-field [checked]="mismatchedOnly()" (checkedChange)="toggleMismatched($event)" i18n>
-      فقط موارد مغایرت نام
+    <pb-checkbox-field [checked]="mismatchedOnly()" (checkedChange)="toggleMismatched($event)">
+      {{ 'surgery.mismatchOnly' | translate }}
     </pb-checkbox-field>
   </div>
 
@@ -39,7 +34,11 @@
   }
 
   @if (!loading() && items().length === 0) {
-    <pb-empty-state icon="event_busy" [title]="emptyTitle" [hint]="emptyHint()" />
+    <pb-empty-state
+      icon="event_busy"
+      [title]="'surgery.emptyTitle' | translate"
+      [hint]="emptyHint()"
+    />
   } @else {
     <ul class="queue">
       @for (item of items(); track item.id) {
@@ -48,7 +47,9 @@
             @if (item.surgeryDate) {
               <span class="queue__date-value">{{ item.surgeryDate.jalali | faNum }}</span>
             } @else {
-              <span class="queue__date-value queue__date-value--none" i18n>بدون تاریخ</span>
+              <span class="queue__date-value queue__date-value--none">{{
+                'surgery.noDate' | translate
+              }}</span>
             }
             <pb-status-chip
               [tone]="
@@ -59,22 +60,22 @@
                     : 'warning'
               "
             >
-              {{ statusLabel(item.status) }}
+              {{ statusLabel(item.status) | translate }}
             </pb-status-chip>
           </div>
 
           <div class="queue__body">
             <div class="queue__identity">
-              <strong>{{ item.recordedName || unnamed }}</strong>
+              <strong>{{ item.recordedName || ('patient.unnamed' | translate) }}</strong>
               @if (item.implantRegistryNo) {
-                <span class="queue__registry" i18n>
-                  دفتر ایمپلنت <span class="ltr-nums">{{ item.implantRegistryNo }}</span>
-                </span>
+                <span class="queue__registry">{{
+                  'surgery.implantRegistry' | translate: { number: item.implantRegistryNo }
+                }}</span>
               }
               @if (item.patient) {
-                <a class="queue__patient" [routerLink]="['/patients', item.patient.id]" i18n>
+                <a class="queue__patient" [routerLink]="['/patients', item.patient.id]">
                   <mat-icon aria-hidden="true">link</mat-icon>
-                  پرونده <span class="ltr-nums">{{ item.patient.fileNo }}</span>
+                  {{ 'surgery.patientFile' | translate: { fileNo: item.patient.fileNo } }}
                 </a>
               }
             </div>
@@ -84,10 +85,10 @@
             @if (item.hasNameMismatch) {
               <p class="queue__warning" role="note">
                 <mat-icon aria-hidden="true">warning</mat-icon>
-                <span i18n>
-                  شماره <span class="ltr-nums">{{ item.implantRegistryNo }}</span> در دفتر ایمپلنت
-                  به «{{ item.registeredName }}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.
-                </span>
+                <span>{{
+                  'surgery.identityWarning'
+                    | translate: { number: item.implantRegistryNo, name: item.registeredName }
+                }}</span>
               </p>
             }
 
@@ -104,13 +105,13 @@
               @if (item.abutmentType !== 'unknown') {
                 <span class="queue__detail">
                   <mat-icon aria-hidden="true">hardware</mat-icon>
-                  {{ abutmentLabel(item.abutmentType) }}
+                  {{ abutmentLabel(item.abutmentType) | translate }}
                 </span>
               }
               @if (item.prosthesisDue) {
-                <span class="queue__detail" i18n>
+                <span class="queue__detail">
                   <mat-icon aria-hidden="true">schedule</mat-icon>
-                  پروتز: {{ item.prosthesisDue }}
+                  {{ 'surgery.prosthesis' | translate: { date: item.prosthesisDue } }}
                 </span>
               }
             </div>
@@ -137,8 +138,7 @@
       [pageSize]="limit()"
       [pageSizeOptions]="[10, 25, 50, 100]"
       (page)="onPage($event)"
-      i18n-aria-label
-      aria-label="صفحه‌بندی"
+      [attr.aria-label]="'common.pagination' | translate"
     />
   }
 </div>

@@ -9,8 +9,7 @@
       <a
         class="hero__back"
         routerLink="/patients"
-        i18n-aria-label
-        aria-label="بازگشت به فهرست بیماران"
+        [attr.aria-label]="'patientDetail.backAria' | translate"
       >
         <mat-icon aria-hidden="true">arrow_forward</mat-icon>
       </a>
@@ -18,27 +17,27 @@
       <pb-avatar size="large" [tone]="p.gender" [name]="p.fullName" />
 
       <div class="hero__identity">
-        <h1>{{ p.fullName || unnamed }}</h1>
+        <h1>{{ p.fullName || ('patient.unnamed' | translate) }}</h1>
         <div class="hero__meta">
-          <span class="hero__chip" i18n>
+          <span class="hero__chip">
             <mat-icon aria-hidden="true">folder</mat-icon>
-            پرونده <span class="ltr-nums">{{ p.fileNo }}</span>
+            {{ 'patientDetail.file' | translate: { fileNo: p.fileNo } }}
           </span>
           <span class="hero__chip">
             <mat-icon aria-hidden="true">{{ genderIcon(p.gender) }}</mat-icon>
-            {{ genderLabel(p.gender) }}
+            {{ genderLabel(p.gender) | translate }}
           </span>
           @if (p.age !== null) {
-            <span class="hero__chip" i18n>
+            <span class="hero__chip">
               <mat-icon aria-hidden="true">cake</mat-icon>
-              {{ p.age | faNum }} سال
+              {{ 'patientDetail.age' | translate: { age: (p.age | faNum) } }}
               <small>({{ p.birthDate | jalali: 'long' }})</small>
             </span>
           }
           @if (p.isArchived) {
-            <span class="hero__chip hero__chip--archived" i18n>
+            <span class="hero__chip hero__chip--archived">
               <mat-icon aria-hidden="true">inventory_2</mat-icon>
-              بایگانی شده
+              {{ 'patientDetail.archived' | translate }}
             </span>
           }
         </div>
@@ -47,20 +46,19 @@
       <div class="hero__actions">
         @if (p.mobile) {
           <pb-button [href]="'tel:' + p.mobile" icon="call" class="hero__call">
-            <span class="hero__call-label" i18n>تماس</span>
+            <span class="hero__call-label">{{ 'common.call' | translate }}</span>
           </pb-button>
         }
         @if (auth.can('editPatients') && !p.isArchived) {
           <pb-button variant="stroked" [routerLink]="['/patients', p.id, 'edit']" icon="edit">
-            <span class="hero__edit-label" i18n>ویرایش</span>
+            <span class="hero__edit-label">{{ 'common.edit' | translate }}</span>
           </pb-button>
         }
         <button
           mat-icon-button
           type="button"
           [matMenuTriggerFor]="menu"
-          i18n-aria-label
-          aria-label="عملیات بیشتر"
+          [attr.aria-label]="'patientDetail.moreActions' | translate"
         >
           <mat-icon aria-hidden="true">more_vert</mat-icon>
         </button>
@@ -68,19 +66,19 @@
           @if (p.homePhone) {
             <a mat-menu-item [href]="'tel:' + p.homePhone">
               <mat-icon aria-hidden="true">call</mat-icon>
-              <span i18n>تماس با منزل</span>
+              <span>{{ 'patientDetail.homeCall' | translate }}</span>
             </a>
           }
           @if (auth.can('archivePatients')) {
             @if (p.isArchived) {
               <button mat-menu-item type="button" (click)="restore()">
                 <mat-icon aria-hidden="true">unarchive</mat-icon>
-                <span i18n>خروج از بایگانی</span>
+                <span>{{ 'patientDetail.restore' | translate }}</span>
               </button>
             } @else {
               <button mat-menu-item type="button" (click)="archive()">
                 <mat-icon aria-hidden="true">inventory_2</mat-icon>
-                <span i18n>بایگانی پرونده</span>
+                <span>{{ 'patientDetail.archive' | translate }}</span>
               </button>
             }
           }
@@ -93,7 +91,7 @@
       <aside class="alert alert--medical" role="note">
         <mat-icon aria-hidden="true">medical_information</mat-icon>
         <div>
-          <strong i18n>سابقه بیماری</strong>
+          <strong>{{ 'patientDetail.medicalHistory' | translate }}</strong>
           <p>{{ p.medicalHistory }}</p>
         </div>
       </aside>
@@ -103,10 +101,10 @@
       <aside class="alert alert--issues" role="note">
         <mat-icon aria-hidden="true">error</mat-icon>
         <div class="alert__body">
-          <strong>{{ p.dataIssues.length | faNum }} مورد نیازمند بازبینی</strong>
-          <p class="alert__note" i18n>
-            این موارد هنگام انتقال از فایل اکسل شناسایی شدند. مقدار اصلی حفظ شده است.
-          </p>
+          <strong>{{
+            'patients.issueCount' | translate: { count: (p.dataIssues.length | faNum) }
+          }}</strong>
+          <p class="alert__note">{{ 'patientDetail.importIssuesHint' | translate }}</p>
           <ul class="issues">
             @for (issue of p.dataIssues; track issue.field) {
               <li class="issues__item">
@@ -123,10 +121,9 @@
                     mat-button
                     type="button"
                     (click)="resolveIssue(issue.field)"
-                    i18n-matTooltip
-                    matTooltip="بررسی شد؛ این هشدار را بردار"
+                    [matTooltip]="'patientDetail.markReviewedTooltip' | translate"
                   >
-                    بررسی شد
+                    <span>{{ 'patientDetail.reviewed' | translate }}</span>
                   </button>
                 }
               </li>
@@ -142,11 +139,11 @@
       animationDuration="200ms"
       (selectedTabChange)="loadHistory()"
     >
-      <mat-tab i18n-label label="اطلاعات">
+      <mat-tab [label]="'patientDetail.informationTab' | translate">
         <div class="tab">
-          <pb-surface i18n-title title="مشخصات">
+          <pb-surface [title]="'patientDetail.details' | translate">
             @if (detailRows().length === 0) {
-              <p class="card__empty" i18n>اطلاعات تکمیلی ثبت نشده است.</p>
+              <p class="card__empty">{{ 'patientDetail.noAdditionalInfo' | translate }}</p>
             } @else {
               <dl class="facts">
                 @for (row of detailRows(); track row.label) {
@@ -162,19 +159,19 @@
             }
           </pb-surface>
 
-          <pb-surface i18n-title title="مراجعات">
+          <pb-surface [title]="'patientDetail.visits' | translate">
             <dl class="facts">
               <div class="facts__row">
-                <dt i18n>
+                <dt>
                   <mat-icon aria-hidden="true">event_available</mat-icon>
-                  اولین مراجعه
+                  {{ 'patientDetail.firstVisit' | translate }}
                 </dt>
                 <dd>{{ p.firstVisitAt | jalali: 'long' }}</dd>
               </div>
               <div class="facts__row">
-                <dt i18n>
+                <dt>
                   <mat-icon aria-hidden="true">event</mat-icon>
-                  آخرین مراجعه
+                  {{ 'patientDetail.lastVisit' | translate }}
                 </dt>
                 <dd>{{ p.lastVisitAt | jalali: 'long' }}</dd>
               </div>
@@ -182,7 +179,7 @@
           </pb-surface>
 
           @if (p.notes) {
-            <pb-surface i18n-title title="یادداشت">
+            <pb-surface [title]="'patientDetail.notes' | translate">
               <p class="card__note">{{ p.notes }}</p>
             </pb-surface>
           }
@@ -191,7 +188,7 @@
 
       <mat-tab>
         <ng-template mat-tab-label>
-          درمان‌ها
+          <span>{{ 'patientDetail.treatmentsTab' | translate }}</span>
           @if (p.treatments.length) {
             <span class="tab__badge">{{ p.treatments.length | faNum }}</span>
           }
@@ -199,7 +196,7 @@
         <div class="tab">
           @if (p.treatments.length === 0) {
             <pb-surface>
-              <p class="card__empty" i18n>هنوز درمانی برای این بیمار ثبت نشده است.</p>
+              <p class="card__empty">{{ 'patientDetail.noTreatments' | translate }}</p>
             </pb-surface>
           } @else {
             <ul class="treatments">
@@ -212,11 +209,11 @@
                   <mat-icon class="treatments__icon" aria-hidden="true">{{ t.icon }}</mat-icon>
                   <div class="treatments__body">
                     <strong>{{ t.nameFa }}</strong>
-                    <span class="treatments__meta" i18n>
+                    <span class="treatments__meta">
                       @if (t.performedAt) {
                         {{ t.performedAt | jalali: 'long' }}
                       } @else {
-                        تاریخ ثبت نشده
+                        {{ 'patientDetail.treatmentDateMissing' | translate }}
                       }
                     </span>
                     @if (t.notes) {
@@ -230,75 +227,84 @@
         </div>
       </mat-tab>
 
-      <mat-tab i18n-label label="پرونده‌های تخصصی">
+      <mat-tab [label]="'patientDetail.specializedTab' | translate">
         <div class="tab">
-          <pb-surface i18n-title title="دفتر ایمپلنت">
+          <pb-surface [title]="'patientDetail.implantBook' | translate">
             @if (p.implantCases?.length) {
               <ul class="registry">
                 @for (c of p.implantCases; track c.id) {
-                  <li i18n>
+                  <li>
                     <mat-icon aria-hidden="true">deployed_code</mat-icon>
-                    <span
-                      >شماره <span class="ltr-nums">{{ c.registryNo }}</span></span
-                    >
-                    <span class="registry__status">{{ caseStatusLabel(c.status) }}</span>
+                    <span>{{
+                      'patientDetail.implantRegistryNumber' | translate: { number: c.registryNo }
+                    }}</span>
+                    <span class="registry__status">{{
+                      caseStatusLabel(c.status) | translate
+                    }}</span>
                   </li>
                 }
               </ul>
-              <p class="card__hint" i18n>
-                شماره دفتر ایمپلنت مستقل از شماره پرونده اصلی است و ممکن است عدد یکسانی با پروندهٔ
-                بیمار دیگری داشته باشد.
-              </p>
+              <p class="card__hint">{{ 'patientDetail.implantNumberHint' | translate }}</p>
             } @else {
-              <p class="card__empty" i18n>پرونده ایمپلنتی برای این بیمار ثبت نشده است.</p>
+              <p class="card__empty">{{ 'patientDetail.noImplant' | translate }}</p>
             }
           </pb-surface>
 
-          <pb-surface i18n-title title="دفتر ارتودنسی">
+          <pb-surface [title]="'patientDetail.orthoBook' | translate">
             @if (p.orthoCases?.length) {
               <ul class="registry">
                 @for (c of p.orthoCases; track c.id) {
-                  <li i18n>
+                  <li>
                     <mat-icon aria-hidden="true">straighten</mat-icon>
-                    <span
-                      >شماره <span class="ltr-nums">{{ c.registryNo }}</span></span
-                    >
-                    <span class="registry__status">{{ caseStatusLabel(c.status) }}</span>
+                    <span>{{
+                      'patientDetail.orthoRegistryNumber' | translate: { number: c.registryNo }
+                    }}</span>
+                    <span class="registry__status">{{
+                      caseStatusLabel(c.status) | translate
+                    }}</span>
                   </li>
                 }
               </ul>
             } @else {
-              <p class="card__empty" i18n>پرونده ارتودنسی برای این بیمار ثبت نشده است.</p>
+              <p class="card__empty">{{ 'patientDetail.noOrtho' | translate }}</p>
             }
           </pb-surface>
         </div>
       </mat-tab>
 
       @if (auth.can('viewHistory')) {
-        <mat-tab i18n-label label="تاریخچه">
+        <mat-tab [label]="'patientDetail.historyTab' | translate">
           <div class="tab">
             <pb-surface>
               @if (history().length === 0) {
-                <p class="card__empty" i18n>تغییری ثبت نشده است.</p>
+                <p class="card__empty">{{ 'patientDetail.noHistory' | translate }}</p>
               } @else {
                 <ol class="timeline">
                   @for (entry of history(); track entry.id) {
                     <li class="timeline__item">
                       <span class="timeline__dot" [attr.data-action]="entry.action"></span>
                       <div class="timeline__body">
-                        <div class="timeline__head" i18n>
+                        <div class="timeline__head">
                           <strong>{{ actionLabel(entry.action) }}</strong>
-                          <span class="timeline__who">{{ entry.username ?? 'سیستم' }}</span>
+                          <span class="timeline__who">{{
+                            entry.username ?? ('audit.systemUser' | translate)
+                          }}</span>
                         </div>
                         @for (change of changeEntries(entry.changes); track change[0]) {
                           <div class="timeline__change">
                             <span class="timeline__field">{{ changeLabel(change[0]) }}</span>
                             @if (asChange(change[1]); as diff) {
-                              <span class="timeline__from">{{ formatValue(diff.from) }}</span>
+                              <span class="timeline__from">{{
+                                formatValue(diff.from, change[0])
+                              }}</span>
                               <mat-icon aria-hidden="true">arrow_back</mat-icon>
-                              <span class="timeline__to">{{ formatValue(diff.to) }}</span>
+                              <span class="timeline__to">{{
+                                formatValue(diff.to, change[0])
+                              }}</span>
                             } @else {
-                              <span class="timeline__to">{{ formatValue(change[1]) }}</span>
+                              <span class="timeline__to">{{
+                                formatValue(change[1], change[0])
+                              }}</span>
                             }
                           </div>
                         }

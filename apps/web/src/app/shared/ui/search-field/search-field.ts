@@ -7,6 +7,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe } from '@ngx-translate/core';
 
 export interface SearchFieldOption {
   value: string;
@@ -34,6 +35,7 @@ export interface SearchFieldOption {
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    TranslatePipe,
   ],
   template: `
     <div class="pb-search-field" [class.pb-search-field--compact]="compact()">
@@ -51,19 +53,21 @@ export interface SearchFieldOption {
       />
 
       @if (loading()) {
-        <mat-spinner class="pb-search-field__spinner" [diameter]="20" aria-label="در حال جستجو" />
+        <mat-spinner
+          class="pb-search-field__spinner"
+          [diameter]="20"
+          [attr.aria-label]="'common.searching' | translate"
+        />
       } @else if (control().value) {
         <button
           class="pb-search-field__clear"
           mat-icon-button
           type="button"
           (click)="clear()"
-          [attr.aria-label]="clearLabel"
+          [attr.aria-label]="'action.clearSearch' | translate"
         >
           <mat-icon aria-hidden="true">close</mat-icon>
         </button>
-      } @else if (shortcut()) {
-        <kbd class="pb-search-field__shortcut" aria-hidden="true">{{ shortcut() }}</kbd>
       }
     </div>
 
@@ -178,23 +182,6 @@ export interface SearchFieldOption {
       margin-inline: var(--pb-space-3);
     }
 
-    .pb-search-field__shortcut {
-      flex: 0 0 auto;
-      margin-inline-end: var(--pb-space-3);
-      padding: 2px 7px;
-      border: 1px solid var(--mat-sys-outline-variant);
-      border-radius: var(--mat-sys-corner-extra-small);
-      background: transparent;
-      color: var(--mat-sys-on-surface-variant);
-      font: var(--mat-sys-label-small);
-      direction: ltr;
-      white-space: nowrap;
-
-      @media (pointer: coarse) {
-        display: none;
-      }
-    }
-
     .pb-search-option {
       display: flex;
       align-items: center;
@@ -236,7 +223,6 @@ export class PbSearchField {
   readonly placeholder = input('');
   readonly ariaLabel = input('');
   readonly compact = input(false);
-  readonly shortcut = input<string | null>(null);
   readonly loading = input(false);
   readonly options = input<readonly SearchFieldOption[]>([]);
   readonly showEmpty = input(false);
@@ -244,8 +230,6 @@ export class PbSearchField {
   readonly optionSelected = output<string>();
 
   private readonly inputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');
-  protected readonly clearLabel = $localize`:@@action.clearSearch:پاک کردن جستجو`;
-
   focus(): void {
     this.inputElement()?.nativeElement.focus();
   }

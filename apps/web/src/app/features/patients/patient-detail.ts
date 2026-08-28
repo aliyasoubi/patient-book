@@ -8,11 +8,12 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PatientsService } from '../../core/services/patients.service';
 import { AuthService } from '../../core/services/auth.service';
 import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
-import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import {
   caseStatusLabel,
@@ -43,6 +44,7 @@ import type { AuditEntry } from '../../core/models/common.model';
     PbSurface,
     PbAvatar,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
@@ -54,6 +56,7 @@ export class PatientDetail {
   private readonly snackBar = inject(MatSnackBar);
   protected readonly auth = inject(AuthService);
   private readonly errors = inject(ApiErrorTranslator);
+  private readonly i18n = inject(TranslateService);
 
   /** Bound from the `:id` route parameter. */
   readonly id = input.required<string>();
@@ -71,6 +74,7 @@ export class PatientDetail {
 
   /** Grouped for the "details" tab, skipping anything the record does not hold. */
   protected readonly detailRows = computed(() => {
+    this.i18n.currentLang();
     const p = this.patient();
     if (!p) return [];
     const rows: Array<{ icon: string; label: string; value: string; ltr?: boolean }> = [];
@@ -78,19 +82,19 @@ export class PatientDetail {
       if (value) rows.push({ icon, label, value, ltr });
     };
 
-    push('badge', $localize`:@@field.nationalId:کد ملی`, p.nationalId, true);
-    push('escalator_warning', $localize`:@@field.fatherName:نام پدر`, p.fatherName);
-    push('work', $localize`:@@field.occupation:شغل`, p.occupation);
+    push('badge', this.i18n.instant('field.nationalId'), p.nationalId, true);
+    push('escalator_warning', this.i18n.instant('field.fatherName'), p.fatherName);
+    push('work', this.i18n.instant('field.occupation'), p.occupation);
     push(
       'school',
-      $localize`:@@field.education:تحصیلات`,
-      p.education !== 'unknown' ? educationLabel(p.education) : p.educationRaw,
+      this.i18n.instant('field.education'),
+      p.education !== 'unknown' ? this.i18n.instant(educationLabel(p.education)) : p.educationRaw,
     );
-    push('smartphone', $localize`:@@field.mobile:موبایل`, p.mobile, true);
-    push('call', $localize`:@@field.homePhone:تلفن منزل`, p.homePhone, true);
-    push('home', $localize`:@@field.homeAddress:آدرس منزل`, p.homeAddress);
-    push('apartment', $localize`:@@field.workAddress:آدرس محل کار`, p.workAddress);
-    push('share', $localize`:@@field.referralSource:نحوه آشنایی`, p.referralSource?.name ?? null);
+    push('smartphone', this.i18n.instant('field.mobile'), p.mobile, true);
+    push('call', this.i18n.instant('field.homePhone'), p.homePhone, true);
+    push('home', this.i18n.instant('field.homeAddress'), p.homeAddress);
+    push('apartment', this.i18n.instant('field.workAddress'), p.workAddress);
+    push('share', this.i18n.instant('field.referralSource'), p.referralSource?.name ?? null);
     return rows;
   });
 
@@ -125,8 +129,6 @@ export class PatientDetail {
     return this.errors.forCode(issue.code, issue.params);
   }
 
-  protected readonly unnamed = $localize`:@@patient.unnamed:بدون نام`;
-
   protected loadHistory(): void {
     if (this.historyLoaded() || !this.auth.can('viewHistory')) return;
     this.historyLoaded.set(true);
@@ -138,8 +140,8 @@ export class PatientDetail {
     this.service.resolveIssue(this.id(), field).subscribe((patient) => {
       this.patient.set(patient);
       this.snackBar.open(
-        $localize`:@@patient.issueResolved:هشدار بررسی و برداشته شد.`,
-        $localize`:@@action.dismiss:بستن`,
+        this.i18n.instant('patient.issueResolved'),
+        this.i18n.instant('action.dismiss'),
       );
     });
   }
@@ -148,9 +150,9 @@ export class PatientDetail {
     const p = this.patient();
     if (!p) return;
     const data: ConfirmData = {
-      title: $localize`:@@archive.title:بایگانی پرونده`,
-      message: $localize`:@@archive.message:پرونده «${p.fullName}:name:» به بایگانی منتقل می‌شود. اطلاعات حذف نمی‌شود و هر زمان قابل بازگردانی است.`,
-      confirmLabel: $localize`:@@archive.confirm:بایگانی کن`,
+      title: this.i18n.instant('archive.title'),
+      message: this.i18n.instant('archive.message', { name: p.fullName }),
+      confirmLabel: this.i18n.instant('archive.confirm'),
       tone: 'warn',
     };
     this.dialog
@@ -160,8 +162,8 @@ export class PatientDetail {
         if (!confirmed) return;
         this.service.archive(p.id).subscribe(() => {
           this.snackBar.open(
-            $localize`:@@archive.done:پرونده بایگانی شد.`,
-            $localize`:@@action.dismiss:بستن`,
+            this.i18n.instant('archive.done'),
+            this.i18n.instant('action.dismiss'),
           );
           void this.router.navigate(['/patients']);
         });
@@ -172,8 +174,8 @@ export class PatientDetail {
     this.service.restore(this.id()).subscribe((patient) => {
       this.patient.set(patient);
       this.snackBar.open(
-        $localize`:@@archive.restored:پرونده از بایگانی خارج شد.`,
-        $localize`:@@action.dismiss:بستن`,
+        this.i18n.instant('archive.restored'),
+        this.i18n.instant('action.dismiss'),
       );
     });
   }
@@ -182,35 +184,51 @@ export class PatientDetail {
   protected changeLabel(key: string): string {
     switch (key) {
       case 'fileNo':
-        return $localize`:@@field.fileNo:شماره پرونده`;
+        return this.i18n.instant('field.fileNo');
       case 'firstName':
-        return $localize`:@@field.firstName:نام`;
+        return this.i18n.instant('field.firstName');
       case 'lastName':
-        return $localize`:@@field.lastName:نام خانوادگی`;
+        return this.i18n.instant('field.lastName');
       case 'nationalId':
-        return $localize`:@@field.nationalId:کد ملی`;
+        return this.i18n.instant('field.nationalId');
       case 'mobile':
-        return $localize`:@@field.mobile:موبایل`;
+        return this.i18n.instant('field.mobile');
       case 'homePhone':
-        return $localize`:@@field.homePhone:تلفن منزل`;
+        return this.i18n.instant('field.homePhone');
       case 'gender':
-        return $localize`:@@field.gender:جنسیت`;
+        return this.i18n.instant('field.gender');
       case 'birthDate':
-        return $localize`:@@field.birthDate:تاریخ تولد`;
+        return this.i18n.instant('field.birthDate');
       case 'occupation':
-        return $localize`:@@field.occupation:شغل`;
+        return this.i18n.instant('field.occupation');
       case 'education':
-        return $localize`:@@field.education:تحصیلات`;
+        return this.i18n.instant('field.education');
+      case 'educationRaw':
+        return this.i18n.instant('field.educationOriginal');
+      case 'referralSource':
+        return this.i18n.instant('field.referralSource');
       case 'medicalHistory':
-        return $localize`:@@field.medicalHistory:سابقه بیماری`;
+        return this.i18n.instant('field.medicalHistory');
       case 'homeAddress':
-        return $localize`:@@field.homeAddress:آدرس منزل`;
+        return this.i18n.instant('field.homeAddress');
+      case 'workAddress':
+        return this.i18n.instant('field.workAddress');
+      case 'firstVisitAt':
+        return this.i18n.instant('field.firstVisit');
       case 'lastVisitAt':
-        return $localize`:@@field.lastVisit:آخرین مراجعه`;
+        return this.i18n.instant('field.lastVisit');
+      case 'notes':
+        return this.i18n.instant('field.notes');
+      case 'treatments':
+        return this.i18n.instant('field.treatments');
+      case 'dataIssues':
+        return this.i18n.instant('field.dataIssues');
+      case 'isArchived':
+        return this.i18n.instant('field.archiveStatus');
       case 'fullName':
-        return $localize`:@@field.fullName:نام کامل`;
+        return this.i18n.instant('field.fullName');
       case 'resolvedIssue':
-        return $localize`:@@field.resolvedIssue:رفع هشدار`;
+        return this.i18n.instant('field.resolvedIssue');
       default:
         return key;
     }
@@ -219,15 +237,15 @@ export class PatientDetail {
   protected actionLabel(action: string): string {
     switch (action) {
       case 'create':
-        return $localize`:@@auditAction.create:ایجاد`;
+        return this.i18n.instant('auditAction.create');
       case 'update':
-        return $localize`:@@auditAction.update:ویرایش`;
+        return this.i18n.instant('auditAction.update');
       case 'delete':
-        return $localize`:@@auditAction.delete:بایگانی`;
+        return this.i18n.instant('auditAction.delete');
       case 'restore':
-        return $localize`:@@auditAction.restore:بازگردانی`;
+        return this.i18n.instant('auditAction.restore');
       default:
-        return action;
+        return this.i18n.instant('auditAction.other');
     }
   }
 
@@ -241,8 +259,41 @@ export class PatientDetail {
       : null;
   }
 
-  protected formatValue(value: unknown): string {
+  protected formatValue(value: unknown, field: string): string {
     if (value === null || value === undefined || value === '') return '—';
+
+    if (field === 'gender' && typeof value === 'string') {
+      return this.i18n.instant(genderLabel(value));
+    }
+    if (field === 'education' && typeof value === 'string') {
+      return this.i18n.instant(educationLabel(value));
+    }
+    if (field === 'resolvedIssue' && typeof value === 'string') return this.changeLabel(value);
+    if (field === 'isArchived' && typeof value === 'boolean') {
+      return value
+        ? this.i18n.instant('archive.statusArchived')
+        : this.i18n.instant('archive.statusActive');
+    }
+    if (field === 'referralSource' && typeof value === 'object') {
+      const name = (value as { name?: unknown }).name;
+      return typeof name === 'string' ? name : this.i18n.instant('value.notRecorded');
+    }
+    if (field === 'treatments' && Array.isArray(value)) {
+      const count = formatPersianCount(value.length);
+      return this.i18n.instant('audit.treatmentCount', { count });
+    }
+    if (field === 'dataIssues' && Array.isArray(value)) {
+      const count = formatPersianCount(value.length);
+      return this.i18n.instant('audit.issueCount', { count });
+    }
+    if (typeof value === 'boolean') {
+      return value ? this.i18n.instant('value.yes') : this.i18n.instant('value.no');
+    }
+    if (Array.isArray(value)) {
+      const count = formatPersianCount(value.length);
+      return this.i18n.instant('value.itemCount', { count });
+    }
+    if (typeof value === 'object') return this.i18n.instant('value.recordedDetails');
     return String(value);
   }
 }
