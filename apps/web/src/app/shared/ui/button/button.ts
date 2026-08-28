@@ -50,11 +50,15 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
     @if (isLink()) {
       <a
         [matButton]="appearance()"
-        [routerLink]="routerLink()"
-        [attr.href]="href()"
+        [routerLink]="isDisabled() ? null : routerLink()"
+        [attr.href]="isDisabled() ? null : href()"
         [queryParams]="queryParams()"
         class="pb-btn"
         [class.pb-btn--full]="fullWidth()"
+        [class.pb-btn--disabled]="isDisabled()"
+        [attr.aria-disabled]="isDisabled() ? 'true' : null"
+        [attr.tabindex]="isDisabled() ? -1 : null"
+        (click)="isDisabled() && $event.preventDefault()"
       >
         @if (loading()) {
           <mat-progress-spinner
@@ -137,6 +141,17 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
     }
     .pb-btn:active {
       transform: scale(0.96);
+    }
+
+    /*
+     * Material's own \`[disabled]\` only exists on <button>; an <a> has no such
+     * attribute, so a disabled/loading link previously stayed fully clickable.
+     * routerLink/href are already cleared above — this just matches Material's
+     * visual disabled state and blocks hover/selection on the anchor.
+     */
+    .pb-btn--disabled {
+      pointer-events: none;
+      opacity: 0.38;
     }
   `,
 })

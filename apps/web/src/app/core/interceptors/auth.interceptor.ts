@@ -32,7 +32,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authorized).pipe(
     catchError((error: unknown) => {
-      if (!(error instanceof HttpErrorResponse) || error.status !== 401 || !isRefreshable) {
+      if (
+        !(error instanceof HttpErrorResponse) ||
+        error.status !== 401 ||
+        !isApiCall ||
+        !isRefreshable
+      ) {
         return throwError(() => error);
       }
 

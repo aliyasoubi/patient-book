@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: dental
+          POSTGRES_PASSWORD: dental_dev_pw
+          POSTGRES_DB: patient_book
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dental"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: dental
+      DB_PASSWORD: dental_dev_pw
+      DB_NAME: patient_book
+      JWT_SECRET: ci-only-secret-never-used-in-production
+      JWT_REFRESH_SECRET: ci-only-refresh-secret-never-used-in-production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Hard-coded UI text is an architectural rule here, not a style nit —
+      # keep it a gate, not an opt-in script nobody remembers to run.
+      - run: npm run i18n:check
+
+      - run: npm test
+
+      - run: npm run build
+
+      - run: npm run migration:run
+
+      - run: npm run test:e2e

@@ -1,6 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,7 +12,15 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Subject,
+  switchMap,
+} from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PatientsService, PatientQuery } from './data/patients.service';
@@ -124,7 +132,11 @@ export class PatientList {
     { initialValue: false },
   );
 
-  protected readonly searchControl = new FormControl('', { nonNullable: true });
+  // Seed the box from ?q= so a link into a search reproduces it.
+  protected readonly searchControl = new FormControl(
+    this.route.snapshot.queryParamMap.get('q') ?? '',
+    { nonNullable: true },
+  );
 
   protected readonly page = signal(1);
   protected readonly limit = signal(25);
@@ -154,7 +166,7 @@ export class PatientList {
       map((v) => v.trim()),
       distinctUntilChanged(),
     ),
-    { initialValue: '' },
+    { initialValue: this.searchControl.value.trim() },
   );
 
   protected readonly columns = computed(() => [
@@ -180,22 +192,48 @@ export class PatientList {
     );
   });
 
-  constructor() {
-    // Seed the box from ?q= so a link into a search reproduces it.
-    const initialQuery = this.route.snapshot.queryParamMap.get('q');
-    if (initialQuery) this.searchControl.setValue(initialQuery, { emitEvent: false });
+  /**
+   * One persistent subscription, fed by the effect below. `switchMap` cancels
+   * the in-flight request when a newer query arrives, so a slow "Ali" request
+   * can no longer resolve after a faster "Alireza" one and overwrite it.
+   */
+  private readonly fetchTrigger$ = new Subject<PatientQuery>();
 
+  constructor() {
     this.service.treatmentTypes().subscribe((types) => this.treatmentTypes.set(types));
+
+    this.fetchTrigger$
+      .pipe(
+        switchMap((query) =>
+          this.service.list(query).pipe(
+            catchError(() => {
+              this.loading.set(false);
+              return EMPTY;
+            }),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((result) => {
+        this.patients.set(result.items);
+        this.total.set(result.total);
+        this.loading.set(false);
+      });
 
     // Any change to query, paging, sorting or filters refetches. Resetting to
     // page 1 happens in the handlers, not here, so paging itself does not loop.
     effect(() => {
-      const query = this.debouncedQuery();
-      const page = this.page();
-      const limit = this.limit();
-      const sort = this.sort();
-      const filters = this.filters();
-      untracked(() => this.fetch(query, page, limit, sort, filters));
+      const query = this.buildQuery(
+        this.debouncedQuery(),
+        this.page(),
+        this.limit(),
+        this.sort(),
+        this.filters(),
+      );
+      untracked(() => {
+        this.loading.set(true);
+        this.fetchTrigger$.next(query);
+      });
     });
 
     // Reflect the query in the URL so the browser Back button works and the
@@ -212,15 +250,14 @@ export class PatientList {
     });
   }
 
-  private fetch(
+  private buildQuery(
     q: string,
     page: number,
     limit: number,
     sort: { by: string; dir: 'ASC' | 'DESC' },
     filters: Filters,
-  ): void {
-    this.loading.set(true);
-    const query: PatientQuery = {
+  ): PatientQuery {
+    return {
       q: q || undefined,
       page,
       limit,
@@ -234,15 +271,6 @@ export class PatientList {
       inactiveMonths: filters.inactiveMonths ?? undefined,
       includeArchived: filters.includeArchived || undefined,
     };
-
-    this.service.list(query).subscribe({
-      next: (result) => {
-        this.patients.set(result.items);
-        this.total.set(result.total);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
   }
 
   protected onSortChange(event: Sort): void {
@@ -305,10 +333,6 @@ export class PatientList {
     return this.searchControl.value || this.activeFilterCount() > 0
       ? this.i18n.instant('patients.emptyHintFiltered')
       : this.i18n.instant('patients.emptyHintNone');
-  }
-
-  protected open(patient: Patient): void {
-    void this.router.navigate(['/patients', patient.id]);
   }
 
   /**

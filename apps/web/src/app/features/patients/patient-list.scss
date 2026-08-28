@@ -163,16 +163,10 @@
   }
 
   &__row {
-    cursor: pointer;
     transition: background-color 140ms ease;
 
     &:hover {
       background: color-mix(in srgb, var(--mat-sys-primary) 6%, transparent);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: -2px;
     }
 
     &--archived {
@@ -186,6 +180,14 @@
     gap: 10px;
     min-width: 0;
     padding-block: 4px;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: -2px;
+    }
   }
 
   &__name-block {
@@ -213,6 +215,14 @@
   &__file {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: -2px;
+    }
   }
 
   &__phone {
