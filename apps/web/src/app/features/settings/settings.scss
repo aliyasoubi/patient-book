@@ -26,6 +26,51 @@ mat-button-toggle-group .material-symbols-rounded {
   margin-inline-end: 5px;
 }
 
+.palette-hint {
+  margin-top: 18px;
+}
+
+.palette-picker {
+  display: flex;
+  gap: 14px;
+}
+
+/**
+ * Each swatch carries its own `data-palette`, re-scoping `--mat-sys-primary`
+ * to that palette for itself (see styles.scss) — the fill is the real theme
+ * token, not a hardcoded hex that could drift from it.
+ */
+.palette-swatch {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--mat-sys-corner-full);
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  cursor: pointer;
+  transition: transform 150ms var(--pb-ease-spring);
+
+  &:hover {
+    transform: scale(1.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+
+  &.is-selected {
+    border-color: var(--mat-sys-on-surface);
+  }
+
+  .material-symbols-rounded {
+    font-size: 20px;
+  }
+}
+
 .account-row {
   display: flex;
   align-items: center;

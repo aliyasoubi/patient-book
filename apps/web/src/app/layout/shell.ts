@@ -13,6 +13,7 @@ import { map } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
+import { PaletteService } from '../core/services/palette.service';
 import { ThemeService } from '../core/services/theme.service';
 import { GlobalSearch } from './global-search';
 import { roleLabel } from '../shared/labels';
@@ -92,6 +93,9 @@ export class Shell {
   private readonly breakpoints = inject(BreakpointObserver);
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  // Injected only to apply the stored preference on boot — the shell never
+  // reads it itself; the picker lives in settings.
+  private readonly palette = inject(PaletteService);
 
   /**
    * Three layouts, not two: a phone gets a bottom bar, a tablet gets a

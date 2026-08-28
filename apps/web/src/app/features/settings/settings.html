@@ -21,6 +21,27 @@
         {{ 'settings.dark' | translate }}
       </mat-button-toggle>
     </mat-button-toggle-group>
+
+    <p class="panel__hint palette-hint">{{ 'settings.colorPalette' | translate }}</p>
+    <div class="palette-picker" role="radiogroup" [attr.aria-label]="'settings.colorPalette' | translate">
+      @for (name of paletteNames; track name) {
+        <button
+          type="button"
+          class="palette-swatch"
+          [class.is-selected]="palette.palette() === name"
+          role="radio"
+          [attr.aria-checked]="palette.palette() === name"
+          [attr.data-palette]="name"
+          [matTooltip]="('settings.palette.' + name) | translate"
+          (click)="setPalette(name)"
+        >
+          @if (palette.palette() === name) {
+            <mat-icon aria-hidden="true">check</mat-icon>
+          }
+          <span class="visually-hidden">{{ 'settings.palette.' + name | translate }}</span>
+        </button>
+      }
+    </div>
   </pb-surface>
 
   <pb-surface icon="account_circle" [title]="'settings.account' | translate">

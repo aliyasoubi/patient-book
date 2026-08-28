@@ -80,6 +80,53 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/**
+ * Alternate colour palettes, picked in settings. `theme-overrides` only
+ * patches individual token values, not a whole M3 tonal ramp, so this calls
+ * the full `mat.theme` mixin again scoped to the attribute — CSS resolves
+ * cascade per-property on whatever element carries it, so only the color
+ * tokens these blocks declare are replaced; typography, shape and every
+ * other token still fall through from the base block above. Not scoped to
+ * `html` specifically: the settings picker also stamps this attribute on
+ * each swatch button, so its `--mat-sys-primary` previews that palette
+ * without a hardcoded, driftable hex value.
+ */
+[data-palette='cyan'] {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$azure-palette,
+        theme-type: color-scheme,
+      ),
+    )
+  );
+}
+
+[data-palette='green'] {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$green-palette,
+        tertiary: mat.$azure-palette,
+        theme-type: color-scheme,
+      ),
+    )
+  );
+}
+
+[data-palette='violet'] {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$violet-palette,
+        tertiary: mat.$azure-palette,
+        theme-type: color-scheme,
+      ),
+    )
+  );
+}
+
 /** Explicit dark/light override, used when the user picks one in settings. */
 html[data-theme='light'] {
   @include mat.theme-overrides(

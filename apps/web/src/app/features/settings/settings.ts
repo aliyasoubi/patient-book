@@ -1,9 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
+import { PaletteService, PaletteName } from '../../core/services/palette.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { PatientsService } from '../patients/data/patients.service';
 import { PersianCountPipe } from '../../shared/pipes/persian-number.pipe';
@@ -21,6 +23,7 @@ import type { ReferralSource, TreatmentType } from '../patients/data/patient.mod
     PbSurface,
     PbPageHeader,
     MatIconModule,
+    MatTooltipModule,
     TranslatePipe,
   ],
   templateUrl: './settings.html',
@@ -29,7 +32,10 @@ import type { ReferralSource, TreatmentType } from '../patients/data/patient.mod
 export class Settings {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  protected readonly palette = inject(PaletteService);
   private readonly patients = inject(PatientsService);
+
+  protected readonly paletteNames: readonly PaletteName[] = ['cyan', 'green', 'violet'];
 
   protected readonly roleLabel = roleLabel;
   protected readonly referralKindLabel = referralKindLabel;
@@ -51,5 +57,9 @@ export class Settings {
 
   protected setTheme(mode: ThemeMode): void {
     this.theme.set(mode);
+  }
+
+  protected setPalette(palette: PaletteName): void {
+    this.palette.set(palette);
   }
 }
