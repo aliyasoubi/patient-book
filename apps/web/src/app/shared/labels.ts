@@ -61,8 +61,16 @@ export function educationLabel(level: EducationLevel | string): string {
 
 /** Every education level, in the order a form should offer them. */
 export const EDUCATION_LEVELS: readonly EducationLevel[] = [
-  'none', 'primary', 'diploma', 'associate', 'bachelor',
-  'master', 'doctorate', 'student', 'other', 'unknown',
+  'none',
+  'primary',
+  'diploma',
+  'associate',
+  'bachelor',
+  'master',
+  'doctorate',
+  'student',
+  'other',
+  'unknown',
 ];
 
 export const GENDERS: readonly Gender[] = ['female', 'male', 'unknown'];
@@ -187,21 +195,38 @@ export function ageBandLabel(band: string): string {
  * Chip colours for the treatment catalogue, keyed by the `color` the API seeds
  * each treatment type with. Not localised — these are visual tokens.
  */
+const PRIMARY_TREATMENT = {
+  bg: 'var(--mat-sys-primary-container)',
+  fg: 'var(--mat-sys-on-primary-container)',
+};
+const SECONDARY_TREATMENT = {
+  bg: 'var(--mat-sys-secondary-container)',
+  fg: 'var(--mat-sys-on-secondary-container)',
+};
+const TERTIARY_TREATMENT = {
+  bg: 'var(--mat-sys-tertiary-container)',
+  fg: 'var(--mat-sys-on-tertiary-container)',
+};
+const ERROR_TREATMENT = {
+  bg: 'var(--mat-sys-error-container)',
+  fg: 'var(--mat-sys-on-error-container)',
+};
+
 export const TREATMENT_COLORS: Record<string, { bg: string; fg: string }> = {
-  violet: { bg: 'color-mix(in srgb, #7c4dff 16%, transparent)', fg: '#7c4dff' },
-  sky: { bg: 'color-mix(in srgb, #0288d1 16%, transparent)', fg: '#0288d1' },
-  indigo: { bg: 'color-mix(in srgb, #3f51b5 16%, transparent)', fg: '#3f51b5' },
-  rose: { bg: 'color-mix(in srgb, #e91e63 16%, transparent)', fg: '#e91e63' },
-  amber: { bg: 'color-mix(in srgb, #ff8f00 18%, transparent)', fg: '#ff8f00' },
-  cyan: { bg: 'color-mix(in srgb, #00acc1 16%, transparent)', fg: '#00acc1' },
-  teal: { bg: 'color-mix(in srgb, #00897b 16%, transparent)', fg: '#00897b' },
-  purple: { bg: 'color-mix(in srgb, #8e24aa 16%, transparent)', fg: '#8e24aa' },
-  orange: { bg: 'color-mix(in srgb, #f4511e 16%, transparent)', fg: '#f4511e' },
-  green: { bg: 'color-mix(in srgb, #43a047 16%, transparent)', fg: '#43a047' },
-  lime: { bg: 'color-mix(in srgb, #afb42b 20%, transparent)', fg: '#827717' },
-  pink: { bg: 'color-mix(in srgb, #d81b60 16%, transparent)', fg: '#d81b60' },
-  blue: { bg: 'color-mix(in srgb, #1e88e5 16%, transparent)', fg: '#1e88e5' },
-  primary: { bg: 'var(--mat-sys-secondary-container)', fg: 'var(--mat-sys-on-secondary-container)' },
+  sky: PRIMARY_TREATMENT,
+  cyan: PRIMARY_TREATMENT,
+  blue: PRIMARY_TREATMENT,
+  teal: SECONDARY_TREATMENT,
+  green: SECONDARY_TREATMENT,
+  lime: SECONDARY_TREATMENT,
+  violet: TERTIARY_TREATMENT,
+  indigo: TERTIARY_TREATMENT,
+  purple: TERTIARY_TREATMENT,
+  amber: TERTIARY_TREATMENT,
+  rose: ERROR_TREATMENT,
+  orange: ERROR_TREATMENT,
+  pink: ERROR_TREATMENT,
+  primary: PRIMARY_TREATMENT,
 };
 
 export function treatmentColor(key: string): { bg: string; fg: string } {

@@ -13,23 +13,60 @@
  * theme switch is needed for the default case.
  */
 html {
-  @include mat.theme((
-    color: (
-      primary: mat.$cyan-palette,
-      tertiary: mat.$azure-palette,
-      theme-type: color-scheme,
-    ),
-    typography: (
-      plain-family: (Vazirmatn, 'Segoe UI', Tahoma, sans-serif),
-      brand-family: (Vazirmatn, 'Segoe UI', Tahoma, sans-serif),
-      bold-weight: 700,
-      medium-weight: 500,
-      regular-weight: 400,
-    ),
-    density: 0,
-  ));
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$azure-palette,
+        theme-type: color-scheme,
+      ),
+      typography: (
+        plain-family: (
+          Vazirmatn,
+          'Segoe UI',
+          Tahoma,
+          sans-serif,
+        ),
+        brand-family: (
+          Vazirmatn,
+          'Segoe UI',
+          Tahoma,
+          sans-serif,
+        ),
+        bold-weight: 700,
+        medium-weight: 500,
+        regular-weight: 400,
+      ),
+      density: 0,
+    )
+  );
 
   color-scheme: light dark;
+  // App-level aliases keep layout and component roles consistent while M3
+  // remains the source of truth for colour, type and shape.
+  --pb-space-1: 4px;
+  --pb-space-2: 8px;
+  --pb-space-3: 12px;
+  --pb-space-4: 16px;
+  --pb-space-5: 24px;
+  --pb-space-6: 32px;
+  --pb-control-height: 48px;
+  --pb-search-height: 56px;
+  --pb-avatar-sm: 32px;
+  --pb-avatar-md: 40px;
+  --pb-avatar-lg: 56px;
+  --pb-icon-sm: 18px;
+  --pb-icon-md: 24px;
+  --pb-icon-lg: 32px;
+  --pb-page-content: 1200px;
+  --pb-page-wide: 1500px;
+  --pb-page-form: 960px;
+  --pb-page-narrow: 640px;
+  --pb-page-inline: 24px;
+  --pb-page-inline-compact: 12px;
+  --pb-page-block-start: 20px;
+  --pb-page-block-end: 32px;
+  --pb-page-gap: 16px;
   // Persian numerals are what staff read on paper charts; keep the app
   // consistent with the ledgers it replaces.
   font-variant-numeric: normal;
@@ -38,9 +75,11 @@ html {
 
 /** Explicit dark/light override, used when the user picks one in settings. */
 html[data-theme='light'] {
-  @include mat.theme-overrides((
-    // Nothing to override — light is the base emitted above.
-  ));
+  @include mat.theme-overrides(
+    (
+      // Nothing to override — light is the base emitted above.
+    )
+  );
   color-scheme: light;
 }
 

@@ -51,6 +51,9 @@ export class RegistryService<T extends RegistryCase> {
     }
     if (dto.status) qb.andWhere('c.status = :status', { status: dto.status });
     if (dto.unlinkedOnly) qb.andWhere('c."patientId" IS NULL');
+    if (dto.archivedOnly) {
+      qb.withDeleted().andWhere('c."deletedAt" IS NOT NULL');
+    }
 
     const sortable: Record<string, string> = {
       registryNo: 'c.registryNo',
@@ -77,79 +80,138 @@ export class RegistryService<T extends RegistryCase> {
   }
 
   async findOne(id: string): Promise<T> {
-    const row = await this.repo.findOne({
+    return this.findOneFrom(this.repo, id);
+  }
+
+  private async findOneFrom(
+    repository: Repository<T>,
+    id: string,
+    withDeleted = false,
+  ): Promise<T> {
+    const row = await repository.findOne({
       where: { id } as never,
       relations: { patient: true } as never,
+      withDeleted,
     });
     if (!row) throw AppException.notFound(ErrorCode.RegistryCaseNotFound);
     return row;
   }
 
   async create(dto: UpsertRegistryCaseDto, userId: string | null): Promise<T> {
-    const clash = await this.repo.findOne({ where: { registryNo: dto.registryNo } as never });
-    if (clash) {
-      throw AppException.conflict(ErrorCode.RegistryNumberTaken, {
-        registryNo: dto.registryNo,
+    return this.repo.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(this.repo.target);
+      const clash = await repository.findOne({
+        where: { registryNo: dto.registryNo } as never,
       });
-    }
-    const entity = this.repo.create(dto as never) as unknown as T;
-    entity.matchMethod = dto.patientId ? 'manual' : 'unmatched';
-    entity.searchText = this.buildSearch(entity);
-
-    const saved = await this.repo.save(entity as never);
-    await this.audit.record({
-      userId,
-      action: 'create',
-      entity: this.entityName,
-      entityId: (saved as unknown as T).id,
-      changes: { registryNo: dto.registryNo, recordedName: dto.recordedName },
-    });
-    return saved as unknown as T;
-  }
-
-  async update(id: string, dto: Partial<UpsertRegistryCaseDto>, userId: string | null): Promise<T> {
-    const existing = await this.findOne(id);
-    if (dto.registryNo && dto.registryNo !== existing.registryNo) {
-      const clash = await this.repo.findOne({ where: { registryNo: dto.registryNo } as never });
       if (clash) {
         throw AppException.conflict(ErrorCode.RegistryNumberTaken, {
           registryNo: dto.registryNo,
         });
       }
-    }
-    Object.assign(existing, dto);
-    // A human editing the link makes it authoritative.
-    if (dto.patientId !== undefined) {
-      existing.matchMethod = dto.patientId ? 'manual' : 'unmatched';
-    }
-    existing.searchText = this.buildSearch(existing);
+      const entity = repository.create(dto as never) as unknown as T;
+      entity.matchMethod = dto.patientId ? 'manual' : 'unmatched';
+      entity.searchText = this.buildSearch(entity);
 
-    const saved = await this.repo.save(existing as never);
-    await this.audit.record({
-      userId,
-      action: 'update',
-      entity: this.entityName,
-      entityId: id,
-      changes: dto as Record<string, unknown>,
+      const saved = (await repository.save(entity as never)) as unknown as T;
+      await this.audit.recordRequired(
+        {
+          userId,
+          action: 'create',
+          entity: this.entityName,
+          entityId: saved.id,
+          changes: {
+            registryNo: saved.registryNo,
+            recordedName: saved.recordedName,
+          },
+        },
+        manager,
+      );
+      return saved;
     });
-    return saved as unknown as T;
+  }
+
+  async update(
+    id: string,
+    dto: Partial<UpsertRegistryCaseDto>,
+    userId: string | null,
+  ): Promise<T> {
+    return this.repo.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(this.repo.target);
+      const existing = await this.findOneFrom(repository, id);
+      if (dto.registryNo && dto.registryNo !== existing.registryNo) {
+        const clash = await repository.findOne({
+          where: { registryNo: dto.registryNo } as never,
+        });
+        if (clash) {
+          throw AppException.conflict(ErrorCode.RegistryNumberTaken, {
+            registryNo: dto.registryNo,
+          });
+        }
+      }
+      Object.assign(existing, dto);
+      // A human editing the link makes it authoritative.
+      if (dto.patientId !== undefined) {
+        existing.matchMethod = dto.patientId ? 'manual' : 'unmatched';
+      }
+      existing.searchText = this.buildSearch(existing);
+
+      const saved = (await repository.save(existing as never)) as unknown as T;
+      await this.audit.recordRequired(
+        {
+          userId,
+          action: 'update',
+          entity: this.entityName,
+          entityId: id,
+          changes: dto,
+        },
+        manager,
+      );
+      return saved;
+    });
   }
 
   async remove(id: string, userId: string | null): Promise<void> {
-    const existing = await this.findOne(id);
-    await this.repo.delete(id);
-    await this.audit.record({
-      userId,
-      action: 'delete',
-      entity: this.entityName,
-      entityId: id,
-      changes: { registryNo: existing.registryNo },
+    await this.repo.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(this.repo.target);
+      const existing = await this.findOneFrom(repository, id);
+      await repository.softDelete(id);
+      await this.audit.recordRequired(
+        {
+          userId,
+          action: 'delete',
+          entity: this.entityName,
+          entityId: id,
+          changes: { registryNo: existing.registryNo },
+        },
+        manager,
+      );
     });
+  }
+
+  async restore(id: string, userId: string | null): Promise<T> {
+    await this.repo.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(this.repo.target);
+      const existing = await this.findOneFrom(repository, id, true);
+      await repository.restore(id);
+      await this.audit.recordRequired(
+        {
+          userId,
+          action: 'restore',
+          entity: this.entityName,
+          entityId: id,
+          changes: { registryNo: existing.registryNo },
+        },
+        manager,
+      );
+    });
+    return this.findOne(id);
   }
 
   private buildSearch(c: RegistryCase): string {
     return searchKey(
-      [c.registryNo, c.recordedName, c.mobile, c.homePhone].filter(Boolean).join(' '),
+      [c.registryNo, c.recordedName, c.mobile, c.homePhone]
+        .filter(Boolean)
+        .join(' '),
     );
   }
 }

@@ -1,12 +1,14 @@
 <div class="settings">
-  <h1 i18n>تنظیمات</h1>
+  <pb-page-header i18n-title title="تنظیمات" />
 
   <pb-surface icon="contrast" i18n-title title="ظاهر برنامه">
     <p class="panel__hint" i18n>حالت «خودکار» از تنظیمات سیستم‌عامل پیروی می‌کند.</p>
     <mat-button-toggle-group
       [value]="theme.mode()"
       (valueChange)="setTheme($event)"
-      i18n-aria-label aria-label="حالت نمایش">
+      i18n-aria-label
+      aria-label="حالت نمایش"
+    >
       <mat-button-toggle value="system" i18n>
         <mat-icon aria-hidden="true">brightness_auto</mat-icon>
         خودکار
@@ -54,9 +56,7 @@
     <ul class="catalogue">
       @for (r of referrals(); track r.id) {
         <li class="catalogue__item">
-          <mat-icon aria-hidden="true">{{
-            referralKindIcon(r.kind)
-          }}</mat-icon>
+          <mat-icon aria-hidden="true">{{ referralKindIcon(r.kind) }}</mat-icon>
           <span class="catalogue__name">{{ r.name }}</span>
           <span class="catalogue__kind">{{ referralKindLabel(r.kind) }}</span>
           @if (r.patientCount) {

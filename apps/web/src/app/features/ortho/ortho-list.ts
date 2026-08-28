@@ -6,26 +6,29 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { RegistryService } from '../../core/services/registry.service';
-import { AuthService } from '../../core/services/auth.service';
 import { RegistryTable } from '../../shared/components/registry-table';
 import { PersianCountPipe } from '../../shared/pipes/persian-number.pipe';
-import { PbCheckboxField, PbSearchField } from '../../shared/ui';
+import { PbCheckboxField, PbPageHeader, PbSearchField } from '../../shared/ui';
 import type { RegistryCase } from '../../core/models/common.model';
 
 @Component({
   selector: 'pb-ortho-list',
   standalone: true,
   imports: [
-    ReactiveFormsModule, MatPaginatorModule, MatProgressBarModule,
-    RegistryTable, PersianCountPipe, PbSearchField, PbCheckboxField,
+    ReactiveFormsModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
+    RegistryTable,
+    PersianCountPipe,
+    PbSearchField,
+    PbCheckboxField,
+    PbPageHeader,
   ],
   templateUrl: './ortho-list.html',
   styleUrl: './ortho-list.scss',
 })
 export class OrthoList {
   private readonly registry = inject(RegistryService);
-  protected readonly auth = inject(AuthService);
-
   protected readonly search = new FormControl('', { nonNullable: true });
   protected readonly page = signal(1);
   protected readonly limit = signal(25);
@@ -71,9 +74,7 @@ export class OrthoList {
   protected readonly emptyTitle = $localize`:@@ortho.emptyTitle:پرونده ارتودنسی یافت نشد`;
 
   protected emptyHint(): string {
-    return this.search.value
-      ? $localize`:@@search.changeQuery:عبارت جستجو را تغییر دهید.`
-      : '';
+    return this.search.value ? $localize`:@@search.changeQuery:عبارت جستجو را تغییر دهید.` : '';
   }
 
   protected onPage(event: PageEvent): void {

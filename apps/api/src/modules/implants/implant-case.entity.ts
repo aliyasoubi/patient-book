@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -38,7 +39,10 @@ export class ImplantCase {
   @Column({ type: 'uuid', nullable: true })
   patientId!: string | null;
 
-  @ManyToOne(() => Patient, (p) => p.implantCases, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Patient, (p) => p.implantCases, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'patientId' })
   patient!: Patient | null;
 
@@ -76,4 +80,7 @@ export class ImplantCase {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
+
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  deletedAt!: Date | null;
 }

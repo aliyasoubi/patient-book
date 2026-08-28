@@ -1,10 +1,5 @@
 <div class="form-page">
-  <header class="form-page__header">
-    <button mat-icon-button type="button" (click)="cancel()" i18n-aria-label aria-label="بازگشت">
-      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-    </button>
-    <h1>{{ title() }}</h1>
-  </header>
+  <pb-page-header [title]="title()" i18n-backLabel backLabel="بازگشت" (back)="cancel()" />
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />
@@ -16,10 +11,12 @@
       <div class="grid">
         <pb-text-field
           [control]="form.controls.fileNo"
-          i18n-label label="شماره پرونده"
+          i18n-label
+          label="شماره پرونده"
           prefixIcon="folder"
           [ltr]="true"
-          inputmode="numeric" />
+          inputmode="numeric"
+        />
 
         <pb-text-field [control]="form.controls.firstName" i18n-label label="نام" />
 
@@ -29,23 +26,32 @@
 
         <pb-text-field
           [control]="form.controls.nationalId"
-          i18n-label label="کد ملی"
+          i18n-label
+          label="کد ملی"
           [ltr]="true"
           inputmode="numeric"
           [maxlength]="10"
-          i18n-hint hint="۱۰ رقم" />
+          i18n-hint
+          hint="۱۰ رقم"
+        />
 
         <pb-select-field
           [control]="form.controls.gender"
           [options]="genderOptions"
-          i18n-label label="جنسیت" />
+          i18n-label
+          label="جنسیت"
+        />
 
         <pb-date-field
           [control]="form.controls.birthDate"
-          i18n-label label="تاریخ تولد"
+          i18n-label
+          label="تاریخ تولد"
           startView="multi-year"
-          i18n-placeholder placeholder="۱۳۶۸/۰۵/۱۲"
-          i18n-hint hint="تاریخ شمسی" />
+          i18n-placeholder
+          placeholder="۱۳۶۸/۰۵/۱۲"
+          i18n-hint
+          hint="تاریخ شمسی"
+        />
       </div>
     </pb-surface>
 
@@ -54,32 +60,41 @@
       <div class="grid">
         <pb-text-field
           [control]="form.controls.mobile"
-          i18n-label label="شماره موبایل"
+          i18n-label
+          label="شماره موبایل"
           prefixIcon="smartphone"
           [ltr]="true"
           inputmode="tel"
           [maxlength]="11"
-          i18n-hint hint="مثال: ۰۹۱۲۱۲۳۴۵۶۷" />
+          i18n-hint
+          hint="مثال: ۰۹۱۲۱۲۳۴۵۶۷"
+        />
 
         <pb-text-field
           [control]="form.controls.homePhone"
-          i18n-label label="تلفن منزل"
+          i18n-label
+          label="تلفن منزل"
           prefixIcon="call"
           [ltr]="true"
           inputmode="tel"
-          [errorMessages]="homePhoneErrors" />
+          [errorMessages]="homePhoneErrors"
+        />
 
         <pb-textarea-field
           class="grid__full"
           [control]="form.controls.homeAddress"
-          i18n-label label="آدرس منزل"
-          [rows]="2" />
+          i18n-label
+          label="آدرس منزل"
+          [rows]="2"
+        />
 
         <pb-textarea-field
           class="grid__full"
           [control]="form.controls.workAddress"
-          i18n-label label="آدرس محل کار"
-          [rows]="2" />
+          i18n-label
+          label="آدرس محل کار"
+          [rows]="2"
+        />
       </div>
     </pb-surface>
 
@@ -91,13 +106,18 @@
         <pb-select-field
           [control]="form.controls.education"
           [options]="educationOptions"
-          i18n-label label="تحصیلات" />
+          i18n-label
+          label="تحصیلات"
+        />
 
         <pb-text-field
           [control]="form.controls.referralSourceName"
-          i18n-label label="نحوه آشنایی"
+          i18n-label
+          label="نحوه آشنایی"
           [options]="referralMatches()"
-          i18n-hint hint="در صورت نبود، مورد جدید ساخته می‌شود" />
+          i18n-hint
+          hint="در صورت نبود، مورد جدید ساخته می‌شود"
+        />
 
         <pb-date-field [control]="form.controls.firstVisitAt" i18n-label label="اولین مراجعه" />
 
@@ -106,10 +126,13 @@
         <pb-textarea-field
           class="grid__full"
           [control]="form.controls.medicalHistory"
-          i18n-label label="سابقه بیماری قبلی"
+          i18n-label
+          label="سابقه بیماری قبلی"
           [rows]="2"
           prefixIcon="medical_information"
-          i18n-placeholder placeholder="مثال: فشار خون، دیابت، مصرف داروی رقیق‌کننده خون" />
+          i18n-placeholder
+          placeholder="مثال: فشار خون، دیابت، مصرف داروی رقیق‌کننده خون"
+        />
       </div>
     </pb-surface>
 
@@ -124,10 +147,9 @@
             [style.--tx-bg]="color(type.color).bg"
             [style.--tx-fg]="color(type.color).fg"
             [attr.aria-pressed]="isSelected(type.code)"
-            (click)="toggleTreatment(type.code)">
-            <mat-icon class="treatment__icon" aria-hidden="true">{{
-              type.icon
-            }}</mat-icon>
+            (click)="toggleTreatment(type.code)"
+          >
+            <mat-icon class="treatment__icon" aria-hidden="true">{{ type.icon }}</mat-icon>
             <span class="treatment__label">{{ type.nameFa }}</span>
             @if (isSelected(type.code)) {
               <mat-icon class="treatment__check" aria-hidden="true">check</mat-icon>
@@ -142,8 +164,10 @@
       <pb-textarea-field
         class="grid__full"
         [control]="form.controls.notes"
-        i18n-label label="یادداشت داخلی"
-        [rows]="3" />
+        i18n-label
+        label="یادداشت داخلی"
+        [rows]="3"
+      />
     </pb-surface>
 
     <!-- ── Actions ───────────────────────────────────────────────── -->
@@ -156,7 +180,8 @@
         type="submit"
         icon="save"
         [loading]="saving()"
-        [loadingText]="savingLabel">
+        [loadingText]="savingLabel"
+      >
         {{ submitLabel() }}
       </pb-button>
     </div>

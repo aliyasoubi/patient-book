@@ -1,16 +1,21 @@
-import { Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Component, HostListener, computed, inject, signal, viewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  of,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { PatientsService } from '../core/services/patients.service';
 import type { PatientSuggestion } from '../core/models/patient.model';
+import { PbSearchField, type SearchFieldOption } from '../shared/ui';
 
 /** Below this, a Persian query is too broad to be worth a round trip. */
 const MIN_QUERY_LENGTH = 2;
@@ -18,9 +23,7 @@ const MIN_QUERY_LENGTH = 2;
 @Component({
   selector: 'pb-global-search',
   standalone: true,
-  imports: [
-    ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatAutocompleteModule, MatProgressBarModule, MatIconModule],
+  imports: [PbSearchField],
   templateUrl: './global-search.html',
   styleUrl: './global-search.scss',
 })
@@ -28,7 +31,7 @@ export class GlobalSearch {
   private readonly patients = inject(PatientsService);
   private readonly router = inject(Router);
 
-  private readonly input = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  private readonly searchField = viewChild<PbSearchField>('searchField');
 
   protected readonly control = new FormControl('', { nonNullable: true });
   protected readonly loading = signal(false);
@@ -64,23 +67,33 @@ export class GlobalSearch {
     { initialValue: [] as PatientSuggestion[] },
   );
 
+  protected readonly searchOptions = computed<SearchFieldOption[]>(() =>
+    this.suggestions().map((item) => ({
+      value: item.id,
+      label: item.fullName || $localize`:@@patient.unnamed:بدون نام`,
+      meta: item.fileNo,
+      supporting: item.mobile,
+      icon: 'person',
+    })),
+  );
+
+  protected readonly emptyMessage = $localize`:@@globalSearch.empty:بیماری با این مشخصات پیدا نشد`;
+
   /** Ctrl/Cmd+K focuses the search from anywhere, as staff expect. */
   @HostListener('document:keydown', ['$event'])
   protected onKeydown(event: KeyboardEvent): void {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      this.input()?.nativeElement.focus();
+      this.searchField()?.focus();
     }
-    if (event.key === 'Escape' && document.activeElement === this.input()?.nativeElement) {
-      this.control.setValue('');
-      this.input()?.nativeElement.blur();
+    if (event.key === 'Escape' && this.searchField()?.isFocused()) {
+      this.searchField()?.clearAndBlur();
     }
   }
 
-  protected onSelect(event: MatAutocompleteSelectedEvent): void {
-    const selected = event.option.value as PatientSuggestion;
+  protected onSelect(patientId: string): void {
     this.control.setValue('');
-    void this.router.navigate(['/patients', selected.id]);
+    void this.router.navigate(['/patients', patientId]);
   }
 
   /** Enter without picking a suggestion runs a full search. */
@@ -92,7 +105,7 @@ export class GlobalSearch {
     void this.router.navigate(['/patients'], { queryParams: { q } });
   }
 
-  protected displayEmpty(): string {
-    return '';
+  protected displayEmpty(): boolean {
+    return this.control.value.trim().length >= MIN_QUERY_LENGTH;
   }
 }

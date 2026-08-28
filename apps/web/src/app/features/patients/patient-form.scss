@@ -1,27 +1,14 @@
 .form-page {
-  max-width: 960px;
+  max-width: var(--pb-page-form);
   margin-inline: auto;
-  padding: 16px 24px 32px;
+  padding: var(--pb-space-4) var(--pb-page-inline) var(--pb-page-block-end);
 
   @media (max-width: 700px) {
-    padding: 12px 12px 24px;
+    padding: var(--pb-space-3) var(--pb-page-inline-compact) var(--pb-space-5);
   }
 
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 16px;
-
-    h1 {
-      margin: 0;
-      font: var(--mat-sys-title-large);
-      font-weight: 700;
-
-      @media (max-width: 700px) {
-        font-size: var(--mat-sys-title-medium-size);
-      }
-    }
+  pb-page-header {
+    margin-bottom: var(--pb-space-4);
   }
 }
 
@@ -117,9 +104,5 @@
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 0;
-  background: linear-gradient(
-    to top,
-    var(--mat-sys-surface-container-lowest) 60%,
-    transparent
-  );
+  background: linear-gradient(to top, var(--mat-sys-surface-container-lowest) 60%, transparent);
 }

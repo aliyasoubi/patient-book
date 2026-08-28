@@ -1,14 +1,10 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
 
-import { AuthTokens, AuthUser, UserRole } from '../models/common.model';
+import { AuthSession, AuthUser, UserRole } from '../models/common.model';
 import { environment } from '../../../environments/environment';
-
-const ACCESS_KEY = 'pb.access';
-const REFRESH_KEY = 'pb.refresh';
-const USER_KEY = 'pb.user';
 
 /** Who may do what. Mirrors the guards on the API — the server still enforces. */
 const PERMISSIONS = {
@@ -25,7 +21,8 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
-  private readonly _user = signal<AuthUser | null>(this.readStoredUser());
+  private readonly _accessToken = signal<string | null>(null);
+  private readonly _user = signal<AuthUser | null>(null);
 
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => this._user() !== null);
@@ -41,58 +38,73 @@ export class AuthService {
     return role !== null && (PERMISSIONS[permission] as readonly string[]).includes(role);
   }
 
-  login(username: string, password: string): Observable<AuthTokens> {
-    return this.http
-      .post<AuthTokens>(`${environment.apiUrl}/auth/login`, { username, password })
-      .pipe(tap((tokens) => this.store(tokens)));
+  /** Restore a browser session from the Secure HttpOnly refresh cookie. */
+  restoreSession(): Observable<void> {
+    return this.refresh().pipe(
+      map(() => undefined),
+      catchError(() => {
+        this.clearSession(false);
+        return of(undefined);
+      }),
+    );
   }
 
-  refresh(): Observable<AuthTokens> {
-    const refreshToken = localStorage.getItem(REFRESH_KEY) ?? '';
+  login(username: string, password: string): Observable<AuthSession> {
     return this.http
-      .post<AuthTokens>(`${environment.apiUrl}/auth/refresh`, { refreshToken })
-      .pipe(tap((tokens) => this.store(tokens)));
+      .post<AuthSession>(
+        `${environment.apiUrl}/auth/login`,
+        { username, password },
+        {
+          withCredentials: true,
+        },
+      )
+      .pipe(tap((session) => this.store(session)));
+  }
+
+  refresh(): Observable<AuthSession> {
+    return this.http
+      .post<AuthSession>(`${environment.apiUrl}/auth/refresh`, {}, { withCredentials: true })
+      .pipe(tap((session) => this.store(session)));
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/auth/change-password`, {
-      currentPassword,
-      newPassword,
-    });
+    return this.http.post<void>(
+      `${environment.apiUrl}/auth/change-password`,
+      {
+        currentPassword,
+        newPassword,
+      },
+      { withCredentials: true },
+    );
   }
 
   logout(redirect = true): void {
-    localStorage.removeItem(ACCESS_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    localStorage.removeItem(USER_KEY);
-    this._user.set(null);
-    if (redirect) void this.router.navigate(['/login']);
+    this.http
+      .post<void>(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
+      .pipe(
+        catchError(() => of(undefined)),
+        finalize(() => this.clearSession(redirect)),
+      )
+      .subscribe();
   }
 
   get accessToken(): string | null {
-    return localStorage.getItem(ACCESS_KEY);
+    return this._accessToken();
   }
 
-  get refreshToken(): string | null {
-    return localStorage.getItem(REFRESH_KEY);
+  /** Clear local authentication after a rejected refresh without another request. */
+  expireSession(redirect = true): void {
+    this.clearSession(redirect);
   }
 
-  private store(tokens: AuthTokens): void {
-    localStorage.setItem(ACCESS_KEY, tokens.accessToken);
-    localStorage.setItem(REFRESH_KEY, tokens.refreshToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(tokens.user));
-    this._user.set(tokens.user);
+  private store(session: AuthSession): void {
+    this._accessToken.set(session.accessToken);
+    this._user.set(session.user);
   }
 
-  private readStoredUser(): AuthUser | null {
-    const raw = localStorage.getItem(USER_KEY);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as AuthUser;
-    } catch {
-      // Corrupt storage should log the user out, not crash the app shell.
-      localStorage.removeItem(USER_KEY);
-      return null;
-    }
+  private clearSession(redirect: boolean): void {
+    this._accessToken.set(null);
+    this._user.set(null);
+    if (redirect) void this.router.navigate(['/login']);
   }
 }

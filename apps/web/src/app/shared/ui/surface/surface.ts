@@ -31,13 +31,13 @@ import { MatIconModule } from '@angular/material/icon';
   styles: `
     :host {
       display: block;
-      padding: 18px;
+      padding: var(--pb-space-4);
       border: 1px solid var(--mat-sys-outline-variant);
       border-radius: var(--mat-sys-corner-large);
       background: var(--mat-sys-surface);
 
       @media (max-width: 700px) {
-        padding: 14px;
+        padding: var(--pb-space-3);
       }
     }
 
@@ -53,16 +53,16 @@ import { MatIconModule } from '@angular/material/icon';
     .pb-surface__header {
       display: flex;
       align-items: baseline;
-      gap: 8px;
-      margin-bottom: 14px;
+      gap: var(--pb-space-2);
+      margin-bottom: var(--pb-space-3);
     }
 
     :host(.pb-surface--flush) .pb-surface__header {
-      margin: 18px 18px 0;
+      margin: var(--pb-space-4) var(--pb-space-4) 0;
     }
 
     .pb-surface__icon {
-      font-size: 19px;
+      font-size: var(--pb-icon-sm);
       color: var(--mat-sys-primary);
       align-self: center;
     }
@@ -81,7 +81,7 @@ import { MatIconModule } from '@angular/material/icon';
     }
 
     :host(.pb-surface--flush) .pb-surface__body {
-      padding: 18px;
+      padding: var(--pb-space-4);
     }
   `,
 })

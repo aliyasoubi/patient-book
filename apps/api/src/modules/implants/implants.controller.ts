@@ -1,5 +1,14 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -34,7 +43,10 @@ export class ImplantsController {
   @Post()
   @Roles(UserRole.Admin, UserRole.Dentist, UserRole.Receptionist)
   @ApiOperation({ summary: 'Create an implant register entry' })
-  create(@Body() dto: UpsertRegistryCaseDto, @CurrentUser('id') userId: string) {
+  create(
+    @Body() dto: UpsertRegistryCaseDto,
+    @CurrentUser('id') userId: string,
+  ) {
     return this.registry.create(dto, userId);
   }
 
@@ -52,8 +64,21 @@ export class ImplantsController {
   @Delete(':id')
   @HttpCode(204)
   @Roles(UserRole.Admin, UserRole.Dentist)
-  @ApiOperation({ summary: 'Delete an implant register entry' })
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+  @ApiOperation({ summary: 'Archive an implant register entry' })
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
     return this.registry.remove(id, userId);
+  }
+
+  @Post(':id/restore')
+  @Roles(UserRole.Admin, UserRole.Dentist)
+  @ApiOperation({ summary: 'Restore an archived implant register entry' })
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.registry.restore(id, userId);
   }
 }

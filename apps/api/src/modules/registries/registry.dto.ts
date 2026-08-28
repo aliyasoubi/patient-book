@@ -22,7 +22,9 @@ const clean = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? normalizeForDisplay(value) || null : value;
 
 export class QueryRegistryDto extends PaginationDto {
-  @ApiPropertyOptional({ description: 'Search across register number and name' })
+  @ApiPropertyOptional({
+    description: 'Search across register number and name',
+  })
   @IsString()
   @MaxLength(120)
   @IsOptional()
@@ -38,10 +40,19 @@ export class QueryRegistryDto extends PaginationDto {
   @IsBoolean()
   @IsOptional()
   unlinkedOnly?: boolean;
+
+  @ApiPropertyOptional({ description: 'Only archived entries' })
+  @Transform(toBool)
+  @IsBoolean()
+  @IsOptional()
+  archivedOnly?: boolean;
 }
 
 export class UpsertRegistryCaseDto {
-  @ApiPropertyOptional({ description: 'Number within this register (independent of the main file number)' })
+  @ApiPropertyOptional({
+    description:
+      'Number within this register (independent of the main file number)',
+  })
   @Transform(clean)
   @Matches(/^\d{1,24}$/)
   registryNo!: string;

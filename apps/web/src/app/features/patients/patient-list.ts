@@ -21,10 +21,19 @@ import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-
 import { TreatmentChips } from '../../shared/components/treatment-chips';
 import { EmptyState } from '../../shared/components/empty-state';
 import {
-  EDUCATION_LEVELS, GENDERS, educationLabel, genderIcon, genderLabel,
+  EDUCATION_LEVELS,
+  GENDERS,
+  educationLabel,
+  genderIcon,
+  genderLabel,
 } from '../../shared/labels';
 import {
-  PbButton, PbCheckboxField, PbSearchField, PbSelectField,
+  PbAvatar,
+  PbButton,
+  PbCheckboxField,
+  PbPageHeader,
+  PbSearchField,
+  PbSelectField,
 } from '../../shared/ui';
 import type { SelectOption } from '../../shared/ui';
 import type { Patient, TreatmentType } from '../../core/models/patient.model';
@@ -62,12 +71,29 @@ const EMPTY_FILTERS: Filters = {
   selector: 'pb-patient-list',
   standalone: true,
   imports: [
-    ReactiveFormsModule, RouterLink,
-    MatTableModule, MatSortModule, MatPaginatorModule, MatChipsModule, MatButtonModule,
-    MatMenuModule, MatProgressBarModule, MatTooltipModule,
-    JalaliPipe, PersianNumberPipe, PersianCountPipe,
-    TreatmentChips, EmptyState,
-    PbSearchField, PbSelectField, PbCheckboxField, PbButton, MatIconModule],
+    ReactiveFormsModule,
+    RouterLink,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatChipsModule,
+    MatButtonModule,
+    MatMenuModule,
+    MatProgressBarModule,
+    MatTooltipModule,
+    JalaliPipe,
+    PersianNumberPipe,
+    PersianCountPipe,
+    TreatmentChips,
+    EmptyState,
+    PbSearchField,
+    PbSelectField,
+    PbCheckboxField,
+    PbButton,
+    PbAvatar,
+    PbPageHeader,
+    MatIconModule,
+  ],
   templateUrl: './patient-list.html',
   styleUrl: './patient-list.scss',
 })

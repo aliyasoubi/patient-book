@@ -30,11 +30,25 @@ async function main(): Promise<void> {
         created++;
       }
     }
-    console.log(`✓  Treatment catalogue: ${TREATMENT_TYPES.length} types (${created} new)`);
+    console.log(
+      `✓  Treatment catalogue: ${TREATMENT_TYPES.length} types (${created} new)`,
+    );
 
     const users = dataSource.getRepository(User);
     const username = process.env.SEED_ADMIN_USERNAME ?? 'admin';
-    const password = process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe!2026';
+    const configuredPassword = process.env.SEED_ADMIN_PASSWORD;
+    if (
+      process.env.NODE_ENV === 'production' &&
+      (!configuredPassword ||
+        configuredPassword === 'ChangeMe!2026' ||
+        configuredPassword.length < 12 ||
+        /(?:change[-_ ]?me|insecure|example|default)/i.test(configuredPassword))
+    ) {
+      throw new Error(
+        'SEED_ADMIN_PASSWORD must be a non-placeholder password of at least 12 characters when seeding production',
+      );
+    }
+    const password = configuredPassword ?? 'ChangeMe!2026';
     const existingAdmin = await users.findOne({ where: { username } });
 
     if (existingAdmin) {
@@ -47,10 +61,13 @@ async function main(): Promise<void> {
           fullName: 'مدیر سیستم',
           role: UserRole.Admin,
           isActive: true,
+          mustChangePassword: true,
         }),
       );
       console.log(`✓  Admin created — username: ${username}`);
-      console.log(`   Password comes from SEED_ADMIN_PASSWORD. Change it after first login.`);
+      console.log(
+        `   Password comes from SEED_ADMIN_PASSWORD. Change it after first login.`,
+      );
     }
   } finally {
     await dataSource.destroy();

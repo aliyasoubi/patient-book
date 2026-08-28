@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -28,16 +27,32 @@ import type {
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import {
-  PbButton, PbDateField, PbSelectField, PbSurface, PbTextareaField, PbTextField,
+  PbButton,
+  PbDateField,
+  PbPageHeader,
+  PbSelectField,
+  PbSurface,
+  PbTextareaField,
+  PbTextField,
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
+import { applyPatientDateChanges } from './patient-form.utils';
 
 @Component({
   selector: 'pb-patient-form',
   standalone: true,
   imports: [
-    ReactiveFormsModule, MatButtonModule, MatProgressBarModule,
-    PbTextField, PbTextareaField, PbSelectField, PbDateField, PbButton, PbSurface, MatIconModule],
+    ReactiveFormsModule,
+    MatProgressBarModule,
+    PbTextField,
+    PbTextareaField,
+    PbSelectField,
+    PbDateField,
+    PbButton,
+    PbSurface,
+    PbPageHeader,
+    MatIconModule,
+  ],
   templateUrl: './patient-form.html',
   styleUrl: './patient-form.scss',
 })
@@ -238,17 +253,25 @@ export class PatientForm {
       treatments: [...this.selectedTreatments()].map((code) => ({ code })),
     };
 
-    // Only send a date the user actually set; omitting the key leaves whatever
-    // the record already holds, including imprecise imported values.
-    const dates: Array<['birthDate' | 'firstVisitAt' | 'lastVisitAt', Date | null]> = [
-      ['birthDate', raw.birthDate],
-      ['firstVisitAt', raw.firstVisitAt],
-      ['lastVisitAt', raw.lastVisitAt],
-    ];
-    for (const [key, value] of dates) {
-      if (value) payload[key] = this.dateAdapter.toIso8601(value);
-      else if (this.isEdit() && this.originalHadDate(key)) payload[key] = null;
-    }
+    applyPatientDateChanges(
+      payload,
+      this.isEdit(),
+      {
+        birthDate: {
+          value: raw.birthDate,
+          dirty: this.form.controls.birthDate.dirty,
+        },
+        firstVisitAt: {
+          value: raw.firstVisitAt,
+          dirty: this.form.controls.firstVisitAt.dirty,
+        },
+        lastVisitAt: {
+          value: raw.lastVisitAt,
+          dirty: this.form.controls.lastVisitAt.dirty,
+        },
+      },
+      (value) => this.dateAdapter.toIso8601(value),
+    );
 
     const request = this.isEdit()
       ? this.service.update(this.id()!, payload)
@@ -270,11 +293,6 @@ export class PatientForm {
         this.applyServerErrors(error);
       },
     });
-  }
-
-  private originalHadDate(key: 'birthDate' | 'firstVisitAt' | 'lastVisitAt'): boolean {
-    const p = this.original();
-    return !!p && p[key] !== null;
   }
 
   /**

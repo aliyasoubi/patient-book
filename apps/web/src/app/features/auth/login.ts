@@ -12,7 +12,14 @@ import { PbButton, PbTextField } from '../../shared/ui';
 @Component({
   selector: 'pb-login',
   standalone: true,
-  imports: [ReactiveFormsModule, MatCardModule, MatProgressBarModule, PbTextField, PbButton, MatIconModule],
+  imports: [
+    ReactiveFormsModule,
+    MatCardModule,
+    MatProgressBarModule,
+    PbTextField,
+    PbButton,
+    MatIconModule,
+  ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -42,8 +49,10 @@ export class Login {
 
     const { username, password } = this.form.getRawValue();
     this.auth.login(username, password).subscribe({
-      next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
+      next: (session) => {
+        const returnUrl = session.user.mustChangePassword
+          ? '/settings/account'
+          : (this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard');
         void this.router.navigateByUrl(returnUrl);
       },
       error: (error: unknown) => {

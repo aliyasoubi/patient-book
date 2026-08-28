@@ -1,32 +1,29 @@
 .account {
-  max-width: 620px;
+  max-width: var(--pb-page-narrow);
   margin-inline: auto;
-  padding: 16px 24px 32px;
+  padding: var(--pb-space-4) var(--pb-page-inline) var(--pb-page-block-end);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--pb-page-gap);
 
   @media (max-width: 700px) {
-    padding: 12px 12px 24px;
+    padding: var(--pb-space-3) var(--pb-page-inline-compact) var(--pb-space-5);
   }
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    h1 {
-      margin: 0;
-      font: var(--mat-sys-title-large);
-      font-weight: 700;
-    }
-  }
+.password-required {
+  margin: 0;
+  padding: var(--pb-space-3) var(--pb-space-4);
+  border-radius: var(--mat-sys-corner-medium);
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+  font: var(--mat-sys-body-medium);
 }
 
 // pb-surface owns the bordered-panel look and its icon+title header now;
 // only the hint paragraph beneath the title is still this page's own concern.
 .panel__hint {
-  margin: 0 0 18px;
+  margin: 0 0 var(--pb-space-4);
   font-size: var(--mat-sys-body-medium-size);
   font-weight: var(--mat-sys-body-medium-weight);
   letter-spacing: var(--mat-sys-body-medium-tracking);
@@ -37,21 +34,7 @@
 .identity {
   display: flex;
   align-items: center;
-  gap: 14px;
-
-  &__avatar {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-primary-container);
-    color: var(--mat-sys-on-primary-container);
-
-    .material-symbols-rounded {
-      font-size: 25px;
-    }
-  }
+  gap: var(--pb-space-4);
 
   strong {
     display: block;
@@ -76,6 +59,6 @@
   &__actions {
     display: flex;
     justify-content: flex-end;
-    margin-top: 12px;
+    margin-top: var(--pb-space-3);
   }
 }

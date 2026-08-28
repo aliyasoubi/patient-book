@@ -1,29 +1,28 @@
 <div class="registry-page">
-  <header class="registry-page__header">
-    <div>
-      <h1 i18n>دفتر ارتودنسی</h1>
-      <p class="registry-page__note" i18n>
-        شماره‌گذاری این دفتر مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره
-        نمی‌کند.
-      </p>
-    </div>
-    @if (!loading() && total() > 0) {
-      <span class="registry-page__count">{{ total() | faCount }} پرونده</span>
-    }
-  </header>
+  <pb-page-header
+    i18n-title
+    title="دفتر ارتودنسی"
+    i18n-subtitle
+    subtitle="شماره‌گذاری این دفتر مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره نمی‌کند."
+    [count]="!loading() && total() > 0 ? (total() | faCount) + ' پرونده' : null"
+  />
 
   <div class="registry-page__toolbar">
     <pb-search-field
       class="registry-page__search"
       [control]="search"
-      i18n-placeholder placeholder="جستجوی شماره یا نام…"
-      i18n-ariaLabel ariaLabel="جستجو در دفتر ارتودنسی" />
+      i18n-placeholder
+      placeholder="جستجوی شماره یا نام…"
+      i18n-ariaLabel
+      ariaLabel="جستجو در دفتر ارتودنسی"
+    />
 
     <pb-checkbox-field
       [checked]="unlinkedOnly()"
       (checkedChange)="toggleUnlinked($event)"
       class="registry-page__filter"
-      i18n>
+      i18n
+    >
       فقط بدون اتصال
     </pb-checkbox-field>
   </div>
@@ -37,7 +36,8 @@
     icon="straighten"
     [emptyTitle]="emptyTitle"
     [emptyHint]="emptyHint()"
-    [canEdit]="false" />
+    [canEdit]="false"
+  />
 
   @if (total() > 0) {
     <mat-paginator
@@ -46,6 +46,8 @@
       [pageSize]="limit()"
       [pageSizeOptions]="[10, 25, 50, 100]"
       (page)="onPage($event)"
-      i18n-aria-label aria-label="صفحه‌بندی" />
+      i18n-aria-label
+      aria-label="صفحه‌بندی"
+    />
   }
 </div>

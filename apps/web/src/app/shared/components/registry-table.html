@@ -15,16 +15,25 @@
           @if (c.patient) {
             <a class="registry__link" [routerLink]="['/patients', c.patient.id]" i18n>
               <mat-icon aria-hidden="true">link</mat-icon>
-              <span>پرونده <span class="ltr-nums">{{ c.patient.fileNo }}</span></span>
+              <span
+                >پرونده <span class="ltr-nums">{{ c.patient.fileNo }}</span></span
+              >
               @if (patientName(c) !== c.recordedName) {
                 <span class="registry__alias">({{ patientName(c) }})</span>
               }
-              <span class="registry__match" [matTooltip]="matchMethodLabel(c.matchMethod)">
+              <pb-status-chip
+                class="registry__match"
+                [matTooltip]="matchMethodLabel(c.matchMethod)"
+              >
                 {{ matchMethodLabel(c.matchMethod) }}
-              </span>
+              </pb-status-chip>
             </a>
           } @else {
-            <span class="registry__unlinked" i18n-matTooltip matTooltip="این پرونده به هیچ بیماری در دفتر اصلی متصل نیست">
+            <span
+              class="registry__unlinked"
+              i18n-matTooltip
+              matTooltip="این پرونده به هیچ بیماری در دفتر اصلی متصل نیست"
+            >
               <mat-icon aria-hidden="true">link_off</mat-icon>
               بدون اتصال به پرونده اصلی
             </span>
@@ -35,15 +44,17 @@
           @if (c.mobile) {
             <a class="registry__phone ltr-nums" [href]="'tel:' + c.mobile">{{ c.mobile }}</a>
           }
-          <span class="registry__status" [attr.data-status]="c.status">
+          <pb-status-chip [tone]="c.status === 'active' ? 'success' : 'neutral'">
             {{ statusLabel(c.status) }}
-          </span>
+          </pb-status-chip>
           @if (canEdit()) {
             <button
               mat-icon-button
               type="button"
               (click)="edit.emit(c)"
-              i18n-aria-label aria-label="ویرایش پرونده">
+              i18n-aria-label
+              aria-label="ویرایش پرونده"
+            >
               <mat-icon aria-hidden="true">edit</mat-icon>
             </button>
           }

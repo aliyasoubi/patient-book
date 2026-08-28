@@ -67,6 +67,7 @@ const DOMAIN_ERROR_STATUS: Partial<Record<ErrorCode, HttpStatus>> = {
   [ErrorCode.InvalidCredentials]: HttpStatus.UNAUTHORIZED,
   [ErrorCode.SessionExpired]: HttpStatus.UNAUTHORIZED,
   [ErrorCode.SessionRevoked]: HttpStatus.UNAUTHORIZED,
+  [ErrorCode.PasswordChangeRequired]: HttpStatus.FORBIDDEN,
   [ErrorCode.CurrentPasswordWrong]: HttpStatus.UNAUTHORIZED,
   [ErrorCode.AccountDisabled]: HttpStatus.FORBIDDEN,
   [ErrorCode.FileNumberTaken]: HttpStatus.CONFLICT,

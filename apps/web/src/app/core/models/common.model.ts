@@ -21,11 +21,11 @@ export interface AuthUser {
   username: string;
   fullName: string;
   role: UserRole;
+  mustChangePassword: boolean;
 }
 
-export interface AuthTokens {
+export interface AuthSession {
   accessToken: string;
-  refreshToken: string;
   user: AuthUser;
 }
 
@@ -71,7 +71,13 @@ export interface DashboardStats {
     needsReview: number;
   };
   gender: Array<{ key: string; count: number }>;
-  topTreatments: Array<{ code: string; nameFa: string; icon: string; color: string; count: number }>;
+  topTreatments: Array<{
+    code: string;
+    nameFa: string;
+    icon: string;
+    color: string;
+    count: number;
+  }>;
   topReferrals: Array<{ id: string; name: string; kind: string; count: number }>;
   newPatientsByMonth: Array<{ month: string; count: number }>;
   ageBands: Array<{ band: string; count: number }>;

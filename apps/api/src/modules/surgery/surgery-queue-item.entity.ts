@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -28,7 +29,10 @@ export class SurgeryQueueItem {
   @Column({ type: 'uuid', nullable: true })
   implantCaseId!: string | null;
 
-  @ManyToOne(() => ImplantCase, (c) => c.surgeries, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => ImplantCase, (c) => c.surgeries, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'implantCaseId' })
   implantCase!: ImplantCase | null;
 
@@ -79,7 +83,11 @@ export class SurgeryQueueItem {
   @Column({ type: 'varchar', length: 60, nullable: true })
   prosthesisDue!: string | null;
 
-  @Column({ type: 'enum', enum: SurgeryStatus, default: SurgeryStatus.Scheduled })
+  @Column({
+    type: 'enum',
+    enum: SurgeryStatus,
+    default: SurgeryStatus.Scheduled,
+  })
   status!: SurgeryStatus;
 
   @Column({ type: 'text', nullable: true })
@@ -93,4 +101,7 @@ export class SurgeryQueueItem {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
+
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  deletedAt!: Date | null;
 }

@@ -15,13 +15,6 @@ export class LoginDto {
   password!: string;
 }
 
-export class RefreshDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  refreshToken!: string;
-}
-
 export class ChangePasswordDto {
   @ApiProperty()
   @IsString()
@@ -43,11 +36,24 @@ export interface JwtPayload {
   tv: number;
 }
 
-export class AuthTokens {
+export interface AuthUserResponse {
+  id: string;
+  username: string;
+  fullName: string;
+  role: string;
+  mustChangePassword: boolean;
+}
+
+export class AuthSession {
   @ApiProperty()
   accessToken!: string;
+
+  @ApiProperty()
+  user!: AuthUserResponse;
+}
+
+/** Internal token pair; the controller stores refreshToken in an HttpOnly cookie. */
+export class AuthTokens extends AuthSession {
   @ApiProperty()
   refreshToken!: string;
-  @ApiProperty()
-  user!: { id: string; username: string; fullName: string; role: string };
 }

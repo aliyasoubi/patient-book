@@ -1,8 +1,9 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
+import { Observable, catchError, finalize, shareReplay, switchMap, throwError } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
+import type { AuthSession } from '../models/common.model';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -10,59 +11,46 @@ import { environment } from '../../../environments/environment';
  * refresh, not one per request. `null` means "a refresh is running"; the token
  * value is published when it completes.
  */
-let refreshInFlight = false;
-const refreshedToken = new BehaviorSubject<string | null>(null);
+let refreshRequest$: Observable<AuthSession> | null = null;
 
 /** Endpoints that must never carry a token or trigger a refresh loop. */
-const AUTH_ENDPOINTS = ['/auth/login', '/auth/refresh'];
+const PUBLIC_AUTH_ENDPOINTS = ['/auth/login', '/auth/refresh', '/auth/logout'];
+const NON_REFRESHABLE_ENDPOINTS = PUBLIC_AUTH_ENDPOINTS;
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
 
   const isApiCall = req.url.startsWith(environment.apiUrl) || req.url.startsWith('/api');
-  const isAuthCall = AUTH_ENDPOINTS.some((e) => req.url.includes(e));
+  const isPublicAuthCall = PUBLIC_AUTH_ENDPOINTS.some((endpoint) => req.url.includes(endpoint));
+  const isRefreshable = !NON_REFRESHABLE_ENDPOINTS.some((endpoint) => req.url.includes(endpoint));
 
   const token = auth.accessToken;
   const authorized =
-    isApiCall && !isAuthCall && token
+    isApiCall && !isPublicAuthCall && token
       ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
       : req;
 
   return next(authorized).pipe(
     catchError((error: unknown) => {
-      if (!(error instanceof HttpErrorResponse) || error.status !== 401 || isAuthCall) {
-        return throwError(() => error);
-      }
-      if (!auth.refreshToken) {
-        auth.logout();
+      if (!(error instanceof HttpErrorResponse) || error.status !== 401 || !isRefreshable) {
         return throwError(() => error);
       }
 
-      if (refreshInFlight) {
-        // Queue behind the refresh already running, then retry.
-        return refreshedToken.pipe(
-          filter((t): t is string => t !== null),
-          take(1),
-          switchMap((fresh) =>
-            next(req.clone({ setHeaders: { Authorization: `Bearer ${fresh}` } })),
-          ),
-        );
-      }
-
-      refreshInFlight = true;
-      refreshedToken.next(null);
-
-      return auth.refresh().pipe(
-        switchMap((tokens) => {
-          refreshInFlight = false;
-          refreshedToken.next(tokens.accessToken);
-          return next(req.clone({ setHeaders: { Authorization: `Bearer ${tokens.accessToken}` } }));
-        }),
+      refreshRequest$ ??= auth.refresh().pipe(
         catchError((refreshError: unknown) => {
-          refreshInFlight = false;
-          auth.logout();
+          auth.expireSession();
           return throwError(() => refreshError);
         }),
+        finalize(() => {
+          refreshRequest$ = null;
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+
+      return refreshRequest$.pipe(
+        switchMap((session) =>
+          next(req.clone({ setHeaders: { Authorization: `Bearer ${session.accessToken}` } })),
+        ),
       );
     }),
   );

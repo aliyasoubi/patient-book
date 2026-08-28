@@ -13,7 +13,7 @@
         <source>داشبورد — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">28</context>
+          <context context-type="linenumber">29</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.patients" datatype="html">
@@ -27,56 +27,56 @@
         <source>بیمار جدید — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">40</context>
+          <context context-type="linenumber">39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.patientDetail" datatype="html">
         <source>پرونده بیمار — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">46</context>
+          <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.patientEdit" datatype="html">
         <source>ویرایش پرونده — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">52</context>
+          <context context-type="linenumber">50</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.implants" datatype="html">
         <source>دفتر ایمپلنت — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">57</context>
+          <context context-type="linenumber">55</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.ortho" datatype="html">
         <source>دفتر ارتودنسی — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">62</context>
+          <context context-type="linenumber">60</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.surgery" datatype="html">
         <source>لیست انتظار جراحی — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">67</context>
+          <context context-type="linenumber">65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.settings" datatype="html">
         <source>تنظیمات — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">72</context>
+          <context context-type="linenumber">70</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.account" datatype="html">
         <source>حساب کاربری — دفترچه بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">77</context>
+          <context context-type="linenumber">75</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.network" datatype="html">
@@ -114,312 +114,319 @@
           <context context-type="linenumber">51</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="error.passwordChangeRequired" datatype="html">
+        <source>پیش از دسترسی به پرونده‌ها باید رمز عبور اولیه را تغییر دهید.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
+          <context context-type="linenumber">53</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="error.currentPasswordWrong" datatype="html">
         <source>رمز عبور فعلی نادرست است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">55</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.usernameTaken" datatype="html">
         <source>این نام کاربری قبلاً ثبت شده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">55</context>
+          <context context-type="linenumber">57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.cannotDisableSelf" datatype="html">
         <source>نمی‌توانید حساب خودتان را غیرفعال کنید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">57</context>
+          <context context-type="linenumber">59</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.cannotDemoteSelf" datatype="html">
         <source>نمی‌توانید نقش مدیریتی خودتان را تغییر دهید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">61</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.cannotDeleteSelf" datatype="html">
         <source>نمی‌توانید حساب خودتان را حذف کنید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">61</context>
+          <context context-type="linenumber">63</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.unauthorized" datatype="html">
         <source>برای انجام این کار باید وارد شوید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">63</context>
+          <context context-type="linenumber">65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.forbidden" datatype="html">
         <source>برای این عملیات دسترسی کافی ندارید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">65</context>
+          <context context-type="linenumber">67</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.rateLimited" datatype="html">
         <source>تعداد درخواست‌ها زیاد است. کمی صبر کنید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">67</context>
+          <context context-type="linenumber">69</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.patientNotFoundWithFile" datatype="html">
         <source>پرونده <x id="fileNo" equiv-text="params[&apos;fileNo&apos;]"/> پیدا نشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">72</context>
+          <context context-type="linenumber">74</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.patientNotFound" datatype="html">
         <source>پرونده بیمار پیدا نشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">73</context>
+          <context context-type="linenumber">75</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.fileNumberTaken" datatype="html">
         <source>شماره پرونده <x id="fileNo" equiv-text="params[&apos;fileNo&apos;]"/> قبلاً ثبت شده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">75</context>
+          <context context-type="linenumber">77</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.registryCaseNotFoundWithNo" datatype="html">
         <source>شماره <x id="registryNo" equiv-text="params[&apos;registryNo&apos;]"/> در این دفتر وجود ندارد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">78</context>
+          <context context-type="linenumber">80</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.registryCaseNotFound" datatype="html">
         <source>پرونده در این دفتر پیدا نشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">79</context>
+          <context context-type="linenumber">81</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.registryNumberTaken" datatype="html">
         <source>شماره <x id="registryNo" equiv-text="params[&apos;registryNo&apos;]"/> در این دفتر قبلاً ثبت شده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">81</context>
+          <context context-type="linenumber">83</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.surgeryItemNotFound" datatype="html">
         <source>ردیف لیست جراحی پیدا نشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">83</context>
+          <context context-type="linenumber">85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.notFound" datatype="html">
         <source>رکورد مورد نظر پیدا نشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">85</context>
+          <context context-type="linenumber">87</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.nationalIdLength" datatype="html">
         <source>کد ملی باید ۱۰ رقم باشد (<x id="length" equiv-text="params[&apos;length&apos;]"/> رقم ثبت شده).</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">89</context>
+          <context context-type="linenumber">91</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.nationalIdChecksum" datatype="html">
         <source>کد ملی معتبر نیست؛ رقم کنترل آن نادرست است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">91</context>
+          <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.mobileInvalid" datatype="html">
         <source>شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">93</context>
+          <context context-type="linenumber">95</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.phoneInvalid" datatype="html">
         <source>شماره تلفن معتبر نیست.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">95</context>
+          <context context-type="linenumber">97</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.dateEmpty" datatype="html">
         <source>تاریخ وارد نشده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">99</context>
+          <context context-type="linenumber">101</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.dateUnknownFormat" datatype="html">
         <source>قالب تاریخ شناخته نشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">103</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.dateNonNumeric" datatype="html">
         <source>تاریخ باید فقط شامل رقم باشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">103</context>
+          <context context-type="linenumber">105</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.dateAmbiguousYear" datatype="html">
         <source>سال تاریخ مبهم است؛ آن را کامل بنویسید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">105</context>
+          <context context-type="linenumber">107</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.dateYearOutOfRange" datatype="html">
         <source>سال <x id="year" equiv-text="params[&apos;year&apos;]"/> خارج از محدودهٔ تقویم شمسی است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">107</context>
+          <context context-type="linenumber">109</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.dateMonthInvalid" datatype="html">
         <source>ماه <x id="month" equiv-text="params[&apos;month&apos;]"/> معتبر نیست؛ ماه باید بین ۱ تا ۱۲ باشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">109</context>
+          <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.dateDayInvalid" datatype="html">
         <source>روز <x id="day" equiv-text="params[&apos;day&apos;]"/> معتبر نیست.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">111</context>
+          <context context-type="linenumber">113</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.dateNotOnCalendar" datatype="html">
         <source>این روز در تقویم شمسی وجود ندارد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">113</context>
+          <context context-type="linenumber">115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.unknownTreatment" datatype="html">
         <source>درمان ناشناخته: <x id="codes" equiv-text="params[&apos;codes&apos;]"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">117</context>
+          <context context-type="linenumber">119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.sortUnsupported" datatype="html">
         <source>مرتب‌سازی بر اساس این ستون پشتیبانی نمی‌شود.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">119</context>
+          <context context-type="linenumber">121</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.required" datatype="html">
         <source>این مقدار الزامی است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">140</context>
+          <context context-type="linenumber">142</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.maxLength" datatype="html">
         <source>این مقدار طولانی‌تر از حد مجاز است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">142</context>
+          <context context-type="linenumber">144</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.minLength" datatype="html">
         <source>این مقدار کوتاه‌تر از حد مجاز است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">144</context>
+          <context context-type="linenumber">146</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.enum" datatype="html">
         <source>مقدار انتخاب‌شده معتبر نیست.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">146</context>
+          <context context-type="linenumber">148</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.uuid" datatype="html">
         <source>شناسه معتبر نیست.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">148</context>
+          <context context-type="linenumber">150</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.number" datatype="html">
         <source>این مقدار باید عدد باشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">151</context>
+          <context context-type="linenumber">153</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.jalaliDate" datatype="html">
         <source>تاریخ شمسی معتبری نیست.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">153</context>
+          <context context-type="linenumber">155</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.nationalId" datatype="html">
         <source>کد ملی معتبر نیست.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">155</context>
+          <context context-type="linenumber">157</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.generic" datatype="html">
         <source>مقدار واردشده معتبر نیست.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">158</context>
+          <context context-type="linenumber">160</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.fileNoDigits" datatype="html">
         <source>شماره پرونده باید فقط رقم باشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">169</context>
+          <context context-type="linenumber">171</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.mobile" datatype="html">
         <source>شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">171</context>
+          <context context-type="linenumber">173</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.homePhone" datatype="html">
         <source>شماره تلفن معتبر نیست.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">173</context>
+          <context context-type="linenumber">175</context>
         </context-group>
       </trans-unit>
       <trans-unit id="validation.username" datatype="html">
         <source>نام کاربری فقط می‌تواند شامل حروف انگلیسی، رقم، نقطه، خط تیره و زیرخط باشد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">175</context>
+          <context context-type="linenumber">177</context>
         </context-group>
       </trans-unit>
       <trans-unit id="error.unexpected" datatype="html">
         <source>خطای غیرمنتظره‌ای رخ داد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/i18n/api-error.translator.ts</context>
-          <context context-type="linenumber">182</context>
+          <context context-type="linenumber">184</context>
         </context-group>
       </trans-unit>
       <trans-unit id="action.dismiss" datatype="html">
@@ -430,23 +437,23 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">137</context>
+          <context context-type="linenumber">142</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">159</context>
+          <context context-type="linenumber">164</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">171</context>
+          <context context-type="linenumber">176</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">264</context>
+          <context context-type="linenumber">287</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">316</context>
+          <context context-type="linenumber">334</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.ts</context>
@@ -696,7 +703,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">21,22</context>
+          <context context-type="linenumber">22,23</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4544209726478499130" datatype="html">
@@ -717,243 +724,243 @@
         <source>نام کاربری</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/login.html</context>
-          <context context-type="linenumber">27,28</context>
+          <context context-type="linenumber">28,29</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2132420445094136753" datatype="html">
         <source>رمز عبور</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/login.html</context>
-          <context context-type="linenumber">34,35</context>
+          <context context-type="linenumber">37,38</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1646379790195982921" datatype="html">
         <source> ورود </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/login.html</context>
-          <context context-type="linenumber">49</context>
+          <context context-type="linenumber">55</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="6361136717408720948" datatype="html">
-        <source>اطلاعات بیماران محرمانه است. پس از پایان کار از سیستم خارج شوید.</source>
+      <trans-unit id="1491612889303630617" datatype="html">
+        <source> اطلاعات بیماران محرمانه است. پس از پایان کار از سیستم خارج شوید. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/login.html</context>
-          <context context-type="linenumber">55,56</context>
+          <context context-type="linenumber">62,63</context>
         </context-group>
       </trans-unit>
       <trans-unit id="login.signingIn" datatype="html">
         <source>در حال ورود…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/login.ts</context>
-          <context context-type="linenumber">27</context>
+          <context context-type="linenumber">35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3961685179615268162" datatype="html">
         <source>خلاصه‌ای از وضعیت پرونده‌های مطب</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">5,6</context>
+          <context context-type="linenumber">2,3</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5341040251752972760" datatype="html">
         <source>بیمار جدید</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">8</context>
+          <context context-type="linenumber">4</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">16,17</context>
+          <context context-type="linenumber">10,11</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8687046154994985881" datatype="html">
         <source>آمار کلی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">18,19</context>
+          <context context-type="linenumber">14,15</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5375869112933091674" datatype="html">
         <source>درمان‌های ثبت‌شده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">34,35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7981937485782234829" datatype="html">
         <source>تعداد بیماران هر درمان</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">34,35</context>
+          <context context-type="linenumber">36,38</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5698005936408804288" datatype="html">
         <source>بیماران جدید</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">58</context>
+          <context context-type="linenumber">61</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4654905653897236003" datatype="html">
         <source>۱۲ ماه گذشته</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">58,59</context>
+          <context context-type="linenumber">61,62</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8352098334913082935" datatype="html">
         <source><x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION" equiv-text="{{ t.last.count | faCount }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/> نفر در <x id="INTERPOLATION_1" equiv-text="{{ t.last.month | faNum }}"/> </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">72,74</context>
+          <context context-type="linenumber">76,78</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8030943971859246310" datatype="html">
         <source>داده کافی برای نمودار وجود ندارد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">79,80</context>
+          <context context-type="linenumber">83,84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4509903876288800041" datatype="html">
         <source>ترکیب جنسیتی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">84,85</context>
+          <context context-type="linenumber">88,89</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8478899840175075786" datatype="html">
         <source>نسبت بیماران بر اساس جنسیت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">86,87</context>
+          <context context-type="linenumber">94,95</context>
         </context-group>
       </trans-unit>
       <trans-unit id="505372698486426616" datatype="html">
         <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;split__dot&quot; [attr.data-gender]=&quot;g.key&quot;&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span&gt;"/><x id="INTERPOLATION" equiv-text="{{ genderLabel(g.key) }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ g.count | faCount }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/><x id="START_SMALL_TEXT" ctype="x-small" equiv-text="&lt;small&gt;"/><x id="INTERPOLATION_2" equiv-text="{{ g.percent | faNum }}"/>٪<x id="CLOSE_SMALL_TEXT" ctype="x-small" equiv-text="&lt;/small&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">98,102</context>
+          <context context-type="linenumber">108,112</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5794466025374729929" datatype="html">
         <source>گروه‌های سنی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">109,110</context>
+          <context context-type="linenumber">119,120</context>
         </context-group>
       </trans-unit>
       <trans-unit id="307353779614642756" datatype="html">
         <source>نحوه آشنایی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">124</context>
+          <context context-type="linenumber">134</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">98,99</context>
+          <context context-type="linenumber">116,117</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">52,53</context>
+          <context context-type="linenumber">54,55</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9001361600726083994" datatype="html">
         <source>۱۰ مورد برتر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">124,125</context>
+          <context context-type="linenumber">134,135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5075518292093386360" datatype="html">
         <source>پیگیری مراجعه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">141,142</context>
+          <context context-type="linenumber">151,152</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7825330560487741755" datatype="html">
         <source>مراجعه در ۶ ماه اخیر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">145,146</context>
+          <context context-type="linenumber">155,156</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4586120026395890620" datatype="html">
         <source>بیش از یک سال بدون مراجعه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">149,150</context>
+          <context context-type="linenumber">163,164</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="5588621857945468697" datatype="html">
-        <source> مشاهده فهرست <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>arrow_back<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+      <trans-unit id="3942217288198181143" datatype="html">
+        <source> مشاهده فهرست <x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>arrow_back<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.html</context>
-          <context context-type="linenumber">151,153</context>
+          <context context-type="linenumber">165,168</context>
         </context-group>
       </trans-unit>
       <trans-unit id="greeting.morning" datatype="html">
         <source>صبح بخیر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">57</context>
+          <context context-type="linenumber">65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="greeting.afternoon" datatype="html">
         <source>ظهر بخیر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">67</context>
         </context-group>
       </trans-unit>
       <trans-unit id="greeting.evening" datatype="html">
         <source>عصر بخیر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">60</context>
+          <context context-type="linenumber">68</context>
         </context-group>
       </trans-unit>
       <trans-unit id="greeting.withName" datatype="html">
         <source><x id="part" equiv-text="part"/>، <x id="name" equiv-text="name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">61</context>
+          <context context-type="linenumber">69</context>
         </context-group>
       </trans-unit>
       <trans-unit id="tile.patients" datatype="html">
         <source>کل بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">69</context>
+          <context context-type="linenumber">77</context>
         </context-group>
       </trans-unit>
       <trans-unit id="tile.implants" datatype="html">
         <source>پرونده‌های ایمپلنت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">76</context>
+          <context context-type="linenumber">84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="tile.upcomingSurgeries" datatype="html">
         <source>جراحی‌های پیش‌رو</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">83</context>
+          <context context-type="linenumber">91</context>
         </context-group>
       </trans-unit>
       <trans-unit id="tile.needsReview" datatype="html">
         <source>نیازمند بازبینی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">91</context>
+          <context context-type="linenumber">99</context>
         </context-group>
       </trans-unit>
       <trans-unit id="dashboard.trendAria" datatype="html">
         <source>روند بیماران جدید، بیشینه <x id="max" equiv-text="max"/> نفر در ماه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/dashboard/dashboard.ts</context>
-          <context context-type="linenumber">140</context>
+          <context context-type="linenumber">150</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4403843704920331331" datatype="html">
@@ -964,11 +971,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">225,226</context>
+          <context context-type="linenumber">235,236</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="8752573017952741430" datatype="html">
-        <source> شماره‌گذاری این دفتر مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره نمی‌کند. </source>
+      <trans-unit id="3688694813025546109" datatype="html">
+        <source>شماره‌گذاری این دفتر مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره نمی‌کند.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/implants/implant-list.html</context>
           <context context-type="linenumber">6,7</context>
@@ -982,66 +989,66 @@
         <source>جستجوی شماره یا نام…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/implants/implant-list.html</context>
-          <context context-type="linenumber">19,20</context>
+          <context context-type="linenumber">15,16</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/ortho/ortho-list.html</context>
-          <context context-type="linenumber">19,20</context>
+          <context context-type="linenumber">15,16</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6503397197778359649" datatype="html">
         <source>جستجو در دفتر ایمپلنت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/implants/implant-list.html</context>
-          <context context-type="linenumber">20,22</context>
+          <context context-type="linenumber">17,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6246967155627879274" datatype="html">
         <source> فقط بدون اتصال </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/implants/implant-list.html</context>
-          <context context-type="linenumber">27,28</context>
+          <context context-type="linenumber">26,27</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/ortho/ortho-list.html</context>
-          <context context-type="linenumber">27,28</context>
+          <context context-type="linenumber">26,27</context>
         </context-group>
       </trans-unit>
       <trans-unit id="934641796884407622" datatype="html">
         <source>صفحه‌بندی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/implants/implant-list.html</context>
-          <context context-type="linenumber">49,51</context>
+          <context context-type="linenumber">50,52</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/ortho/ortho-list.html</context>
-          <context context-type="linenumber">49,51</context>
+          <context context-type="linenumber">50,52</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">341,343</context>
+          <context context-type="linenumber">357,359</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">133,135</context>
+          <context context-type="linenumber">141,143</context>
         </context-group>
       </trans-unit>
       <trans-unit id="implant.emptyTitle" datatype="html">
         <source>پرونده ایمپلنتی یافت نشد</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/implants/implant-list.ts</context>
-          <context context-type="linenumber">71</context>
+          <context context-type="linenumber">74</context>
         </context-group>
       </trans-unit>
       <trans-unit id="search.changeQuery" datatype="html">
         <source>عبارت جستجو را تغییر دهید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/implants/implant-list.ts</context>
-          <context context-type="linenumber">75</context>
+          <context context-type="linenumber">77</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/ortho/ortho-list.ts</context>
-          <context context-type="linenumber">75</context>
+          <context context-type="linenumber">77</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2960768439896653075" datatype="html">
@@ -1052,1080 +1059,1096 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">246,247</context>
+          <context context-type="linenumber">257,258</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4632883893486139476" datatype="html">
         <source>جستجو در دفتر ارتودنسی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/ortho/ortho-list.html</context>
-          <context context-type="linenumber">20,22</context>
+          <context context-type="linenumber">17,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ortho.emptyTitle" datatype="html">
         <source>پرونده ارتودنسی یافت نشد</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/ortho/ortho-list.ts</context>
-          <context context-type="linenumber">71</context>
+          <context context-type="linenumber">74</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7215444592803890508" datatype="html">
         <source>بازگشت به فهرست بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">9,10</context>
+          <context context-type="linenumber">13,15</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="1380482723388587623" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>folder<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> پرونده <x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ p.fileNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+      <trans-unit id="1791439583666665813" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>folder<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> پرونده <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ p.fileNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">19,21</context>
+          <context context-type="linenumber">24,26</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="8356787091752549247" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>cake<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> <x id="INTERPOLATION" equiv-text="{{ p.age | faNum }}"/> سال <x id="START_SMALL_TEXT" ctype="x-small" equiv-text="&lt;small&gt;"/>(<x id="INTERPOLATION_1" equiv-text="{{ p.birthDate | jalali: &apos;long&apos; }}"/>)<x id="CLOSE_SMALL_TEXT" ctype="x-small" equiv-text="&lt;/small&gt;"/></source>
+      <trans-unit id="5020357338262276501" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>cake<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> <x id="INTERPOLATION" equiv-text="{{ p.age | faNum }}"/> سال <x id="START_SMALL_TEXT" ctype="x-small" equiv-text="&lt;small&gt;"/>(<x id="INTERPOLATION_1" equiv-text="{{ p.birthDate | jalali: &apos;long&apos; }}"/>)<x id="CLOSE_SMALL_TEXT" ctype="x-small" equiv-text="&lt;/small&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">28,31</context>
+          <context context-type="linenumber">33,36</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="5802514138712077596" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>inventory_2<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> بایگانی شده </source>
+      <trans-unit id="1948184866298835051" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>inventory_2<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> بایگانی شده </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">35,37</context>
+          <context context-type="linenumber">40,42</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9045786060894515616" datatype="html">
         <source>تماس</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">46,47</context>
+          <context context-type="linenumber">50,51</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">249,250</context>
+          <context context-type="linenumber">257,258</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">313,314</context>
+          <context context-type="linenumber">327,328</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1056902425167197337" datatype="html">
         <source>ویرایش</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">52,53</context>
+          <context context-type="linenumber">55,56</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">307,308</context>
+          <context context-type="linenumber">321,322</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8014052411609178094" datatype="html">
         <source>عملیات بیشتر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">55,56</context>
+          <context context-type="linenumber">63,64</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4231081358108242055" datatype="html">
         <source>تماس با منزل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">62,63</context>
+          <context context-type="linenumber">71,72</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4374459310002449991" datatype="html">
         <source>خروج از بایگانی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">69,70</context>
+          <context context-type="linenumber">78,79</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1310080092610765356" datatype="html">
         <source>بایگانی پرونده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">74,75</context>
+          <context context-type="linenumber">83,84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="382843509124190205" datatype="html">
         <source>سابقه بیماری</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">87,88</context>
+          <context context-type="linenumber">96,97</context>
         </context-group>
       </trans-unit>
       <trans-unit id="991866144967107229" datatype="html">
         <source> این موارد هنگام انتقال از فایل اکسل شناسایی شدند. مقدار اصلی حفظ شده است. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">99</context>
+          <context context-type="linenumber">108</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3232861221038351376" datatype="html">
         <source>بررسی شد؛ این هشدار را بردار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">117,118</context>
+          <context context-type="linenumber">127,128</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7482006595690336082" datatype="html">
         <source>اطلاعات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">130,131</context>
+          <context context-type="linenumber">145,146</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8202491511389624852" datatype="html">
         <source>مشخصات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">133,134</context>
+          <context context-type="linenumber">148</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5761262939528060661" datatype="html">
         <source>اطلاعات تکمیلی ثبت نشده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">135,136</context>
+          <context context-type="linenumber">149,150</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9045249506226637795" datatype="html">
         <source>مراجعات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">152,153</context>
+          <context context-type="linenumber">165,166</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="4970836535530871744" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>event_available<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> اولین مراجعه </source>
+      <trans-unit id="5229430476850783590" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>event_available<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> اولین مراجعه </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">156,158</context>
+          <context context-type="linenumber">169,171</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="164790418869677776" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>event<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> آخرین مراجعه </source>
+      <trans-unit id="1991458129308883406" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>event<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> آخرین مراجعه </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">163,165</context>
+          <context context-type="linenumber">176,178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2523993427537148743" datatype="html">
         <source>یادداشت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">173,174</context>
+          <context context-type="linenumber">185,186</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">141,142</context>
+          <context context-type="linenumber">163,164</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6477822855263937927" datatype="html">
         <source>هنوز درمانی برای این بیمار ثبت نشده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">190,191</context>
+          <context context-type="linenumber">202,203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8190991737274576751" datatype="html">
         <source><x id="START_BLOCK_IF" equiv-text="@if (t.performedAt) {"/> <x id="INTERPOLATION" equiv-text="{{ t.performedAt | jalali: &apos;long&apos; }}"/> <x id="CLOSE_BLOCK_IF" equiv-text="}"/><x id="START_BLOCK_ELSE" equiv-text="@else {"/> تاریخ ثبت نشده <x id="CLOSE_BLOCK_ELSE" equiv-text="}"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">205,210</context>
+          <context context-type="linenumber">216,221</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2374155705409508970" datatype="html">
         <source>پرونده‌های تخصصی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">222,223</context>
+          <context context-type="linenumber">233,234</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="6942239509009760792" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>deployed_code<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span&gt;"/>شماره <x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ c.registryNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_3" ctype="x-span_3" equiv-text="&lt;span class=&quot;registry__status&quot;&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ caseStatusLabel(c.status) }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+      <trans-unit id="2526997429674038366" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>deployed_code<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span
+                      &gt;"/>شماره <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ c.registryNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span class=&quot;registry__status&quot;&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ caseStatusLabel(c.status) }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">230,233</context>
+          <context context-type="linenumber">240,245</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7944325385610608352" datatype="html">
         <source> شماره دفتر ایمپلنت مستقل از شماره پرونده اصلی است و ممکن است عدد یکسانی با پروندهٔ بیمار دیگری داشته باشد. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">237,238</context>
+          <context context-type="linenumber">249,250</context>
         </context-group>
       </trans-unit>
       <trans-unit id="404905353969903633" datatype="html">
         <source>پرونده ایمپلنتی برای این بیمار ثبت نشده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">241,242</context>
+          <context context-type="linenumber">253,254</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="573163583464637545" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>straighten<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span&gt;"/>شماره <x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ c.registryNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_3" ctype="x-span_3" equiv-text="&lt;span class=&quot;registry__status&quot;&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ caseStatusLabel(c.status) }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+      <trans-unit id="5485520347224712214" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>straighten<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span
+                      &gt;"/>شماره <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ c.registryNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span class=&quot;registry__status&quot;&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ caseStatusLabel(c.status) }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">251,254</context>
+          <context context-type="linenumber">262,267</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5134810605547812739" datatype="html">
         <source>پرونده ارتودنسی برای این بیمار ثبت نشده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">258,259</context>
+          <context context-type="linenumber">271,272</context>
         </context-group>
       </trans-unit>
       <trans-unit id="835830695557062447" datatype="html">
         <source>تاریخچه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">265,266</context>
+          <context context-type="linenumber">278,279</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9023298318467465031" datatype="html">
         <source>تغییری ثبت نشده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">269,270</context>
+          <context context-type="linenumber">282,283</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5568807349933855182" datatype="html">
         <source><x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION" equiv-text="{{ actionLabel(entry.action) }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;timeline__who&quot;&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ entry.username ?? &apos;سیستم&apos; }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.html</context>
-          <context context-type="linenumber">277,279</context>
+          <context context-type="linenumber">290,292</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.nationalId" datatype="html">
         <source>کد ملی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">76</context>
+          <context context-type="linenumber">81</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">182</context>
+          <context context-type="linenumber">191</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.fatherName" datatype="html">
         <source>نام پدر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">77</context>
+          <context context-type="linenumber">82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.occupation" datatype="html">
         <source>شغل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">78</context>
+          <context context-type="linenumber">83</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">187</context>
+          <context context-type="linenumber">201</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.education" datatype="html">
         <source>تحصیلات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">81</context>
+          <context context-type="linenumber">86</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">188</context>
+          <context context-type="linenumber">203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.mobile" datatype="html">
         <source>موبایل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">84</context>
+          <context context-type="linenumber">89</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">183</context>
+          <context context-type="linenumber">193</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.homePhone" datatype="html">
         <source>تلفن منزل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">85</context>
+          <context context-type="linenumber">90</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">184</context>
+          <context context-type="linenumber">195</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.homeAddress" datatype="html">
         <source>آدرس منزل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">86</context>
+          <context context-type="linenumber">91</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">190</context>
+          <context context-type="linenumber">207</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.workAddress" datatype="html">
         <source>آدرس محل کار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">87</context>
+          <context context-type="linenumber">92</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.referralSource" datatype="html">
         <source>نحوه آشنایی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">88</context>
+          <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patient.unnamed" datatype="html">
         <source>بدون نام</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">123</context>
+          <context context-type="linenumber">128</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">274</context>
+          <context context-type="linenumber">299</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.ts</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">106</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layout/global-search.ts</context>
+          <context context-type="linenumber">73</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/registry-table.ts</context>
-          <context context-type="linenumber">38</context>
+          <context context-type="linenumber">39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patient.issueResolved" datatype="html">
         <source>هشدار بررسی و برداشته شد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">136</context>
+          <context context-type="linenumber">141</context>
         </context-group>
       </trans-unit>
       <trans-unit id="archive.title" datatype="html">
         <source>بایگانی پرونده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">146</context>
+          <context context-type="linenumber">151</context>
         </context-group>
       </trans-unit>
       <trans-unit id="archive.message" datatype="html">
         <source>پرونده «<x id="name" equiv-text="p.fullName"/>» به بایگانی منتقل می‌شود. اطلاعات حذف نمی‌شود و هر زمان قابل بازگردانی است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">147</context>
+          <context context-type="linenumber">152</context>
         </context-group>
       </trans-unit>
       <trans-unit id="archive.confirm" datatype="html">
         <source>بایگانی کن</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">148</context>
+          <context context-type="linenumber">153</context>
         </context-group>
       </trans-unit>
       <trans-unit id="archive.done" datatype="html">
         <source>پرونده بایگانی شد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">158</context>
+          <context context-type="linenumber">163</context>
         </context-group>
       </trans-unit>
       <trans-unit id="archive.restored" datatype="html">
         <source>پرونده از بایگانی خارج شد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">170</context>
+          <context context-type="linenumber">175</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.fileNo" datatype="html">
         <source>شماره پرونده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">179</context>
+          <context context-type="linenumber">185</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.firstName" datatype="html">
         <source>نام</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">180</context>
+          <context context-type="linenumber">187</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.lastName" datatype="html">
         <source>نام خانوادگی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">181</context>
+          <context context-type="linenumber">189</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.gender" datatype="html">
         <source>جنسیت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">185</context>
+          <context context-type="linenumber">197</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.birthDate" datatype="html">
         <source>تاریخ تولد</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">186</context>
+          <context context-type="linenumber">199</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.medicalHistory" datatype="html">
         <source>سابقه بیماری</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">189</context>
+          <context context-type="linenumber">205</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.lastVisit" datatype="html">
         <source>آخرین مراجعه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">191</context>
+          <context context-type="linenumber">209</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.fullName" datatype="html">
         <source>نام کامل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">192</context>
+          <context context-type="linenumber">211</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.resolvedIssue" datatype="html">
         <source>رفع هشدار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">193</context>
+          <context context-type="linenumber">213</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auditAction.create" datatype="html">
         <source>ایجاد</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">200</context>
+          <context context-type="linenumber">222</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auditAction.update" datatype="html">
         <source>ویرایش</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">201</context>
+          <context context-type="linenumber">224</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auditAction.delete" datatype="html">
         <source>بایگانی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">202</context>
+          <context context-type="linenumber">226</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auditAction.restore" datatype="html">
         <source>بازگردانی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-detail.ts</context>
-          <context context-type="linenumber">203</context>
+          <context context-type="linenumber">228</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9121273379379717545" datatype="html">
         <source>بازگشت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">4</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">4</context>
+          <context context-type="linenumber">2</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7628177155025036620" datatype="html">
         <source>هویت بیمار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">15,16</context>
+          <context context-type="linenumber">10,11</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1375951016915810402" datatype="html">
         <source>شماره پرونده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">19,20</context>
+          <context context-type="linenumber">15,16</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">208,209</context>
+          <context context-type="linenumber">222,223</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7280207011559943039" datatype="html">
         <source>نام</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">26</context>
+          <context context-type="linenumber">23</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6173831640812325599" datatype="html">
         <source>نام خانوادگی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">26,28</context>
+          <context context-type="linenumber">23,25</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3312041964136994461" datatype="html">
         <source>نام پدر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">28,30</context>
+          <context context-type="linenumber">25,27</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2292821785794824971" datatype="html">
         <source>کد ملی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">33</context>
+          <context context-type="linenumber">31</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6546154218875349764" datatype="html">
         <source>۱۰ رقم</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">36,38</context>
+          <context context-type="linenumber">36</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6810104991788320758" datatype="html">
         <source>جنسیت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">41,43</context>
+          <context context-type="linenumber">43</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">51</context>
+          <context context-type="linenumber">50</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4268914719740700972" datatype="html">
         <source>تاریخ تولد</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">45,46</context>
+          <context context-type="linenumber">48,49</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7753016826124042596" datatype="html">
         <source>۱۳۶۸/۰۵/۱۲</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">47,48</context>
+          <context context-type="linenumber">51,52</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3181623177299827086" datatype="html">
         <source>تاریخ شمسی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">48,49</context>
+          <context context-type="linenumber">53,54</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1418313032558122712" datatype="html">
         <source>اطلاعات تماس</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">53,54</context>
+          <context context-type="linenumber">59,60</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2433555049009747398" datatype="html">
         <source>شماره موبایل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">57,58</context>
+          <context context-type="linenumber">64,65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8591633060495166389" datatype="html">
         <source>مثال: ۰۹۱۲۱۲۳۴۵۶۷</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">62,64</context>
+          <context context-type="linenumber">70,71</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7810706218880090136" datatype="html">
         <source>تلفن منزل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">66,67</context>
+          <context context-type="linenumber">76,77</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4179324907602385581" datatype="html">
         <source>آدرس منزل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">75,76</context>
+          <context context-type="linenumber">87,88</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3717440150811946086" datatype="html">
         <source>آدرس محل کار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">81,82</context>
+          <context context-type="linenumber">95,96</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5160796626127225499" datatype="html">
         <source>اطلاعات تکمیلی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">87,88</context>
+          <context context-type="linenumber">102,103</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1369201131023948451" datatype="html">
         <source>شغل</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">91</context>
+          <context context-type="linenumber">106</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1305509449680911155" datatype="html">
         <source>تحصیلات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">94,96</context>
+          <context context-type="linenumber">111</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">60</context>
         </context-group>
       </trans-unit>
       <trans-unit id="551442219071632084" datatype="html">
         <source>در صورت نبود، مورد جدید ساخته می‌شود</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">100,102</context>
+          <context context-type="linenumber">119,120</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1818225561658729724" datatype="html">
         <source>اولین مراجعه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">102,104</context>
+          <context context-type="linenumber">122,124</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2398020896184568423" datatype="html">
         <source>آخرین مراجعه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">104,106</context>
+          <context context-type="linenumber">124,126</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">282,283</context>
+          <context context-type="linenumber">294,295</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6503258712159610821" datatype="html">
         <source>سابقه بیماری قبلی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">109,110</context>
+          <context context-type="linenumber">130,131</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8201479510739467631" datatype="html">
         <source>مثال: فشار خون، دیابت، مصرف داروی رقیق‌کننده خون</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">112,113</context>
+          <context context-type="linenumber">134,135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2080384346606160430" datatype="html">
         <source>درمان‌های انجام‌شده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">117,118</context>
+          <context context-type="linenumber">140,141</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2289945297017402414" datatype="html">
         <source>یادداشت داخلی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">145,146</context>
+          <context context-type="linenumber">168,169</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8289710773681029370" datatype="html">
         <source> انصراف </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.html</context>
-          <context context-type="linenumber">152,153</context>
+          <context context-type="linenumber">176,177</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.homePhoneInvalid" datatype="html">
         <source>شماره تلفن معتبر نیست</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">70</context>
+          <context context-type="linenumber">85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patientForm.editTitle" datatype="html">
         <source>ویرایش پرونده بیمار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">83</context>
+          <context context-type="linenumber">98</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patientForm.createTitle" datatype="html">
         <source>ثبت بیمار جدید</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">84</context>
+          <context context-type="linenumber">99</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patientForm.saveLabel" datatype="html">
         <source>ذخیره تغییرات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">88</context>
+          <context context-type="linenumber">103</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patientForm.createLabel" datatype="html">
         <source>ثبت پرونده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">89</context>
+          <context context-type="linenumber">104</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patientForm.savingLabel" datatype="html">
         <source>در حال ذخیره…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">91</context>
+          <context context-type="linenumber">106</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patientForm.saved" datatype="html">
         <source>تغییرات ذخیره شد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">262</context>
+          <context context-type="linenumber">285</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patientForm.created" datatype="html">
         <source>پرونده بیمار ثبت شد.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-form.ts</context>
-          <context context-type="linenumber">263</context>
+          <context context-type="linenumber">286</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7003857013334112652" datatype="html">
         <source>بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">5,6</context>
+          <context context-type="linenumber">6</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8103120493821732791" datatype="html">
         <source>نام، شماره پرونده، موبایل، کد ملی یا آدرس…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">26,27</context>
+          <context context-type="linenumber">21,22</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1596081571678930983" datatype="html">
         <source>جستجو در بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">27,29</context>
+          <context context-type="linenumber">23,26</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6106259903782145028" datatype="html">
         <source>فیلترها</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">37,38</context>
+          <context context-type="linenumber">35,36</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">46,47</context>
+          <context context-type="linenumber">44,45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7040313024664762757" datatype="html">
         <source>بدون مراجعه از</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">66,67</context>
+          <context context-type="linenumber">69,70</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3010374403744451423" datatype="html">
         <source>فیلتر درمان</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">75,76</context>
+          <context context-type="linenumber">81,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3463612223437623131" datatype="html">
         <source> نیازمند بازبینی داده </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">92,93</context>
+          <context context-type="linenumber">100,101</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1848064945019978007" datatype="html">
         <source> دارای سابقه بیماری </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">98,99</context>
+          <context context-type="linenumber">107,108</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6944107856717051734" datatype="html">
         <source> شامل بایگانی </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">104,105</context>
+          <context context-type="linenumber">114,115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5399239223580010" datatype="html">
         <source> پاک کردن فیلترها </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">109</context>
+          <context context-type="linenumber">126</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3462081271037627728" datatype="html">
         <source> پاک کردن جستجو و فیلترها </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">128,129</context>
+          <context context-type="linenumber">142,143</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1733818423953003737" datatype="html">
         <source> پرونده <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ patient.fileNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_BLOCK_IF" equiv-text="@if (patient.age !== null) {"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span aria-hidden=&quot;true&quot;&gt;"/>·<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> <x id="INTERPOLATION_1" equiv-text="{{ patient.age | faNum }}"/> سال <x id="CLOSE_BLOCK_IF" equiv-text="}"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">147,151</context>
+          <context context-type="linenumber">161,165</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7688313853727035453" datatype="html">
         <source>نام بیمار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">215,216</context>
+          <context context-type="linenumber">229,230</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2251671297308873660" datatype="html">
         <source> <x id="INTERPOLATION" equiv-text="{{ genderLabel(p.gender) }}"/> <x id="START_BLOCK_IF" equiv-text="@if (p.fatherName) {"/><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span aria-hidden=&quot;true&quot;&gt;"/>·<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> فرزند <x id="INTERPOLATION_1" equiv-text="{{ p.fatherName }}"/> <x id="CLOSE_BLOCK_IF" equiv-text="}"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">226,230</context>
+          <context context-type="linenumber">236,240</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4992897255260366018" datatype="html">
         <source>بایگانی شده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">240,241</context>
+          <context context-type="linenumber">248,249</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7446596966401704963" datatype="html">
         <source>سن</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">265</context>
+          <context context-type="linenumber">277</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2471577614957767085" datatype="html">
         <source>درمان‌ها</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">275,276</context>
+          <context context-type="linenumber">287,288</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2067932389184533941" datatype="html">
         <source>عملیات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">289,290</context>
+          <context context-type="linenumber">301,302</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2269876817378919990" datatype="html">
         <source>عملیات پرونده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">296,297</context>
+          <context context-type="linenumber">309,310</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6812389862233589651" datatype="html">
         <source>مشاهده پرونده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.html</context>
-          <context context-type="linenumber">302,303</context>
+          <context context-type="linenumber">316,317</context>
         </context-group>
       </trans-unit>
       <trans-unit id="filter.inactive6m" datatype="html">
         <source>۶ ماه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">35</context>
+          <context context-type="linenumber">44</context>
         </context-group>
       </trans-unit>
       <trans-unit id="filter.inactive1y" datatype="html">
         <source>۱ سال</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">36</context>
+          <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="filter.inactive2y" datatype="html">
         <source>۲ سال</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">37</context>
+          <context context-type="linenumber">46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="filter.inactive3y" datatype="html">
         <source>۳ سال</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">38</context>
+          <context context-type="linenumber">47</context>
         </context-group>
       </trans-unit>
       <trans-unit id="filter.all" datatype="html">
         <source>همه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">93</context>
+          <context context-type="linenumber">118</context>
         </context-group>
       </trans-unit>
       <trans-unit id="filter.noPreference" datatype="html">
         <source>مهم نیست</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">94</context>
+          <context context-type="linenumber">119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="pagination.range" datatype="html">
         <source><x id="from" equiv-text="from"/>–<x id="to" equiv-text="to"/> از <x id="total" equiv-text="total"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">156</context>
+          <context context-type="linenumber">181</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patients.issueCount" datatype="html">
         <source><x id="count" equiv-text="count"/> مورد نیازمند بازبینی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">277</context>
+          <context context-type="linenumber">302</context>
         </context-group>
       </trans-unit>
       <trans-unit id="action.callPerson" datatype="html">
         <source>تماس با <x id="name" equiv-text="name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">281</context>
+          <context context-type="linenumber">306</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.ts</context>
-          <context context-type="linenumber">104</context>
+          <context context-type="linenumber">109</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patients.emptyTitle" datatype="html">
         <source>بیماری پیدا نشد</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">284</context>
+          <context context-type="linenumber">309</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patients.emptyHintFiltered" datatype="html">
         <source>عبارت جستجو یا فیلترها را تغییر دهید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">288</context>
+          <context context-type="linenumber">313</context>
         </context-group>
       </trans-unit>
       <trans-unit id="patients.emptyHintNone" datatype="html">
         <source>هنوز پرونده‌ای ثبت نشده است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/patients/patient-list.ts</context>
-          <context context-type="linenumber">289</context>
+          <context context-type="linenumber">314</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1339309159936698418" datatype="html">
         <source>حساب کاربری</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">6,7</context>
+          <context context-type="linenumber">4,5</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">25,26</context>
+          <context context-type="linenumber">27,28</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">80,81</context>
+          <context context-type="linenumber">92,94</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">91,92</context>
+          <context context-type="linenumber">107,108</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5663683283848019013" datatype="html">
+        <source> برای ادامه کار و دسترسی به پرونده‌ها، ابتدا رمز عبور موقت خود را تغییر دهید. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/account.html</context>
+          <context context-type="linenumber">11,12</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8328969943329736625" datatype="html">
         <source>تغییر رمز عبور</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">25,26</context>
+          <context context-type="linenumber">29,30</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5006006840051707676" datatype="html">
         <source> پس از تغییر رمز، همهٔ نشست‌های فعال روی سایر دستگاه‌ها بسته می‌شود و باید دوباره وارد شوید. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">27,28</context>
+          <context context-type="linenumber">31,32</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2755178433348477732" datatype="html">
         <source>رمز عبور فعلی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">33,34</context>
+          <context context-type="linenumber">38,39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7775804956342464546" datatype="html">
         <source>رمز عبور جدید</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">41,42</context>
+          <context context-type="linenumber">48,49</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3789356421080661253" datatype="html">
         <source>حداقل ۱۰ کاراکتر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">45,47</context>
+          <context context-type="linenumber">53,55</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4453955248879043347" datatype="html">
         <source>تکرار رمز عبور جدید</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">49,50</context>
+          <context context-type="linenumber">59,60</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3924264981704480814" datatype="html">
         <source> تغییر رمز عبور </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.html</context>
-          <context context-type="linenumber">62,63</context>
+          <context context-type="linenumber">74,75</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">34,35</context>
+          <context context-type="linenumber">36,37</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.savingLabel" datatype="html">
         <source>در حال ذخیره…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/settings/account.ts</context>
+          <context context-type="linenumber">47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="action.back" datatype="html">
+        <source>بازگشت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/account.ts</context>
           <context context-type="linenumber">48</context>
@@ -2170,57 +2193,57 @@
         <source>حالت نمایش</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">9,10</context>
+          <context context-type="linenumber">10,12</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">54,55</context>
+          <context context-type="linenumber">59,60</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">96,97</context>
+          <context context-type="linenumber">112,113</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="732466316320795909" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>brightness_auto<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> خودکار </source>
+      <trans-unit id="5016877764681458324" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>brightness_auto<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> خودکار </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">11,13</context>
+          <context context-type="linenumber">13,15</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="7504124699510572993" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>light_mode<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> روشن </source>
+      <trans-unit id="7416952916142757582" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>light_mode<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> روشن </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">15,17</context>
+          <context context-type="linenumber">17,19</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="5325371978631557248" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>dark_mode<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> تیره </source>
+      <trans-unit id="5877422411533943385" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>dark_mode<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> تیره </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">19,21</context>
+          <context context-type="linenumber">21,23</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8342470560347845299" datatype="html">
         <source>انواع درمان</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">39,40</context>
+          <context context-type="linenumber">41,42</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5559471001689350333" datatype="html">
         <source>فهرست درمان‌هایی که در پرونده بیماران قابل ثبت است.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">40,41</context>
+          <context context-type="linenumber">42,43</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3104304717758546430" datatype="html">
         <source>پرتکرارترین منابع معرفی بیماران.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/settings/settings.html</context>
-          <context context-type="linenumber">53,54</context>
+          <context context-type="linenumber">55,56</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4830964691809195149" datatype="html">
@@ -2230,8 +2253,8 @@
           <context context-type="linenumber">4,5</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="3042609851510150398" datatype="html">
-        <source> شماره‌های این فهرست به دفتر ایمپلنت اشاره دارند، نه به شماره پرونده اصلی بیمار. </source>
+      <trans-unit id="4968951786111806628" datatype="html">
+        <source>شماره‌های این فهرست به دفتر ایمپلنت اشاره دارند، نه به شماره پرونده اصلی بیمار.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
           <context context-type="linenumber">6,7</context>
@@ -2241,288 +2264,278 @@
         <source>جستجوی نام، شماره یا دندان…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">18,19</context>
+          <context context-type="linenumber">15,16</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5485118705832727744" datatype="html">
         <source>جستجو در لیست جراحی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">19,21</context>
+          <context context-type="linenumber">17,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6438357386178269818" datatype="html">
         <source>فیلتر وضعیت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">25,26</context>
+          <context context-type="linenumber">25,27</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7353603720344210336" datatype="html">
         <source>همه</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">26</context>
+          <context context-type="linenumber">27</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7707022502177366858" datatype="html">
         <source>در انتظار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">27</context>
+          <context context-type="linenumber">28</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3076592853154176231" datatype="html">
         <source>انجام شده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">28</context>
+          <context context-type="linenumber">29</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6420369462179064065" datatype="html">
         <source> فقط موارد مغایرت نام </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">32,33</context>
+          <context context-type="linenumber">33,34</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7119534294360161391" datatype="html">
         <source>بدون تاریخ</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">53,54</context>
+          <context context-type="linenumber">51,52</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4764878757232949729" datatype="html">
         <source> دفتر ایمپلنت <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ item.implantRegistryNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">65,66</context>
+          <context context-type="linenumber">71,72</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="7872617483213581219" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>link<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> پرونده <x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ item.patient.fileNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+      <trans-unit id="2739675017329897442" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>link<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> پرونده <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ item.patient.fileNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">70,72</context>
+          <context context-type="linenumber">76,78</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6743140357136928204" datatype="html">
         <source> شماره <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ item.implantRegistryNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> در دفتر ایمپلنت به «<x id="INTERPOLATION_1" equiv-text="{{ item.registeredName }}"/>» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">82,84</context>
+          <context context-type="linenumber">88,90</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="467738985970137879" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>schedule<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> پروتز: <x id="INTERPOLATION" equiv-text="{{ item.prosthesisDue }}"/> </source>
+      <trans-unit id="8250026045308762635" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>schedule<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> پروتز: <x id="INTERPOLATION" equiv-text="{{ item.prosthesisDue }}"/> </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.html</context>
-          <context context-type="linenumber">106,108</context>
+          <context context-type="linenumber">112,114</context>
         </context-group>
       </trans-unit>
       <trans-unit id="surgery.emptyTitle" datatype="html">
         <source>ردیفی در لیست جراحی نیست</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.ts</context>
-          <context context-type="linenumber">107</context>
+          <context context-type="linenumber">112</context>
         </context-group>
       </trans-unit>
       <trans-unit id="filters.changeThem" datatype="html">
         <source>فیلترها را تغییر دهید.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/surgery/surgery-list.ts</context>
-          <context context-type="linenumber">111</context>
+          <context context-type="linenumber">116</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2637860689295548141" datatype="html">
         <source>جستجوی نام، شماره پرونده، موبایل یا کد ملی…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/global-search.html</context>
-          <context context-type="linenumber">10,11</context>
+          <context context-type="linenumber">13,14</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5939368267598487399" datatype="html">
         <source>جستجوی بیمار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/global-search.html</context>
-          <context context-type="linenumber">11,12</context>
+          <context context-type="linenumber">15,17</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="5772358116458305538" datatype="html">
-        <source>پاک کردن جستجو</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layout/global-search.html</context>
-          <context context-type="linenumber">20,21</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="8001125866446298951" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;search__option-name&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ item.fullName || &apos;بدون نام&apos; }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_3" ctype="x-span_3" equiv-text="&lt;span class=&quot;search__option-meta&quot;&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION_1" equiv-text="{{ item.fileNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_BLOCK_IF" equiv-text="@if (item.mobile) {"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span aria-hidden=&quot;true&quot;&gt;"/>·<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION_2" equiv-text="{{ item.mobile }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_BLOCK_IF" equiv-text="}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layout/global-search.html</context>
-          <context context-type="linenumber">37,46</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="8892896628335729746" datatype="html">
+      <trans-unit id="globalSearch.empty" datatype="html">
         <source>بیماری با این مشخصات پیدا نشد</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layout/global-search.html</context>
-          <context context-type="linenumber">49</context>
+          <context context-type="sourcefile">src/app/layout/global-search.ts</context>
+          <context context-type="linenumber">80</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5630372201436538569" datatype="html">
         <source>مطب دندانپزشکی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">22,23</context>
+          <context context-type="linenumber">23,24</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7978619400909203464" datatype="html">
         <source>بخش‌های اصلی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">26,27</context>
+          <context context-type="linenumber">27,28</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">112,113</context>
+          <context context-type="linenumber">128,129</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2589994437653658612" datatype="html">
         <source>باز کردن منو</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">63,64</context>
+          <context context-type="linenumber">73,74</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2735473191893981679" datatype="html">
         <source>خروج</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">101,102</context>
+          <context context-type="linenumber">117,118</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1129578161144665612" datatype="html">
         <source>بیشتر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">133</context>
+          <context context-type="linenumber">150</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.html</context>
-          <context context-type="linenumber">136,137</context>
+          <context context-type="linenumber">154,155</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.dashboard" datatype="html">
         <source>داشبورد</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">35</context>
+          <context context-type="linenumber">38</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.patients" datatype="html">
         <source>بیماران</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">36</context>
+          <context context-type="linenumber">42</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.surgery" datatype="html">
         <source>لیست جراحی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">37</context>
+          <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.implants" datatype="html">
         <source>دفتر ایمپلنت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">38</context>
+          <context context-type="linenumber">51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.ortho" datatype="html">
         <source>دفتر ارتودنسی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">39</context>
+          <context context-type="linenumber">57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.settings" datatype="html">
         <source>تنظیمات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">40</context>
+          <context context-type="linenumber">63</context>
         </context-group>
       </trans-unit>
       <trans-unit id="theme.tooltipLight" datatype="html">
         <source>حالت نمایش: روشن</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">128</context>
         </context-group>
       </trans-unit>
       <trans-unit id="theme.tooltipDark" datatype="html">
         <source>حالت نمایش: تیره</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">103</context>
+          <context context-type="linenumber">130</context>
         </context-group>
       </trans-unit>
       <trans-unit id="theme.tooltipSystem" datatype="html">
         <source>حالت نمایش: خودکار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layout/shell.ts</context>
-          <context context-type="linenumber">105</context>
+          <context context-type="linenumber">132</context>
         </context-group>
       </trans-unit>
       <trans-unit id="action.cancel" datatype="html">
         <source>انصراف</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/confirm-dialog.ts</context>
-          <context context-type="linenumber">49</context>
+          <context context-type="linenumber">68</context>
         </context-group>
       </trans-unit>
       <trans-unit id="action.confirm" datatype="html">
         <source>تأیید</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/confirm-dialog.ts</context>
-          <context context-type="linenumber">50</context>
+          <context context-type="linenumber">69</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="8146983880064119052" datatype="html">
-        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;material-symbols-rounded&quot; aria-hidden=&quot;true&quot;&gt;"/>link<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span&gt;"/>پرونده <x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ c.patient.fileNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_BLOCK_IF" equiv-text="@if (patientName(c) !== c.recordedName) {"/><x id="START_TAG_SPAN_3" ctype="x-span_3" equiv-text="&lt;span class=&quot;registry__alias&quot;&gt;"/>(<x id="INTERPOLATION_1" equiv-text="{{ patientName(c) }}"/>)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_BLOCK_IF" equiv-text="}"/><x id="START_TAG_SPAN_4" ctype="x-span_4" equiv-text="&lt;span class=&quot;registry__match&quot; [matTooltip]=&quot;matchMethodLabel(c.matchMethod)&quot;&gt;"/> <x id="INTERPOLATION_2" equiv-text="{{ matchMethodLabel(c.matchMethod) }}"/> <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+      <trans-unit id="8363415764951458228" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>link<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span
+                &gt;"/>پرونده <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ltr-nums&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ c.patient.fileNo }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_BLOCK_IF" equiv-text="@if (patientName(c) !== c.recordedName) {"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span class=&quot;registry__alias&quot;&gt;"/>(<x id="INTERPOLATION_1" equiv-text="{{ patientName(c) }}"/>)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_BLOCK_IF" equiv-text="}"/><x id="START_TAG_PB_STATUS_CHIP" ctype="x-pb_status_chip" equiv-text="&lt;pb-status-chip
+                class=&quot;registry__match&quot;
+                [matTooltip]=&quot;matchMethodLabel(c.matchMethod)&quot;
+              &gt;"/> <x id="INTERPOLATION_2" equiv-text="{{ matchMethodLabel(c.matchMethod) }}"/> <x id="CLOSE_TAG_PB_STATUS_CHIP" ctype="x-pb_status_chip" equiv-text="&lt;/pb-status-chip&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/registry-table.html</context>
-          <context context-type="linenumber">17,26</context>
+          <context context-type="linenumber">17,31</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6177414118870253449" datatype="html">
         <source>این پرونده به هیچ بیماری در دفتر اصلی متصل نیست</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/registry-table.html</context>
-          <context context-type="linenumber">27,28</context>
+          <context context-type="linenumber">35,36</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3155234275221575212" datatype="html">
         <source>ویرایش پرونده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/registry-table.html</context>
-          <context context-type="linenumber">46,47</context>
+          <context context-type="linenumber">56,57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="registry.emptyDefault" datatype="html">
         <source>پرونده‌ای یافت نشد</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/registry-table.ts</context>
-          <context context-type="linenumber">29</context>
+          <context context-type="linenumber">30</context>
         </context-group>
       </trans-unit>
       <trans-unit id="list.separator" datatype="html">
         <source>، </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/treatment-chips.ts</context>
-          <context context-type="linenumber">94</context>
+          <context context-type="linenumber">95</context>
         </context-group>
       </trans-unit>
       <trans-unit id="gender.female" datatype="html">
@@ -2620,224 +2633,224 @@
         <source>معرفی بیمار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">73</context>
+          <context context-type="linenumber">81</context>
         </context-group>
       </trans-unit>
       <trans-unit id="referral.professional" datatype="html">
         <source>معرفی همکار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">75</context>
+          <context context-type="linenumber">83</context>
         </context-group>
       </trans-unit>
       <trans-unit id="referral.social" datatype="html">
         <source>شبکه‌های اجتماعی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">77</context>
+          <context context-type="linenumber">85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="referral.website" datatype="html">
         <source>وب‌سایت</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">79</context>
+          <context context-type="linenumber">87</context>
         </context-group>
       </trans-unit>
       <trans-unit id="referral.advertising" datatype="html">
         <source>تبلیغات</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">81</context>
+          <context context-type="linenumber">89</context>
         </context-group>
       </trans-unit>
       <trans-unit id="referral.other" datatype="html">
         <source>سایر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">83</context>
+          <context context-type="linenumber">91</context>
         </context-group>
       </trans-unit>
       <trans-unit id="role.admin" datatype="html">
         <source>مدیر سیستم</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">103</context>
+          <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="role.dentist" datatype="html">
         <source>دندانپزشک</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">105</context>
+          <context context-type="linenumber">113</context>
         </context-group>
       </trans-unit>
       <trans-unit id="role.receptionist" datatype="html">
         <source>پذیرش</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">107</context>
+          <context context-type="linenumber">115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="role.viewer" datatype="html">
         <source>فقط مشاهده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">109</context>
+          <context context-type="linenumber">117</context>
         </context-group>
       </trans-unit>
       <trans-unit id="caseStatus.active" datatype="html">
         <source>در جریان</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">116</context>
+          <context context-type="linenumber">124</context>
         </context-group>
       </trans-unit>
       <trans-unit id="caseStatus.completed" datatype="html">
         <source>تکمیل شده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">118</context>
+          <context context-type="linenumber">126</context>
         </context-group>
       </trans-unit>
       <trans-unit id="caseStatus.onHold" datatype="html">
         <source>متوقف</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">120</context>
+          <context context-type="linenumber">128</context>
         </context-group>
       </trans-unit>
       <trans-unit id="surgeryStatus.scheduled" datatype="html">
         <source>در انتظار</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">127</context>
+          <context context-type="linenumber">135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="surgeryStatus.completed" datatype="html">
         <source>انجام شده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">129</context>
+          <context context-type="linenumber">137</context>
         </context-group>
       </trans-unit>
       <trans-unit id="surgeryStatus.cancelled" datatype="html">
         <source>لغو شده</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">131</context>
+          <context context-type="linenumber">139</context>
         </context-group>
       </trans-unit>
       <trans-unit id="abutment.cover" datatype="html">
         <source>کاور اسکرو</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">138</context>
+          <context context-type="linenumber">146</context>
         </context-group>
       </trans-unit>
       <trans-unit id="abutment.healing" datatype="html">
         <source>هیلینگ</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">140</context>
+          <context context-type="linenumber">148</context>
         </context-group>
       </trans-unit>
       <trans-unit id="abutment.both" datatype="html">
         <source>کاور و هیلینگ</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">142</context>
+          <context context-type="linenumber">150</context>
         </context-group>
       </trans-unit>
       <trans-unit id="abutment.other" datatype="html">
         <source>سایر</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">144</context>
+          <context context-type="linenumber">152</context>
         </context-group>
       </trans-unit>
       <trans-unit id="abutment.unknown" datatype="html">
         <source>نامشخص</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">146</context>
+          <context context-type="linenumber">154</context>
         </context-group>
       </trans-unit>
       <trans-unit id="match.exact" datatype="html">
         <source>تطبیق دقیق نام</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">153</context>
+          <context context-type="linenumber">161</context>
         </context-group>
       </trans-unit>
       <trans-unit id="match.fuzzy" datatype="html">
         <source>تطبیق تقریبی نام</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">155</context>
+          <context context-type="linenumber">163</context>
         </context-group>
       </trans-unit>
       <trans-unit id="match.manual" datatype="html">
         <source>اتصال دستی</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">157</context>
+          <context context-type="linenumber">165</context>
         </context-group>
       </trans-unit>
       <trans-unit id="match.unmatched" datatype="html">
         <source>بدون اتصال</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">159</context>
+          <context context-type="linenumber">167</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ageBand.under13" datatype="html">
         <source>زیر ۱۳</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">170</context>
+          <context context-type="linenumber">178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ageBand.13to19" datatype="html">
         <source>۱۳ تا ۱۹</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">172</context>
+          <context context-type="linenumber">180</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ageBand.20to29" datatype="html">
         <source>۲۰ تا ۲۹</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">174</context>
+          <context context-type="linenumber">182</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ageBand.30to39" datatype="html">
         <source>۳۰ تا ۳۹</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">176</context>
+          <context context-type="linenumber">184</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ageBand.40to49" datatype="html">
         <source>۴۰ تا ۴۹</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">178</context>
+          <context context-type="linenumber">186</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ageBand.50to64" datatype="html">
         <source>۵۰ تا ۶۴</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">180</context>
+          <context context-type="linenumber">188</context>
         </context-group>
       </trans-unit>
       <trans-unit id="ageBand.65plus" datatype="html">
         <source>۶۵ به بالا</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/labels.ts</context>
-          <context context-type="linenumber">182</context>
+          <context context-type="linenumber">190</context>
         </context-group>
       </trans-unit>
       <trans-unit id="field.required" datatype="html">
@@ -2914,21 +2927,21 @@
         <source>پاک کردن جستجو</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/search-field/search-field.ts</context>
-          <context context-type="linenumber">60</context>
+          <context context-type="linenumber">247</context>
         </context-group>
       </trans-unit>
       <trans-unit id="action.showPassword" datatype="html">
         <source>نمایش رمز</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/text-field/text-field.ts</context>
-          <context context-type="linenumber">141</context>
+          <context context-type="linenumber">146</context>
         </context-group>
       </trans-unit>
       <trans-unit id="action.hidePassword" datatype="html">
         <source>پنهان کردن رمز</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/ui/text-field/text-field.ts</context>
-          <context context-type="linenumber">142</context>
+          <context context-type="linenumber">147</context>
         </context-group>
       </trans-unit>
     </body>

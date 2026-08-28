@@ -1,28 +1,29 @@
 <div class="surgery">
-  <header class="surgery__header">
-    <div>
-      <h1 i18n>لیست انتظار جراحی</h1>
-      <p class="surgery__note" i18n>
-        شماره‌های این فهرست به دفتر ایمپلنت اشاره دارند، نه به شماره پرونده اصلی بیمار.
-      </p>
-    </div>
-    @if (!loading() && total() > 0) {
-      <span class="surgery__count">{{ total() | faCount }} ردیف</span>
-    }
-  </header>
+  <pb-page-header
+    i18n-title
+    title="لیست انتظار جراحی"
+    i18n-subtitle
+    subtitle="شماره‌های این فهرست به دفتر ایمپلنت اشاره دارند، نه به شماره پرونده اصلی بیمار."
+    [count]="!loading() && total() > 0 ? (total() | faCount) + ' ردیف' : null"
+  />
 
   <div class="surgery__toolbar">
     <pb-search-field
       class="surgery__search"
       [control]="search"
-      i18n-placeholder placeholder="جستجوی نام، شماره یا دندان…"
-      i18n-ariaLabel ariaLabel="جستجو در لیست جراحی" />
+      i18n-placeholder
+      placeholder="جستجوی نام، شماره یا دندان…"
+      i18n-ariaLabel
+      ariaLabel="جستجو در لیست جراحی"
+    />
 
     <mat-button-toggle-group
       [value]="status()"
       (valueChange)="setStatus($event)"
       class="surgery__status-filter"
-      i18n-aria-label aria-label="فیلتر وضعیت">
+      i18n-aria-label
+      aria-label="فیلتر وضعیت"
+    >
       <mat-button-toggle value="" i18n>همه</mat-button-toggle>
       <mat-button-toggle value="scheduled" i18n>در انتظار</mat-button-toggle>
       <mat-button-toggle value="completed" i18n>انجام شده</mat-button-toggle>
@@ -38,10 +39,7 @@
   }
 
   @if (!loading() && items().length === 0) {
-    <pb-empty-state
-      icon="event_busy"
-      [title]="emptyTitle"
-      [hint]="emptyHint()" />
+    <pb-empty-state icon="event_busy" [title]="emptyTitle" [hint]="emptyHint()" />
   } @else {
     <ul class="queue">
       @for (item of items(); track item.id) {
@@ -52,9 +50,17 @@
             } @else {
               <span class="queue__date-value queue__date-value--none" i18n>بدون تاریخ</span>
             }
-            <span class="queue__status" [attr.data-status]="item.status">
+            <pb-status-chip
+              [tone]="
+                item.status === 'completed'
+                  ? 'success'
+                  : item.status === 'cancelled'
+                    ? 'error'
+                    : 'warning'
+              "
+            >
               {{ statusLabel(item.status) }}
-            </span>
+            </pb-status-chip>
           </div>
 
           <div class="queue__body">
@@ -79,8 +85,8 @@
               <p class="queue__warning" role="note">
                 <mat-icon aria-hidden="true">warning</mat-icon>
                 <span i18n>
-                  شماره <span class="ltr-nums">{{ item.implantRegistryNo }}</span> در دفتر ایمپلنت به
-                  «{{ item.registeredName }}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.
+                  شماره <span class="ltr-nums">{{ item.implantRegistryNo }}</span> در دفتر ایمپلنت
+                  به «{{ item.registeredName }}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.
                 </span>
               </p>
             }
@@ -114,7 +120,8 @@
             <a
               class="queue__call"
               [href]="'tel:' + item.patient!.mobile"
-              [attr.aria-label]="callLabel(item.recordedName)">
+              [attr.aria-label]="callLabel(item.recordedName)"
+            >
               <mat-icon aria-hidden="true">call</mat-icon>
             </a>
           }
@@ -130,6 +137,8 @@
       [pageSize]="limit()"
       [pageSizeOptions]="[10, 25, 50, 100]"
       (page)="onPage($event)"
-      i18n-aria-label aria-label="صفحه‌بندی" />
+      i18n-aria-label
+      aria-label="صفحه‌بندی"
+    />
   }
 </div>

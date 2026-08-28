@@ -24,6 +24,7 @@ export enum ErrorCode {
   AccountDisabled = 'ERR_ACCOUNT_DISABLED',
   SessionExpired = 'ERR_SESSION_EXPIRED',
   SessionRevoked = 'ERR_SESSION_REVOKED',
+  PasswordChangeRequired = 'ERR_PASSWORD_CHANGE_REQUIRED',
   CurrentPasswordWrong = 'ERR_CURRENT_PASSWORD_WRONG',
   UsernameTaken = 'ERR_USERNAME_TAKEN',
   CannotDisableSelf = 'ERR_CANNOT_DISABLE_SELF',

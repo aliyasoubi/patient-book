@@ -9,28 +9,35 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { RegistryService } from '../../core/services/registry.service';
-import { AuthService } from '../../core/services/auth.service';
 import { EmptyState } from '../../shared/components/empty-state';
 import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
-import { PbCheckboxField, PbSearchField } from '../../shared/ui';
+import { PbCheckboxField, PbPageHeader, PbSearchField, PbStatusChip } from '../../shared/ui';
 import type { SurgeryQueueItem } from '../../core/models/common.model';
 
 @Component({
   selector: 'pb-surgery-list',
   standalone: true,
   imports: [
-    ReactiveFormsModule, RouterLink,
-    MatButtonToggleModule, MatPaginatorModule,
-    MatProgressBarModule, EmptyState, PersianCountPipe, PersianNumberPipe,
-    PbSearchField, PbCheckboxField, MatIconModule],
+    ReactiveFormsModule,
+    RouterLink,
+    MatButtonToggleModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
+    EmptyState,
+    PersianCountPipe,
+    PersianNumberPipe,
+    PbSearchField,
+    PbCheckboxField,
+    PbPageHeader,
+    PbStatusChip,
+    MatIconModule,
+  ],
   templateUrl: './surgery-list.html',
   styleUrl: './surgery-list.scss',
 })
 export class SurgeryList {
   private readonly registry = inject(RegistryService);
-  protected readonly auth = inject(AuthService);
-
   protected readonly abutmentLabel = abutmentLabel;
   protected readonly statusLabel = surgeryStatusLabel;
 

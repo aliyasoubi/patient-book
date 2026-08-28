@@ -1,23 +1,13 @@
 .settings {
-  max-width: 900px;
+  max-width: var(--pb-page-form);
   margin-inline: auto;
-  padding: 20px 24px 32px;
+  padding: var(--pb-page-block-start) var(--pb-page-inline) var(--pb-page-block-end);
   display: flex;
   flex-direction: column;
   gap: 14px;
 
   @media (max-width: 700px) {
-    padding: 14px 12px 24px;
-  }
-
-  h1 {
-    margin: 0;
-    font: var(--mat-sys-headline-small);
-    font-weight: 700;
-
-    @media (max-width: 700px) {
-      font-size: var(--mat-sys-title-large-size);
-    }
+    padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
   }
 }
 

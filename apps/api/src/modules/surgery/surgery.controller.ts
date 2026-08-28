@@ -1,10 +1,23 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { SurgeryService } from './surgery.service';
-import { QuerySurgeryDto, UpdateSurgeryDto, UpsertSurgeryDto } from './dto/surgery.dto';
+import {
+  QuerySurgeryDto,
+  UpdateSurgeryDto,
+  UpsertSurgeryDto,
+} from './dto/surgery.dto';
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
 import { UserRole } from '../../domain';
@@ -44,7 +57,21 @@ export class SurgeryController {
   @Delete(':id')
   @HttpCode(204)
   @Roles(UserRole.Admin, UserRole.Dentist)
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+  @ApiOperation({ summary: 'Archive a surgery queue entry' })
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
     return this.surgery.remove(id, userId);
+  }
+
+  @Post(':id/restore')
+  @Roles(UserRole.Admin, UserRole.Dentist)
+  @ApiOperation({ summary: 'Restore an archived surgery queue entry' })
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.surgery.restore(id, userId);
   }
 }

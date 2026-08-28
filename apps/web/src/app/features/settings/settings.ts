@@ -7,13 +7,20 @@ import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { PatientsService } from '../../core/services/patients.service';
 import { PersianCountPipe } from '../../shared/pipes/persian-number.pipe';
 import { referralKindIcon, referralKindLabel, roleLabel } from '../../shared/labels';
-import { PbButton, PbSurface } from '../../shared/ui';
+import { PbButton, PbPageHeader, PbSurface } from '../../shared/ui';
 import type { ReferralSource, TreatmentType } from '../../core/models/patient.model';
 
 @Component({
   selector: 'pb-settings',
   standalone: true,
-  imports: [MatButtonToggleModule, PersianCountPipe, PbButton, PbSurface, MatIconModule],
+  imports: [
+    MatButtonToggleModule,
+    PersianCountPipe,
+    PbButton,
+    PbSurface,
+    PbPageHeader,
+    MatIconModule,
+  ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
 })
@@ -31,11 +38,13 @@ export class Settings {
 
   constructor() {
     this.patients.treatmentTypes().subscribe((t) => this.treatments.set(t));
-    this.patients.referralSources().subscribe((r) =>
-      this.referrals.set(
-        [...r].sort((a, b) => (b.patientCount ?? 0) - (a.patientCount ?? 0)).slice(0, 30),
-      ),
-    );
+    this.patients
+      .referralSources()
+      .subscribe((r) =>
+        this.referrals.set(
+          [...r].sort((a, b) => (b.patientCount ?? 0) - (a.patientCount ?? 0)).slice(0, 30),
+        ),
+      );
   }
 
   protected setTheme(mode: ThemeMode): void {

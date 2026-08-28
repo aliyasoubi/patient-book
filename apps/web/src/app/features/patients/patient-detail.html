@@ -6,11 +6,16 @@
   <div class="detail">
     <!-- ── Hero ──────────────────────────────────────────────────── -->
     <header class="hero" [class.hero--archived]="p.isArchived">
-      <a class="hero__back" routerLink="/patients" i18n-aria-label aria-label="بازگشت به فهرست بیماران">
+      <a
+        class="hero__back"
+        routerLink="/patients"
+        i18n-aria-label
+        aria-label="بازگشت به فهرست بیماران"
+      >
         <mat-icon aria-hidden="true">arrow_forward</mat-icon>
       </a>
 
-      <span class="hero__avatar" [attr.data-gender]="p.gender">{{ initials() }}</span>
+      <pb-avatar size="large" [tone]="p.gender" [name]="p.fullName" />
 
       <div class="hero__identity">
         <h1>{{ p.fullName || unnamed }}</h1>
@@ -50,7 +55,13 @@
             <span class="hero__edit-label" i18n>ویرایش</span>
           </pb-button>
         }
-        <button mat-icon-button type="button" [matMenuTriggerFor]="menu" i18n-aria-label aria-label="عملیات بیشتر">
+        <button
+          mat-icon-button
+          type="button"
+          [matMenuTriggerFor]="menu"
+          i18n-aria-label
+          aria-label="عملیات بیشتر"
+        >
           <mat-icon aria-hidden="true">more_vert</mat-icon>
         </button>
         <mat-menu #menu="matMenu" xPosition="before">
@@ -112,7 +123,9 @@
                     mat-button
                     type="button"
                     (click)="resolveIssue(issue.field)"
-                    i18n-matTooltip matTooltip="بررسی شد؛ این هشدار را بردار">
+                    i18n-matTooltip
+                    matTooltip="بررسی شد؛ این هشدار را بردار"
+                  >
                     بررسی شد
                   </button>
                 }
@@ -124,7 +137,11 @@
     }
 
     <!-- ── Tabs ──────────────────────────────────────────────────── -->
-    <mat-tab-group class="detail__tabs" animationDuration="200ms" (selectedTabChange)="loadHistory()">
+    <mat-tab-group
+      class="detail__tabs"
+      animationDuration="200ms"
+      (selectedTabChange)="loadHistory()"
+    >
       <mat-tab i18n-label label="اطلاعات">
         <div class="tab">
           <pb-surface i18n-title title="مشخصات">
@@ -190,10 +207,9 @@
                 <li
                   class="treatments__item"
                   [style.--tx-bg]="color(t.color).bg"
-                  [style.--tx-fg]="color(t.color).fg">
-                  <mat-icon class="treatments__icon" aria-hidden="true">{{
-                    t.icon
-                  }}</mat-icon>
+                  [style.--tx-fg]="color(t.color).fg"
+                >
+                  <mat-icon class="treatments__icon" aria-hidden="true">{{ t.icon }}</mat-icon>
                   <div class="treatments__body">
                     <strong>{{ t.nameFa }}</strong>
                     <span class="treatments__meta" i18n>
@@ -222,7 +238,9 @@
                 @for (c of p.implantCases; track c.id) {
                   <li i18n>
                     <mat-icon aria-hidden="true">deployed_code</mat-icon>
-                    <span>شماره <span class="ltr-nums">{{ c.registryNo }}</span></span>
+                    <span
+                      >شماره <span class="ltr-nums">{{ c.registryNo }}</span></span
+                    >
                     <span class="registry__status">{{ caseStatusLabel(c.status) }}</span>
                   </li>
                 }
@@ -242,7 +260,9 @@
                 @for (c of p.orthoCases; track c.id) {
                   <li i18n>
                     <mat-icon aria-hidden="true">straighten</mat-icon>
-                    <span>شماره <span class="ltr-nums">{{ c.registryNo }}</span></span>
+                    <span
+                      >شماره <span class="ltr-nums">{{ c.registryNo }}</span></span
+                    >
                     <span class="registry__status">{{ caseStatusLabel(c.status) }}</span>
                   </li>
                 }

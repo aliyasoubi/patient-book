@@ -22,7 +22,7 @@ import {
   treatmentColor,
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { PbButton, PbSurface } from '../../shared/ui';
+import { PbAvatar, PbButton, PbSurface } from '../../shared/ui';
 import type { DataIssue, Patient } from '../../core/models/patient.model';
 import type { AuditEntry } from '../../core/models/common.model';
 
@@ -30,9 +30,20 @@ import type { AuditEntry } from '../../core/models/common.model';
   selector: 'pb-patient-detail',
   standalone: true,
   imports: [
-    RouterLink, MatButtonModule, MatMenuModule, MatTabsModule,
-    MatProgressBarModule, MatTooltipModule, MatDialogModule,
-    JalaliPipe, PersianNumberPipe, PbButton, PbSurface, MatIconModule],
+    RouterLink,
+    MatButtonModule,
+    MatMenuModule,
+    MatTabsModule,
+    MatProgressBarModule,
+    MatTooltipModule,
+    MatDialogModule,
+    JalaliPipe,
+    PersianNumberPipe,
+    PbButton,
+    PbSurface,
+    PbAvatar,
+    MatIconModule,
+  ],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.scss',
 })
@@ -57,12 +68,6 @@ export class PatientDetail {
   protected readonly patient = signal<Patient | null>(null);
   protected readonly history = signal<AuditEntry[]>([]);
   protected readonly historyLoaded = signal(false);
-
-  protected readonly initials = computed(() => {
-    const p = this.patient();
-    if (!p) return '';
-    return [p.firstName?.[0], p.lastName?.[0]].filter(Boolean).join('');
-  });
 
   /** Grouped for the "details" tab, skipping anything the record does not hold. */
   protected readonly detailRows = computed(() => {
@@ -176,32 +181,53 @@ export class PatientDetail {
   /** Field name in an audit entry. Falls back to the raw key when unmapped. */
   protected changeLabel(key: string): string {
     switch (key) {
-      case 'fileNo': return $localize`:@@field.fileNo:شماره پرونده`;
-      case 'firstName': return $localize`:@@field.firstName:نام`;
-      case 'lastName': return $localize`:@@field.lastName:نام خانوادگی`;
-      case 'nationalId': return $localize`:@@field.nationalId:کد ملی`;
-      case 'mobile': return $localize`:@@field.mobile:موبایل`;
-      case 'homePhone': return $localize`:@@field.homePhone:تلفن منزل`;
-      case 'gender': return $localize`:@@field.gender:جنسیت`;
-      case 'birthDate': return $localize`:@@field.birthDate:تاریخ تولد`;
-      case 'occupation': return $localize`:@@field.occupation:شغل`;
-      case 'education': return $localize`:@@field.education:تحصیلات`;
-      case 'medicalHistory': return $localize`:@@field.medicalHistory:سابقه بیماری`;
-      case 'homeAddress': return $localize`:@@field.homeAddress:آدرس منزل`;
-      case 'lastVisitAt': return $localize`:@@field.lastVisit:آخرین مراجعه`;
-      case 'fullName': return $localize`:@@field.fullName:نام کامل`;
-      case 'resolvedIssue': return $localize`:@@field.resolvedIssue:رفع هشدار`;
-      default: return key;
+      case 'fileNo':
+        return $localize`:@@field.fileNo:شماره پرونده`;
+      case 'firstName':
+        return $localize`:@@field.firstName:نام`;
+      case 'lastName':
+        return $localize`:@@field.lastName:نام خانوادگی`;
+      case 'nationalId':
+        return $localize`:@@field.nationalId:کد ملی`;
+      case 'mobile':
+        return $localize`:@@field.mobile:موبایل`;
+      case 'homePhone':
+        return $localize`:@@field.homePhone:تلفن منزل`;
+      case 'gender':
+        return $localize`:@@field.gender:جنسیت`;
+      case 'birthDate':
+        return $localize`:@@field.birthDate:تاریخ تولد`;
+      case 'occupation':
+        return $localize`:@@field.occupation:شغل`;
+      case 'education':
+        return $localize`:@@field.education:تحصیلات`;
+      case 'medicalHistory':
+        return $localize`:@@field.medicalHistory:سابقه بیماری`;
+      case 'homeAddress':
+        return $localize`:@@field.homeAddress:آدرس منزل`;
+      case 'lastVisitAt':
+        return $localize`:@@field.lastVisit:آخرین مراجعه`;
+      case 'fullName':
+        return $localize`:@@field.fullName:نام کامل`;
+      case 'resolvedIssue':
+        return $localize`:@@field.resolvedIssue:رفع هشدار`;
+      default:
+        return key;
     }
   }
 
   protected actionLabel(action: string): string {
     switch (action) {
-      case 'create': return $localize`:@@auditAction.create:ایجاد`;
-      case 'update': return $localize`:@@auditAction.update:ویرایش`;
-      case 'delete': return $localize`:@@auditAction.delete:بایگانی`;
-      case 'restore': return $localize`:@@auditAction.restore:بازگردانی`;
-      default: return action;
+      case 'create':
+        return $localize`:@@auditAction.create:ایجاد`;
+      case 'update':
+        return $localize`:@@auditAction.update:ویرایش`;
+      case 'delete':
+        return $localize`:@@auditAction.delete:بایگانی`;
+      case 'restore':
+        return $localize`:@@auditAction.restore:بازگردانی`;
+      default:
+        return action;
     }
   }
 

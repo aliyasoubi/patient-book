@@ -39,10 +39,13 @@ npm run dev
 | --- | --- |
 | Web app | http://localhost:4200 |
 | API | http://localhost:3000/api |
+| Database readiness | http://localhost:3000/api/health |
 | API docs (Swagger) | http://localhost:3000/api/docs |
 
 Sign in with the credentials from `SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD`.
-**Change the password immediately** — the seeded default is not a secret.
+The first administrator is required to replace the seed password before the API
+will allow access to patient data. Production seeding rejects missing, short,
+or placeholder passwords.
 
 ### If the Postgres image will not pull
 
@@ -274,9 +277,13 @@ Persian sentence frozen into the database at import time.
 
 ### Security
 
-- JWT access tokens (30 min) plus refresh tokens (7 days), with a `tokenVersion`
-  on each user so a password change or a deactivation revokes every live session
-  at once.
+- Short-lived JWT access tokens are held in browser memory, while refresh tokens
+  use `HttpOnly`, `SameSite=Strict` cookies (`Secure` in production). Patient
+  sessions are therefore not persisted in `localStorage` and are not readable by
+  browser JavaScript.
+- A `tokenVersion` on each user means a password change, logout, or deactivation
+  revokes existing refresh sessions. Seeded administrators must change their
+  initial password before they can access patient endpoints.
 - Every endpoint requires authentication by default; opting out is explicit
   (`@Public()`), so a new controller cannot accidentally expose patient records.
 - Roles: `admin` · `dentist` · `receptionist` · `viewer`. The frontend hides what
@@ -284,9 +291,14 @@ Persian sentence frozen into the database at import time.
 - Login is rate-limited to 5 attempts per minute. Unknown usernames and wrong
   passwords return the same message and run the same bcrypt comparison, so the
   response leaks neither existence nor timing.
-- Patient records are **archived, never deleted** — a dental record is a legal
-  document. Users are deactivated rather than removed so audit rows keep
-  pointing at a real person.
+- Patient, implant, orthodontic, and surgery records are **archived, never
+  deleted** — a dental record is a legal document. Users are deactivated rather
+  than removed so audit rows keep pointing at a real person.
+- Patient, registry, surgery, referral-catalogue, and user-administration writes
+  commit with their audit records in the same database transaction, so a
+  successful office change cannot silently lose its audit trail.
+- Production startup refuses development/placeholder secrets, short database
+  passwords, missing browser origins, and non-HTTPS CORS origins.
 
 ---
 
@@ -323,7 +335,7 @@ silently pins the source locale.
 npm run i18n:extract --workspace=web
 ```
 
-That writes `apps/web/src/locale/messages.xlf` (447 messages, 210 with stable
+That writes `apps/web/src/locale/messages.xlf` (440 messages, with stable
 ids). Translate it to `messages.en.xlf`, then register the locale in
 `apps/web/angular.json`:
 
@@ -361,6 +373,12 @@ Font Awesome would need separate wiring and would not match M3's metrics.
 bar, a tablet a collapsible drawer, a desktop a permanent rail. The patient list
 becomes cards below 900px, where a seven-column table is unusable.
 
+**Components share one M3 vocabulary.** Global and list search use the same
+search-field primitive; profile, patient, and account identities use the same
+avatar primitive; status colors use semantic M3 chips; and list/form pages share
+one page header. App-level spacing, control, avatar, and page-width tokens prevent
+each feature from inventing its own dimensions.
+
 **Dates** run through a custom `JalaliDateAdapter`, so the Material datepicker
 counts months the Jalali way — the first six have 31 days, the next five 30, and
 Esfand 29 or 30 by leap year. Deriving that from the Gregorian calendar would be
@@ -380,7 +398,8 @@ them.
 | `npm run dev` | API and web app together |
 | `npm run dev:api` / `npm run dev:web` | Either one alone |
 | `npm run build` | Production build of both |
-| `npm test` | API unit tests (81, no database needed) |
+| `npm test` | API and web unit tests (no database needed) |
+| `npm run test:e2e` | API readiness test (requires PostgreSQL) |
 | `npm run i18n:extract -w web` | Regenerate the message catalogue |
 | `npm run migration:run` / `migration:revert` | Schema |
 | `npm run seed` | Treatment catalogue + admin account |
@@ -391,11 +410,22 @@ them.
 
 ## Before going live
 
-1. Replace `JWT_SECRET` and `JWT_REFRESH_SECRET` with fresh values
-   (`openssl rand -base64 48`) and change the seeded admin password.
-2. Serve over HTTPS. Patient records must not cross a network in the clear.
-3. Set up automated `pg_dump` backups and test a restore.
-4. Work through the 87 flagged review items — the dashboard links straight to
+1. Configure unique `JWT_SECRET` and `JWT_REFRESH_SECRET` values
+   (`openssl rand -base64 48`), a strong database password, a strong
+   `SEED_ADMIN_PASSWORD`, and the exact HTTPS frontend URL in `CORS_ORIGIN`.
+2. Deploy the API and web app together, then run `npm run migration:run` before
+   opening the new release. The auth response/cookie contract changed, and the
+   migrations add the required initial-password-change flag, case-insensitive
+   username uniqueness, and archive columns for the clinical registers.
+3. Serve both sides over HTTPS and verify `GET /api/health` through the same
+   reverse proxy/load balancer staff will use.
+4. Set up automated `pg_dump` backups and complete a restore drill on a separate
+   database. A backup that has never been restored is not a recovery plan.
+5. Work through the 87 flagged review items — the dashboard links straight to
    them, and clearing one is a single click on the patient's record.
-5. Decide what to do with the 92 unlinked ortho entries; most simply have no name
+6. Decide what to do with the 92 unlinked ortho entries; most simply have no name
    in the source and need one typed in.
+7. Run a short pilot with each real role and verify login, password change,
+   patient create/edit/archive/restore, treatment changes, search, audit history,
+   session expiry, and backup recovery before using it as the office system of
+   record.

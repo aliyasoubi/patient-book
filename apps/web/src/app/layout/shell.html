@@ -13,51 +13,65 @@
     [opened]="isDesktop() || (drawerOpen() && !isHandset())"
     [disableClose]="isDesktop()"
     (closedStart)="closeDrawer()"
-    position="start">
-      <div class="nav">
-        <a class="nav__brand" routerLink="/dashboard" (click)="closeDrawer()">
-          <mat-icon class="nav__logo is-filled" aria-hidden="true">dentistry</mat-icon>
-          <span class="nav__brand-text">
-            <strong i18n>دفترچه بیماران</strong>
-            <small i18n>مطب دندانپزشکی</small>
-          </span>
-        </a>
+    position="start"
+  >
+    <div class="nav">
+      <a class="nav__brand" routerLink="/dashboard" (click)="closeDrawer()">
+        <mat-icon class="nav__logo is-filled" aria-hidden="true">dentistry</mat-icon>
+        <span class="nav__brand-text">
+          <strong i18n>دفترچه بیماران</strong>
+          <small i18n>مطب دندانپزشکی</small>
+        </span>
+      </a>
 
-        <nav class="nav__links" i18n-aria-label aria-label="بخش‌های اصلی">
-          @for (item of navItems(); track item.path) {
-            <a
-              class="nav__link"
-              [routerLink]="item.path"
-              routerLinkActive="is-active"
-              #rla="routerLinkActive"
-              (click)="closeDrawer()">
-              <mat-icon class="nav__icon" [class.is-filled]="rla.isActive" aria-hidden="true">{{ item.icon }}</mat-icon>
-              <span class="nav__label">{{ item.label }}</span>
-            </a>
-          }
-        </nav>
-
-        <div class="nav__footer">
-          <button
-            mat-button
-            class="nav__theme"
-            type="button"
-            (click)="theme.cycle()"
-            [matTooltip]="themeTooltip()">
-            <mat-icon aria-hidden="true">{{
-              theme.mode() === 'system' ? 'brightness_auto'
-                : theme.mode() === 'light' ? 'light_mode' : 'dark_mode'
+      <nav class="nav__links" i18n-aria-label aria-label="بخش‌های اصلی">
+        @for (item of navItems(); track item.path) {
+          <a
+            class="nav__link"
+            [routerLink]="item.path"
+            routerLinkActive="is-active"
+            #rla="routerLinkActive"
+            (click)="closeDrawer()"
+          >
+            <mat-icon class="nav__icon" [class.is-filled]="rla.isActive" aria-hidden="true">{{
+              item.icon
             }}</mat-icon>
-            <span i18n>حالت نمایش</span>
-          </button>
-        </div>
+            <span class="nav__label">{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+
+      <div class="nav__footer">
+        <button
+          mat-button
+          class="nav__theme"
+          type="button"
+          (click)="theme.cycle()"
+          [matTooltip]="themeTooltip()"
+        >
+          <mat-icon aria-hidden="true">{{
+            theme.mode() === 'system'
+              ? 'brightness_auto'
+              : theme.mode() === 'light'
+                ? 'light_mode'
+                : 'dark_mode'
+          }}</mat-icon>
+          <span i18n>حالت نمایش</span>
+        </button>
+      </div>
     </div>
   </mat-sidenav>
 
   <mat-sidenav-content class="shell__content">
     <mat-toolbar class="topbar">
       @if (!isDesktop() && !isHandset()) {
-        <button mat-icon-button type="button" (click)="toggleDrawer()" i18n-aria-label aria-label="باز کردن منو">
+        <button
+          mat-icon-button
+          type="button"
+          (click)="toggleDrawer()"
+          i18n-aria-label
+          aria-label="باز کردن منو"
+        >
           <mat-icon aria-hidden="true">menu</mat-icon>
         </button>
       }
@@ -74,14 +88,19 @@
         type="button"
         class="topbar__avatar-btn"
         [matMenuTriggerFor]="userMenu"
-        i18n-aria-label aria-label="حساب کاربری">
-        <span class="topbar__avatar">{{ initials() }}</span>
+        i18n-aria-label
+        aria-label="حساب کاربری"
+      >
+        <pb-avatar size="small" tone="primary" [name]="auth.user()?.fullName ?? ''" />
       </button>
 
       <mat-menu #userMenu="matMenu" xPosition="before">
         <div class="user-menu__header">
-          <strong>{{ auth.user()?.fullName }}</strong>
-          <small>{{ roleLabel() }}</small>
+          <pb-avatar size="medium" tone="primary" [name]="auth.user()?.fullName ?? ''" />
+          <span class="user-menu__identity">
+            <strong>{{ auth.user()?.fullName }}</strong>
+            <small>{{ roleLabel() }}</small>
+          </span>
         </div>
         <a mat-menu-item routerLink="/settings/account">
           <mat-icon aria-hidden="true">manage_accounts</mat-icon>
@@ -112,9 +131,12 @@
             class="bottom-nav__item"
             [routerLink]="item.path"
             routerLinkActive="is-active"
-            #rla="routerLinkActive">
+            #rla="routerLinkActive"
+          >
             <span class="bottom-nav__pill">
-              <mat-icon [class.is-filled]="rla.isActive" aria-hidden="true">{{ item.icon }}</mat-icon>
+              <mat-icon [class.is-filled]="rla.isActive" aria-hidden="true">{{
+                item.icon
+              }}</mat-icon>
             </span>
             <span class="bottom-nav__label">{{ item.label }}</span>
           </a>
@@ -123,7 +145,9 @@
           class="bottom-nav__item"
           type="button"
           [matMenuTriggerFor]="moreMenu"
-          i18n-aria-label aria-label="بیشتر">
+          i18n-aria-label
+          aria-label="بیشتر"
+        >
           <span class="bottom-nav__pill">
             <mat-icon aria-hidden="true">more_horiz</mat-icon>
           </span>

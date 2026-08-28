@@ -6,6 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { caseStatusLabel, matchMethodLabel } from '../labels';
 import { EmptyState } from './empty-state';
+import { PbStatusChip } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
 
 /**
@@ -19,7 +20,7 @@ import type { RegistryCase } from '../../core/models/common.model';
 @Component({
   selector: 'pb-registry-table',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatTooltipModule, EmptyState, MatIconModule],
+  imports: [RouterLink, MatButtonModule, MatTooltipModule, EmptyState, PbStatusChip, MatIconModule],
   templateUrl: './registry-table.html',
   styleUrl: './registry-table.scss',
 })

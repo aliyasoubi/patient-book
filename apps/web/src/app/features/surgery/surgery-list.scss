@@ -1,47 +1,13 @@
 .surgery {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px 24px 32px;
-  max-width: 1200px;
+  gap: var(--pb-page-gap);
+  padding: var(--pb-page-block-start) var(--pb-page-inline) var(--pb-page-block-end);
+  max-width: var(--pb-page-content);
   margin-inline: auto;
 
   @media (max-width: 700px) {
-    padding: 14px 12px 24px;
-  }
-
-  &__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-
-    h1 {
-      margin: 0 0 4px;
-      font: var(--mat-sys-headline-small);
-      font-weight: 700;
-
-      @media (max-width: 700px) {
-        font-size: var(--mat-sys-title-large-size);
-      }
-    }
-  }
-
-  &__note {
-    margin: 0;
-    max-width: 64ch;
-    font-size: var(--mat-sys-body-medium-size);
-    font-weight: var(--mat-sys-body-medium-weight);
-    letter-spacing: var(--mat-sys-body-medium-tracking);
-    line-height: 1.8;
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__count {
-    flex: 0 0 auto;
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-    white-space: nowrap;
+    padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
   }
 
   &__toolbar {
@@ -125,26 +91,6 @@
     &--none {
       font-weight: 400;
       color: var(--mat-sys-on-surface-variant);
-    }
-  }
-
-  &__status {
-    padding: 2px 8px;
-    border-radius: var(--mat-sys-corner-full);
-    font: var(--mat-sys-label-small);
-    letter-spacing: var(--mat-sys-label-small-tracking);
-    background: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface-variant);
-    white-space: nowrap;
-
-    &[data-status='scheduled'] {
-      background: color-mix(in srgb, #fb8c00 18%, transparent);
-      color: #e65100;
-    }
-
-    &[data-status='completed'] {
-      background: color-mix(in srgb, #43a047 16%, transparent);
-      color: #2e7d32;
     }
   }
 

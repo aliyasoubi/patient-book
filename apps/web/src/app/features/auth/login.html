@@ -24,34 +24,42 @@
 
           <pb-text-field
             [control]="form.controls.username"
-            i18n-label label="نام کاربری"
+            i18n-label
+            label="نام کاربری"
             prefixIcon="person"
             [ltr]="true"
-            nativeAutocomplete="username" />
+            nativeAutocomplete="username"
+          />
 
           <pb-text-field
             [control]="form.controls.password"
-            i18n-label label="رمز عبور"
+            i18n-label
+            label="رمز عبور"
             type="password"
             prefixIcon="lock"
             [ltr]="true"
-            nativeAutocomplete="current-password" />
+            nativeAutocomplete="current-password"
+          />
 
           <pb-button
             variant="flat"
+            size="large"
             type="submit"
             icon="login"
             class="login__submit"
             [fullWidth]="true"
             [loading]="loading()"
             [loadingText]="signInLabel"
-            i18n>
+            i18n
+          >
             ورود
           </pb-button>
         </form>
       </mat-card-content>
     </mat-card>
 
-    <p class="login__footer" i18n>اطلاعات بیماران محرمانه است. پس از پایان کار از سیستم خارج شوید.</p>
+    <p class="login__footer" i18n>
+      اطلاعات بیماران محرمانه است. پس از پایان کار از سیستم خارج شوید.
+    </p>
   </div>
 </div>

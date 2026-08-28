@@ -2,14 +2,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../core/services/auth.service';
 import { roleLabel } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { PbButton, PbSurface, PbTextField } from '../../shared/ui';
+import { PbAvatar, PbButton, PbPageHeader, PbSurface, PbTextField } from '../../shared/ui';
 
 /**
  * The two new-password fields must agree. Rather than surface this as a
@@ -33,7 +31,7 @@ function passwordsMatch(group: AbstractControl): null {
 @Component({
   selector: 'pb-account',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, PbTextField, PbButton, PbSurface, MatIconModule],
+  imports: [ReactiveFormsModule, PbTextField, PbButton, PbSurface, PbAvatar, PbPageHeader],
   templateUrl: './account.html',
   styleUrl: './account.scss',
 })
@@ -47,6 +45,7 @@ export class Account {
   protected readonly roleLabel = roleLabel;
   protected readonly saving = signal(false);
   protected readonly savingLabel = $localize`:@@account.savingLabel:در حال ذخیره…`;
+  protected readonly backLabel = $localize`:@@action.back:بازگشت`;
 
   protected readonly currentPasswordErrors = {
     wrong: $localize`:@@account.currentPasswordWrong:رمز عبور فعلی نادرست است`,
@@ -78,7 +77,7 @@ export class Account {
           { duration: 7000 },
         );
         // Changing the password revokes every session, this one included.
-        this.auth.logout();
+        this.auth.expireSession();
       },
       error: (error: unknown) => {
         this.saving.set(false);

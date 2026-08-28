@@ -1,16 +1,20 @@
 <div class="account">
-  <header class="account__header">
-    <button mat-icon-button type="button" (click)="back()" i18n-aria-label aria-label="بازگشت">
-      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-    </button>
-    <h1 i18n>حساب کاربری</h1>
-  </header>
+  <pb-page-header
+    i18n-title
+    title="حساب کاربری"
+    [backLabel]="auth.user()?.mustChangePassword ? null : backLabel"
+    (back)="back()"
+  />
+
+  @if (auth.user()?.mustChangePassword) {
+    <p class="password-required" role="alert" i18n>
+      برای ادامه کار و دسترسی به پرونده‌ها، ابتدا رمز عبور موقت خود را تغییر دهید.
+    </p>
+  }
 
   <pb-surface>
     <div class="identity">
-      <span class="identity__avatar">
-        <mat-icon aria-hidden="true">person</mat-icon>
-      </span>
+      <pb-avatar size="large" tone="primary" [name]="auth.user()?.fullName ?? ''" />
       <div>
         <strong>{{ auth.user()?.fullName }}</strong>
         <span class="identity__meta">
@@ -30,26 +34,33 @@
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pw-form">
       <pb-text-field
         [control]="form.controls.currentPassword"
-        i18n-label label="رمز عبور فعلی"
+        i18n-label
+        label="رمز عبور فعلی"
         type="password"
         [ltr]="true"
         nativeAutocomplete="current-password"
-        [errorMessages]="currentPasswordErrors" />
+        [errorMessages]="currentPasswordErrors"
+      />
 
       <pb-text-field
         [control]="form.controls.newPassword"
-        i18n-label label="رمز عبور جدید"
+        i18n-label
+        label="رمز عبور جدید"
         type="password"
         [ltr]="true"
         nativeAutocomplete="new-password"
-        i18n-hint hint="حداقل ۱۰ کاراکتر" />
+        i18n-hint
+        hint="حداقل ۱۰ کاراکتر"
+      />
 
       <pb-text-field
         [control]="form.controls.confirmPassword"
-        i18n-label label="تکرار رمز عبور جدید"
+        i18n-label
+        label="تکرار رمز عبور جدید"
         type="password"
         [ltr]="true"
-        nativeAutocomplete="new-password" />
+        nativeAutocomplete="new-password"
+      />
 
       <div class="pw-form__actions">
         <pb-button
@@ -58,7 +69,8 @@
           icon="save"
           [loading]="saving()"
           [loadingText]="savingLabel"
-          i18n>
+          i18n
+        >
           تغییر رمز عبور
         </pb-button>
       </div>

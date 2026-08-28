@@ -1,52 +1,17 @@
 <form class="search" (submit)="onSubmit($event)" role="search">
-  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search__field">
-    <mat-icon class="search__icon" matIconPrefix aria-hidden="true">search</mat-icon>
-    <input
-      #searchInput
-      matInput
-      type="search"
-      [formControl]="control"
-      [matAutocomplete]="auto"
-      i18n-placeholder placeholder="جستجوی نام، شماره پرونده، موبایل یا کد ملی…"
-      i18n-aria-label aria-label="جستجوی بیمار"
-      autocomplete="off"
-      enterkeyhint="search" />
-    @if (control.value) {
-      <button
-        matIconSuffix
-        type="button"
-        class="search__clear"
-        (click)="control.setValue('')"
-        i18n-aria-label aria-label="پاک کردن جستجو">
-        <mat-icon aria-hidden="true">close</mat-icon>
-      </button>
-    } @else {
-      <kbd matSuffix class="search__kbd" aria-hidden="true">Ctrl K</kbd>
-    }
-  </mat-form-field>
-
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" class="search__progress" />
-  }
-
-  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelect($event)" [displayWith]="displayEmpty">
-    @for (item of suggestions(); track item.id) {
-      <mat-option [value]="item" class="search__option">
-        <mat-icon class="search__option-icon" aria-hidden="true">person</mat-icon>
-        <span class="search__option-body" i18n>
-          <span class="search__option-name">{{ item.fullName || 'بدون نام' }}</span>
-          <span class="search__option-meta">
-            <span class="ltr-nums">{{ item.fileNo }}</span>
-            @if (item.mobile) {
-              <span aria-hidden="true">·</span>
-              <span class="ltr-nums">{{ item.mobile }}</span>
-            }
-          </span>
-        </span>
-      </mat-option>
-    }
-    @if (control.value.trim().length >= 2 && suggestions().length === 0 && !loading()) {
-      <mat-option [disabled]="true" class="search__empty" i18n>بیماری با این مشخصات پیدا نشد</mat-option>
-    }
-  </mat-autocomplete>
+  <pb-search-field
+    #searchField
+    [control]="control"
+    [compact]="true"
+    shortcut="Ctrl K"
+    [loading]="loading()"
+    [options]="searchOptions()"
+    [showEmpty]="displayEmpty()"
+    [emptyMessage]="emptyMessage"
+    (optionSelected)="onSelect($event)"
+    i18n-placeholder
+    placeholder="جستجوی نام، شماره پرونده، موبایل یا کد ملی…"
+    i18n-ariaLabel
+    ariaLabel="جستجوی بیمار"
+  />
 </form>

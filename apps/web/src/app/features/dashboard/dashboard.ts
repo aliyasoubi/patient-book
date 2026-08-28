@@ -14,7 +14,7 @@ import {
   referralKindLabel,
   treatmentColor,
 } from '../../shared/labels';
-import { PbButton, PbSurface } from '../../shared/ui';
+import { PbButton, PbPageHeader, PbSurface } from '../../shared/ui';
 import type { DashboardStats } from '../../core/models/common.model';
 
 interface StatTile {
@@ -30,8 +30,16 @@ interface StatTile {
   selector: 'pb-dashboard',
   standalone: true,
   imports: [
-    RouterLink, MatProgressBarModule, MatTooltipModule,
-    PersianCountPipe, PersianNumberPipe, PbButton, PbSurface, MatIconModule],
+    RouterLink,
+    MatProgressBarModule,
+    MatTooltipModule,
+    PersianCountPipe,
+    PersianNumberPipe,
+    PbButton,
+    PbSurface,
+    PbPageHeader,
+    MatIconModule,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -130,7 +138,9 @@ export class Dashboard {
       x: i * step,
       y: h - (m.count / max) * h,
     }));
-    const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const line = points
+      .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+      .join(' ');
     const area = `${line} L${w},${h} L0,${h} Z`;
     return { line, area, months, max, last: months[months.length - 1] };
   });

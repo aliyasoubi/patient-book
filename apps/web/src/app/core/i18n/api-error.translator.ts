@@ -49,6 +49,8 @@ export class ApiErrorTranslator {
         return $localize`:@@error.sessionExpired:نشست شما منقضی شده است. دوباره وارد شوید.`;
       case 'ERR_SESSION_REVOKED':
         return $localize`:@@error.sessionRevoked:نشست شما باطل شده است. دوباره وارد شوید.`;
+      case 'ERR_PASSWORD_CHANGE_REQUIRED':
+        return $localize`:@@error.passwordChangeRequired:پیش از دسترسی به پرونده‌ها باید رمز عبور اولیه را تغییر دهید.`;
       case 'ERR_CURRENT_PASSWORD_WRONG':
         return $localize`:@@error.currentPasswordWrong:رمز عبور فعلی نادرست است.`;
       case 'ERR_USERNAME_TAKEN':

@@ -20,7 +20,8 @@
     "migration:run": "npm run migration:run --workspace=api",
     "seed": "npm run seed --workspace=api",
     "import": "npm run import --workspace=api",
-    "test": "npm run test --workspace=api"
+    "test": "npm run test --workspace=api -- --runInBand && npm run test --workspace=web -- --watch=false",
+    "test:e2e": "npm run test:e2e --workspace=api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

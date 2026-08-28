@@ -1,30 +1,27 @@
 <div class="list">
   <!-- ── Header ────────────────────────────────────────────────── -->
-  <header class="list__header">
-    <div class="list__heading">
-      <h1 i18n>بیماران</h1>
-      @if (!loading() && total() > 0) {
-        <span class="list__count">{{ total() | faCount }} پرونده</span>
-      }
-    </div>
-
+  <pb-page-header
+    i18n-title
+    title="بیماران"
+    [count]="!loading() && total() > 0 ? (total() | faCount) + ' پرونده' : null"
+  >
     @if (auth.can('editPatients')) {
-      <pb-button
-        routerLink="/patients/new"
-        icon="person_add"
-        class="list__new">
+      <pb-button routerLink="/patients/new" icon="person_add" class="list__new">
         <span class="list__new-label" i18n>بیمار جدید</span>
       </pb-button>
     }
-  </header>
+  </pb-page-header>
 
   <!-- ── Search + filter bar ───────────────────────────────────── -->
   <div class="list__toolbar">
     <pb-search-field
       class="list__search"
       [control]="searchControl"
-      i18n-placeholder placeholder="نام، شماره پرونده، موبایل، کد ملی یا آدرس…"
-      i18n-ariaLabel ariaLabel="جستجو در بیماران" />
+      i18n-placeholder
+      placeholder="نام، شماره پرونده، موبایل، کد ملی یا آدرس…"
+      i18n-ariaLabel
+      ariaLabel="جستجو در بیماران"
+    />
 
     <button
       mat-stroked-button
@@ -32,7 +29,8 @@
       class="list__filter-btn"
       [class.is-active]="activeFilterCount() > 0"
       (click)="filtersOpen.set(!filtersOpen())"
-      [attr.aria-expanded]="filtersOpen()">
+      [attr.aria-expanded]="filtersOpen()"
+    >
       <mat-icon aria-hidden="true">tune</mat-icon>
       <span i18n>فیلترها</span>
       @if (activeFilterCount() > 0) {
@@ -47,36 +45,45 @@
       <div class="filters__row">
         <pb-select-field
           class="filters__field"
-          i18n-label label="جنسیت"
+          i18n-label
+          label="جنسیت"
           [options]="genderFilterOptions"
           [anyLabel]="allLabel"
           [value]="filters().gender"
-          (valueChange)="updateFilter('gender', $any($event))" />
+          (valueChange)="updateFilter('gender', $any($event))"
+        />
 
         <pb-select-field
           class="filters__field"
-          i18n-label label="تحصیلات"
+          i18n-label
+          label="تحصیلات"
           [options]="educationFilterOptions"
           [anyLabel]="allLabel"
           [value]="filters().education"
-          (valueChange)="updateFilter('education', $any($event))" />
+          (valueChange)="updateFilter('education', $any($event))"
+        />
 
         <pb-select-field
           class="filters__field"
-          i18n-label label="بدون مراجعه از"
+          i18n-label
+          label="بدون مراجعه از"
           [options]="inactiveMonthsOptions"
           [anyLabel]="noPreferenceLabel"
           [value]="inactiveMonthsValue()"
-          (valueChange)="updateInactiveMonths($event)" />
+          (valueChange)="updateInactiveMonths($event)"
+        />
       </div>
 
       <div class="filters__group">
-        <span class="filters__label">درمان‌ها <small>(بیمارانی که همهٔ موارد انتخابی را داشته‌اند)</small></span>
+        <span class="filters__label"
+          >درمان‌ها <small>(بیمارانی که همهٔ موارد انتخابی را داشته‌اند)</small></span
+        >
         <mat-chip-listbox multiple class="filters__chips" i18n-aria-label aria-label="فیلتر درمان">
           @for (type of treatmentTypes(); track type.id) {
             <mat-chip-option
               [selected]="filters().treatments.includes(type.code)"
-              (selectionChange)="toggleTreatment(type.code)">
+              (selectionChange)="toggleTreatment(type.code)"
+            >
               <mat-icon class="chip-icon" aria-hidden="true">{{ type.icon }}</mat-icon>
               {{ type.nameFa }}
             </mat-chip-option>
@@ -88,24 +95,34 @@
         <pb-checkbox-field
           [checked]="filters().hasIssues"
           (checkedChange)="updateFilter('hasIssues', $event)"
-          i18n>
+          i18n
+        >
           نیازمند بازبینی داده
         </pb-checkbox-field>
         <pb-checkbox-field
           [checked]="filters().hasMedicalHistory"
           (checkedChange)="updateFilter('hasMedicalHistory', $event)"
-          i18n>
+          i18n
+        >
           دارای سابقه بیماری
         </pb-checkbox-field>
         <pb-checkbox-field
           [checked]="filters().includeArchived"
           (checkedChange)="updateFilter('includeArchived', $event)"
-          i18n>
+          i18n
+        >
           شامل بایگانی
         </pb-checkbox-field>
 
         @if (activeFilterCount() > 0) {
-          <pb-button variant="text" type="button" (click)="clearFilters()" icon="filter_alt_off" class="filters__clear" i18n>
+          <pb-button
+            variant="text"
+            type="button"
+            (click)="clearFilters()"
+            icon="filter_alt_off"
+            class="filters__clear"
+            i18n
+          >
             پاک کردن فیلترها
           </pb-button>
         }
@@ -119,10 +136,7 @@
 
   <!-- ── Results ───────────────────────────────────────────────── -->
   @if (!loading() && patients().length === 0) {
-    <pb-empty-state
-      icon="person_search"
-      [title]="emptyTitle"
-      [hint]="emptyHint()">
+    <pb-empty-state icon="person_search" [title]="emptyTitle" [hint]="emptyHint()">
       @if (searchControl.value || activeFilterCount() > 0) {
         <pb-button variant="stroked" type="button" (click)="clearSearch(); clearFilters()" i18n>
           پاک کردن جستجو و فیلترها
@@ -136,11 +150,11 @@
         <li class="card" [class.card--archived]="patient.isArchived">
           <a class="card__link" [routerLink]="['/patients', patient.id]">
             <div class="card__head">
-              <span class="card__avatar" [attr.data-gender]="patient.gender">
-                <mat-icon aria-hidden="true">{{
-                  genderIcon(patient.gender)
-                }}</mat-icon>
-              </span>
+              <pb-avatar
+                size="medium"
+                [tone]="patient.gender"
+                [icon]="genderIcon(patient.gender)"
+              />
               <div class="card__identity">
                 <strong class="card__name">{{ patient.fullName || unnamed }}</strong>
                 <span class="card__file" i18n>
@@ -151,9 +165,7 @@
                 </span>
               </div>
               @if (patient.dataIssues.length > 0) {
-                <span
-                  class="card__flag"
-                  [matTooltip]="issueTooltip(patient.dataIssues.length)">
+                <span class="card__flag" [matTooltip]="issueTooltip(patient.dataIssues.length)">
                   <mat-icon aria-hidden="true">error</mat-icon>
                 </span>
               }
@@ -186,7 +198,8 @@
             <a
               class="card__call"
               [href]="'tel:' + patient.mobile"
-              [attr.aria-label]="callLabel(patient.fullName)">
+              [attr.aria-label]="callLabel(patient.fullName)"
+            >
               <mat-icon aria-hidden="true">call</mat-icon>
             </a>
           }
@@ -203,7 +216,8 @@
         [matSortActive]="sort().by"
         [matSortDirection]="sort().dir === 'ASC' ? 'asc' : 'desc'"
         (matSortChange)="onSortChange($event)"
-        class="table">
+        class="table"
+      >
         <ng-container matColumnDef="fileNo">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="fileNo" i18n>شماره پرونده</th>
           <td mat-cell *matCellDef="let p">
@@ -215,11 +229,7 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header="lastName" i18n>نام بیمار</th>
           <td mat-cell *matCellDef="let p">
             <div class="table__identity">
-              <span class="table__avatar" [attr.data-gender]="p.gender">
-                <mat-icon aria-hidden="true">{{
-                  genderIcon(p.gender)
-                }}</mat-icon>
-              </span>
+              <pb-avatar size="small" [tone]="p.gender" [icon]="genderIcon(p.gender)" />
               <div class="table__name-block">
                 <span class="table__name">{{ p.fullName || unnamed }}</span>
                 <span class="table__sub" i18n>
@@ -230,9 +240,7 @@
                 </span>
               </div>
               @if (p.dataIssues.length > 0) {
-                <span
-                  class="table__flag"
-                  [matTooltip]="issueTooltip(p.dataIssues.length)">
+                <span class="table__flag" [matTooltip]="issueTooltip(p.dataIssues.length)">
                   <mat-icon aria-hidden="true">error</mat-icon>
                 </span>
               }
@@ -249,7 +257,11 @@
           <th mat-header-cell *matHeaderCellDef i18n>تماس</th>
           <td mat-cell *matCellDef="let p">
             @if (p.mobile) {
-              <a class="table__phone ltr-nums" [href]="'tel:' + p.mobile" (click)="$event.stopPropagation()">
+              <a
+                class="table__phone ltr-nums"
+                [href]="'tel:' + p.mobile"
+                (click)="$event.stopPropagation()"
+              >
                 {{ p.mobile }}
               </a>
             } @else if (p.homePhone) {
@@ -293,7 +305,9 @@
               type="button"
               [matMenuTriggerFor]="rowMenu"
               (click)="$event.stopPropagation()"
-              i18n-aria-label aria-label="عملیات پرونده">
+              i18n-aria-label
+              aria-label="عملیات پرونده"
+            >
               <mat-icon aria-hidden="true">more_vert</mat-icon>
             </button>
             <mat-menu #rowMenu="matMenu">
@@ -325,7 +339,8 @@
           [class.table__row--archived]="row.isArchived"
           tabindex="0"
           (click)="open(row)"
-          (keydown.enter)="open(row)"></tr>
+          (keydown.enter)="open(row)"
+        ></tr>
       </table>
     </div>
   }
@@ -338,6 +353,8 @@
       [pageSize]="limit()"
       [pageSizeOptions]="[10, 25, 50, 100]"
       (page)="onPage($event)"
-      i18n-aria-label aria-label="صفحه‌بندی" />
+      i18n-aria-label
+      aria-label="صفحه‌بندی"
+    />
   }
 </div>

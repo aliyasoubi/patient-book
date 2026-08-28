@@ -1,44 +1,14 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 32px;
-  max-width: 1500px;
+  gap: var(--pb-page-gap);
+  padding: var(--pb-page-block-start) var(--pb-page-inline) var(--pb-page-block-end);
+  max-width: var(--pb-page-wide);
   margin-inline: auto;
 
   @media (max-width: 700px) {
-    padding: 14px 12px 24px;
+    padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
     gap: 12px;
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  &__heading {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    min-width: 0;
-
-    h1 {
-      margin: 0;
-      font: var(--mat-sys-headline-small);
-      font-weight: 700;
-
-      @media (max-width: 700px) {
-        font-size: var(--mat-sys-title-large-size);
-      }
-    }
-  }
-
-  &__count {
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-    white-space: nowrap;
   }
 
   &__new {
@@ -62,7 +32,7 @@
   &__toolbar {
     display: flex;
     gap: 10px;
-    align-items: flex-start;
+    align-items: center;
   }
 
   &__search {
@@ -72,7 +42,7 @@
 
   &__filter-btn {
     flex: 0 0 auto;
-    height: 48px;
+    height: var(--pb-search-height);
     gap: 6px;
 
     &.is-active {
@@ -218,31 +188,6 @@
     padding-block: 4px;
   }
 
-  &__avatar {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    flex: 0 0 auto;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface-variant);
-
-    .material-symbols-rounded {
-      font-size: 19px;
-    }
-
-    &[data-gender='female'] {
-      background: color-mix(in srgb, #e91e63 14%, transparent);
-      color: #c2185b;
-    }
-
-    &[data-gender='male'] {
-      background: color-mix(in srgb, #1e88e5 14%, transparent);
-      color: #1565c0;
-    }
-  }
-
   &__name-block {
     display: flex;
     flex-direction: column;
@@ -355,31 +300,6 @@
     align-items: center;
     gap: 10px;
     min-width: 0;
-  }
-
-  &__avatar {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    flex: 0 0 auto;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface-variant);
-
-    .material-symbols-rounded {
-      font-size: 22px;
-    }
-
-    &[data-gender='female'] {
-      background: color-mix(in srgb, #e91e63 14%, transparent);
-      color: #c2185b;
-    }
-
-    &[data-gender='male'] {
-      background: color-mix(in srgb, #1e88e5 14%, transparent);
-      color: #1565c0;
-    }
   }
 
   &__identity {

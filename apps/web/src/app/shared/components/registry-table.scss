@@ -79,15 +79,6 @@
     color: var(--mat-sys-on-surface-variant);
   }
 
-  &__match {
-    padding: 1px 7px;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface-variant);
-    font: var(--mat-sys-label-small);
-    letter-spacing: var(--mat-sys-label-small-tracking);
-  }
-
   &__unlinked {
     display: inline-flex;
     align-items: center;
@@ -116,20 +107,5 @@
     font: var(--mat-sys-body-medium);
     color: var(--mat-sys-primary);
     text-decoration: none;
-  }
-
-  &__status {
-    padding: 3px 10px;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface-variant);
-    font: var(--mat-sys-label-small);
-    letter-spacing: var(--mat-sys-label-small-tracking);
-    white-space: nowrap;
-
-    &[data-status='active'] {
-      background: color-mix(in srgb, #43a047 16%, transparent);
-      color: #2e7d32;
-    }
   }
 }

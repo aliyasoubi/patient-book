@@ -19,6 +19,7 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [authGuard],
+    canActivateChild: [authGuard],
     loadComponent: () => import('./layout/shell').then((m) => m.Shell),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
@@ -29,14 +30,12 @@ export const routes: Routes = [
       },
       {
         path: 'patients',
-        loadComponent: () =>
-          import('./features/patients/patient-list').then((m) => m.PatientList),
+        loadComponent: () => import('./features/patients/patient-list').then((m) => m.PatientList),
         title: $localize`:@@route.patients:بیماران — دفترچه بیماران`,
       },
       {
         path: 'patients/new',
-        loadComponent: () =>
-          import('./features/patients/patient-form').then((m) => m.PatientForm),
+        loadComponent: () => import('./features/patients/patient-form').then((m) => m.PatientForm),
         title: $localize`:@@route.patientNew:بیمار جدید — دفترچه بیماران`,
       },
       {
@@ -47,8 +46,7 @@ export const routes: Routes = [
       },
       {
         path: 'patients/:id/edit',
-        loadComponent: () =>
-          import('./features/patients/patient-form').then((m) => m.PatientForm),
+        loadComponent: () => import('./features/patients/patient-form').then((m) => m.PatientForm),
         title: $localize`:@@route.patientEdit:ویرایش پرونده — دفترچه بیماران`,
       },
       {

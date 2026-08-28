@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 export type ButtonVariant = 'flat' | 'stroked' | 'text';
+export type ButtonSize = 'default' | 'large';
 export type ButtonRouterLink = string | readonly unknown[];
 
 /** The app's vocabulary, in Material 3's terms. */
@@ -43,6 +44,7 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
   imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, NgTemplateOutlet, RouterLink],
   host: {
     '[class.pb-button--full]': 'fullWidth()',
+    '[class.pb-button--large]': "size() === 'large'",
   },
   template: `
     @if (isLink()) {
@@ -52,14 +54,16 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
         [attr.href]="href()"
         [queryParams]="queryParams()"
         class="pb-btn"
-        [class.pb-btn--full]="fullWidth()">
+        [class.pb-btn--full]="fullWidth()"
+      >
         @if (loading()) {
           <mat-progress-spinner
             mode="indeterminate"
             diameter="18"
             strokeWidth="2.5"
             class="pb-btn__spinner"
-            aria-hidden="true" />
+            aria-hidden="true"
+          />
         } @else if (icon()) {
           <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
         }
@@ -71,14 +75,16 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
         [type]="type()"
         [disabled]="isDisabled()"
         class="pb-btn"
-        [class.pb-btn--full]="fullWidth()">
+        [class.pb-btn--full]="fullWidth()"
+      >
         @if (loading()) {
           <mat-progress-spinner
             mode="indeterminate"
             diameter="18"
             strokeWidth="2.5"
             class="pb-btn__spinner"
-            aria-hidden="true" />
+            aria-hidden="true"
+          />
         } @else if (icon()) {
           <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
         }
@@ -115,18 +121,20 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
     .pb-btn--full {
       width: 100%;
     }
+    :host(.pb-button--large) .pb-btn {
+      height: var(--pb-control-height);
+      font-size: var(--mat-sys-title-medium-size);
+    }
     .pb-btn__spinner {
       display: inline-flex;
       margin-inline-end: 8px;
-      /* Spins in place of the icon; Material tints it via currentColor. */
-      ::ng-deep circle {
-        stroke: currentColor;
-      }
+      --mat-progress-spinner-active-indicator-color: currentColor;
     }
   `,
 })
 export class PbButton {
   readonly variant = input<ButtonVariant>('flat');
+  readonly size = input<ButtonSize>('default');
   readonly type = input<'button' | 'submit'>('button');
   readonly icon = input<string | null>(null);
   readonly disabled = input(false);

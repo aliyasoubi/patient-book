@@ -1,13 +1,9 @@
 <div class="dash">
-  <header class="dash__header">
-    <div>
-      <h1>{{ greeting() }}</h1>
-      <p i18n>خلاصه‌ای از وضعیت پرونده‌های مطب</p>
-    </div>
+  <pb-page-header [title]="greeting()" i18n-subtitle subtitle="خلاصه‌ای از وضعیت پرونده‌های مطب">
     @if (auth.can('editPatients')) {
       <pb-button routerLink="/patients/new" icon="person_add" i18n>بیمار جدید</pb-button>
     }
-  </header>
+  </pb-page-header>
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />
@@ -21,7 +17,8 @@
           class="tile"
           [class.tile--warn]="tile.tone === 'warn' && tile.value > 0"
           [routerLink]="tile.link"
-          [queryParams]="tile.queryParams ?? {}">
+          [queryParams]="tile.queryParams ?? {}"
+        >
           <mat-icon class="tile__icon" aria-hidden="true">{{ tile.icon }}</mat-icon>
           <span class="tile__value">{{ tile.value | faCount }}</span>
           <span class="tile__label">{{ tile.label }}</span>
@@ -31,19 +28,28 @@
 
     <div class="dash__grid">
       <!-- ── Treatments ────────────────────────────────────────── -->
-      <pb-surface class="panel--wide" i18n-title title="درمان‌های ثبت‌شده" i18n-hint hint="تعداد بیماران هر درمان">
+      <pb-surface
+        class="panel--wide"
+        i18n-title
+        title="درمان‌های ثبت‌شده"
+        i18n-hint
+        hint="تعداد بیماران هر درمان"
+      >
         <ul class="bars">
           @for (t of treatmentBars(); track t.code) {
             <li class="bars__row">
               <span class="bars__label">
-                <mat-icon class="bars__icon" [style.color]="color(t.color).fg" aria-hidden="true">{{ t.icon }}</mat-icon>
+                <mat-icon class="bars__icon" [style.color]="color(t.color).fg" aria-hidden="true">{{
+                  t.icon
+                }}</mat-icon>
                 {{ t.nameFa }}
               </span>
               <span class="bars__track">
                 <span
                   class="bars__fill"
                   [style.width.%]="t.percent"
-                  [style.background]="color(t.color).fg"></span>
+                  [style.background]="color(t.color).fg"
+                ></span>
               </span>
               <span class="bars__value">{{ t.count | faCount }}</span>
             </li>
@@ -60,7 +66,8 @@
               viewBox="0 0 100 32"
               preserveAspectRatio="none"
               role="img"
-              [attr.aria-label]="trendLabel(t.max)">
+              [attr.aria-label]="trendLabel(t.max)"
+            >
               <path class="trend__area" [attr.d]="t.area" />
               <path class="trend__line" [attr.d]="t.line" />
             </svg>
@@ -80,13 +87,19 @@
       <!-- ── Gender ────────────────────────────────────────────── -->
       <pb-surface i18n-title title="ترکیب جنسیتی">
         <div class="split">
-          <div class="split__bar" role="img" i18n-aria-label aria-label="نسبت بیماران بر اساس جنسیت">
+          <div
+            class="split__bar"
+            role="img"
+            i18n-aria-label
+            aria-label="نسبت بیماران بر اساس جنسیت"
+          >
             @for (g of genderSplit(); track g.key) {
               <span
                 class="split__seg"
                 [attr.data-gender]="g.key"
                 [style.width.%]="g.percent"
-                [matTooltip]="genderLabel(g.key) + ': ' + g.count"></span>
+                [matTooltip]="genderLabel(g.key) + ': ' + g.count"
+              ></span>
             }
           </div>
           <ul class="split__legend">
@@ -141,7 +154,11 @@
             <span class="recall__value">{{ s.recentlyActive | faCount }}</span>
             <span class="recall__label" i18n>مراجعه در ۶ ماه اخیر</span>
           </a>
-          <a class="recall__item recall__item--warn" routerLink="/patients" [queryParams]="{ inactiveMonths: 12 }">
+          <a
+            class="recall__item recall__item--warn"
+            routerLink="/patients"
+            [queryParams]="{ inactiveMonths: 12 }"
+          >
             <span class="recall__value">{{ s.inactiveOverYear | faCount }}</span>
             <span class="recall__label" i18n>بیش از یک سال بدون مراجعه</span>
             <span class="recall__cta" i18n>

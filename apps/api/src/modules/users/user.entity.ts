@@ -30,6 +30,10 @@ export class User {
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
 
+  /** Seeded accounts cannot access patient data until this is cleared. */
+  @Column({ type: 'boolean', default: false })
+  mustChangePassword!: boolean;
+
   /**
    * Bumped whenever the password changes or the account is disabled. Refresh
    * tokens carry the value they were minted with, so incrementing it revokes

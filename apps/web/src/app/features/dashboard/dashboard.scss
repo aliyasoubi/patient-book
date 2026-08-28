@@ -1,38 +1,14 @@
 .dash {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 20px 24px 32px;
-  max-width: 1500px;
+  gap: var(--pb-page-gap);
+  padding: var(--pb-page-block-start) var(--pb-page-inline) var(--pb-page-block-end);
+  max-width: var(--pb-page-wide);
   margin-inline: auto;
 
   @media (max-width: 700px) {
-    padding: 14px 12px 24px;
+    padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
     gap: 14px;
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-
-    h1 {
-      margin: 0 0 2px;
-      font: var(--mat-sys-headline-small);
-      font-weight: 700;
-
-      @media (max-width: 700px) {
-        font-size: var(--mat-sys-title-large-size);
-      }
-    }
-
-    p {
-      margin: 0;
-      font: var(--mat-sys-body-medium);
-      color: var(--mat-sys-on-surface-variant);
-    }
   }
 
   &__grid {
@@ -239,9 +215,15 @@
     height: 100%;
     transition: width 500ms cubic-bezier(0.2, 0, 0, 1);
 
-    &[data-gender='female'] { background: #ec407a; }
-    &[data-gender='male'] { background: #42a5f5; }
-    &[data-gender='unknown'] { background: var(--mat-sys-outline); }
+    &[data-gender='female'] {
+      background: var(--mat-sys-tertiary);
+    }
+    &[data-gender='male'] {
+      background: var(--mat-sys-primary);
+    }
+    &[data-gender='unknown'] {
+      background: var(--mat-sys-outline);
+    }
   }
 
   &__legend {
@@ -277,9 +259,15 @@
     border-radius: var(--mat-sys-corner-full);
     flex: 0 0 auto;
 
-    &[data-gender='female'] { background: #ec407a; }
-    &[data-gender='male'] { background: #42a5f5; }
-    &[data-gender='unknown'] { background: var(--mat-sys-outline); }
+    &[data-gender='female'] {
+      background: var(--mat-sys-tertiary);
+    }
+    &[data-gender='male'] {
+      background: var(--mat-sys-primary);
+    }
+    &[data-gender='unknown'] {
+      background: var(--mat-sys-outline);
+    }
   }
 }
 

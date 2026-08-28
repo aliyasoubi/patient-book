@@ -16,6 +16,7 @@ import { ThemeService } from '../core/services/theme.service';
 import { GlobalSearch } from './global-search';
 import { roleLabel } from '../shared/labels';
 import type { UserRole } from '../core/models/common.model';
+import { PbAvatar } from '../shared/ui';
 
 export interface NavItem {
   path: string;
@@ -32,12 +33,37 @@ export interface NavItem {
  */
 function navItems(): NavItem[] {
   return [
-    { path: '/dashboard', label: $localize`:@@nav.dashboard:داشبورد`, icon: 'dashboard', primary: true },
+    {
+      path: '/dashboard',
+      label: $localize`:@@nav.dashboard:داشبورد`,
+      icon: 'dashboard',
+      primary: true,
+    },
     { path: '/patients', label: $localize`:@@nav.patients:بیماران`, icon: 'groups', primary: true },
-    { path: '/surgery', label: $localize`:@@nav.surgery:لیست جراحی`, icon: 'event_available', primary: true },
-    { path: '/implants', label: $localize`:@@nav.implants:دفتر ایمپلنت`, icon: 'deployed_code', primary: true },
-    { path: '/ortho', label: $localize`:@@nav.ortho:دفتر ارتودنسی`, icon: 'straighten', primary: false },
-    { path: '/settings', label: $localize`:@@nav.settings:تنظیمات`, icon: 'settings', primary: false },
+    {
+      path: '/surgery',
+      label: $localize`:@@nav.surgery:لیست جراحی`,
+      icon: 'event_available',
+      primary: true,
+    },
+    {
+      path: '/implants',
+      label: $localize`:@@nav.implants:دفتر ایمپلنت`,
+      icon: 'deployed_code',
+      primary: true,
+    },
+    {
+      path: '/ortho',
+      label: $localize`:@@nav.ortho:دفتر ارتودنسی`,
+      icon: 'straighten',
+      primary: false,
+    },
+    {
+      path: '/settings',
+      label: $localize`:@@nav.settings:تنظیمات`,
+      icon: 'settings',
+      primary: false,
+    },
   ];
 }
 
@@ -45,10 +71,19 @@ function navItems(): NavItem[] {
   selector: 'pb-shell',
   standalone: true,
   imports: [
-    RouterOutlet, RouterLink, RouterLinkActive,
-    MatSidenavModule, MatToolbarModule, MatButtonModule,
-    MatListModule, MatMenuModule, MatTooltipModule,
-    GlobalSearch, MatIconModule],
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatSidenavModule,
+    MatToolbarModule,
+    MatButtonModule,
+    MatListModule,
+    MatMenuModule,
+    MatTooltipModule,
+    GlobalSearch,
+    PbAvatar,
+    MatIconModule,
+  ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
@@ -85,13 +120,6 @@ export class Shell {
   protected readonly primaryNav = computed(() => this.navItems().filter((i) => i.primary));
 
   protected readonly roleLabel = computed(() => roleLabel(this.auth.role()));
-
-  /** Initials for the avatar, from the Persian full name. */
-  protected readonly initials = computed(() => {
-    const name = this.auth.user()?.fullName ?? '';
-    const parts = name.split(' ').filter(Boolean);
-    return parts.slice(0, 2).map((p) => p[0]).join('');
-  });
 
   /** Tooltip naming the current theme mode. */
   protected themeTooltip(): string {

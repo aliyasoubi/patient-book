@@ -1,5 +1,13 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -34,22 +42,42 @@ export class UsersController {
   @Post()
   @ApiOperation({ summary: 'Create a user' })
   async create(@Body() dto: CreateUserDto, @CurrentUser('id') actorId: string) {
-    const exists = await this.users.findOne({ where: { username: dto.username } });
-    if (exists) throw AppException.conflict(ErrorCode.UsernameTaken, { username: dto.username });
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+    return this.users.manager.transaction(async (manager) => {
+      const users = manager.getRepository(User);
+      const exists = await users
+        .createQueryBuilder('u')
+        .where('lower(u.username) = lower(:username)', {
+          username: dto.username,
+        })
+        .getOne();
+      if (exists) {
+        throw AppException.conflict(ErrorCode.UsernameTaken, {
+          username: dto.username,
+        });
+      }
 
-    const user = await this.users.save(
-      this.users.create({
-        username: dto.username,
-        fullName: dto.fullName,
-        role: dto.role,
-        passwordHash: await bcrypt.hash(dto.password, 12),
-      }),
-    );
-    await this.audit.record({
-      userId: actorId, action: 'create', entity: 'user', entityId: user.id,
-      changes: { username: user.username, role: user.role },
+      const user = await users.save(
+        users.create({
+          username: dto.username,
+          fullName: dto.fullName,
+          role: dto.role,
+          passwordHash,
+          mustChangePassword: true,
+        }),
+      );
+      await this.audit.recordRequired(
+        {
+          userId: actorId,
+          action: 'create',
+          entity: 'user',
+          entityId: user.id,
+          changes: { username: user.username, role: user.role },
+        },
+        manager,
+      );
+      return users.findOneOrFail({ where: { id: user.id } });
     });
-    return this.users.findOne({ where: { id: user.id } });
   }
 
   @Patch(':id')
@@ -65,18 +93,50 @@ export class UsersController {
     if (id === actorId && dto.role && dto.role !== UserRole.Admin) {
       throw AppException.forbidden(ErrorCode.CannotDemoteSelf);
     }
-    const patch: Partial<User> = { ...dto };
-    // Disabling an account must end its live sessions, not just block new logins.
-    if (dto.isActive === false) {
-      const current = await this.users.findOne({ where: { id } });
-      if (current) patch.tokenVersion = current.tokenVersion + 1;
-    }
-    await this.users.update(id, patch);
-    await this.audit.record({
-      userId: actorId, action: 'update', entity: 'user', entityId: id,
-      changes: dto as Record<string, unknown>,
+    return this.users.manager.transaction(async (manager) => {
+      const users = manager.getRepository(User);
+      const current = await users.findOne({ where: { id } });
+      if (!current) {
+        throw AppException.notFound(ErrorCode.NotFound, { entity: 'user' });
+      }
+
+      if (
+        dto.username &&
+        dto.username.toLocaleLowerCase() !==
+          current.username.toLocaleLowerCase()
+      ) {
+        const clash = await users
+          .createQueryBuilder('u')
+          .where('lower(u.username) = lower(:username)', {
+            username: dto.username,
+          })
+          .andWhere('u.id <> :id', { id })
+          .getOne();
+        if (clash) {
+          throw AppException.conflict(ErrorCode.UsernameTaken, {
+            username: dto.username,
+          });
+        }
+      }
+
+      const patch: Partial<User> = { ...dto };
+      // Disabling an account must end its live sessions, not just block new logins.
+      if (dto.isActive === false) {
+        patch.tokenVersion = current.tokenVersion + 1;
+      }
+      await users.update(id, patch);
+      await this.audit.recordRequired(
+        {
+          userId: actorId,
+          action: 'update',
+          entity: 'user',
+          entityId: id,
+          changes: dto as Record<string, unknown>,
+        },
+        manager,
+      );
+      return users.findOneOrFail({ where: { id } });
     });
-    return this.users.findOne({ where: { id } });
   }
 
   @Post(':id/reset-password')
@@ -87,28 +147,61 @@ export class UsersController {
     @Body() dto: ResetPasswordDto,
     @CurrentUser('id') actorId: string,
   ) {
-    const user = await this.users.findOne({ where: { id } });
-    if (!user) throw AppException.notFound(ErrorCode.NotFound, { entity: 'user' });
-    await this.users.update(id, {
-      passwordHash: await bcrypt.hash(dto.newPassword, 12),
-      tokenVersion: user.tokenVersion + 1,
-    });
-    await this.audit.record({
-      userId: actorId, action: 'update', entity: 'user', entityId: id,
-      changes: { passwordReset: true },
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    await this.users.manager.transaction(async (manager) => {
+      const users = manager.getRepository(User);
+      const user = await users.findOne({ where: { id } });
+      if (!user) {
+        throw AppException.notFound(ErrorCode.NotFound, { entity: 'user' });
+      }
+      await users.update(id, {
+        passwordHash,
+        tokenVersion: user.tokenVersion + 1,
+        mustChangePassword: true,
+      });
+      await this.audit.recordRequired(
+        {
+          userId: actorId,
+          action: 'update',
+          entity: 'user',
+          entityId: id,
+          changes: { passwordReset: true },
+        },
+        manager,
+      );
     });
   }
 
   @Delete(':id')
   @HttpCode(204)
   @ApiOperation({ summary: 'Deactivate a user' })
-  async deactivate(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') actorId: string) {
-    if (id === actorId) throw AppException.forbidden(ErrorCode.CannotDeleteSelf);
-    const user = await this.users.findOne({ where: { id } });
-    if (!user) throw AppException.notFound(ErrorCode.NotFound, { entity: 'user' });
-    // Users are deactivated, never deleted — audit rows must keep pointing at
-    // a real person.
-    await this.users.update(id, { isActive: false, tokenVersion: user.tokenVersion + 1 });
-    await this.audit.record({ userId: actorId, action: 'delete', entity: 'user', entityId: id });
+  async deactivate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') actorId: string,
+  ) {
+    if (id === actorId)
+      throw AppException.forbidden(ErrorCode.CannotDeleteSelf);
+    await this.users.manager.transaction(async (manager) => {
+      const users = manager.getRepository(User);
+      const user = await users.findOne({ where: { id } });
+      if (!user) {
+        throw AppException.notFound(ErrorCode.NotFound, { entity: 'user' });
+      }
+      // Users are deactivated, never deleted — audit rows must keep pointing at
+      // a real person.
+      await users.update(id, {
+        isActive: false,
+        tokenVersion: user.tokenVersion + 1,
+      });
+      await this.audit.recordRequired(
+        {
+          userId: actorId,
+          action: 'delete',
+          entity: 'user',
+          entityId: id,
+        },
+        manager,
+      );
+    });
   }
 }

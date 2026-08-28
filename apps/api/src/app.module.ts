@@ -17,7 +17,9 @@ import { SurgeryModule } from './modules/surgery/surgery.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { PasswordChangeGuard } from './modules/auth/guards/password-change.guard';
 import { AllExceptionsFilter } from './presentation/http/filters/all-exceptions.filter';
+import { HealthController } from './presentation/http/health.controller';
 
 @Module({
   imports: [
@@ -38,9 +40,11 @@ import { AllExceptionsFilter } from './presentation/http/filters/all-exceptions.
     SurgeryModule,
     StatsModule,
   ],
+  controllers: [HealthController],
   providers: [
     // Order matters: authenticate, then authorise, then rate-limit.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PasswordChangeGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

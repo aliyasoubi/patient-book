@@ -1,0 +1,35 @@
+@mixin layout {
+  .registry-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-page-gap);
+    max-width: var(--pb-page-content);
+    margin-inline: auto;
+    padding: var(--pb-page-block-start) var(--pb-page-inline) var(--pb-page-block-end);
+
+    @media (max-width: 700px) {
+      padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
+    }
+
+    &__toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--pb-space-4);
+      flex-wrap: wrap;
+    }
+
+    &__search {
+      flex: 1 1 280px;
+      min-width: 0;
+    }
+
+    &__filter {
+      flex: 0 0 auto;
+    }
+
+    mat-paginator {
+      border-top: 1px solid var(--mat-sys-outline-variant);
+      background: transparent;
+    }
+  }
+}

@@ -82,11 +82,6 @@
 
   &__submit {
     margin-top: 4px;
-
-    ::ng-deep .pb-btn {
-      height: 48px;
-      font-size: var(--mat-sys-title-medium-size);
-    }
   }
 
   &__footer {

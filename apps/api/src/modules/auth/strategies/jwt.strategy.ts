@@ -17,6 +17,7 @@ export interface RequestUser {
   username: string;
   fullName: string;
   role: string;
+  mustChangePassword: boolean;
 }
 
 @Injectable()
@@ -47,6 +48,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       username: user.username,
       fullName: user.fullName,
       role: user.role,
+      mustChangePassword: user.mustChangePassword,
     };
   }
 }

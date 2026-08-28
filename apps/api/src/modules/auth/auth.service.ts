@@ -10,6 +10,7 @@ import { AuthTokens, ChangePasswordDto, JwtPayload } from './dto/auth.dto';
 import type { AppConfig } from '../../config/configuration';
 import { AppException } from '../../application/errors/app.exception';
 import { ErrorCode } from '../../domain';
+import { AuditService } from '../../application/services/audit.service';
 
 /** What `jsonwebtoken` accepts for a duration: "30m", "7d", seconds, … */
 type ExpiresIn = NonNullable<Parameters<JwtService['sign']>[1]>['expiresIn'];
@@ -20,6 +21,7 @@ export class AuthService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -36,17 +38,39 @@ export class AuthService {
       .where('lower(u.username) = lower(:username)', { username })
       .getOne();
 
-    const hash = user?.passwordHash ?? '$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidin';
+    const hash =
+      user?.passwordHash ??
+      '$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidin';
     const ok = await bcrypt.compare(password, hash);
 
     if (!user || !ok) {
+      await this.audit.record({
+        userId: user?.id ?? null,
+        username,
+        action: 'login_failed',
+        entity: 'auth',
+      });
       throw AppException.unauthorized(ErrorCode.InvalidCredentials);
     }
     if (!user.isActive) {
       throw AppException.forbidden(ErrorCode.AccountDisabled);
     }
 
-    await this.users.update(user.id, { lastLoginAt: new Date() });
+    await this.users.manager.transaction(async (manager) => {
+      await manager.getRepository(User).update(user.id, {
+        lastLoginAt: new Date(),
+      });
+      await this.audit.recordRequired(
+        {
+          userId: user.id,
+          username: user.username,
+          action: 'login',
+          entity: 'auth',
+          entityId: user.id,
+        },
+        manager,
+      );
+    });
     return this.issueTokens(user);
   }
 
@@ -85,11 +109,49 @@ export class AuthService {
     const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!ok) throw AppException.unauthorized(ErrorCode.CurrentPasswordWrong);
 
-    await this.users.update(user.id, {
-      passwordHash: await bcrypt.hash(dto.newPassword, 12),
-      // Every other device is signed out.
-      tokenVersion: user.tokenVersion + 1,
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    await this.users.manager.transaction(async (manager) => {
+      const users = manager.getRepository(User);
+      await users.update(user.id, {
+        passwordHash,
+        mustChangePassword: false,
+      });
+      // Atomic increment avoids losing a concurrent logout/deactivation bump.
+      await users.increment({ id: user.id }, 'tokenVersion', 1);
+      await this.audit.recordRequired(
+        {
+          userId: user.id,
+          username: user.username,
+          action: 'update',
+          entity: 'user',
+          entityId: user.id,
+          changes: { passwordChanged: true },
+        },
+        manager,
+      );
     });
+  }
+
+  /** Revoke every token represented by a still-valid refresh cookie. */
+  async logout(refreshToken: string): Promise<void> {
+    if (!refreshToken) return;
+
+    const jwtConfig = this.config.get<AppConfig['jwt']>('jwt')!;
+    let payload: JwtPayload;
+    try {
+      payload = await this.jwt.verifyAsync<JwtPayload>(refreshToken, {
+        secret: jwtConfig.refreshSecret,
+      });
+    } catch {
+      // Idempotent logout: an expired/invalid cookie is still cleared by the
+      // controller and does not need to become a user-visible error.
+      return;
+    }
+
+    const user = await this.users.findOne({ where: { id: payload.sub } });
+    if (user?.isActive && user.tokenVersion === payload.tv) {
+      await this.users.increment({ id: user.id }, 'tokenVersion', 1);
+    }
   }
 
   private async issueTokens(user: User): Promise<AuthTokens> {
@@ -120,6 +182,7 @@ export class AuthService {
         username: user.username,
         fullName: user.fullName,
         role: user.role,
+        mustChangePassword: user.mustChangePassword,
       },
     };
   }
