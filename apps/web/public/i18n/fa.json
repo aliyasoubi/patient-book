@@ -227,11 +227,25 @@
     "implantRegistryNumber": "شماره {{number}}",
     "implantNumberHint": "شماره دفتر ایمپلنت مستقل از شماره پرونده اصلی است و ممکن است عدد یکسانی با پروندهٔ بیمار دیگری داشته باشد.",
     "noImplant": "پرونده ایمپلنتی برای این بیمار ثبت نشده است.",
+    "addImplantCase": "پرونده ایمپلنت جدید",
+    "implantCaseCreated": "پرونده ایمپلنت جدید ثبت شد.",
     "orthoBook": "دفتر ارتودنسی",
     "orthoRegistryNumber": "شماره {{number}}",
     "noOrtho": "پرونده ارتودنسی برای این بیمار ثبت نشده است.",
+    "addOrthoCase": "پرونده ارتودنسی جدید",
+    "orthoCaseCreated": "پرونده ارتودنسی جدید ثبت شد.",
     "historyTab": "تاریخچه",
     "noHistory": "تغییری ثبت نشده است."
+  },
+  "registryForm": {
+    "newImplant": "پرونده ایمپلنت جدید",
+    "newOrtho": "پرونده ارتودنسی جدید",
+    "registryNo": "شماره پرونده",
+    "recordedName": "نام ثبت‌شده",
+    "mobile": "شماره موبایل",
+    "homePhone": "تلفن منزل",
+    "notes": "یادداشت",
+    "create": "ثبت پرونده"
   },
   "settings": {
     "title": "تنظیمات",

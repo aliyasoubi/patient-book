@@ -248,6 +248,11 @@
             } @else {
               <p class="card__empty">{{ 'patientDetail.noImplant' | translate }}</p>
             }
+            @if (auth.can('editPatients') && !p.isArchived) {
+              <pb-button variant="text" icon="add" (click)="addCase('implant')">
+                {{ 'patientDetail.addImplantCase' | translate }}
+              </pb-button>
+            }
           </pb-surface>
 
           <pb-surface [title]="'patientDetail.orthoBook' | translate">
@@ -267,6 +272,11 @@
               </ul>
             } @else {
               <p class="card__empty">{{ 'patientDetail.noOrtho' | translate }}</p>
+            }
+            @if (auth.can('editPatients') && !p.isArchived) {
+              <pb-button variant="text" icon="add" (click)="addCase('ortho')">
+                {{ 'patientDetail.addOrthoCase' | translate }}
+              </pb-button>
             }
           </pb-surface>
         </div>

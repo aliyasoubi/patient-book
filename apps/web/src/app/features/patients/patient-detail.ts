@@ -16,6 +16,10 @@ import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import {
+  RegistryCaseDialog,
+  RegistryCaseDialogData,
+} from '../../shared/components/registry-case-dialog';
+import {
   caseStatusLabel,
   educationLabel,
   genderIcon,
@@ -178,6 +182,32 @@ export class PatientDetail {
         this.i18n.instant('action.dismiss'),
       );
     });
+  }
+
+  /** Opens a new ortho or implant پرونده already linked to this patient. */
+  protected addCase(kind: RegistryCaseDialogData['kind']): void {
+    const p = this.patient();
+    if (!p) return;
+    const data: RegistryCaseDialogData = {
+      kind,
+      patientId: p.id,
+      patientName: p.fullName,
+      patientMobile: p.mobile,
+      patientHomePhone: p.homePhone,
+    };
+    this.dialog
+      .open(RegistryCaseDialog, { data, width: '480px', maxWidth: '92vw' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (!created) return;
+        this.snackBar.open(
+          this.i18n.instant(
+            kind === 'ortho' ? 'patientDetail.orthoCaseCreated' : 'patientDetail.implantCaseCreated',
+          ),
+          this.i18n.instant('action.dismiss'),
+        );
+        this.load(p.id);
+      });
   }
 
   /** Field name in an audit entry. Falls back to the raw key when unmapped. */
