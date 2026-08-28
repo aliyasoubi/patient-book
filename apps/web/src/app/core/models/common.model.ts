@@ -1,3 +1,30 @@
+/** Wire type mirroring the API. Dates arrive as Jalali strings plus an ISO value. */
+export interface JalaliValue {
+  /** `1368/05/12`, already trimmed to the precision actually known. */
+  jalali: string;
+  iso: string;
+  precision: 'day' | 'month' | 'year';
+  /** The original spreadsheet text, when the import could not parse it cleanly. */
+  raw?: string | null;
+}
+
+export type Gender = 'male' | 'female' | 'unknown';
+
+export type EducationLevel =
+  | 'none' | 'primary' | 'diploma' | 'associate' | 'bachelor'
+  | 'master' | 'doctorate' | 'student' | 'other' | 'unknown';
+
+export interface PatientTreatment {
+  id: string;
+  code: string;
+  nameFa: string;
+  nameEn: string;
+  icon: string;
+  color: string;
+  performedAt: JalaliValue | null;
+  notes: string | null;
+}
+
 export interface PageResult<T> {
   items: T[];
   total: number;

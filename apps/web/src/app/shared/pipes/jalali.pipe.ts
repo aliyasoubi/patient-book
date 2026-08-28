@@ -1,5 +1,5 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
-import type { JalaliValue } from '../../core/models/patient.model';
+import type { JalaliValue } from '../../core/models/common.model';
 import { JALALI_MONTH_KEYS } from '../../core/jalali/jalali-date-adapter';
 import { TranslateService } from '@ngx-translate/core';
 

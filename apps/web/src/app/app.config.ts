@@ -44,6 +44,10 @@ export const appConfig: ApplicationConfig = {
         prefix: './i18n/',
         suffix: '.json',
         failOnError: true,
+        // Loads via HttpBackend, bypassing withInterceptors — otherwise the
+        // error interceptor injects ApiErrorTranslator -> TranslateService
+        // while TranslateService is still constructing itself (NG0200).
+        useHttpBackend: true,
       }),
       fallbackLang: 'fa',
       lang: 'fa',

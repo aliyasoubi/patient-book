@@ -2,7 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { treatmentColor } from '../labels';
-import type { PatientTreatment } from '../../core/models/patient.model';
+import type { PatientTreatment } from '../../core/models/common.model';
 import { TranslateService } from '@ngx-translate/core';
 
 /**

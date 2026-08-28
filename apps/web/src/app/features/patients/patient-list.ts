@@ -15,7 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { PatientsService, PatientQuery } from '../../core/services/patients.service';
+import { PatientsService, PatientQuery } from './data/patients.service';
 import { AuthService } from '../../core/services/auth.service';
 import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
@@ -37,8 +37,8 @@ import {
   PbSelectField,
 } from '../../shared/ui';
 import type { SelectOption } from '../../shared/ui';
-import type { Patient, TreatmentType } from '../../core/models/patient.model';
-import type { EducationLevel, Gender } from '../../core/models/patient.model';
+import type { Patient, TreatmentType } from './data/patient.model';
+import type { EducationLevel, Gender } from '../../core/models/common.model';
 
 /** `inactiveMonths` filter choices. Kept as strings — see PbSelectField. */
 const INACTIVE_MONTHS_OPTIONS: SelectOption[] = [

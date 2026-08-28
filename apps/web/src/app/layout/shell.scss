@@ -103,6 +103,11 @@
     font-size: 22px;
     width: 22px;
     height: 22px;
+    transition: transform 200ms var(--pb-ease-spring);
+  }
+
+  &__link.is-active &__icon {
+    transform: scale(1.1);
   }
 
   &__footer {
@@ -244,13 +249,20 @@
     width: 56px;
     height: 30px;
     border-radius: var(--mat-sys-corner-full);
-    transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1);
+    transform: scale(0.85);
+    transition:
+      background-color 200ms cubic-bezier(0.2, 0, 0, 1),
+      transform 250ms var(--pb-ease-spring);
 
     .material-symbols-rounded {
       font-size: 22px;
       width: 22px;
       height: 22px;
     }
+  }
+
+  &__item.is-active &__pill {
+    transform: scale(1);
   }
 
   &__label {

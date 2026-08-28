@@ -130,6 +130,14 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
       margin-inline-end: 8px;
       --mat-progress-spinner-active-indicator-color: currentColor;
     }
+
+    /* A light press-in gives tap feedback beyond Material's ripple alone. */
+    .pb-btn {
+      transition: transform 120ms var(--pb-ease-spring);
+    }
+    .pb-btn:active {
+      transform: scale(0.96);
+    }
   `,
 })
 export class PbButton {

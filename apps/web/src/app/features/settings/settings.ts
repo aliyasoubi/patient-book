@@ -5,11 +5,11 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
-import { PatientsService } from '../../core/services/patients.service';
+import { PatientsService } from '../patients/data/patients.service';
 import { PersianCountPipe } from '../../shared/pipes/persian-number.pipe';
 import { referralKindIcon, referralKindLabel, roleLabel } from '../../shared/labels';
 import { PbButton, PbPageHeader, PbSurface } from '../../shared/ui';
-import type { ReferralSource, TreatmentType } from '../../core/models/patient.model';
+import type { ReferralSource, TreatmentType } from '../patients/data/patient.model';
 
 @Component({
   selector: 'pb-settings',

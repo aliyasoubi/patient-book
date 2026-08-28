@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { DashboardStats, PageResult, RegistryCase, SurgeryQueueItem } from '../models/common.model';
-import { toParams } from './patients.service';
+import { toParams } from './http-params.util';
 
 export interface RegistryQuery {
   q?: string;

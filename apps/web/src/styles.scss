@@ -67,6 +67,13 @@ html {
   --pb-page-block-start: 20px;
   --pb-page-block-end: 32px;
   --pb-page-gap: 16px;
+  // Material's M3 color/type/shape scales ship as tokens here; motion does
+  // not, so these are hand-picked to match M3 Expressive's spatial-spring
+  // feel. Spring is for small, playful feedback (nav selection, button
+  // press) — a whole surface overshooting its own bounds reads as jittery,
+  // so dialogs/snackbars get the gentler M3 "emphasized decelerate" curve.
+  --pb-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --pb-ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
   // Persian numerals are what staff read on paper charts; keep the app
   // consistent with the ledgers it replaces.
   font-variant-numeric: normal;
@@ -177,6 +184,20 @@ mat-icon.material-symbols-rounded {
 }
 
 /* ── Motion ────────────────────────────────────────────────────────── */
+/**
+ * Material's dialog/snackbar entrances ship the plain M2 "standard decelerate"
+ * curve baked into their compiled CSS, with no token to override it through —
+ * so this reaches past the component boundary on purpose, scoped to exactly
+ * the two selectors that carry the entrance transform.
+ */
+.mat-mdc-dialog-surface {
+  transition-timing-function: var(--pb-ease-emphasized) !important;
+}
+
+.mat-snack-bar-container-animations-enabled.mat-snack-bar-container-enter {
+  animation-timing-function: var(--pb-ease-emphasized) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

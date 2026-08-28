@@ -1,5 +1,4 @@
-import type { EducationLevel, Gender } from '../core/models/patient.model';
-import type { UserRole } from '../core/models/common.model';
+import type { EducationLevel, Gender, UserRole } from '../core/models/common.model';
 
 /**
  * Translation keys for the enum values the API speaks.

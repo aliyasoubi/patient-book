@@ -13,8 +13,8 @@ import {
   tap,
 } from 'rxjs';
 
-import { PatientsService } from '../core/services/patients.service';
-import type { PatientSuggestion } from '../core/models/patient.model';
+import { PatientsService } from '../features/patients/data/patients.service';
+import type { PatientSuggestion } from '../features/patients/data/patient.model';
 import { PbSearchField, type SearchFieldOption } from '../shared/ui';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 

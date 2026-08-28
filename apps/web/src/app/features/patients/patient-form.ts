@@ -8,7 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { PatientsService } from '../../core/services/patients.service';
+import { PatientsService } from './data/patients.service';
 import {
   EDUCATION_LEVELS,
   GENDERS,
@@ -17,14 +17,8 @@ import {
   treatmentColor,
 } from '../../shared/labels';
 import { iranianNationalId, iranianMobile } from '../../shared/validators';
-import type {
-  EducationLevel,
-  Gender,
-  Patient,
-  PatientInput,
-  ReferralSource,
-  TreatmentType,
-} from '../../core/models/patient.model';
+import type { Patient, PatientInput, ReferralSource, TreatmentType } from './data/patient.model';
+import type { EducationLevel, Gender } from '../../core/models/common.model';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import {

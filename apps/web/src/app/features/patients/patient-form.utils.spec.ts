@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PatientInput } from '../../core/models/patient.model';
+import type { PatientInput } from './data/patient.model';
 import { applyPatientDateChanges, type PatientDateControlState } from './patient-form.utils';
 
 const basePayload = (): PatientInput => ({

@@ -1,16 +1,11 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
-import { AuditEntry, PageResult } from '../models/common.model';
-import {
-  Patient,
-  PatientInput,
-  PatientSuggestion,
-  ReferralSource,
-  TreatmentType,
-} from '../models/patient.model';
+import { environment } from '../../../../environments/environment';
+import { toParams } from '../../../core/services/http-params.util';
+import { AuditEntry, PageResult } from '../../../core/models/common.model';
+import { Patient, PatientInput, PatientSuggestion, ReferralSource, TreatmentType } from './patient.model';
 
 export interface PatientQuery {
   q?: string;
@@ -85,25 +80,4 @@ export class PatientsService {
       params: q ? { q } : {},
     });
   }
-}
-
-/**
- * Build query params, dropping anything empty. An `undefined` filter must not
- * reach the API as the string "undefined", which its validators would reject.
- *
- * Accepts any object of scalars/arrays — interface types have no index
- * signature, so a bare `Record<string, unknown>` parameter would reject them.
- */
-export function toParams(query: object): HttpParams {
-  let params = new HttpParams();
-  for (const [key, value] of Object.entries(query)) {
-    if (value === undefined || value === null || value === '') continue;
-    if (Array.isArray(value)) {
-      if (value.length === 0) continue;
-      params = params.set(key, value.join(','));
-    } else {
-      params = params.set(key, String(value));
-    }
-  }
-  return params;
 }

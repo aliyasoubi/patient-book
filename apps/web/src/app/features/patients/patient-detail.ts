@@ -10,7 +10,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { PatientsService } from '../../core/services/patients.service';
+import { PatientsService } from './data/patients.service';
 import { AuthService } from '../../core/services/auth.service';
 import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
@@ -24,7 +24,7 @@ import {
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { PbAvatar, PbButton, PbSurface } from '../../shared/ui';
-import type { DataIssue, Patient } from '../../core/models/patient.model';
+import type { DataIssue, Patient } from './data/patient.model';
 import type { AuditEntry } from '../../core/models/common.model';
 
 @Component({

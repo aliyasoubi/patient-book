@@ -1,4 +1,4 @@
-import type { PatientInput } from '../../core/models/patient.model';
+import type { PatientInput } from './data/patient.model';
 
 export type PatientDateKey = 'birthDate' | 'firstVisitAt' | 'lastVisitAt';
 
