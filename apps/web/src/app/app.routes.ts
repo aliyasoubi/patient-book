@@ -81,6 +81,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/account').then((m) => m.Account),
         title: translatedTitle('route.account'),
       },
+      {
+        path: 'settings/data-exchange',
+        loadComponent: () =>
+          import('./features/settings/data-exchange').then((m) => m.DataExchange),
+        title: translatedTitle('route.dataExchange'),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

@@ -9,5 +9,6 @@ import { ImplantRegistryService } from './implant-registry.service';
   imports: [TypeOrmModule.forFeature([ImplantCase])],
   providers: [ImplantRegistryService],
   controllers: [ImplantsController],
+  exports: [ImplantRegistryService],
 })
 export class ImplantsModule {}

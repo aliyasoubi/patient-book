@@ -22,6 +22,7 @@ import {
 import {
   caseStatusLabel,
   educationLabel,
+  fieldLabel,
   genderIcon,
   genderLabel,
   treatmentColor,
@@ -212,56 +213,7 @@ export class PatientDetail {
 
   /** Field name in an audit entry. Falls back to the raw key when unmapped. */
   protected changeLabel(key: string): string {
-    switch (key) {
-      case 'fileNo':
-        return this.i18n.instant('field.fileNo');
-      case 'firstName':
-        return this.i18n.instant('field.firstName');
-      case 'lastName':
-        return this.i18n.instant('field.lastName');
-      case 'nationalId':
-        return this.i18n.instant('field.nationalId');
-      case 'mobile':
-        return this.i18n.instant('field.mobile');
-      case 'homePhone':
-        return this.i18n.instant('field.homePhone');
-      case 'gender':
-        return this.i18n.instant('field.gender');
-      case 'birthDate':
-        return this.i18n.instant('field.birthDate');
-      case 'occupation':
-        return this.i18n.instant('field.occupation');
-      case 'education':
-        return this.i18n.instant('field.education');
-      case 'educationRaw':
-        return this.i18n.instant('field.educationOriginal');
-      case 'referralSource':
-        return this.i18n.instant('field.referralSource');
-      case 'medicalHistory':
-        return this.i18n.instant('field.medicalHistory');
-      case 'homeAddress':
-        return this.i18n.instant('field.homeAddress');
-      case 'workAddress':
-        return this.i18n.instant('field.workAddress');
-      case 'firstVisitAt':
-        return this.i18n.instant('field.firstVisit');
-      case 'lastVisitAt':
-        return this.i18n.instant('field.lastVisit');
-      case 'notes':
-        return this.i18n.instant('field.notes');
-      case 'treatments':
-        return this.i18n.instant('field.treatments');
-      case 'dataIssues':
-        return this.i18n.instant('field.dataIssues');
-      case 'isArchived':
-        return this.i18n.instant('field.archiveStatus');
-      case 'fullName':
-        return this.i18n.instant('field.fullName');
-      case 'resolvedIssue':
-        return this.i18n.instant('field.resolvedIssue');
-      default:
-        return key;
-    }
+    return this.i18n.instant(fieldLabel(key));
   }
 
   protected actionLabel(action: string): string {

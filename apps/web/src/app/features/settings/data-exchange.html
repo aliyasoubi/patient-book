@@ -1,0 +1,186 @@
+<div class="data-exchange">
+  <pb-page-header
+    [title]="'dataExchange.title' | translate"
+    [backLabel]="'common.back' | translate"
+    (back)="back()"
+  />
+
+  <pb-surface icon="download" [title]="'dataExchange.exportTitle' | translate">
+    <p class="panel__hint">{{ 'dataExchange.exportHint' | translate }}</p>
+    <pb-button
+      variant="stroked"
+      icon="download"
+      [loading]="exporting()"
+      (click)="downloadExport()"
+    >
+      {{ 'dataExchange.exportButton' | translate }}
+    </pb-button>
+  </pb-surface>
+
+  <pb-surface icon="rule" [title]="'dataExchange.reconcileTitle' | translate">
+    <p class="panel__hint">{{ 'dataExchange.reconcileHint' | translate }}</p>
+
+    <input
+      #fileInput
+      type="file"
+      accept=".xlsx"
+      class="visually-hidden"
+      (change)="onFileSelected($event)"
+    />
+    <pb-button
+      variant="stroked"
+      icon="upload_file"
+      [loading]="uploading()"
+      [loadingText]="'dataExchange.uploading' | translate"
+      (click)="fileInput.click()"
+    >
+      {{ 'dataExchange.chooseFile' | translate }}
+    </pb-button>
+
+    @if (uploading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (preview(); as p) {
+      <div class="review">
+        @if (p.unmatched.patients || p.unmatched.implants || p.unmatched.ortho) {
+          <p class="review__unmatched">
+            {{
+              'dataExchange.unmatchedSummary'
+                | translate: { count: p.unmatched.patients + p.unmatched.implants + p.unmatched.ortho }
+            }}
+          </p>
+        }
+
+        @if (totalChanged() === 0) {
+          <p class="card__empty">{{ 'dataExchange.noChanges' | translate }}</p>
+        } @else {
+          <p class="review__summary">
+            {{
+              'dataExchange.previewSummary'
+                | translate: { patients: p.patients.length, implants: p.implants.length, ortho: p.ortho.length }
+            }}
+          </p>
+
+          @if (p.patients.length) {
+            <section class="review__group">
+              <header class="review__group-head">
+                <pb-checkbox-field
+                  [checked]="groupFullySelected('patients', patientIds())"
+                  (checkedChange)="toggleGroup('patients', patientIds(), $event)"
+                >
+                  {{ 'dataExchange.patientsGroup' | translate }}
+                </pb-checkbox-field>
+              </header>
+              @for (row of p.patients; track row.id) {
+                <div class="review__row">
+                  <pb-checkbox-field
+                    [checked]="isSelected('patients', row.id)"
+                    (checkedChange)="toggle('patients', row.id, $event)"
+                  >
+                    <span class="review__row-title">
+                      {{ 'patientDetail.file' | translate: { fileNo: row.fileNo } }}
+                      — {{ row.fullName || ('patient.unnamed' | translate) }}
+                    </span>
+                  </pb-checkbox-field>
+                  <ul class="review__fields">
+                    @for (f of row.fields; track f.field) {
+                      <li>
+                        <span class="review__field-name">{{ fieldLabel(f.field) }}</span>
+                        <span class="review__field-current">{{ f.current || '—' }}</span>
+                        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                        <span class="review__field-proposed">{{ f.proposed }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </section>
+          }
+
+          @if (p.implants.length) {
+            <section class="review__group">
+              <header class="review__group-head">
+                <pb-checkbox-field
+                  [checked]="groupFullySelected('implants', implantIds())"
+                  (checkedChange)="toggleGroup('implants', implantIds(), $event)"
+                >
+                  {{ 'dataExchange.implantsGroup' | translate }}
+                </pb-checkbox-field>
+              </header>
+              @for (row of p.implants; track row.id) {
+                <div class="review__row">
+                  <pb-checkbox-field
+                    [checked]="isSelected('implants', row.id)"
+                    (checkedChange)="toggle('implants', row.id, $event)"
+                  >
+                    <span class="review__row-title">
+                      {{ 'patientDetail.implantRegistryNumber' | translate: { number: row.registryNo } }}
+                      — {{ row.recordedName }}
+                    </span>
+                  </pb-checkbox-field>
+                  <ul class="review__fields">
+                    @for (f of row.fields; track f.field) {
+                      <li>
+                        <span class="review__field-name">{{ fieldLabel(f.field) }}</span>
+                        <span class="review__field-current">{{ f.current || '—' }}</span>
+                        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                        <span class="review__field-proposed">{{ f.proposed }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </section>
+          }
+
+          @if (p.ortho.length) {
+            <section class="review__group">
+              <header class="review__group-head">
+                <pb-checkbox-field
+                  [checked]="groupFullySelected('ortho', orthoIds())"
+                  (checkedChange)="toggleGroup('ortho', orthoIds(), $event)"
+                >
+                  {{ 'dataExchange.orthoGroup' | translate }}
+                </pb-checkbox-field>
+              </header>
+              @for (row of p.ortho; track row.id) {
+                <div class="review__row">
+                  <pb-checkbox-field
+                    [checked]="isSelected('ortho', row.id)"
+                    (checkedChange)="toggle('ortho', row.id, $event)"
+                  >
+                    <span class="review__row-title">
+                      {{ 'patientDetail.orthoRegistryNumber' | translate: { number: row.registryNo } }}
+                      — {{ row.recordedName }}
+                    </span>
+                  </pb-checkbox-field>
+                  <ul class="review__fields">
+                    @for (f of row.fields; track f.field) {
+                      <li>
+                        <span class="review__field-name">{{ fieldLabel(f.field) }}</span>
+                        <span class="review__field-current">{{ f.current || '—' }}</span>
+                        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                        <span class="review__field-proposed">{{ f.proposed }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </section>
+          }
+
+          <pb-button
+            variant="flat"
+            icon="check"
+            [loading]="applying()"
+            [loadingText]="'dataExchange.applying' | translate"
+            (click)="confirmApply()"
+          >
+            {{ 'dataExchange.applySelected' | translate }} ({{ selectedCount() }})
+          </pb-button>
+        }
+      </div>
+    }
+  </pb-surface>
+</div>

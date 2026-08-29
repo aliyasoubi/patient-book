@@ -21,6 +21,15 @@ export class ExcelJsWorkbookReader extends WorkbookPort {
     this.workbook = workbook;
   }
 
+  /** Load from an in-memory buffer — an uploaded file, never written to disk. */
+  async openBuffer(buffer: Buffer): Promise<void> {
+    const workbook = new ExcelJS.Workbook();
+    // ExcelJS's own .d.ts predates @types/node's generic `Buffer<TArrayBuffer>`
+    // and is structurally incompatible with it; the runtime value is fine.
+    await workbook.xlsx.load(buffer as never);
+    this.workbook = workbook;
+  }
+
   sheetNames(): string[] {
     return this.workbook?.worksheets.map((w) => w.name) ?? [];
   }

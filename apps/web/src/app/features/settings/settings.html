@@ -70,6 +70,15 @@
     </ul>
   </pb-surface>
 
+  @if (auth.can('manageData')) {
+    <pb-surface icon="sync_alt" [title]="'settings.dataExchange' | translate">
+      <p class="panel__hint">{{ 'settings.dataExchangeHint' | translate }}</p>
+      <pb-button variant="stroked" routerLink="/settings/data-exchange" icon="sync_alt">
+        {{ 'settings.openDataExchange' | translate }}
+      </pb-button>
+    </pb-surface>
+  }
+
   <pb-surface icon="share" [title]="'settings.referrals' | translate">
     <p class="panel__hint">{{ 'settings.referralsHint' | translate }}</p>
     <ul class="catalogue">

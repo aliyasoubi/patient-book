@@ -12,6 +12,7 @@ const PERMISSIONS = {
   archivePatients: ['admin', 'dentist'],
   manageUsers: ['admin'],
   viewHistory: ['admin', 'dentist'],
+  manageData: ['admin'],
 } as const satisfies Record<string, readonly UserRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

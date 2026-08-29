@@ -150,6 +150,67 @@ export function abutmentLabel(type: string): string {
   }
 }
 
+/**
+ * Translation key for a field name as it appears in an audit-history entry or
+ * a reconcile diff — both describe the same underlying `Patient`/registry
+ * fields, so both read this one mapping.
+ */
+export function fieldLabel(key: string): string {
+  switch (key) {
+    case 'fileNo':
+      return 'field.fileNo';
+    case 'firstName':
+      return 'field.firstName';
+    case 'lastName':
+      return 'field.lastName';
+    case 'nationalId':
+      return 'field.nationalId';
+    case 'mobile':
+      return 'field.mobile';
+    case 'homePhone':
+      return 'field.homePhone';
+    case 'gender':
+      return 'field.gender';
+    case 'birthDate':
+      return 'field.birthDate';
+    case 'occupation':
+      return 'field.occupation';
+    case 'education':
+      return 'field.education';
+    case 'educationRaw':
+      return 'field.educationOriginal';
+    case 'referralSource':
+    case 'referralSourceName':
+      return 'field.referralSource';
+    case 'medicalHistory':
+      return 'field.medicalHistory';
+    case 'homeAddress':
+      return 'field.homeAddress';
+    case 'workAddress':
+      return 'field.workAddress';
+    case 'firstVisitAt':
+      return 'field.firstVisit';
+    case 'lastVisitAt':
+      return 'field.lastVisit';
+    case 'notes':
+      return 'field.notes';
+    case 'treatments':
+      return 'field.treatments';
+    case 'dataIssues':
+      return 'field.dataIssues';
+    case 'isArchived':
+      return 'field.archiveStatus';
+    case 'fullName':
+      return 'field.fullName';
+    case 'resolvedIssue':
+      return 'field.resolvedIssue';
+    case 'recordedName':
+      return 'field.recordedName';
+    default:
+      return key;
+  }
+}
+
 export function matchMethodLabel(method: string): string {
   switch (method) {
     case 'exact':

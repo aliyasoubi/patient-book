@@ -112,6 +112,47 @@ export interface DashboardStats {
   inactiveOverYear: number;
 }
 
+/** One field a reconcile preview proposes changing, with the current value. */
+export interface FieldDiff {
+  field: string;
+  current: string | null;
+  proposed: string | null;
+}
+
+export interface PatientDiff {
+  id: string;
+  fileNo: string;
+  fullName: string;
+  fields: FieldDiff[];
+}
+
+export interface CaseDiff {
+  id: string;
+  registryNo: string;
+  recordedName: string;
+  fields: FieldDiff[];
+}
+
+export interface ReconcilePreview {
+  patients: PatientDiff[];
+  implants: CaseDiff[];
+  ortho: CaseDiff[];
+  /** Sheet rows with no matching fileNo/registryNo in the app. */
+  unmatched: { patients: number; implants: number; ortho: number };
+}
+
+export interface ApplyResultRow {
+  id: string;
+  ok: boolean;
+  reason?: string;
+}
+
+export interface ApplyReconcileResult {
+  patients: ApplyResultRow[];
+  implants: ApplyResultRow[];
+  ortho: ApplyResultRow[];
+}
+
 export interface AuditEntry {
   id: string;
   userId: string | null;

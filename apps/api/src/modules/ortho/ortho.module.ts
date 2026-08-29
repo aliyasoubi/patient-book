@@ -9,5 +9,6 @@ import { OrthoRegistryService } from './ortho-registry.service';
   imports: [TypeOrmModule.forFeature([OrthoCase])],
   providers: [OrthoRegistryService],
   controllers: [OrthoController],
+  exports: [OrthoRegistryService],
 })
 export class OrthoModule {}
