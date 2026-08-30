@@ -141,10 +141,15 @@ export interface ReconcilePreview {
   unmatched: { patients: number; implants: number; ortho: number };
 }
 
+/**
+ * Per-row outcome of an apply. A failure carries the same stable code the rest
+ * of the API speaks, so `ApiErrorTranslator` renders a real reason.
+ */
 export interface ApplyResultRow {
   id: string;
   ok: boolean;
-  reason?: string;
+  code?: string;
+  params?: Readonly<Record<string, string | number>>;
 }
 
 export interface ApplyReconcileResult {

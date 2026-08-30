@@ -1,6 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsDefined,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
+
+import type { ErrorParams } from '../../../domain';
 
 /** One field the workbook proposes changing, with what the app currently holds. */
 export interface FieldDiff {
@@ -38,12 +47,25 @@ export class ApplyFieldDto {
   field!: string;
 
   @ApiProperty({ nullable: true })
+  @IsDefined()
   @IsOptional()
   @IsString()
   proposed!: string | null;
+
+  /**
+   * The value the preview showed as current. Echoed back so apply can refuse
+   * to overwrite an edit made after the preview was taken — `@IsDefined` (not
+   * `@IsOptional` alone) so a client cannot skip the check by omitting it,
+   * while still allowing an explicit `null` for a field that was empty.
+   */
+  @ApiProperty({ nullable: true })
+  @IsDefined()
+  @IsOptional()
+  @IsString()
+  expectedCurrent!: string | null;
 }
 
-/** An entity (patient, implant case, or ortho case) with the field changes approved for it. */
+/** An entity (patient, implant case, or ortho case) with the changes approved for it. */
 export class ApplyEntityDto {
   @ApiProperty()
   @IsUUID()
@@ -79,10 +101,16 @@ export class ApplyReconcileDto {
   ortho?: ApplyEntityDto[];
 }
 
+/**
+ * Per-row outcome. Failures carry the same stable `code` + `params` vocabulary
+ * every other endpoint speaks, so the client renders a real reason — "شماره
+ * پرونده تکراری است" — rather than a generic "it didn't work".
+ */
 export interface ApplyResultRow {
   id: string;
   ok: boolean;
-  reason?: string;
+  code?: string;
+  params?: ErrorParams;
 }
 
 export interface ApplyReconcileResult {

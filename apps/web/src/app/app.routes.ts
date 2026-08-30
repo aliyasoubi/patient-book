@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { ResolveFn, Routes } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, roleGuard } from './core/guards/auth.guard';
 
 /**
  * Every feature is lazily loaded.
@@ -82,7 +82,11 @@ export const routes: Routes = [
         title: translatedTitle('route.account'),
       },
       {
+        // Admin-only, matching the API's own guard on `/data-exchange`. The
+        // server is still the boundary; this keeps a non-admin from landing on
+        // a screen whose every request would be rejected.
         path: 'settings/data-exchange',
+        canActivate: [roleGuard('admin')],
         loadComponent: () =>
           import('./features/settings/data-exchange').then((m) => m.DataExchange),
         title: translatedTitle('route.dataExchange'),

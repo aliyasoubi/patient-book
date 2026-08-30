@@ -64,6 +64,19 @@ export enum ErrorCode {
   // -- Import -----------------------------------------------------------
   WorkbookNotFound = 'ERR_WORKBOOK_NOT_FOUND',
   DatabaseNotEmpty = 'ERR_DATABASE_NOT_EMPTY',
+
+  // -- Data exchange ----------------------------------------------------
+  /** The upload could not be parsed as a workbook at all. */
+  WorkbookUnreadable = 'ERR_WORKBOOK_UNREADABLE',
+  /** A workbook parsed, but holds none of the sheets this app knows. */
+  WorkbookSheetsMissing = 'ERR_WORKBOOK_SHEETS_MISSING',
+  /**
+   * The record changed after the preview was taken, so applying would
+   * overwrite an edit the reviewer never saw. The caller re-previews.
+   */
+  ReconcileConflict = 'ERR_RECONCILE_CONFLICT',
+  /** A field name that is not one this reconcile is allowed to write. */
+  ReconcileFieldUnknown = 'ERR_RECONCILE_FIELD_UNKNOWN',
 }
 
 /** Values interpolated into a rendered message, e.g. `{ fileNo: '11559' }`. */

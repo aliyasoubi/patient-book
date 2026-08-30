@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -15,7 +14,8 @@ import { memoryStorage } from 'multer';
 
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
-import { UserRole } from '../../domain';
+import { AppException } from '../../application/errors/app.exception';
+import { ErrorCode, UserRole } from '../../domain';
 import { ExportWorkbookUseCase } from './application/export-workbook.use-case';
 import { ReconcileWorkbookUseCase } from './application/reconcile-workbook.use-case';
 import { ApplyReconcileUseCase } from './application/apply-reconcile.use-case';
@@ -48,11 +48,25 @@ export class DataExchangeController {
     res.send(buffer);
   }
 
+  /**
+   * 8 MB is generous headroom over the practice's own workbook (under 1 MB)
+   * while keeping a mistaken upload from being buffered whole in memory.
+   */
   @Post('reconcile/preview')
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+    }),
+  )
   @ApiOperation({ summary: 'Diff an uploaded workbook against the current register' })
   async preview(@UploadedFile() file?: Express.Multer.File) {
-    if (!file) throw new BadRequestException('No file uploaded');
+    // The extension check in the browser is a convenience, not a guarantee —
+    // the real validation is parsing it, which the use case turns into a
+    // stable 400 rather than letting ExcelJS's error surface as a 500.
+    if (!file?.buffer?.length) {
+      throw AppException.badRequest(ErrorCode.WorkbookUnreadable);
+    }
     return this.reconcileUseCase.execute(file.buffer);
   }
 

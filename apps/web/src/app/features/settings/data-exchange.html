@@ -93,6 +93,12 @@
                       </li>
                     }
                   </ul>
+                  @if (failureFor(row.id); as reason) {
+                    <p class="review__failure" role="alert">
+                      <mat-icon aria-hidden="true">error</mat-icon>
+                      {{ reason }}
+                    </p>
+                  }
                 </div>
               }
             </section>
@@ -129,6 +135,12 @@
                       </li>
                     }
                   </ul>
+                  @if (failureFor(row.id); as reason) {
+                    <p class="review__failure" role="alert">
+                      <mat-icon aria-hidden="true">error</mat-icon>
+                      {{ reason }}
+                    </p>
+                  }
                 </div>
               }
             </section>
@@ -165,6 +177,12 @@
                       </li>
                     }
                   </ul>
+                  @if (failureFor(row.id); as reason) {
+                    <p class="review__failure" role="alert">
+                      <mat-icon aria-hidden="true">error</mat-icon>
+                      {{ reason }}
+                    </p>
+                  }
                 </div>
               }
             </section>

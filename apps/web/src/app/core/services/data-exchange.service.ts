@@ -5,10 +5,17 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApplyReconcileResult, ReconcilePreview } from '../models/common.model';
 
-/** One entity's approved field changes, as the apply endpoint expects them. */
+/**
+ * One entity's approved field changes, as the apply endpoint expects them.
+ *
+ * `expectedCurrent` is the value the preview reported. The server re-checks it
+ * before writing and refuses the row if the record has changed since — without
+ * it, a bulk apply could silently overwrite an edit made while the preview was
+ * still on screen.
+ */
 export interface ApplyReconcileEntity {
   id: string;
-  fields: Array<{ field: string; proposed: string | null }>;
+  fields: Array<{ field: string; proposed: string | null; expectedCurrent: string | null }>;
 }
 
 export interface ApplyReconcileRequest {

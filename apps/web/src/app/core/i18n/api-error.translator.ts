@@ -126,6 +126,16 @@ export class ApiErrorTranslator {
       case 'ERR_SORT_FIELD_UNSUPPORTED':
         return this.t('error.sortUnsupported');
 
+      // -- Data exchange -------------------------------------------------
+      case 'ERR_WORKBOOK_UNREADABLE':
+        return this.t('error.workbookUnreadable');
+      case 'ERR_WORKBOOK_SHEETS_MISSING':
+        return this.t('error.workbookSheetsMissing', params);
+      case 'ERR_RECONCILE_CONFLICT':
+        return this.t('error.reconcileConflict', params);
+      case 'ERR_RECONCILE_FIELD_UNKNOWN':
+        return this.t('error.reconcileFieldUnknown', params);
+
       default:
         return this.unexpected();
     }

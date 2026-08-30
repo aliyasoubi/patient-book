@@ -52,6 +52,9 @@ export class DataExchange {
     ortho: new Set(),
   });
 
+  /** Why a row was refused, keyed by entity id, rendered next to that row. */
+  protected readonly failures = signal<Map<string, string>>(new Map());
+
   protected readonly totalChanged = computed(() => {
     const p = this.preview();
     return p ? p.patients.length + p.implants.length + p.ortho.length : 0;
@@ -108,15 +111,15 @@ export class DataExchange {
 
     this.uploading.set(true);
     this.preview.set(null);
+    this.failures.set(new Map());
     this.service.previewReconcile(file).subscribe({
       next: (result) => {
         this.uploading.set(false);
         this.preview.set(result);
-        this.selected.set({
-          patients: new Set(result.patients.map((p) => p.id)),
-          implants: new Set(result.implants.map((c) => c.id)),
-          ortho: new Set(result.ortho.map((c) => c.id)),
-        });
+        // Nothing is selected by default: applying corrections to real patient
+        // records should be an explicit choice per record, not the consequence
+        // of clicking straight through upload → apply.
+        this.selected.set({ patients: new Set(), implants: new Set(), ortho: new Set() });
       },
       error: (error: unknown) => {
         this.uploading.set(false);
@@ -143,6 +146,11 @@ export class DataExchange {
   protected groupFullySelected(kind: EntityKind, ids: string[]): boolean {
     const set = this.selected()[kind];
     return ids.length > 0 && ids.every((id) => set.has(id));
+  }
+
+  /** The reason this row was refused on the last apply, if it was. */
+  protected failureFor(id: string): string | undefined {
+    return this.failures().get(id);
   }
 
   protected toggleGroup(kind: EntityKind, ids: string[], checked: boolean): void {
@@ -194,12 +202,18 @@ export class DataExchange {
     if (!preview) return;
     const selected = this.selected();
 
+    // `expectedCurrent` carries what the preview showed, so the server can
+    // refuse a row whose record changed while this screen was open.
     const pick = (diffs: Array<PatientDiff | CaseDiff>, ids: Set<string>) =>
       diffs
         .filter((d) => ids.has(d.id))
         .map((d) => ({
           id: d.id,
-          fields: d.fields.map((f) => ({ field: f.field, proposed: f.proposed })),
+          fields: d.fields.map((f) => ({
+            field: f.field,
+            proposed: f.proposed,
+            expectedCurrent: f.current,
+          })),
         }));
 
     this.applying.set(true);
@@ -214,12 +228,25 @@ export class DataExchange {
           this.applying.set(false);
           const rows = [...result.patients, ...result.implants, ...result.ortho];
           const okCount = rows.filter((r) => r.ok).length;
-          const failCount = rows.length - okCount;
+          const failed = rows.filter((r) => !r.ok);
+
+          // Each refusal keeps its own reason — a stale preview reads
+          // differently from a duplicate file number, and an admin correcting
+          // hundreds of legacy records needs to tell them apart.
+          this.failures.set(
+            new Map(
+              failed.map((r) => [
+                r.id,
+                this.errors.forCode(r.code ?? 'ERR_UNEXPECTED', r.params ?? {}),
+              ]),
+            ),
+          );
 
           this.snackBar.open(
             this.i18n.instant('dataExchange.applyDone', { count: okCount }) +
-              (failCount
-                ? ' ' + this.i18n.instant('dataExchange.applyPartialFail', { count: failCount })
+              (failed.length
+                ? ' ' +
+                  this.i18n.instant('dataExchange.applyPartialFail', { count: failed.length })
                 : ''),
             this.i18n.instant('action.dismiss'),
             { duration: 8000 },

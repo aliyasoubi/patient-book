@@ -6,58 +6,38 @@ import { Patient } from '../../patients/patient.entity';
 import { ImplantCase } from '../../implants/implant-case.entity';
 import { OrthoCase } from '../../ortho/ortho-case.entity';
 import { ExcelJsWorkbookReader } from '../../import/infrastructure/exceljs-workbook.reader';
-import {
-  MappedPatientRow,
-  PatientRowMapper,
-} from '../../import/infrastructure/row-mappers/patient-row.mapper';
+import { PatientRowMapper } from '../../import/infrastructure/row-mappers/patient-row.mapper';
 import { REGISTRY_COLUMN } from '../../import/infrastructure/row-mappers/registry-row.mapper';
 import { SHEET } from '../../import/application/import-workbook.use-case';
-import { LandlineNumber, MobileNumber, normalizeForDisplay } from '../../../domain';
+import { AppException } from '../../../application/errors/app.exception';
+import { ErrorCode, LandlineNumber, MobileNumber, normalizeForDisplay } from '../../../domain';
+import {
+  PATIENT_FIELD_READERS,
+  REGISTRY_FIELD_READERS,
+  RegistryLike,
+} from './field-readers';
 import { CaseDiff, FieldDiff, PatientDiff, ReconcilePreviewResult } from '../dto/reconcile.dto';
 
-/** Registry-case fields the workbook can propose changing. */
-interface RegistryLike {
-  id: string;
-  registryNo: string;
-  recordedName: string;
-  mobile: string | null;
-  homePhone: string | null;
-}
-
-/** Simple text fields compared as-is between the sheet and the current record. */
-const PATIENT_TEXT_FIELDS: ReadonlyArray<{ field: string; get: (p: Patient) => string | null }> = [
-  { field: 'firstName', get: (p) => p.firstName || null },
-  { field: 'lastName', get: (p) => p.lastName || null },
-  { field: 'fatherName', get: (p) => p.fatherName },
-  { field: 'nationalId', get: (p) => p.nationalId },
-  { field: 'gender', get: (p) => p.gender },
-  { field: 'mobile', get: (p) => p.mobile },
-  { field: 'homePhone', get: (p) => p.homePhone },
-  { field: 'occupation', get: (p) => p.occupation },
-  { field: 'education', get: (p) => p.education },
-  { field: 'medicalHistory', get: (p) => p.medicalHistory },
-  { field: 'homeAddress', get: (p) => p.homeAddress },
-  { field: 'workAddress', get: (p) => p.workAddress },
-];
-
-/** Jalali dates are compared and proposed by their raw text, same as `UpdatePatientDto` accepts. */
-const PATIENT_DATE_FIELDS: ReadonlyArray<{ field: string; get: (p: Patient) => string | null }> = [
-  { field: 'birthDate', get: (p) => p.birthDateRaw },
-  { field: 'firstVisitAt', get: (p) => p.firstVisitRaw },
-  { field: 'lastVisitAt', get: (p) => p.lastVisitRaw },
-];
-
-/** A blank or unclassified sheet cell must never propose erasing an existing value. */
-const NEVER_PROPOSE_UNKNOWN = new Set(['gender', 'education']);
+/**
+ * A blank or unclassified sheet cell must never propose erasing an existing
+ * value, so these two only ever propose a *recognised* bucket.
+ */
+const NEVER_PROPOSE_UNKNOWN: Readonly<Record<string, string>> = {
+  gender: 'unknown',
+  education: 'unknown',
+};
 
 /**
  * Diffs an uploaded workbook against the current register.
  *
  * Read-only: computes what *would* change without writing anything. Only
- * fields the sheet actually provides a non-empty value for are ever
- * proposed — a blank source cell never suggests clearing data the app
- * already holds. Treatment-history columns are intentionally not compared;
- * those already have their own in-app edit path.
+ * fields the sheet actually provides a non-empty value for are ever proposed —
+ * a blank source cell never suggests clearing data the app already holds.
+ * Treatment columns are not compared at all (see {@link PATIENT_FIELD_READERS}).
+ *
+ * Every `current` reported here is echoed back by the client on apply and
+ * re-checked against the database, so a preview that has gone stale is
+ * refused rather than applied blind.
  */
 @Injectable()
 export class ReconcileWorkbookUseCase {
@@ -68,8 +48,7 @@ export class ReconcileWorkbookUseCase {
   ) {}
 
   async execute(buffer: Buffer): Promise<ReconcilePreviewResult> {
-    const reader = new ExcelJsWorkbookReader();
-    await reader.openBuffer(buffer);
+    const reader = await this.read(buffer);
 
     const [allPatients, allImplants, allOrtho] = await Promise.all([
       this.patients.find({ relations: { referralSource: true } }),
@@ -77,31 +56,52 @@ export class ReconcileWorkbookUseCase {
       this.ortho.find(),
     ]);
 
-    const { diffs: patientDiffs, unmatched: patientsUnmatched } = this.diffPatients(
-      reader,
-      allPatients,
-    );
-    const { diffs: implantDiffs, unmatched: implantsUnmatched } = this.diffRegistry(
+    const patients = this.diffPatients(reader, allPatients);
+    const implants = this.diffRegistry(
       reader,
       SHEET.implants,
       new Map(allImplants.map((c) => [c.registryNo, c])),
     );
-    const { diffs: orthoDiffs, unmatched: orthoUnmatched } = this.diffRegistry(
+    const ortho = this.diffRegistry(
       reader,
       SHEET.ortho,
       new Map(allOrtho.map((c) => [c.registryNo, c])),
     );
 
     return {
-      patients: patientDiffs,
-      implants: implantDiffs,
-      ortho: orthoDiffs,
+      patients: patients.diffs,
+      implants: implants.diffs,
+      ortho: ortho.diffs,
       unmatched: {
-        patients: patientsUnmatched,
-        implants: implantsUnmatched,
-        ortho: orthoUnmatched,
+        patients: patients.unmatched,
+        implants: implants.unmatched,
+        ortho: ortho.unmatched,
       },
     };
+  }
+
+  /**
+   * Parse the upload, turning both failure modes into stable 400s. Without
+   * this, ExcelJS's own error escapes as a bare `Error` and the global filter
+   * can only report it as an unexpected 500 — a wrong file is a mistake the
+   * user can fix, not a server fault.
+   */
+  private async read(buffer: Buffer): Promise<ExcelJsWorkbookReader> {
+    const reader = new ExcelJsWorkbookReader();
+    try {
+      await reader.openBuffer(buffer);
+    } catch {
+      throw AppException.badRequest(ErrorCode.WorkbookUnreadable);
+    }
+
+    const names = new Set(reader.sheetNames());
+    const known = [SHEET.patients, SHEET.implants, SHEET.ortho].filter((s) => names.has(s));
+    if (!known.length) {
+      throw AppException.badRequest(ErrorCode.WorkbookSheetsMissing, {
+        expected: [SHEET.patients, SHEET.implants, SHEET.ortho].join('، '),
+      });
+    }
+    return reader;
   }
 
   private diffPatients(
@@ -123,7 +123,22 @@ export class ReconcileWorkbookUseCase {
         continue;
       }
 
-      const fields = this.diffPatientFields(mapped, existing);
+      const fields: FieldDiff[] = [];
+      for (const [field, read] of Object.entries(PATIENT_FIELD_READERS)) {
+        // The mapper hands back a referral as raw text, not a linked entity.
+        const proposed =
+          field === 'referralSourceName'
+            ? normalizeForDisplay(mapped.referralRaw) || null
+            : read(mapped.patient);
+
+        if (!proposed) continue;
+        if (NEVER_PROPOSE_UNKNOWN[field] === proposed) continue;
+
+        const current = read(existing);
+        if (proposed === current) continue;
+        fields.push({ field, current, proposed });
+      }
+
       if (fields.length) {
         diffs.push({
           id: existing.id,
@@ -135,39 +150,6 @@ export class ReconcileWorkbookUseCase {
     }
 
     return { diffs, unmatched };
-  }
-
-  private diffPatientFields(mapped: MappedPatientRow, existing: Patient): FieldDiff[] {
-    const fields: FieldDiff[] = [];
-
-    for (const { field, get } of PATIENT_TEXT_FIELDS) {
-      const proposed = get(mapped.patient);
-      if (!proposed) continue;
-      if (NEVER_PROPOSE_UNKNOWN.has(field) && proposed === 'unknown') continue;
-      const current = get(existing);
-      if (proposed === current) continue;
-      fields.push({ field, current, proposed });
-    }
-
-    for (const { field, get } of PATIENT_DATE_FIELDS) {
-      const proposed = get(mapped.patient);
-      if (!proposed) continue;
-      const current = get(existing);
-      if (proposed === current) continue;
-      fields.push({ field, current, proposed });
-    }
-
-    const proposedReferral = mapped.referralRaw ? normalizeForDisplay(mapped.referralRaw) : null;
-    const currentReferral = existing.referralSource?.name ?? null;
-    if (proposedReferral && proposedReferral !== currentReferral) {
-      fields.push({
-        field: 'referralSourceName',
-        current: currentReferral,
-        proposed: proposedReferral,
-      });
-    }
-
-    return fields;
   }
 
   private diffRegistry<T extends RegistryLike>(
@@ -188,24 +170,19 @@ export class ReconcileWorkbookUseCase {
         continue;
       }
 
+      const proposals: Readonly<Record<string, string | null>> = {
+        recordedName: row.cell(REGISTRY_COLUMN.fullName) || null,
+        mobile: MobileNumber.normalise(row.cell(REGISTRY_COLUMN.mobile)),
+        homePhone: LandlineNumber.normalise(row.cell(REGISTRY_COLUMN.homePhone)),
+      };
+
       const fields: FieldDiff[] = [];
-      const proposedName = row.cell(REGISTRY_COLUMN.fullName);
-      if (proposedName && proposedName !== existing.recordedName) {
-        fields.push({ field: 'recordedName', current: existing.recordedName, proposed: proposedName });
-      }
-
-      const proposedMobile = MobileNumber.normalise(row.cell(REGISTRY_COLUMN.mobile));
-      if (proposedMobile && proposedMobile !== existing.mobile) {
-        fields.push({ field: 'mobile', current: existing.mobile, proposed: proposedMobile });
-      }
-
-      const proposedHomePhone = LandlineNumber.normalise(row.cell(REGISTRY_COLUMN.homePhone));
-      if (proposedHomePhone && proposedHomePhone !== existing.homePhone) {
-        fields.push({
-          field: 'homePhone',
-          current: existing.homePhone,
-          proposed: proposedHomePhone,
-        });
+      for (const [field, read] of Object.entries(REGISTRY_FIELD_READERS)) {
+        const proposed = proposals[field];
+        if (!proposed) continue;
+        const current = read(existing);
+        if (proposed === current) continue;
+        fields.push({ field, current, proposed });
       }
 
       if (fields.length) {
