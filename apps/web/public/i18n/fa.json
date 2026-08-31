@@ -77,7 +77,8 @@
     "viewList": "مشاهده فهرست",
     "trendAria": "روند بیماران جدید، بیشینه {{max}} نفر در ماه",
     "genderCount": "{{gender}}، {{count}} نفر",
-    "maximum": "بیشینه {{count}}"
+    "maximum": "بیشینه {{count}}",
+    "dateTimeAria": "تاریخ و ساعت امروز"
   },
   "greeting": {
     "morning": "صبح بخیر",

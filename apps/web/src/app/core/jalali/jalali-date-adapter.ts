@@ -38,7 +38,15 @@ export const JALALI_MONTH_KEYS = [
  * Saturday. Getting this mapping backwards silently mislabels every column of
  * the calendar header.
  */
-const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+export const JALALI_WEEKDAY_KEYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
 
 /** Saturday, in JavaScript's numbering. The Iranian week starts here. */
 const SATURDAY = 6;
@@ -91,7 +99,7 @@ export class JalaliDateAdapter extends DateAdapter<Date> {
 
   override getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
     const prefix = style === 'long' ? 'day' : style === 'short' ? 'dayShort' : 'dayNarrow';
-    return WEEKDAYS.map((day) => this.i18n.instant(`${prefix}.${day}`));
+    return JALALI_WEEKDAY_KEYS.map((day) => this.i18n.instant(`${prefix}.${day}`));
   }
 
   override getYearName(date: Date): string {

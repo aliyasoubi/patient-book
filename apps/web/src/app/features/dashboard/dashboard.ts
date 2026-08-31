@@ -19,7 +19,7 @@ import {
   referralKindLabel,
   treatmentColor,
 } from '../../shared/labels';
-import { PbButton, PbPageHeader, PbSurface } from '../../shared/ui';
+import { PbButton, PbDatetimeCard, PbPageHeader, PbSurface } from '../../shared/ui';
 import type { DashboardStats } from '../../core/models/common.model';
 
 interface StatTile {
@@ -43,6 +43,7 @@ interface StatTile {
     PbButton,
     PbSurface,
     PbPageHeader,
+    PbDatetimeCard,
     MatIconModule,
     TranslatePipe,
   ],
