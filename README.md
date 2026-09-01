@@ -2,7 +2,7 @@
 
 A patient register for a dental practice
 
-**Stack:** NestJS 11 · Angular 22 · Angular Material 22 (Material 3) · PostgreSQL 17 · TypeORM 1
+**Stack:** NestJS 11 · Angular 22 · Angular Material 22 (Material 3) · PostgreSQL 17 · TypeORM
 
 ---
 
@@ -16,17 +16,11 @@ npm install
 cp .env.example .env
 ```
 
-Start PostgreSQL (Docker), then create the schema and seed the catalogue plus
+Start PostgreSQL, then create the schema and seed the treatment catalogue plus
 the first administrator:
 
 ```bash
 npm run db:up && npm run migration:run && npm run seed
-```
-
-Import the practice's workbook (place it at `data/patients-source.xlsx`):
-
-```bash
-npm run import
 ```
 
 Run both apps:
@@ -42,36 +36,18 @@ npm run dev
 | Database readiness | http://localhost:3000/api/health |
 | API docs (Swagger) | http://localhost:3000/api/docs   |
 
+Swagger is registered only when `NODE_ENV` is not `production`, so the schema of
+the patient API is not published from a live deployment.
+
 Sign in with the credentials from `SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD`.
 The first administrator is required to replace the seed password before the API
-will allow access to patient data. Production seeding rejects missing, short,
-or placeholder passwords.
-
-### If the Postgres image will not pull
-
-Some networks reach `auth.docker.io` but not `registry-1.docker.io`, where the
-image layers actually live. The pull then hangs for minutes instead of failing,
-which makes it look like a slow download rather than a blocked host.
-
-Check in a few seconds rather than waiting it out:
-
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' --max-time 15 https://registry-1.docker.io/v2/
-```
-
-`401` means reachable. `000` means blocked — point `POSTGRES_IMAGE` at a mirror
-of the same official image in your `.env`:
-
-```bash
-echo 'POSTGRES_IMAGE=public.ecr.aws/docker/library/postgres:17-alpine' >> .env
-```
-
-`docker-compose.yml` reads that variable and falls back to `postgres:17-alpine`,
-so nothing changes on a network that can reach Docker Hub normally.
+will allow access to patient data. Production seeding rejects missing, short, or
+placeholder passwords.
 
 ### Running Postgres without Docker
 
-Homebrew works just as well:
+Homebrew works just as well, and is the better option on a network that cannot
+reach Docker Hub:
 
 ```bash
 brew install postgresql@17 && brew services start postgresql@17
@@ -85,75 +61,65 @@ Only one of the two can hold port 5432. Stop the other first
 (`brew services stop postgresql@17`, or `docker compose down`), or give the
 container a different host port with `DB_PORT`.
 
+### Importing an existing register
+
+The importer reads an Excel workbook and is intended for practices migrating off
+a spreadsheet. Place the file at `data/patients-source.xlsx` — the `data/`
+directory is gitignored — and run:
+
+```bash
+npm run import
+```
+
+Nothing is discarded and nothing is invented: unparseable values are kept
+verbatim and surfaced for review rather than being guessed at or dropped.
+Re-running against a populated database is refused unless `--force` is passed.
+
 ---
 
-## What the data actually looked like
+## Why the schema looks like this
 
-The source workbook holds four sheets and 2,233 rows. Three findings shaped the
-schema, and each is worth knowing before you touch the data.
+Three characteristics of paper dental registers drove the data model. They are
+worth understanding before changing the import or the entities.
 
-### 1. The registers use independent numbering that collides
+### Registers use independent numbering that collides
 
-`بیماران ایمپلنت` (implant) and `بیماران ارتو` (ortho) each run their **own**
-`شماره پرونده` sequence, which overlaps numerically with the main patient file
-numbers while referring to different people.
+The implant and orthodontic books each run their **own** `شماره پرونده`
+sequence. Those sequences overlap numerically with the main patient file
+numbers while referring to entirely different people, and numbers get reassigned
+as old books are retired.
 
-Of the 99 numbers present in both the implant sheet and the main sheet, **only 2
-are the same person.** Joining the books on their number would have mislinked 97
-patients — for example implant register `9904` is مرجان بشردوست, who holds main
-file `9905`; main file `9904` is a different patient entirely.
+Joining the registers to patients on their number would therefore mislink
+records. The import matches **by name** instead, and stores each register's
+number in its own `registryNo` column with no foreign key to `patients.fileNo`.
+Every link records how it was established (`exact`, `fuzzy`, `manual`,
+`unmatched`), and unmatched rows stay visible in the UI rather than being
+attached to a plausible guess.
 
-The import therefore matches these registers to patients **by name**, and stores
-each register's number in its own `registryNo` column with no foreign key to
-`patients.fileNo`. Every link records how it was established (`exact`, `fuzzy`,
-`manual`, `unmatched`) and unmatched rows stay visible in the UI rather than
-being guessed at.
+`PatientNameMatcher` owns this rule, including its refusal to choose between two
+patients who share a name.
 
-| Sheet           | Rows | Linked exactly | Linked by name | Left unlinked |
-| --------------- | ---: | -------------: | -------------: | ------------: |
-| بیماران ایمپلنت |  277 |            246 |              5 |            26 |
-| بیماران ارتو    |  140 |             47 |              1 |            92 |
+### The surgery list quotes register numbers, not patient files
 
-Most unlinked ortho rows have no name in the source at all (only 61 of 140 do).
+Surgery queue rows reference the **implant register** number. Because those
+numbers are reused over time, a row can name a different person than the
+register's current holder. Such rows are flagged `hasNameMismatch`, and the app
+asks staff to confirm identity before operating rather than silently attaching
+the row to whoever holds the number today.
 
-### 2. The surgery list quotes reused register numbers
+### Dates are free-form Jalali, and often imprecise
 
-`لیست انتظار جراحی` references the **implant register** number. That register has
-had numbers reassigned over time: 6 of its rows name a different person than the
-register's current holder. Those rows are flagged `hasNameMismatch` and the app
-shows a warning asking staff to confirm identity before operating, rather than
-silently attaching the row to whoever holds the number today.
-
-### 3. Dates are free-form Jalali, and often imprecise
-
-Birth dates appear as `1368`, `1365/8`, `1368/5/12`, `99/05/15` and a handful of
-impossible values. Roughly **half of all birth dates are a bare year.**
-
-Rather than padding those to `۱۳۶۸/۰۱/۰۱` and inventing a birthday, each date is
-stored three ways:
+Handwritten birth dates arrive as a bare year, a year and month, a full date, or
+a two-digit year — and a fraction are simply impossible. Padding a bare year to
+`۱۳۶۸/۰۱/۰۱` would invent a birthday nobody recorded, so each date is stored
+three ways:
 
 - `birthDate` — the parsed Gregorian date, for sorting and filtering
 - `birthDatePrecision` — `day` / `month` / `year`
-- `birthDateRaw` — exactly what the sheet said
+- `birthDateRaw` — exactly what the source said
 
 The UI renders each at its true precision. Values that cannot be parsed at all
-(month 20, day 45, a Gregorian year in a Jalali column) are kept verbatim and
-surfaced as a review item on the patient's record.
-
-### Import results
-
-```
-پرونده              2,233 read · 1,656 imported · 577 skipped (reserved file
-                    numbers with no name, phone, or clinical data)
-بیماران ایمپلنت       277 read · 277 imported
-بیماران ارتو          140 read · 140 imported
-لیست انتظار جراحی      73 read · 73 imported
-                    3,674 treatment records linked
-                       87 values flagged for review
-```
-
-Nothing is discarded and nothing is invented. Re-running the import against a
-populated database is refused unless `--force` is passed.
+are kept verbatim and surfaced as a review item on the patient's record.
 
 ---
 
@@ -176,9 +142,7 @@ denormalised `searchText` column backed by a **`pg_trgm` GIN index** — Postgre
 ships no Persian full-text dictionary, so trigram similarity is what makes
 partial Persian name search work.
 
-National IDs are validated by their check digit, not just their length, and
-9-digit values are zero-padded first (spreadsheets routinely eat the leading
-zero).
+National IDs are validated by their check digit, not just their length.
 
 ---
 
@@ -210,22 +174,17 @@ folder rather than being scattered across four directories.
 ### What this buys
 
 **The domain is testable without a database.** `JalaliDate`, `NationalId` and
-`PatientNameMatcher` are plain classes; their 81 tests need no container and no
-Nest testing module.
+`PatientNameMatcher` are plain classes; their tests need no container and no Nest
+testing module.
 
 **Invalid values cannot reach the database.** A `NationalId` can only be
 constructed through a factory that has already checked its length and check
 digit, so "a string that might be an id" is not a type the persistence layer can
 be handed.
 
-**The rule that matters most is a named thing.** `PatientNameMatcher` holds the
-reason the registers are matched by name and not by number, along with its
-refusal to guess between two patients who share a name. It is one class with one
-job, and its tests read as a specification of that decision.
-
 **Ports keep the import honest.** `ImportWorkbookUseCase` depends on
-`WorkbookPort` — "rows of text" — not on ExcelJS. The mapping rules, which are
-the practice-specific part, are tested against plain arrays.
+`WorkbookPort` — "rows of text" — not on ExcelJS. The mapping rules are tested
+against plain arrays.
 
 ### Errors: codes, not sentences
 
@@ -236,10 +195,10 @@ code plus the values needed to render it:
 {
   "statusCode": 409,
   "code": "ERR_FILE_NUMBER_TAKEN",
-  "params": { "fileNo": "11559" },
-  "message": "File number 11559 already exists",
+  "params": { "fileNo": "10001" },
+  "message": "File number 10001 already exists",
   "path": "/api/patients",
-  "timestamp": "2026-08-26T20:25:16.250Z"
+  "timestamp": "2026-01-01T00:00:00.000Z"
 }
 ```
 
@@ -257,8 +216,7 @@ failures arrive the same way, keyed by field path:
 }
 ```
 
-This is also why `dataIssues` on a patient record stores codes. A row flagged
-during the import carries `ERR_DATE_MONTH_INVALID` with `{ month: 20 }`, not a
+This is also why `dataIssues` on a patient record stores codes rather than a
 Persian sentence frozen into the database at import time.
 
 ### Data model
@@ -266,8 +224,8 @@ Persian sentence frozen into the database at import time.
 | Table                | Purpose                                                    |
 | -------------------- | ---------------------------------------------------------- |
 | `patients`           | The main register. Soft-deleted, never destroyed.          |
-| `treatment_types`    | The 13 procedures, seeded from the sheet's columns.        |
-| `patient_treatments` | Join, with room for a date and note the sheet never had.   |
+| `treatment_types`    | The procedure catalogue, seeded from code.                 |
+| `patient_treatments` | Join, with room for a date and note.                       |
 | `referral_sources`   | نحوه آشنایی, deduplicated on its Persian-folded form.      |
 | `implant_cases`      | Implant register — **its own numbering**.                  |
 | `ortho_cases`        | Ortho register — **its own numbering**.                    |
@@ -297,8 +255,29 @@ Persian sentence frozen into the database at import time.
 - Patient, registry, surgery, referral-catalogue, and user-administration writes
   commit with their audit records in the same database transaction, so a
   successful office change cannot silently lose its audit trail.
-- Production startup refuses development/placeholder secrets, short database
-  passwords, missing browser origins, and non-HTTPS CORS origins.
+- The Excel export is admin-only and writes an `export` audit entry recording who
+  exported, from where, and how many rows — a whole-register extract is exactly
+  the event an audit trail exists for. Row counts only; never exported values.
+- Swagger is disabled in production, and production startup refuses
+  development/placeholder secrets, short database passwords, missing browser
+  origins, and non-HTTPS CORS origins.
+
+---
+
+## Backups
+
+Nightly encrypted `pg_dump` backups with retention and a restore drill live in
+[`ops/backup/`](ops/backup/README.md).
+
+```bash
+./ops/backup/install.sh          # install the scheduled job
+./ops/backup/pb-restore-drill.sh # prove the newest backup still restores
+```
+
+Backups are AES-256 encrypted before they touch disk, which is what makes it
+safe to point `PB_BACKUP_DIR` at an external drive or a cloud-synced folder: the
+sync provider never sees plaintext. A backup that has never been restored is not
+a recovery plan — run the drill.
 
 ---
 
@@ -344,14 +323,14 @@ Persian UI literals, visible English template copy, legacy `i18n` markers, or
 
 ### What the API contributes
 
-Nothing. It returns `ERR_FILE_NUMBER_TAKEN` with `{ fileNo: "11559" }`, and
-`ApiErrorTranslator` on the frontend decides that reads as
-«شماره پرونده ۱۱۵۵۹ قبلاً ثبت شده است». Swagger summaries and developer messages
-are English, because their audience is developers.
+Nothing. It returns `ERR_FILE_NUMBER_TAKEN` with a file number, and
+`ApiErrorTranslator` on the frontend decides how that reads in Persian. Swagger
+summaries and developer messages are English, because their audience is
+developers.
 
 The one deliberate exception is _data_: worksheet names, seeded treatment names
-and the seeded administrator's display name stay Persian, because they are
-values the practice owns rather than labels the app chose.
+and the seeded administrator's display name stay Persian, because they are values
+the practice owns rather than labels the app chose.
 
 ## UI notes
 
@@ -359,7 +338,6 @@ values the practice owns rather than labels the app chose.
 `<mat-icon>` renders its ligatures with no extra configuration, and its variable
 axes (`FILL`, `wght`, `GRAD`, `opsz`) drive the M3 selection idiom where the
 active nav item fills in. It is self-hosted, so the clinic has no CDN dependency.
-Font Awesome would need separate wiring and would not match M3's metrics.
 
 **Layout** adapts at three sizes, not two: a phone gets a thumb-reachable bottom
 bar, a tablet a collapsible drawer, a desktop a permanent rail. The patient list
@@ -395,7 +373,7 @@ them.
 | `npm run i18n:check`                         | Validate JSON keys and reject hard-coded UI text |
 | `npm run migration:run` / `migration:revert` | Schema                                           |
 | `npm run seed`                               | Treatment catalogue + admin account              |
-| `npm run import -- [file] [--force]`         | Load the workbook                                |
+| `npm run import -- [file] [--force]`         | Load a source workbook                           |
 | `npm run db:up` / `db:down`                  | Postgres via Docker                              |
 
 ---
@@ -406,18 +384,14 @@ them.
    (`openssl rand -base64 48`), a strong database password, a strong
    `SEED_ADMIN_PASSWORD`, and the exact HTTPS frontend URL in `CORS_ORIGIN`.
 2. Deploy the API and web app together, then run `npm run migration:run` before
-   opening the new release. The auth response/cookie contract changed, and the
-   migrations add the required initial-password-change flag, case-insensitive
-   username uniqueness, and archive columns for the clinical registers.
+   opening the new release.
 3. Serve both sides over HTTPS and verify `GET /api/health` through the same
-   reverse proxy/load balancer staff will use.
-4. Set up automated `pg_dump` backups and complete a restore drill on a separate
-   database. A backup that has never been restored is not a recovery plan.
-5. Work through the 87 flagged review items — the dashboard links straight to
-   them, and clearing one is a single click on the patient's record.
-6. Decide what to do with the 92 unlinked ortho entries; most simply have no name
-   in the source and need one typed in.
-7. Run a short pilot with each real role and verify login, password change,
+   reverse proxy staff will use.
+4. Install the backup job and complete a restore drill (see
+   [`ops/backup/`](ops/backup/README.md)), then arrange an off-machine copy.
+5. Work through any items the import flagged for review — the dashboard links
+   straight to them, and clearing one is a single click on the patient's record.
+6. Run a short pilot with each real role and verify login, password change,
    patient create/edit/archive/restore, treatment changes, search, audit history,
    session expiry, and backup recovery before using it as the office system of
    record.

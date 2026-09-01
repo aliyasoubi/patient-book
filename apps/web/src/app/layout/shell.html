@@ -41,24 +41,6 @@
         }
       </nav>
 
-      <div class="nav__footer">
-        <button
-          mat-button
-          class="nav__theme"
-          type="button"
-          (click)="theme.cycle()"
-          [matTooltip]="themeTooltip() | translate"
-        >
-          <mat-icon aria-hidden="true">{{
-            theme.mode() === 'system'
-              ? 'brightness_auto'
-              : theme.mode() === 'light'
-                ? 'light_mode'
-                : 'dark_mode'
-          }}</mat-icon>
-          <span>{{ 'app.displayMode' | translate }}</span>
-        </button>
-      </div>
     </div>
   </mat-sidenav>
 
@@ -104,12 +86,6 @@
           <mat-icon aria-hidden="true">manage_accounts</mat-icon>
           <span>{{ 'app.userAccount' | translate }}</span>
         </a>
-        @if (isHandset()) {
-          <button mat-menu-item type="button" (click)="theme.cycle()">
-            <mat-icon aria-hidden="true">contrast</mat-icon>
-            <span>{{ 'app.displayMode' | translate }}</span>
-          </button>
-        }
         <button mat-menu-item type="button" (click)="logout()">
           <mat-icon aria-hidden="true">logout</mat-icon>
           <span>{{ 'app.logout' | translate }}</span>

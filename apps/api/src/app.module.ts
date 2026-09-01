@@ -16,6 +16,7 @@ import { OrthoModule } from './modules/ortho/ortho.module';
 import { SurgeryModule } from './modules/surgery/surgery.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { DataExchangeModule } from './modules/data-exchange/data-exchange.module';
+import { BackupModule } from './modules/backup/backup.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { PasswordChangeGuard } from './modules/auth/guards/password-change.guard';
@@ -41,6 +42,7 @@ import { HealthController } from './presentation/http/health.controller';
     SurgeryModule,
     StatsModule,
     DataExchangeModule,
+    BackupModule,
   ],
   controllers: [HealthController],
   providers: [

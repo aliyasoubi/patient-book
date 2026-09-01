@@ -8,7 +8,6 @@ import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { map } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -80,7 +79,6 @@ function navItems(): NavItem[] {
     MatButtonModule,
     MatListModule,
     MatMenuModule,
-    MatTooltipModule,
     GlobalSearch,
     PbAvatar,
     MatIconModule,
@@ -92,9 +90,11 @@ function navItems(): NavItem[] {
 export class Shell {
   private readonly breakpoints = inject(BreakpointObserver);
   protected readonly auth = inject(AuthService);
-  protected readonly theme = inject(ThemeService);
-  // Injected only to apply the stored preference on boot — the shell never
-  // reads it itself; the picker lives in settings.
+  // Both are injected only to apply the stored preference on boot — their
+  // constructors are what stamp the theme onto the document. The shell never
+  // reads either one; display mode and palette are both picked in settings, so
+  // there is exactly one place in the app that changes how it looks.
+  private readonly theme = inject(ThemeService);
   private readonly palette = inject(PaletteService);
 
   /**
@@ -125,18 +125,6 @@ export class Shell {
   protected readonly primaryNav = computed(() => this.navItems().filter((i) => i.primary));
 
   protected readonly roleLabel = computed(() => roleLabel(this.auth.role()));
-
-  /** Tooltip naming the current theme mode. */
-  protected themeTooltip(): string {
-    switch (this.theme.mode()) {
-      case 'light':
-        return 'theme.tooltipLight';
-      case 'dark':
-        return 'theme.tooltipDark';
-      default:
-        return 'theme.tooltipSystem';
-    }
-  }
 
   protected toggleDrawer(): void {
     this.drawerOpen.update((open) => !open);

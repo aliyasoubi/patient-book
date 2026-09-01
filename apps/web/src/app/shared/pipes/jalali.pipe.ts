@@ -9,9 +9,9 @@ const toPersian = (s: string): string =>
 /**
  * Display a date at the precision the record actually holds.
  *
- * Roughly half the birth dates in the practice's book are a bare year. Padding
- * those to `۱۳۶۸/۰۱/۰۱` would assert a birthday nobody recorded, so a
- * year-precision value renders as just the year.
+ * Handwritten birth dates are commonly a bare year. Padding those to
+ * `۱۳۶۸/۰۱/۰۱` would assert a birthday nobody recorded, so a year-precision
+ * value renders as just the year.
  */
 @Pipe({ name: 'jalali', standalone: true, pure: false })
 export class JalaliPipe implements PipeTransform {

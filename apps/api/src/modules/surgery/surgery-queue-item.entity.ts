@@ -16,8 +16,8 @@ import { ImplantCase } from '../implants/implant-case.entity';
  * لیست انتظار جراحی — the second-stage surgery queue.
  *
  * Rows reference an implant *register* number, not a patient file number.
- * Because that register has reused numbers over time (8 of 70 rows name a
- * different person than the register's current holder), the recorded name is
+ * Because such registers reuse numbers as old books are retired, a row can name
+ * a different person than the number's current holder. The recorded name is
  * stored verbatim and mismatches are flagged rather than resolved by fiat.
  */
 @Entity('surgery_queue')

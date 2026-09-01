@@ -6,9 +6,9 @@ import { toLatinDigits } from '../services/persian-text';
 /**
  * How much of a date the source actually told us.
  *
- * Roughly half the birth dates in this practice's records are a bare year
- * ("۱۳۶۸"). Collapsing those to a full date would assert a birthday nobody ever
- * wrote down, so the precision travels with the value.
+ * Handwritten birth dates are commonly recorded as a bare year ("۱۳۶۸").
+ * Collapsing those to a full date would assert a birthday nobody ever wrote
+ * down, so the precision travels with the value.
  */
 export type DatePrecision = 'day' | 'month' | 'year';
 

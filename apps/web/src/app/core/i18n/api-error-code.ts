@@ -54,7 +54,10 @@ export type ApiErrorCode =
   | 'ERR_WORKBOOK_UNREADABLE'
   | 'ERR_WORKBOOK_SHEETS_MISSING'
   | 'ERR_RECONCILE_CONFLICT'
-  | 'ERR_RECONCILE_FIELD_UNKNOWN';
+  | 'ERR_RECONCILE_FIELD_UNKNOWN'
+  | 'ERR_BACKUP_DIR_INVALID'
+  | 'ERR_BACKUP_DIR_MISSING'
+  | 'ERR_BACKUP_DIR_NOT_WRITABLE';
 
 /** Values the API sends for interpolation, e.g. `{ fileNo: '11559' }`. */
 export type ApiErrorParams = Readonly<Record<string, string | number>>;

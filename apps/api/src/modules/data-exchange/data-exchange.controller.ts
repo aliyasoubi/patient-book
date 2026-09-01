@@ -70,8 +70,8 @@ export class DataExchangeController {
   }
 
   /**
-   * 8 MB is generous headroom over the practice's own workbook (under 1 MB)
-   * while keeping a mistaken upload from being buffered whole in memory.
+   * 8 MB is generous headroom for a register workbook while keeping a mistaken
+   * upload from being buffered whole in memory.
    */
   @Post('reconcile/preview')
   @UseInterceptors(

@@ -136,6 +136,13 @@ export class ApiErrorTranslator {
       case 'ERR_RECONCILE_FIELD_UNKNOWN':
         return this.t('error.reconcileFieldUnknown', params);
 
+      case 'ERR_BACKUP_DIR_INVALID':
+        return this.t('error.backupDirInvalid', params);
+      case 'ERR_BACKUP_DIR_MISSING':
+        return this.t('error.backupDirMissing', params);
+      case 'ERR_BACKUP_DIR_NOT_WRITABLE':
+        return this.t('error.backupDirNotWritable', params);
+
       default:
         return this.unexpected();
     }

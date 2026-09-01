@@ -12,6 +12,12 @@ data/*.json
 *.backup
 !apps/api/src/database/migrations/*.sql
 
+# Encrypted dumps from ops/backup/. `*.sql.gz` does not match `*.sql.gz.enc`,
+# so this needs its own rule — the backups default to living outside the repo,
+# but a redirected PB_BACKUP_DIR should not be able to commit patient records.
+*.enc
+ops/backup/backup.env
+
 # ── Secrets ────────────────────────────────────────────────────────────
 .env
 .env.*
