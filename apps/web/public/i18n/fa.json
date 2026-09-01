@@ -38,7 +38,8 @@
     "pagination": "صفحه‌بندی",
     "searching": "در حال جستجو",
     "notRecorded": "ثبت نشده",
-    "percentSign": "٪"
+    "percentSign": "٪",
+    "retry": "تلاش دوباره"
   },
   "auth": {
     "heading": "ورود به سیستم",
@@ -78,7 +79,8 @@
     "trendAria": "روند بیماران جدید، بیشینه {{max}} نفر در ماه",
     "genderCount": "{{gender}}، {{count}} نفر",
     "maximum": "بیشینه {{count}}",
-    "dateTimeAria": "تاریخ و ساعت امروز"
+    "dateTimeAria": "تاریخ و ساعت امروز",
+    "loadFailed": "اطلاعات داشبورد بارگذاری نشد."
   },
   "greeting": {
     "morning": "صبح بخیر",
@@ -89,7 +91,9 @@
   "tile": {
     "patients": "کل بیماران",
     "implants": "پرونده‌های ایمپلنت",
+    "ortho": "پرونده‌های ارتودنسی",
     "upcomingSurgeries": "جراحی‌های پیش‌رو",
+    "overdueSurgeries": "جراحی‌های عقب‌افتاده",
     "needsReview": "نیازمند بازبینی"
   },
   "registry": {

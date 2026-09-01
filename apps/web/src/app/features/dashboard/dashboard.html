@@ -13,6 +13,14 @@
     <mat-progress-bar mode="indeterminate" />
   }
 
+  @if (failed()) {
+    <pb-surface class="dash__error">
+      <mat-icon class="dash__error-icon" aria-hidden="true">cloud_off</mat-icon>
+      <p class="dash__error-text">{{ 'dashboard.loadFailed' | translate }}</p>
+      <pb-button icon="refresh" (click)="load()">{{ 'common.retry' | translate }}</pb-button>
+    </pb-surface>
+  }
+
   @if (stats(); as s) {
     <!-- ── Headline tiles ──────────────────────────────────────── -->
     <section class="tiles" [attr.aria-label]="'dashboard.overallStats' | translate">
@@ -31,6 +39,31 @@
     </section>
 
     <div class="dash__grid">
+      <!-- ── Recall ─────────────────────────────────────────────
+           Operational follow-up work, so it leads the panels; the
+           analytics below describe the practice rather than ask
+           anything of it. -->
+      <pb-surface [title]="'dashboard.recallTitle' | translate">
+        <div class="recall">
+          <a class="recall__item" routerLink="/patients">
+            <span class="recall__value">{{ s.recentlyActive | faCount }}</span>
+            <span class="recall__label">{{ 'dashboard.recentSixMonths' | translate }}</span>
+          </a>
+          <a
+            class="recall__item recall__item--warn"
+            routerLink="/patients"
+            [queryParams]="{ inactiveMonths: 12 }"
+          >
+            <span class="recall__value">{{ s.inactiveOverYear | faCount }}</span>
+            <span class="recall__label">{{ 'dashboard.inactiveOverYear' | translate }}</span>
+            <span class="recall__cta">
+              {{ 'dashboard.viewList' | translate }}
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            </span>
+          </a>
+        </div>
+      </pb-surface>
+
       <!-- ── Treatments ────────────────────────────────────────── -->
       <pb-surface
         class="panel--wide"
@@ -152,27 +185,6 @@
         </ul>
       </pb-surface>
 
-      <!-- ── Recall ────────────────────────────────────────────── -->
-      <pb-surface [title]="'dashboard.recallTitle' | translate">
-        <div class="recall">
-          <a class="recall__item" routerLink="/patients">
-            <span class="recall__value">{{ s.recentlyActive | faCount }}</span>
-            <span class="recall__label">{{ 'dashboard.recentSixMonths' | translate }}</span>
-          </a>
-          <a
-            class="recall__item recall__item--warn"
-            routerLink="/patients"
-            [queryParams]="{ inactiveMonths: 12 }"
-          >
-            <span class="recall__value">{{ s.inactiveOverYear | faCount }}</span>
-            <span class="recall__label">{{ 'dashboard.inactiveOverYear' | translate }}</span>
-            <span class="recall__cta">
-              {{ 'dashboard.viewList' | translate }}
-              <mat-icon aria-hidden="true">arrow_back</mat-icon>
-            </span>
-          </a>
-        </div>
-      </pb-surface>
     </div>
   }
 </div>

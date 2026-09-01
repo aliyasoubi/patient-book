@@ -14,7 +14,15 @@ export class AuditLog {
   username!: string | null;
 
   @Column({ type: 'varchar', length: 16 })
-  action!: 'create' | 'update' | 'delete' | 'restore' | 'login' | 'login_failed';
+  action!:
+    | 'create'
+    | 'update'
+    | 'delete'
+    | 'restore'
+    | 'login'
+    | 'login_failed'
+    /** A bulk PII extract of the whole register — see the data-exchange controller. */
+    | 'export';
 
   @Index()
   @Column({ type: 'varchar', length: 48 })

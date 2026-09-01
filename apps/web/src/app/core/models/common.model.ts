@@ -95,6 +95,7 @@ export interface DashboardStats {
     implantCases: number;
     orthoCases: number;
     upcomingSurgeries: number;
+    overdueSurgeries: number;
     needsReview: number;
   };
   gender: Array<{ key: string; count: number }>;

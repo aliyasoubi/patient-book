@@ -16,7 +16,10 @@ export interface DashboardStats {
     archived: number;
     implantCases: number;
     orthoCases: number;
+    /** Scheduled surgeries still ahead — undated ones included, they are outstanding too. */
     upcomingSurgeries: number;
+    /** Scheduled but the date has passed: either done and never closed off, or missed. */
+    overdueSurgeries: number;
     needsReview: number;
   };
   gender: Array<{ key: string; count: number }>;
@@ -54,9 +57,16 @@ export class StatsService {
         SELECT
           (SELECT count(*) FROM patients WHERE "deletedAt" IS NULL)                    AS patients,
           (SELECT count(*) FROM patients WHERE "deletedAt" IS NOT NULL)                AS archived,
-          (SELECT count(*) FROM implant_cases)                                          AS "implantCases",
-          (SELECT count(*) FROM ortho_cases)                                            AS "orthoCases",
-          (SELECT count(*) FROM surgery_queue WHERE status = 'scheduled')               AS "upcomingSurgeries",
+          (SELECT count(*) FROM implant_cases WHERE "deletedAt" IS NULL)                 AS "implantCases",
+          (SELECT count(*) FROM ortho_cases WHERE "deletedAt" IS NULL)                   AS "orthoCases",
+          -- An undated scheduled row is still outstanding work, so it counts as
+          -- upcoming; only a date that has already passed moves it to overdue.
+          (SELECT count(*) FROM surgery_queue
+            WHERE status = 'scheduled' AND "deletedAt" IS NULL
+              AND ("surgeryDate" IS NULL OR "surgeryDate" >= CURRENT_DATE))              AS "upcomingSurgeries",
+          (SELECT count(*) FROM surgery_queue
+            WHERE status = 'scheduled' AND "deletedAt" IS NULL
+              AND "surgeryDate" < CURRENT_DATE)                                          AS "overdueSurgeries",
           (SELECT count(*) FROM patients
             WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview"
       `),
@@ -119,6 +129,7 @@ export class StatsService {
         implantCases: Number(t.implantCases ?? 0),
         orthoCases: Number(t.orthoCases ?? 0),
         upcomingSurgeries: Number(t.upcomingSurgeries ?? 0),
+        overdueSurgeries: Number(t.overdueSurgeries ?? 0),
         needsReview: Number(t.needsReview ?? 0),
       },
       gender: gender.map((g) => ({ key: g.key, count: Number(g.count) })),
@@ -145,13 +156,19 @@ export class StatsService {
     };
   }
 
-  /** Surgeries coming up, for the dashboard's "next up" panel. */
+  /**
+   * Surgeries coming up, for the dashboard's "next up" panel. Deliberately the
+   * same set the `upcomingSurgeries` total counts — a list that disagreed with
+   * the tile above it would be worse than no list at all. Undated rows sort
+   * last (Postgres orders NULLs last on ASC) but are still shown: they are
+   * outstanding work, and half the imported queue has no date at all.
+   */
   async upcomingSurgeries(limit = 8): Promise<unknown[]> {
     const rows = await this.surgery
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.implantCase', 'ic')
       .where('s.status = :status', { status: 'scheduled' })
-      .andWhere('s."surgeryDate" IS NOT NULL')
+      .andWhere('(s."surgeryDate" IS NULL OR s."surgeryDate" >= CURRENT_DATE)')
       .orderBy('s.surgeryDate', 'ASC')
       .limit(limit)
       .getMany();

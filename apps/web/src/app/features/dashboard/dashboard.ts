@@ -63,6 +63,7 @@ export class Dashboard {
   protected readonly color = treatmentColor;
 
   protected readonly loading = signal(true);
+  protected readonly failed = signal(false);
   protected readonly stats = signal<DashboardStats | null>(null);
 
   protected readonly greeting = computed(() => {
@@ -78,10 +79,45 @@ export class Dashboard {
     return name ? this.i18n.instant('greeting.withName', { part, name }) : part;
   });
 
+  /**
+   * Ordered work-first: what needs attention, then what is happening next, then
+   * the plain counts. Someone opening this at 9 AM should meet the backlog
+   * before the totals, not after three charts.
+   */
   protected readonly tiles = computed<StatTile[]>(() => {
     const s = this.stats();
     if (!s) return [];
     const tiles: StatTile[] = [
+      {
+        label: 'tile.needsReview',
+        value: s.totals.needsReview,
+        icon: 'error',
+        link: '/patients',
+        queryParams: { hasIssues: 'true' },
+        tone: 'warn',
+      },
+    ];
+    // A permanently-zero warning tile trains people to ignore warnings, so this
+    // one appears only when there is actually something overdue.
+    if (s.totals.overdueSurgeries > 0) {
+      tiles.push({
+        label: 'tile.overdueSurgeries',
+        value: s.totals.overdueSurgeries,
+        icon: 'event_busy',
+        link: '/surgery',
+        queryParams: { status: 'scheduled' },
+        tone: 'warn',
+      });
+    }
+    tiles.push(
+      {
+        label: 'tile.upcomingSurgeries',
+        value: s.totals.upcomingSurgeries,
+        icon: 'event_available',
+        link: '/surgery',
+        queryParams: { status: 'scheduled' },
+        tone: 'neutral',
+      },
       {
         label: 'tile.patients',
         value: s.totals.patients,
@@ -97,22 +133,13 @@ export class Dashboard {
         tone: 'neutral',
       },
       {
-        label: 'tile.upcomingSurgeries',
-        value: s.totals.upcomingSurgeries,
-        icon: 'event_available',
-        link: '/surgery',
-        queryParams: { status: 'scheduled' },
+        label: 'tile.ortho',
+        value: s.totals.orthoCases,
+        icon: 'straighten',
+        link: '/ortho',
         tone: 'neutral',
       },
-      {
-        label: 'tile.needsReview',
-        value: s.totals.needsReview,
-        icon: 'error',
-        link: '/patients',
-        queryParams: { hasIssues: 'true' },
-        tone: 'warn',
-      },
-    ];
+    );
     return tiles;
   });
 
@@ -166,12 +193,22 @@ export class Dashboard {
   }
 
   constructor() {
+    this.load();
+  }
+
+  /** Also the retry handler — a failed load must be recoverable without a reload. */
+  protected load(): void {
+    this.loading.set(true);
+    this.failed.set(false);
     this.registry.dashboard().subscribe({
       next: (stats) => {
         this.stats.set(stats);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.failed.set(true);
+        this.loading.set(false);
+      },
     });
   }
 }

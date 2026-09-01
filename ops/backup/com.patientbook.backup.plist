@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Nightly patient-book backup, 21:00 (after the practice closes).
+
+  A LaunchAgent rather than a LaunchDaemon: it runs as the logged-in user, so
+  it can reach the Homebrew Postgres socket and post a desktop notification
+  when a backup fails. RunAtLoad is deliberately false — loading the agent
+  should not fire an unexpected dump in the middle of a working day.
+
+  If the Mac is asleep or off at 21:00, launchd runs the job at the next
+  opportunity rather than skipping the night entirely.
+
+  Install:    ops/backup/install.sh
+  Uninstall:  launchctl unload ~/Library/LaunchAgents/com.patientbook.backup.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.patientbook.backup</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__SCRIPT_PATH__</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>21</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>__BACKUP_DIR__/launchd.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>__BACKUP_DIR__/launchd.err.log</string>
+</dict>
+</plist>

@@ -3,17 +3,19 @@ import {
   Controller,
   Get,
   Post,
+  Req,
   Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { memoryStorage } from 'multer';
 
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
+import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { ErrorCode, UserRole } from '../../domain';
 import { ExportWorkbookUseCase } from './application/export-workbook.use-case';
@@ -35,12 +37,31 @@ export class DataExchangeController {
     private readonly exportUseCase: ExportWorkbookUseCase,
     private readonly reconcileUseCase: ReconcileWorkbookUseCase,
     private readonly applyUseCase: ApplyReconcileUseCase,
+    private readonly audit: AuditService,
   ) {}
 
+  /**
+   * Audited before the bytes leave: a whole-register PII extract is exactly the
+   * event an audit trail exists for. Only row counts are recorded, never the
+   * exported values. The audit is awaited rather than fire-and-forget so an
+   * export cannot outrun the record of it.
+   */
   @Get('export')
   @ApiOperation({ summary: 'Download the current register as an Excel workbook' })
-  async export(@Res() res: Response): Promise<void> {
-    const buffer = await this.exportUseCase.execute();
+  async export(
+    @Res() res: Response,
+    @Req() req: Request,
+    @CurrentUser() user: { id: string; username: string },
+  ): Promise<void> {
+    const { buffer, counts } = await this.exportUseCase.execute();
+    await this.audit.record({
+      userId: user.id,
+      username: user.username,
+      action: 'export',
+      entity: 'patient_book',
+      changes: counts,
+      ip: req.ip ?? null,
+    });
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': 'attachment; filename="patient-book.xlsx"',
