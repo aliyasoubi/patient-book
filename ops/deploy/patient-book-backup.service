@@ -1,0 +1,21 @@
+[Unit]
+Description=Patient Book encrypted database backup
+Documentation=file://__REPO_ROOT__/ops/deploy/README.md
+# The dump runs inside the Postgres container, so Docker has to be up first.
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=__REPO_ROOT__/ops/deploy/pb-backup.sh
+# Reads the compose file and .env from the checkout.
+WorkingDirectory=__REPO_ROOT__
+# Needs the Docker socket and write access to /etc/patient-book for the key.
+User=root
+# A dump on a large register should never run into the next night's job.
+TimeoutStartSec=3600
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target

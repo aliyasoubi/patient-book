@@ -274,14 +274,50 @@ Persian sentence frozen into the database at import time.
 
 ---
 
-## Backups
+## Deploying
 
-Nightly encrypted `pg_dump` backups with retention and a restore drill live in
-[`ops/backup/`](ops/backup/README.md).
+The production stack — Postgres, the API, and Caddy serving the Angular bundle
+with automatic TLS — is four containers described by
+[`compose.prod.yml`](compose.prod.yml). The runbook is
+[`ops/deploy/README.md`](ops/deploy/README.md).
 
 ```bash
-./ops/backup/install.sh          # install the scheduled job
-./ops/backup/pb-restore-drill.sh # prove the newest backup still restores
+cp .env.production.example .env && chmod 600 .env
+```
+
+```bash
+sudo ./ops/deploy/install.sh && ./ops/deploy/deploy.sh
+```
+
+Postgres publishes no port in production: it is reachable only on the internal
+Docker network. Publishing it even on `127.0.0.1` is worth avoiding, because
+Docker inserts its own iptables rules ahead of `ufw` — a published port stays
+reachable from the internet while the firewall reports it as denied.
+
+The app and the API are served from one origin, which is what lets the refresh
+cookie stay `SameSite=Strict` and keeps CORS out of the request path entirely.
+
+Caddy rather than nginx with certbot: certificates are obtained and renewed
+without a cron job, so an expired certificate is not a way for the practice to
+lose access to its records on a Sunday.
+
+---
+
+## Backups
+
+On the VPS, a systemd timer runs nightly encrypted `pg_dump` backups with
+retention and a restore drill — see [`ops/deploy/`](ops/deploy/README.md).
+The macOS equivalent, for a practice running this on an office Mac under
+launchd, is [`ops/backup/`](ops/backup/README.md).
+
+```bash
+./ops/backup/install.sh          # macOS: install the scheduled job
+./ops/backup/pb-restore-drill.sh # macOS: prove the newest backup restores
+```
+
+```bash
+sudo ./ops/deploy/install.sh          # Linux/VPS: install the systemd timer
+sudo ./ops/deploy/pb-restore-drill.sh # Linux/VPS: prove the newest backup restores
 ```
 
 Backups are AES-256 encrypted before they touch disk, which is what makes it

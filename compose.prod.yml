@@ -1,0 +1,152 @@
+# Production stack for an Ubuntu VPS: Postgres, the API, and Caddy serving the
+# Angular bundle and terminating TLS.
+#
+#   docker compose -f compose.prod.yml up -d --build
+#
+# Configuration comes from `.env` beside this file; see .env.production.example.
+name: patient-book
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-api-env: &api-env
+  NODE_ENV: production
+  API_PORT: 3000
+  # Exactly one proxy (Caddy) sits in front of the API. This is what makes the
+  # login rate limit per-client and the audit trail record real addresses.
+  TRUST_PROXY: 1
+  # Same-origin in practice, but production config refuses to start without it.
+  CORS_ORIGIN: https://${PB_DOMAIN:?set PB_DOMAIN in .env}
+  DB_HOST: db
+  DB_PORT: 5432
+  DB_USER: ${DB_USER:-dental}
+  DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+  DB_NAME: ${DB_NAME:-patient_book}
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET in .env}
+  JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30m}
+  JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    # Deliberately no `ports`. Postgres is reachable only from the internal
+    # network, which is what the API and the backup job use. Publishing it —
+    # even on 127.0.0.1 — is worth avoiding here: Docker installs its own
+    # iptables rules ahead of ufw, so a published port is exposed even when
+    # the firewall is configured to deny it.
+    environment:
+      POSTGRES_USER: ${DB_USER:-dental}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      POSTGRES_DB: ${DB_NAME:-patient_book}
+      # Persian sorting and comparison need a UTF-8 collation.
+      LANG: fa_IR.utf8
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${DB_USER:-dental} -d ${DB_NAME:-patient_book}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    networks: [internal]
+    logging: *logging
+
+  # One-shot: the schema is brought up to date before the API is allowed to
+  # start, every time the stack comes up. A single-instance clinic app has no
+  # concurrent-migration problem to design around, and this removes the chance
+  # of running new code against an old schema after a deploy.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: patient-book-api:latest
+    command: ["node", "apps/api/dist/database/run-migrations.js", "run"]
+    environment: *api-env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    networks: [internal]
+    logging: *logging
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: patient-book-api:latest
+    restart: unless-stopped
+    # PID 1 in a container gets no default signal handlers, so without this
+    # Nest's shutdown hooks never run and stopping the stack severs live
+    # database connections instead of closing them.
+    init: true
+    environment:
+      <<: *api-env
+      # Must match the mount below: BackupService reads the home directory.
+      HOME: ${PB_HOME_DIR:-/srv/patient-book/home}
+      # Read only by the one-off seed step, which is run through this service.
+      # Safe to clear from .env once the first administrator exists — seeding
+      # never touches an account that is already there.
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+    volumes:
+      # Mounted at the identical path inside and out. The settings screen then
+      # shows a directory that genuinely exists on the host, and the nightly
+      # backup job reads the same `.patient-book/backup-dir` the app writes.
+      - ${PB_HOME_DIR:-/srv/patient-book/home}:${PB_HOME_DIR:-/srv/patient-book/home}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    networks: [internal]
+    logging: *logging
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: patient-book-web:latest
+    restart: unless-stopped
+    environment:
+      PB_DOMAIN: ${PB_DOMAIN:?set PB_DOMAIN in .env}
+      PB_TLS_EMAIL: ${PB_TLS_EMAIL:?set PB_TLS_EMAIL in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      # Issued certificates. Losing this volume means re-issuing on next start,
+      # which Let's Encrypt rate-limits — keep it.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_started
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    networks: [internal]
+    logging: *logging
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:
+    driver: bridge

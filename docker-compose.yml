@@ -18,8 +18,12 @@ services:
       - postgres
       - -c
       - max_connections=100
+    # Loopback only. Published as `5432:5432` this would be reachable from
+    # anywhere the host is, and Docker's own iptables rules sit ahead of ufw,
+    # so a firewall would not have stopped it. Production publishes no port
+    # at all — see compose.prod.yml.
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

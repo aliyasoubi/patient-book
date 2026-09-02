@@ -35,7 +35,9 @@
               "src/styles.scss"
             ],
             "stylePreprocessorOptions": {
-              "includePaths": ["../../node_modules"]
+              "includePaths": [
+                "../../node_modules"
+              ]
             }
           },
           "configurations": {
@@ -52,6 +54,14 @@
                   "maximumError": "16kB"
                 }
               ],
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "outputHashing": "all"
             },
             "development": {

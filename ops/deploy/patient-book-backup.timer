@@ -1,0 +1,14 @@
+[Unit]
+Description=Nightly Patient Book backup
+Documentation=file://__REPO_ROOT__/ops/deploy/README.md
+
+[Timer]
+OnCalendar=*-*-* 21:00:00
+# The practice's server is not guaranteed to be awake at 21:00 — a reboot, a
+# host migration. Without this the night is simply skipped, silently.
+Persistent=true
+# Avoid every VPS on the provider dumping at exactly the same second.
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target
