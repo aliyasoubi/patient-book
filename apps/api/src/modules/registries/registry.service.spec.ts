@@ -1,7 +1,13 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import type { DeleteResult, EntityManager, Repository } from 'typeorm';
+import type {
+  DeleteResult,
+  EntityManager,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 
 import { RegistryService, type RegistryCase } from './registry.service';
+import type { QueryRegistryDto } from './registry.dto';
 import type {
   AuditEntry,
   AuditService,
@@ -58,4 +64,68 @@ describe('RegistryService', () => {
       manager,
     );
   });
+});
+
+const CHAINED = [
+  'leftJoinAndSelect',
+  'skip',
+  'take',
+  'andWhere',
+  'addSelect',
+  'orderBy',
+  'addOrderBy',
+  'withDeleted',
+] as const;
+
+/** Chainable builder stub that resolves to an empty page. */
+const listStub = () => {
+  const qb: Record<string, unknown> = {
+    getManyAndCount: jest.fn(() => Promise.resolve([[], 0])),
+  };
+  const calls = new Map<string, jest.Mock>();
+  for (const method of CHAINED) {
+    const mock = jest.fn(() => qb);
+    calls.set(method, mock as unknown as jest.Mock);
+    qb[method] = mock;
+  }
+  const repository = {
+    createQueryBuilder: jest.fn(
+      () => qb as unknown as SelectQueryBuilder<TestRegistryCase>,
+    ),
+  } as unknown as Repository<TestRegistryCase>;
+  const service = new RegistryService(
+    repository,
+    'implant_case',
+    {} as AuditService,
+  );
+  return { service, calls };
+};
+
+const query = (sortBy?: string): QueryRegistryDto =>
+  ({ sortBy, sortDir: 'ASC', page: 1, limit: 25 }) as QueryRegistryDto;
+
+describe('RegistryService sorting', () => {
+  it('sorts by an allow-listed column', async () => {
+    const { service, calls } = listStub();
+
+    await service.findAll(query('recordedName'));
+
+    expect(calls.get('orderBy')).toHaveBeenCalledWith('c.recordedName', 'ASC');
+  });
+
+  /**
+   * `sortable.constructor` resolves through the prototype chain to a function,
+   * which the `??` fallback keeps and TypeORM would splice into ORDER BY.
+   */
+  it.each(['constructor', 'toString', 'valueOf', '__proto__'])(
+    'falls back to the default register order for the inherited property %s',
+    async (inherited) => {
+      const { service, calls } = listStub();
+
+      await service.findAll(query(inherited));
+
+      // The numeric-register branch, exactly as an unset `sortBy` takes.
+      expect(calls.get('orderBy')).toHaveBeenCalledWith('registry_num', 'ASC');
+    },
+  );
 });

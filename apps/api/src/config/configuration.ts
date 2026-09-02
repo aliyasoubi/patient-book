@@ -2,6 +2,8 @@ export interface AppConfig {
   env: string;
   port: number;
   corsOrigin: string[];
+  /** Reverse-proxy hops to trust when reading the client IP. 0 disables. */
+  trustProxy: number;
   db: {
     host: string;
     port: number;
@@ -43,6 +45,18 @@ const positiveInteger = (
   const parsed = Number.parseInt(value ?? String(fallback), 10);
   if (!Number.isSafeInteger(parsed) || parsed <= 0) {
     throw new Error(`${name} must be a positive integer`);
+  }
+  return parsed;
+};
+
+const nonNegativeInteger = (
+  value: string | undefined,
+  fallback: number,
+  name: string,
+): number => {
+  const parsed = Number.parseInt(value ?? String(fallback), 10);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error(`${name} must be a non-negative integer`);
   }
   return parsed;
 };
@@ -111,6 +125,16 @@ export function buildConfiguration(
     corsOrigin: csv(
       env.CORS_ORIGIN,
       runtime === 'production' ? [] : ['http://localhost:4200'],
+    ),
+    // Behind a reverse proxy every request arrives from the proxy itself, so
+    // without this the rate limiter buckets the whole practice into one
+    // counter and every audit row records the proxy's address instead of the
+    // client's. A hop count rather than `true`: trusting the entire chain
+    // would let a client forge X-Forwarded-For and walk past the login limit.
+    trustProxy: nonNegativeInteger(
+      env.TRUST_PROXY,
+      runtime === 'production' ? 1 : 0,
+      'TRUST_PROXY',
     ),
     db: {
       host: env.DB_HOST ?? 'localhost',

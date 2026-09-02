@@ -134,10 +134,16 @@ export class PatientQueryBuilder {
       return;
     }
 
-    const column = SORTABLE[dto.sortBy ?? 'lastName'];
+    // `hasOwn`, not a plain lookup: every object literal inherits
+    // `constructor`, `toString` and friends, so `?sortBy=constructor` would
+    // otherwise pass this allow-list and hand a function to `orderBy`.
+    const requested = dto.sortBy ?? 'lastName';
+    const column = Object.hasOwn(SORTABLE, requested)
+      ? SORTABLE[requested]
+      : undefined;
     if (!column) {
       throw AppException.badRequest(ErrorCode.SortFieldUnsupported, {
-        field: String(dto.sortBy),
+        field: requested,
       });
     }
     qb.orderBy(column, dto.sortDir, 'NULLS LAST');

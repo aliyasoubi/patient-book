@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -10,11 +11,18 @@ import { AppModule } from './app.module';
 import { ValidationException } from './presentation/http/validation.exception';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
   const config = app.get(ConfigService);
   const port = config.get<number>('port')!;
   const corsOrigin = config.get<string[]>('corsOrigin')!;
   const isProd = config.get<string>('env') === 'production';
+  const trustProxy = config.get<number>('trustProxy')!;
+
+  // Before anything that reads an address: the throttler and the audit trail
+  // both take `req.ip`, and behind nginx that is the proxy until this is set.
+  if (trustProxy > 0) app.set('trust proxy', trustProxy);
 
   app.setGlobalPrefix('api');
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));

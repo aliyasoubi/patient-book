@@ -246,9 +246,19 @@ Persian sentence frozen into the database at import time.
   (`@Public()`), so a new controller cannot accidentally expose patient records.
 - Roles: `admin` · `dentist` · `receptionist` · `viewer`. The frontend hides what
   a role cannot do; the API re-checks every request regardless.
-- Login is rate-limited to 5 attempts per minute. Unknown usernames and wrong
-  passwords return the same message and run the same bcrypt comparison, so the
-  response leaks neither existence nor timing.
+- Login is rate-limited to 5 attempts per minute, per client address. Unknown
+  usernames and wrong passwords return the same message and run the same bcrypt
+  comparison, so the response leaks neither existence nor timing.
+- `TRUST_PROXY` is the number of reverse-proxy hops in front of the API — 1
+  behind a single nginx, which is the production default. It is what makes
+  "per client address" true: without it every request appears to come from the
+  proxy, so one mistyped password rate-limits the whole practice and every
+  audit row records the proxy instead of the person. It is a hop count rather
+  than a flag because trusting the entire forwarded chain would let a client
+  forge `X-Forwarded-For` and evade the login limit outright.
+- Errors return a code, never an internal message. Unmapped failures are logged
+  server-side and answered with a fixed `ERR_UNEXPECTED`, so a driver string or
+  a filesystem path cannot reach the browser through an unhandled exception.
 - Patient, implant, orthodontic, and surgery records are **archived, never
   deleted** — a dental record is a legal document. Users are deactivated rather
   than removed so audit rows keep pointing at a real person.

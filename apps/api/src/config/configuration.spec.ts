@@ -50,4 +50,26 @@ describe('buildConfiguration', () => {
 
     expect(() => buildConfiguration(env)).toThrow('at least one');
   });
+
+  it('trusts one reverse-proxy hop in production by default', () => {
+    expect(buildConfiguration(productionEnvironment()).trustProxy).toBe(1);
+  });
+
+  it('trusts no proxy in development, where the API is reached directly', () => {
+    expect(buildConfiguration({}).trustProxy).toBe(0);
+  });
+
+  it('accepts an explicit hop count for a deeper proxy chain', () => {
+    const env = productionEnvironment();
+    env.TRUST_PROXY = '2';
+
+    expect(buildConfiguration(env).trustProxy).toBe(2);
+  });
+
+  it('refuses a hop count that is not a whole number of proxies', () => {
+    const env = productionEnvironment();
+    env.TRUST_PROXY = '-1';
+
+    expect(() => buildConfiguration(env)).toThrow('TRUST_PROXY');
+  });
 });

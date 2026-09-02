@@ -60,7 +60,12 @@ export class RegistryService<T extends RegistryCase> {
       recordedName: 'c.recordedName',
       createdAt: 'c.createdAt',
     };
-    const column = sortable[dto.sortBy ?? 'registryNo'] ?? sortable.registryNo;
+    // `hasOwn` rather than a nullish fallback: inherited members such as
+    // `constructor` resolve to functions, which `??` would happily keep.
+    const requested = dto.sortBy ?? 'registryNo';
+    const column = Object.hasOwn(sortable, requested)
+      ? sortable[requested]
+      : sortable.registryNo;
 
     if (column === sortable.registryNo) {
       // Register numbers are digit strings; sort them numerically so 9 comes

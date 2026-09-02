@@ -38,9 +38,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const resolved = this.resolve(exception);
 
     if (resolved.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      // The response body deliberately carries no detail, so this is the only
+      // record of what actually failed — keep the value itself when a thrown
+      // non-Error leaves us no stack to print.
       this.logger.error(
         `${request.method} ${request.url} -> ${resolved.statusCode} ${resolved.code}`,
-        exception instanceof Error ? exception.stack : undefined,
+        exception instanceof Error ? exception.stack : String(exception),
       );
     }
 
@@ -91,11 +94,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return this.fromHttp(exception);
     }
 
+    // Nothing recognised. An unmapped message is exactly the kind that carries
+    // a filesystem path or a driver string, so it is logged in `catch` and a
+    // fixed one is returned — same rule the database branch above follows.
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       code: ErrorCode.Unexpected,
       params: {},
-      message: exception instanceof Error ? exception.message : 'Unexpected error',
+      message: 'Unexpected error',
     };
   }
 
