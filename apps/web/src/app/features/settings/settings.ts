@@ -12,10 +12,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { PaletteService, PaletteName } from '../../core/services/palette.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { PatientsService } from '../patients/data/patients.service';
-import { PersianCountPipe } from '../../shared/pipes/persian-number.pipe';
-import { referralKindIcon, referralKindLabel, roleLabel } from '../../shared/labels';
+import { roleLabel } from '../../shared/labels';
 import { PbButton, PbPageHeader, PbSurface, PbTextField } from '../../shared/ui';
-import type { ReferralSource, TreatmentType } from '../patients/data/patient.model';
+import type { TreatmentType } from '../patients/data/patient.model';
 
 @Component({
   selector: 'pb-settings',
@@ -23,7 +22,6 @@ import type { ReferralSource, TreatmentType } from '../patients/data/patient.mod
   imports: [
     MatButtonToggleModule,
     ReactiveFormsModule,
-    PersianCountPipe,
     PbButton,
     PbSurface,
     PbPageHeader,
@@ -48,24 +46,14 @@ export class Settings {
   protected readonly paletteNames: readonly PaletteName[] = ['cyan', 'green', 'violet'];
 
   protected readonly roleLabel = roleLabel;
-  protected readonly referralKindLabel = referralKindLabel;
-  protected readonly referralKindIcon = referralKindIcon;
 
   protected readonly treatments = signal<TreatmentType[]>([]);
-  protected readonly referrals = signal<ReferralSource[]>([]);
 
   constructor() {
     // Only an admin can read backup settings; asking as anyone else would just
     // produce a 403 in the console on every settings visit.
     if (this.auth.can('manageData')) this.loadBackupSettings();
     this.patients.treatmentTypes().subscribe((t) => this.treatments.set(t));
-    this.patients
-      .referralSources()
-      .subscribe((r) =>
-        this.referrals.set(
-          [...r].sort((a, b) => (b.patientCount ?? 0) - (a.patientCount ?? 0)).slice(0, 30),
-        ),
-      );
   }
 
   protected setTheme(mode: ThemeMode): void {

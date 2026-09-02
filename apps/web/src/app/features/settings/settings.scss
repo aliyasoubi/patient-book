@@ -130,16 +130,4 @@ mat-button-toggle-group .material-symbols-rounded {
     color: var(--mat-sys-on-surface-variant);
     direction: ltr;
   }
-
-  &__kind,
-  &__count {
-    font: var(--mat-sys-label-small);
-    letter-spacing: var(--mat-sys-label-small-tracking);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__count {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
 }

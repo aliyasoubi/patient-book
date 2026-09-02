@@ -104,20 +104,4 @@
       </pb-button>
     </pb-surface>
   }
-
-  <pb-surface icon="share" [title]="'settings.referrals' | translate">
-    <p class="panel__hint">{{ 'settings.referralsHint' | translate }}</p>
-    <ul class="catalogue">
-      @for (r of referrals(); track r.id) {
-        <li class="catalogue__item">
-          <mat-icon aria-hidden="true">{{ referralKindIcon(r.kind) }}</mat-icon>
-          <span class="catalogue__name">{{ r.name }}</span>
-          <span class="catalogue__kind">{{ referralKindLabel(r.kind) | translate }}</span>
-          @if (r.patientCount) {
-            <span class="catalogue__count">{{ r.patientCount | faCount }}</span>
-          }
-        </li>
-      }
-    </ul>
-  </pb-surface>
 </div>
