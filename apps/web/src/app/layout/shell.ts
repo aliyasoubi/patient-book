@@ -17,7 +17,7 @@ import { ThemeService } from '../core/services/theme.service';
 import { GlobalSearch } from './global-search';
 import { roleLabel } from '../shared/labels';
 import type { UserRole } from '../core/models/common.model';
-import { PbAvatar } from '../shared/ui';
+import { PbAvatar, PbLogo } from '../shared/ui';
 
 export interface NavItem {
   path: string;
@@ -81,6 +81,7 @@ function navItems(): NavItem[] {
     MatMenuModule,
     GlobalSearch,
     PbAvatar,
+    PbLogo,
     MatIconModule,
     TranslatePipe,
   ],

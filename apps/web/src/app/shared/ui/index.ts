@@ -21,4 +21,5 @@ export type { AvatarSize, AvatarTone } from './avatar/avatar';
 export { PbStatusChip } from './status-chip/status-chip';
 export type { StatusTone } from './status-chip/status-chip';
 export { PbDatetimeCard } from './datetime-card/datetime-card';
+export { PbLogo } from './logo/logo';
 export { firstErrorMessage } from './field-errors';

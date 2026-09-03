@@ -8,7 +8,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { PbButton, PbTextField } from '../../shared/ui';
+import { PbButton, PbLogo, PbTextField } from '../../shared/ui';
 
 @Component({
   selector: 'pb-login',
@@ -19,6 +19,7 @@ import { PbButton, PbTextField } from '../../shared/ui';
     MatProgressBarModule,
     PbTextField,
     PbButton,
+    PbLogo,
     MatIconModule,
     TranslatePipe,
   ],

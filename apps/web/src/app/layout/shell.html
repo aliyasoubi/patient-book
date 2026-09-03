@@ -17,7 +17,7 @@
   >
     <div class="nav">
       <a class="nav__brand" routerLink="/dashboard" (click)="closeDrawer()">
-        <mat-icon class="nav__logo is-filled" aria-hidden="true">dentistry</mat-icon>
+        <pb-logo [size]="32" />
         <span class="nav__brand-text">
           <strong>{{ 'app.title' | translate }}</strong>
           <small>{{ 'app.subtitle' | translate }}</small>
@@ -57,7 +57,7 @@
         </button>
       }
       @if (isHandset()) {
-        <mat-icon class="topbar__logo is-filled" aria-hidden="true">dentistry</mat-icon>
+        <pb-logo class="topbar__logo" [size]="28" />
       }
 
       <pb-global-search class="topbar__search" />
