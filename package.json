@@ -1,8 +1,8 @@
 {
-  "name": "patient-book",
+  "name": "dentixo",
   "version": "1.0.0",
   "private": true,
-  "description": "دفترچه بیماران — Patient book for a dental practice",
+  "description": "Dentixo — سامانه هوشمند مدیریت مطب دندانپزشکی (smart dental practice management system)",
   "workspaces": [
     "apps/api",
     "apps/web"

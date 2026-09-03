@@ -1,51 +1,166 @@
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .login {
   display: grid;
-  place-items: center;
+  grid-template-columns: 1fr;
   min-height: 100dvh;
-  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
-  background:
-    radial-gradient(
-      ellipse 120% 80% at 50% -20%,
-      color-mix(in srgb, var(--mat-sys-primary) 22%, transparent),
-      transparent 70%
-    ),
-    var(--mat-sys-surface-container-lowest);
+  background: var(--mat-sys-surface-container-lowest);
+
+  @media (min-width: 900px) {
+    grid-template-columns: 1.05fr 1fr;
+  }
+
+  /* ── Branding panel — hidden on mobile, where the compact header
+     inside .login__main takes over. ────────────────────────────── */
+  &__aside {
+    display: none;
+    position: relative;
+    overflow: hidden;
+    padding: var(--pb-space-6);
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+
+    @media (min-width: 900px) {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  &__aside-glow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle 480px at 15% 15%, color-mix(in srgb, var(--mat-sys-tertiary) 55%, transparent), transparent),
+      radial-gradient(circle 520px at 90% 85%, color-mix(in srgb, var(--mat-sys-on-primary) 18%, transparent), transparent),
+      linear-gradient(155deg, var(--mat-sys-primary), color-mix(in srgb, var(--mat-sys-primary) 70%, black));
+  }
+
+  &__aside-content {
+    position: relative;
+    max-width: 440px;
+    margin-inline: auto;
+    animation: login-rise 600ms var(--pb-ease-emphasized) both;
+  }
+
+  &__tagline {
+    margin: var(--pb-space-4) 0 var(--pb-space-6);
+    font: var(--mat-sys-body-large);
+    color: color-mix(in srgb, var(--mat-sys-on-primary) 88%, transparent);
+    line-height: 1.8;
+  }
+
+  &__features {
+    display: grid;
+    gap: var(--pb-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: var(--pb-space-3);
+      font: var(--mat-sys-title-small);
+      font-weight: 500;
+    }
+  }
+
+  &__feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    inline-size: 40px;
+    block-size: 40px;
+    border-radius: var(--mat-sys-corner-medium);
+    background: color-mix(in srgb, var(--mat-sys-on-primary) 16%, transparent);
+
+    mat-icon {
+      font-size: 22px;
+    }
+  }
+
+  /* ── Form panel ────────────────────────────────────────────────── */
+  &__main {
+    display: grid;
+    place-items: center;
+    padding: var(--pb-space-5) var(--pb-space-4) calc(var(--pb-space-5) + env(safe-area-inset-bottom));
+
+    @media (min-width: 900px) {
+      padding: var(--pb-space-6);
+    }
+  }
 
   &__panel {
     width: 100%;
-    max-width: 420px;
+    max-width: 400px;
+    animation: login-rise 600ms 80ms var(--pb-ease-emphasized) both;
   }
 
+  /*
+   * The wordmark inherits its colour from whichever panel it sits on —
+   * `on-primary` inside the branding aside, `on-surface` in the compact
+   * header — so neither copy hardcodes a colour that belongs to the other.
+   */
   &__brand {
-    text-align: center;
-    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-3);
 
     h1 {
-      margin: 8px 0 4px;
+      margin: 0;
       font: var(--mat-sys-headline-small);
       font-weight: 700;
-      color: var(--mat-sys-on-surface);
+      letter-spacing: -0.2px;
     }
 
-    p {
-      margin: 0;
-      font: var(--mat-sys-body-medium);
-      color: var(--mat-sys-on-surface-variant);
+    &--compact {
+      justify-content: center;
+      margin-bottom: var(--pb-space-5);
+      color: var(--mat-sys-on-surface);
+
+      @media (min-width: 900px) {
+        display: none;
+      }
     }
+  }
+
+  &__aside &__brand h1 {
+    font: var(--mat-sys-headline-medium);
+    font-weight: 700;
+    letter-spacing: -0.4px;
   }
 
   &__logo {
-    font-size: 52px;
-    width: 52px;
-    height: 52px;
+    flex: 0 0 auto;
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
     color: var(--mat-sys-primary);
+  }
+
+  &__aside &__logo {
+    font-size: 44px;
+    width: 44px;
+    height: 44px;
+    color: var(--mat-sys-on-primary);
   }
 
   &__card {
     position: relative;
     overflow: hidden;
-    border-radius: var(--mat-sys-corner-large);
+    border-radius: var(--mat-sys-corner-extra-large);
     background: var(--mat-sys-surface);
+    box-shadow: var(--mat-sys-level3);
   }
 
   &__progress {
@@ -55,9 +170,15 @@
   }
 
   &__title {
-    margin: 4px 0 20px;
-    font-size: var(--mat-sys-title-medium-size);
-    font-weight: 600;
+    margin: 0 0 4px;
+    font-size: var(--mat-sys-title-large-size);
+    font-weight: 700;
+  }
+
+  &__subtitle {
+    margin: 0 0 20px;
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
   }
 
   &__error {
@@ -81,10 +202,14 @@
   }
 
   &__submit {
-    margin-top: 4px;
+    margin-top: 8px;
   }
 
   &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     margin-top: 20px;
     text-align: center;
     font-size: var(--mat-sys-body-small-size);
@@ -92,10 +217,15 @@
     letter-spacing: var(--mat-sys-body-small-tracking);
     line-height: 1.8;
     color: var(--mat-sys-on-surface-variant);
+
+    .material-symbols-rounded {
+      font-size: 16px;
+      flex: 0 0 auto;
+    }
   }
 }
 
 pb-text-field {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 20px;
 }

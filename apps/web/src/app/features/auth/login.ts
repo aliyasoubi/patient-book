@@ -39,6 +39,13 @@ export class Login {
     password: ['', [Validators.required, Validators.maxLength(128)]],
   });
 
+  /** Shown on the branding panel — a quick reminder of what signing in unlocks. */
+  protected readonly features = [
+    { icon: 'groups', label: 'auth.feature.patients' },
+    { icon: 'event_available', label: 'auth.feature.scheduling' },
+    { icon: 'straighten', label: 'auth.feature.treatments' },
+  ];
+
   protected submit(): void {
     if (this.form.invalid || this.loading()) {
       this.form.markAllAsTouched();

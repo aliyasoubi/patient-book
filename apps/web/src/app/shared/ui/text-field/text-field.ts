@@ -39,10 +39,12 @@ export interface TextFieldOption {
     TranslatePipe,
   ],
   template: `
-    <mat-form-field
-      appearance="outline"
-      [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'"
-    >
+    <!--
+      Always 'fixed': it reserves a line of space for the hint/error slot
+      whether or not one is showing, so a validation message appearing on
+      blur doesn't push everything below the field down.
+    -->
+    <mat-form-field appearance="outline" subscriptSizing="fixed">
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }

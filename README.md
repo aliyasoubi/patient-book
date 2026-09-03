@@ -1,6 +1,7 @@
-# دفترچه بیماران — Patient Book
+# Dentixo — سامانه هوشمند مدیریت مطب دندانپزشکی
 
-A patient register for a dental practice
+A practice management system for a dental clinic — patient records, implant and
+ortho registers, and the surgery waiting list
 
 **Stack:** NestJS 11 · Angular 22 · Angular Material 22 (Material 3) · PostgreSQL 17 · TypeORM
 

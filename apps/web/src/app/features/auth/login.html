@@ -1,60 +1,88 @@
 <div class="login">
-  <div class="login__panel">
-    <div class="login__brand">
-      <mat-icon class="is-filled login__logo" aria-hidden="true">dentistry</mat-icon>
-      <h1>{{ 'app.title' | translate }}</h1>
-      <p>{{ 'app.description' | translate }}</p>
+  <aside class="login__aside" aria-hidden="true">
+    <div class="login__aside-glow"></div>
+    <div class="login__aside-content">
+      <div class="login__brand">
+        <mat-icon class="is-filled login__logo">dentistry</mat-icon>
+        <h1>{{ 'app.title' | translate }}</h1>
+      </div>
+
+      <p class="login__tagline">{{ 'app.description' | translate }}</p>
+
+      <ul class="login__features">
+        @for (feature of features; track feature.icon) {
+          <li>
+            <span class="login__feature-icon">
+              <mat-icon aria-hidden="true">{{ feature.icon }}</mat-icon>
+            </span>
+            <span>{{ feature.label | translate }}</span>
+          </li>
+        }
+      </ul>
     </div>
+  </aside>
 
-    <mat-card class="login__card" appearance="outlined">
-      @if (loading()) {
-        <mat-progress-bar mode="indeterminate" class="login__progress" />
-      }
+  <div class="login__main">
+    <div class="login__panel">
+      <div class="login__brand login__brand--compact">
+        <mat-icon class="is-filled login__logo">dentistry</mat-icon>
+        <h1>{{ 'app.title' | translate }}</h1>
+      </div>
 
-      <mat-card-content>
-        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-          <h2 class="login__title">{{ 'auth.heading' | translate }}</h2>
+      <mat-card class="login__card">
+        @if (loading()) {
+          <mat-progress-bar mode="indeterminate" class="login__progress" />
+        }
 
-          @if (errorMessage(); as message) {
-            <div class="login__error" role="alert">
-              <mat-icon aria-hidden="true">error</mat-icon>
-              <span>{{ message }}</span>
-            </div>
-          }
+        <mat-card-content>
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <h2 class="login__title">{{ 'auth.heading' | translate }}</h2>
+            <p class="login__subtitle">{{ 'auth.subheading' | translate }}</p>
 
-          <pb-text-field
-            [control]="form.controls.username"
-            [label]="'auth.username' | translate"
-            prefixIcon="person"
-            [ltr]="true"
-            nativeAutocomplete="username"
-          />
+            @if (errorMessage(); as message) {
+              <div class="login__error" role="alert">
+                <mat-icon aria-hidden="true">error</mat-icon>
+                <span>{{ message }}</span>
+              </div>
+            }
 
-          <pb-text-field
-            [control]="form.controls.password"
-            [label]="'auth.password' | translate"
-            type="password"
-            prefixIcon="lock"
-            [ltr]="true"
-            nativeAutocomplete="current-password"
-          />
+            <pb-text-field
+              [control]="form.controls.username"
+              [label]="'auth.username' | translate"
+              prefixIcon="person"
+              [ltr]="true"
+              nativeAutocomplete="username"
+            />
 
-          <pb-button
-            variant="flat"
-            size="large"
-            type="submit"
-            icon="login"
-            class="login__submit"
-            [fullWidth]="true"
-            [loading]="loading()"
-            [loadingText]="'auth.signingIn' | translate"
-          >
-            {{ 'auth.signIn' | translate }}
-          </pb-button>
-        </form>
-      </mat-card-content>
-    </mat-card>
+            <pb-text-field
+              [control]="form.controls.password"
+              [label]="'auth.password' | translate"
+              type="password"
+              prefixIcon="lock"
+              [ltr]="true"
+              nativeAutocomplete="current-password"
+            />
 
-    <p class="login__footer">{{ 'auth.confidentialNotice' | translate }}</p>
+            <pb-button
+              variant="flat"
+              size="large"
+              type="submit"
+              icon="login"
+              class="login__submit"
+              [fullWidth]="true"
+              [loading]="loading()"
+              [loadingText]="'auth.signingIn' | translate"
+            >
+              {{ 'auth.signIn' | translate }}
+            </pb-button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <p class="login__footer">
+        <mat-icon aria-hidden="true">shield</mat-icon>
+        <span>{{ 'auth.confidentialNotice' | translate }}</span>
+      </p>
+    </div>
   </div>
 </div>

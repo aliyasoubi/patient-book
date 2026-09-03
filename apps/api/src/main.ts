@@ -45,7 +45,7 @@ async function bootstrap(): Promise<void> {
 
   if (!isProd) {
     const swagger = new DocumentBuilder()
-      .setTitle('Patient Book API')
+      .setTitle('Dentixo API')
       .setDescription(
         'API for a dental practice patient register. Errors return a stable ' +
           '`code` plus `params`; all wording is the client\'s responsibility.',
