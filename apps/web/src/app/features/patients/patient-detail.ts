@@ -28,7 +28,7 @@ import {
   treatmentColor,
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { PbAvatar, PbButton, PbSurface } from '../../shared/ui';
+import { PbAvatar, PbButton, PbStatusChip, PbSurface } from '../../shared/ui';
 import type { DataIssue, Patient } from './data/patient.model';
 import type { AuditEntry } from '../../core/models/common.model';
 
@@ -48,6 +48,7 @@ import type { AuditEntry } from '../../core/models/common.model';
     PbButton,
     PbSurface,
     PbAvatar,
+    PbStatusChip,
     MatIconModule,
     TranslatePipe,
   ],

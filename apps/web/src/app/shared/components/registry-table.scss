@@ -26,6 +26,11 @@
     }
   }
 
+  /**
+   * A fixed-width leading column, so register numbers line up down the list
+   * and stay scannable — the reason this is a column and not a chip beside
+   * the name, which would start at a different x on every row.
+   */
   &__no {
     display: inline-flex;
     align-items: center;
@@ -46,7 +51,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
 
   &__name {
@@ -54,25 +59,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  &__link {
-    display: inline-flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 5px;
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-primary);
-    text-decoration: none;
-    width: fit-content;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    .material-symbols-rounded {
-      font-size: 14px;
-    }
   }
 
   &__alias {

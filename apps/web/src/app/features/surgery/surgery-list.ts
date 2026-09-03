@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -22,7 +21,6 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    RouterLink,
     MatButtonToggleModule,
     MatPaginatorModule,
     MatProgressBarModule,

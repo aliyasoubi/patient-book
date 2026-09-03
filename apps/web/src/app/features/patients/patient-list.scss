@@ -124,6 +124,16 @@
     }
   }
 
+  &__chips {
+    --mat-chip-container-shape-radius: var(--mat-sys-corner-full);
+    --mat-chip-container-height: 28px;
+    --mat-chip-label-text-font: var(--mat-sys-label-medium-font);
+    --mat-chip-label-text-size: var(--mat-sys-label-medium-size);
+    --mat-chip-label-text-line-height: var(--mat-sys-label-medium-line-height);
+    --mat-chip-label-text-tracking: var(--mat-sys-label-medium-tracking);
+    --mat-chip-label-text-weight: var(--mat-sys-label-medium-weight);
+  }
+
   &__chips .chip-icon {
     font-size: 16px;
     margin-inline-end: 4px;

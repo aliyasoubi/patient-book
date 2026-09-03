@@ -26,20 +26,25 @@
           [label]="'surgeryForm.implantRegistryNo' | translate"
           [ltr]="true"
           inputmode="numeric"
-          [hint]="'surgeryForm.implantRegistryNoHint' | translate"
+          [placeholder]="'surgeryForm.implantRegistryNoPlaceholder' | translate"
         />
 
         <pb-date-field
           [control]="form.controls.surgeryDate"
           [label]="'surgeryForm.surgeryDate' | translate"
-          [placeholder]="'patientForm.birthDatePlaceholder' | translate"
-          [hint]="'patientForm.jalaliDate' | translate"
+          [placeholder]="'surgeryForm.surgeryDatePlaceholder' | translate"
         />
 
         <pb-text-field
           [control]="form.controls.toothPosition"
           [label]="'surgeryForm.toothPosition' | translate"
-          [hint]="'surgeryForm.toothPositionHint' | translate"
+        />
+
+        <pb-select-field
+          [control]="form.controls.implantBrand"
+          [options]="brandOptions()"
+          [anyLabel]="'surgeryForm.brandUnspecified' | translate"
+          [label]="'surgeryForm.implantBrand' | translate"
         />
 
         <pb-select-field
@@ -51,7 +56,6 @@
         <pb-text-field
           [control]="form.controls.prosthesisDue"
           [label]="'surgeryForm.prosthesisDue' | translate"
-          [hint]="'surgeryForm.prosthesisDueHint' | translate"
         />
 
         <pb-select-field

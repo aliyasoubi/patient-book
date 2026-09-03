@@ -146,13 +146,14 @@
     "section": "مشخصات ردیف",
     "recordedName": "نام بیمار",
     "implantRegistryNo": "شماره پرونده ایمپلنت",
-    "implantRegistryNoHint": "به پرونده هم‌شماره متصل می‌شود",
+    "implantRegistryNoPlaceholder": "به پرونده هم‌شماره متصل می‌شود",
     "surgeryDate": "تاریخ جراحی",
+    "surgeryDatePlaceholder": "۱۴۰۴/۰۶/۱۱",
     "toothPosition": "موقعیت دندان",
-    "toothPositionHint": "مثال: دنتیوم، ۶ راست پایین",
+    "implantBrand": "برند ایمپلنت",
+    "brandUnspecified": "نامشخص",
     "abutmentType": "نوع اباتمنت",
     "prosthesisDue": "موعد پروتز",
-    "prosthesisDueHint": "مثال: آذر ماه",
     "status": "وضعیت",
     "notes": "یادداشت",
     "createLabel": "ثبت ردیف",
@@ -424,11 +425,20 @@
     "other": "سایر",
     "unknown": "نامشخص"
   },
-  "match": {
-    "exact": "تطبیق دقیق نام",
-    "fuzzy": "تطبیق تقریبی نام",
-    "manual": "اتصال دستی",
-    "unmatched": "بدون اتصال"
+  "implantBrand": {
+    "zimmer": "زیمر",
+    "dentium": "دنتیوم",
+    "straumann": "اشترومن",
+    "neobiotech": "نئوبایوتک",
+    "sky": "اسکای",
+    "megagen": "مگاژن",
+    "speed": "اسپید",
+    "implantium": "ایمپلنتیوم",
+    "osstem": "اوستم",
+    "nobel": "نوبل",
+    "tri": "TRI",
+    "dio": "دیو",
+    "superline": "سوپرلاین"
   },
   "ageBand": {
     "under13": "زیر ۱۳",

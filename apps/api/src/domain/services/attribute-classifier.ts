@@ -87,6 +87,9 @@ const IMPLANT_BRANDS: Array<[RegExp, string]> = [
   [/سوپرلاین|superline/i, 'سوپرلاین'],
 ];
 
+/** The brands staff can pick directly, in the order offered on the form. */
+export const IMPLANT_BRAND_NAMES: readonly string[] = IMPLANT_BRANDS.map(([, name]) => name);
+
 /** Pull the implant system out of a phrase like "دنتیوم، ۶ و ۷ راست پایین". */
 export function extractImplantBrand(raw: string | null | undefined): string | null {
   const v = normalizePersian(raw);

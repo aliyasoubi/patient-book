@@ -19,26 +19,22 @@
       <div class="hero__identity">
         <h1>{{ p.fullName || ('patient.unnamed' | translate) }}</h1>
         <div class="hero__meta">
-          <span class="hero__chip">
-            <mat-icon aria-hidden="true">folder</mat-icon>
+          <pb-status-chip icon="folder">
             {{ 'patientDetail.file' | translate: { fileNo: p.fileNo } }}
-          </span>
-          <span class="hero__chip">
-            <mat-icon aria-hidden="true">{{ genderIcon(p.gender) }}</mat-icon>
+          </pb-status-chip>
+          <pb-status-chip [icon]="genderIcon(p.gender)">
             {{ genderLabel(p.gender) | translate }}
-          </span>
+          </pb-status-chip>
           @if (p.age !== null) {
-            <span class="hero__chip">
-              <mat-icon aria-hidden="true">cake</mat-icon>
+            <pb-status-chip icon="cake">
               {{ 'patientDetail.age' | translate: { age: (p.age | faNum) } }}
               <small>({{ p.birthDate | jalali: 'long' }})</small>
-            </span>
+            </pb-status-chip>
           }
           @if (p.isArchived) {
-            <span class="hero__chip hero__chip--archived">
-              <mat-icon aria-hidden="true">inventory_2</mat-icon>
+            <pb-status-chip icon="inventory_2" tone="warning">
               {{ 'patientDetail.archived' | translate }}
-            </span>
+            </pb-status-chip>
           }
         </div>
       </div>
@@ -238,9 +234,12 @@
                     <span>{{
                       'patientDetail.implantRegistryNumber' | translate: { number: c.registryNo }
                     }}</span>
-                    <span class="registry__status">{{
-                      caseStatusLabel(c.status) | translate
-                    }}</span>
+                    <pb-status-chip
+                      class="registry__status"
+                      [tone]="c.status === 'active' ? 'success' : 'neutral'"
+                    >
+                      {{ caseStatusLabel(c.status) | translate }}
+                    </pb-status-chip>
                   </li>
                 }
               </ul>
@@ -264,9 +263,12 @@
                     <span>{{
                       'patientDetail.orthoRegistryNumber' | translate: { number: c.registryNo }
                     }}</span>
-                    <span class="registry__status">{{
-                      caseStatusLabel(c.status) | translate
-                    }}</span>
+                    <pb-status-chip
+                      class="registry__status"
+                      [tone]="c.status === 'active' ? 'success' : 'neutral'"
+                    >
+                      {{ caseStatusLabel(c.status) | translate }}
+                    </pb-status-chip>
                   </li>
                 }
               </ul>

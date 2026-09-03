@@ -73,16 +73,10 @@
           <div class="queue__body">
             <div class="queue__identity">
               <strong>{{ item.recordedName || ('patient.unnamed' | translate) }}</strong>
-              @if (item.implantRegistryNo) {
-                <span class="queue__registry">{{
-                  'surgery.implantRegistry' | translate: { number: item.implantRegistryNo }
-                }}</span>
-              }
               @if (item.patient) {
-                <a class="queue__patient" [routerLink]="['/patients', item.patient.id]">
-                  <mat-icon aria-hidden="true">link</mat-icon>
+                <pb-status-chip icon="link" [routerLink]="['/patients', item.patient.id]">
                   {{ 'surgery.patientFile' | translate: { fileNo: item.patient.fileNo } }}
-                </a>
+                </pb-status-chip>
               }
             </div>
 
@@ -99,6 +93,12 @@
             }
 
             <div class="queue__details">
+              @if (item.implantRegistryNo) {
+                <span class="queue__detail">
+                  <mat-icon aria-hidden="true">deployed_code</mat-icon>
+                  {{ 'surgery.implantRegistry' | translate: { number: item.implantRegistryNo } }}
+                </span>
+              }
               @if (item.toothPosition) {
                 <span class="queue__detail">
                   <mat-icon aria-hidden="true">dentistry</mat-icon>
@@ -106,7 +106,10 @@
                 </span>
               }
               @if (item.implantBrand) {
-                <span class="queue__brand">{{ item.implantBrand }}</span>
+                <span class="queue__detail">
+                  <mat-icon aria-hidden="true">label</mat-icon>
+                  {{ item.implantBrand }}
+                </span>
               }
               @if (item.abutmentType !== 'unknown') {
                 <span class="queue__detail">

@@ -131,28 +131,6 @@
     }
   }
 
-  &__registry {
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__patient {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-primary);
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    .material-symbols-rounded {
-      font-size: 14px;
-    }
-  }
-
   &__warning {
     display: flex;
     align-items: flex-start;
@@ -174,6 +152,11 @@
     }
   }
 
+  /**
+   * Static case attributes read as supporting text, not chips — M3 reserves
+   * chips for interactive things, so pills here would compete with the two
+   * that are (the patient link and the status).
+   */
   &__details {
     display: flex;
     flex-wrap: wrap;
@@ -190,16 +173,6 @@
     .material-symbols-rounded {
       font-size: 16px;
     }
-  }
-
-  &__brand {
-    padding: 2px 9px;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-secondary-container);
-    color: var(--mat-sys-on-secondary-container);
-    font: var(--mat-sys-label-small);
-    font-weight: 600;
-    letter-spacing: var(--mat-sys-label-small-tracking);
   }
 
   &__call {

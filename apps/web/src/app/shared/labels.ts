@@ -74,6 +74,28 @@ export const SURGERY_STATUSES = ['scheduled', 'completed', 'cancelled'] as const
 
 export const ABUTMENT_TYPES = ['unknown', 'cover', 'healing', 'both', 'other'] as const;
 
+/**
+ * Implant systems the practice uses. Stable, ASCII-only keys — the display
+ * name for each lives in `implantBrand.<key>` in `fa.json`, since that's the
+ * literal value the API expects (see `IMPLANT_BRAND_NAMES` on the API), not
+ * just a translatable label.
+ */
+export const IMPLANT_BRAND_KEYS = [
+  'zimmer',
+  'dentium',
+  'straumann',
+  'neobiotech',
+  'sky',
+  'megagen',
+  'speed',
+  'implantium',
+  'osstem',
+  'nobel',
+  'tri',
+  'dio',
+  'superline',
+] as const;
+
 export function referralKindLabel(kind: string): string {
   switch (kind) {
     case 'patient':
@@ -212,19 +234,6 @@ export function fieldLabel(key: string): string {
       return 'field.recordedName';
     default:
       return key;
-  }
-}
-
-export function matchMethodLabel(method: string): string {
-  switch (method) {
-    case 'exact':
-      return 'match.exact';
-    case 'fuzzy':
-      return 'match.fuzzy';
-    case 'manual':
-      return 'match.manual';
-    default:
-      return 'match.unmatched';
   }
 }
 

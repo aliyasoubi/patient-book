@@ -10,7 +10,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { RegistryService } from '../../core/services/registry.service';
-import { ABUTMENT_TYPES, SURGERY_STATUSES, abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
+import { ABUTMENT_TYPES, IMPLANT_BRAND_KEYS, SURGERY_STATUSES, abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import type { RegistryCase } from '../../core/models/common.model';
@@ -62,6 +62,19 @@ export class SurgeryForm {
     label: abutmentLabel(a),
     translate: true,
   }));
+  /**
+   * The API stores the brand's display name itself, not a key — so unlike the
+   * other option lists here, this one resolves eagerly to real Persian text
+   * instead of deferring to the `translate` pipe, and re-reads `currentLang()`
+   * so it would follow a language change instead of freezing at construction.
+   */
+  protected readonly brandOptions = computed<SelectOption[]>(() => {
+    this.i18n.currentLang();
+    return IMPLANT_BRAND_KEYS.map((key) => {
+      const name = this.i18n.instant(`implantBrand.${key}`);
+      return { value: name, label: name };
+    });
+  });
 
   protected readonly saving = signal(false);
 
@@ -70,6 +83,7 @@ export class SurgeryForm {
     implantRegistryNo: ['', [Validators.pattern(/^\d{1,24}$/)]],
     surgeryDate: [null as Date | null],
     toothPosition: ['', [Validators.maxLength(200)]],
+    implantBrand: [''],
     abutmentType: ['unknown'],
     prosthesisDue: ['', [Validators.maxLength(60)]],
     status: ['scheduled'],
@@ -140,6 +154,7 @@ export class SurgeryForm {
       recordedName: raw.recordedName.trim(),
       implantRegistryNo: blank(raw.implantRegistryNo),
       toothPosition: blank(raw.toothPosition) ?? '',
+      implantBrand: raw.implantBrand || null,
       abutmentType: raw.abutmentType,
       prosthesisDue: blank(raw.prosthesisDue),
       status: raw.status,

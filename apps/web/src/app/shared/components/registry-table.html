@@ -19,19 +19,12 @@
           }}</strong>
 
           @if (c.patient) {
-            <a class="registry__link" [routerLink]="['/patients', c.patient.id]">
-              <mat-icon aria-hidden="true">link</mat-icon>
-              <span>{{ 'registry.patientFile' | translate: { fileNo: c.patient.fileNo } }}</span>
+            <pb-status-chip icon="link" [routerLink]="['/patients', c.patient.id]">
+              {{ 'registry.patientFile' | translate: { fileNo: c.patient.fileNo } }}
               @if (patientName(c) !== c.recordedName) {
                 <span class="registry__alias">({{ patientName(c) }})</span>
               }
-              <pb-status-chip
-                class="registry__match"
-                [matTooltip]="matchMethodLabel(c.matchMethod) | translate"
-              >
-                {{ matchMethodLabel(c.matchMethod) | translate }}
-              </pb-status-chip>
-            </a>
+            </pb-status-chip>
           } @else {
             <span class="registry__unlinked" [matTooltip]="'registry.unlinkedTooltip' | translate">
               <mat-icon aria-hidden="true">link_off</mat-icon>
