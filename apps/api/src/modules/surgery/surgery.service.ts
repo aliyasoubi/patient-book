@@ -182,8 +182,13 @@ export class SurgeryService {
       item.recordedName = dto.recordedName ?? '';
     if (dto.toothPosition !== undefined) {
       item.toothPosition = dto.toothPosition ?? '';
-      item.implantBrand = extractImplantBrand(item.toothPosition);
+      // Legacy rows only ever had a brand baked into this phrase; once a row
+      // has an explicit one, editing the tooth position must not clobber it.
+      if (!item.implantBrand) {
+        item.implantBrand = extractImplantBrand(item.toothPosition);
+      }
     }
+    if (dto.implantBrand !== undefined) item.implantBrand = dto.implantBrand ?? null;
     if (dto.abutmentType !== undefined) item.abutmentType = dto.abutmentType;
     if (dto.prosthesisDue !== undefined)
       item.prosthesisDue = dto.prosthesisDue ?? null;

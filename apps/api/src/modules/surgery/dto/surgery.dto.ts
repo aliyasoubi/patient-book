@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -13,7 +14,7 @@ import {
 
 import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
 import { AbutmentType, SurgeryStatus } from '../../../domain';
-import { normalizeForDisplay } from '../../../domain';
+import { normalizeForDisplay, IMPLANT_BRAND_NAMES } from '../../../domain';
 import { IsJalaliDateConstraint } from '../../patients/dto/patient.dto';
 
 const toBool = ({ value }: { value: unknown }): boolean | undefined => {
@@ -90,6 +91,11 @@ export class UpsertSurgeryDto {
   @MaxLength(200)
   @IsOptional()
   toothPosition?: string;
+
+  @ApiPropertyOptional({ enum: IMPLANT_BRAND_NAMES })
+  @IsIn(IMPLANT_BRAND_NAMES)
+  @IsOptional()
+  implantBrand?: string | null;
 
   @ApiPropertyOptional({ enum: AbutmentType })
   @IsEnum(AbutmentType)
