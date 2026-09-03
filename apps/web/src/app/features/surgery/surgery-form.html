@@ -1,0 +1,85 @@
+<div class="form-page">
+  <pb-page-header
+    [title]="'surgeryForm.createTitle' | translate"
+    [backLabel]="'common.back' | translate"
+    (back)="cancel()"
+  />
+
+  @if (saving()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
+    <pb-surface icon="event" [title]="'surgeryForm.section' | translate">
+      <div class="grid">
+        <pb-text-field
+          class="grid__full"
+          [control]="form.controls.recordedName"
+          [label]="'surgeryForm.recordedName' | translate"
+          prefixIcon="badge"
+        />
+
+        <pb-text-field
+          [control]="form.controls.implantRegistryNo"
+          [label]="'surgeryForm.implantRegistryNo' | translate"
+          [ltr]="true"
+          inputmode="numeric"
+          [hint]="'surgeryForm.implantRegistryNoHint' | translate"
+        />
+
+        <pb-date-field
+          [control]="form.controls.surgeryDate"
+          [label]="'surgeryForm.surgeryDate' | translate"
+          [placeholder]="'patientForm.birthDatePlaceholder' | translate"
+          [hint]="'patientForm.jalaliDate' | translate"
+        />
+
+        <pb-text-field
+          [control]="form.controls.toothPosition"
+          [label]="'surgeryForm.toothPosition' | translate"
+          [hint]="'surgeryForm.toothPositionHint' | translate"
+        />
+
+        <pb-select-field
+          [control]="form.controls.abutmentType"
+          [options]="abutmentOptions"
+          [label]="'surgeryForm.abutmentType' | translate"
+        />
+
+        <pb-text-field
+          [control]="form.controls.prosthesisDue"
+          [label]="'surgeryForm.prosthesisDue' | translate"
+          [hint]="'surgeryForm.prosthesisDueHint' | translate"
+        />
+
+        <pb-select-field
+          [control]="form.controls.status"
+          [options]="statusOptions"
+          [label]="'surgeryForm.status' | translate"
+        />
+
+        <pb-textarea-field
+          class="grid__full"
+          [control]="form.controls.notes"
+          [label]="'surgeryForm.notes' | translate"
+          [rows]="3"
+        />
+      </div>
+    </pb-surface>
+
+    <div class="actions">
+      <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
+        {{ 'common.cancel' | translate }}
+      </pb-button>
+      <pb-button
+        variant="flat"
+        type="submit"
+        icon="save"
+        [loading]="saving()"
+        [loadingText]="'surgeryForm.savingLabel' | translate"
+      >
+        {{ 'surgeryForm.createLabel' | translate }}
+      </pb-button>
+    </div>
+  </form>
+</div>

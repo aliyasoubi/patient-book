@@ -3,7 +3,13 @@
     [title]="'surgery.title' | translate"
     [subtitle]="'surgery.subtitle' | translate"
     [count]="countLabel()"
-  />
+  >
+    @if (auth.can('editSurgery')) {
+      <pb-button routerLink="/surgery/new" icon="add" class="surgery__new">
+        <span class="surgery__new-label">{{ 'surgery.new' | translate }}</span>
+      </pb-button>
+    }
+  </pb-page-header>
 
   <div class="surgery__toolbar">
     <pb-search-field

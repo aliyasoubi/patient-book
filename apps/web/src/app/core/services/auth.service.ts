@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 /** Who may do what. Mirrors the guards on the API — the server still enforces. */
 const PERMISSIONS = {
   editPatients: ['admin', 'dentist', 'receptionist'],
+  editSurgery: ['admin', 'dentist', 'receptionist'],
   archivePatients: ['admin', 'dentist'],
   manageUsers: ['admin'],
   viewHistory: ['admin', 'dentist'],

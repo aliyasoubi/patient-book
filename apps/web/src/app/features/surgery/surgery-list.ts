@@ -9,11 +9,12 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { AuthService } from '../../core/services/auth.service';
 import { RegistryService } from '../../core/services/registry.service';
 import { EmptyState } from '../../shared/components/empty-state';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
-import { PbCheckboxField, PbPageHeader, PbSearchField, PbStatusChip } from '../../shared/ui';
+import { PbButton, PbCheckboxField, PbPageHeader, PbSearchField, PbStatusChip } from '../../shared/ui';
 import type { SurgeryQueueItem } from '../../core/models/common.model';
 
 @Component({
@@ -30,6 +31,7 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
     PbSearchField,
     PbCheckboxField,
     PbPageHeader,
+    PbButton,
     PbStatusChip,
     MatIconModule,
     TranslatePipe,
@@ -40,6 +42,7 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
 export class SurgeryList {
   private readonly registry = inject(RegistryService);
   private readonly i18n = inject(TranslateService);
+  protected readonly auth = inject(AuthService);
   protected readonly abutmentLabel = abutmentLabel;
   protected readonly statusLabel = surgeryStatusLabel;
 

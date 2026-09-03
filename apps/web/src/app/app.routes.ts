@@ -72,6 +72,11 @@ export const routes: Routes = [
         title: translatedTitle('route.surgery'),
       },
       {
+        path: 'surgery/new',
+        loadComponent: () => import('./features/surgery/surgery-form').then((m) => m.SurgeryForm),
+        title: translatedTitle('route.surgeryNew'),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
         title: translatedTitle('route.settings'),

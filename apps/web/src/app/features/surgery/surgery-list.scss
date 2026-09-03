@@ -10,6 +10,24 @@
     padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
   }
 
+  &__new {
+    gap: 6px;
+    flex: 0 0 auto;
+
+    @media (max-width: 560px) {
+      .surgery__new-label {
+        // Icon-only on the narrowest screens; the label crowds the title.
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+      min-width: 48px;
+      padding-inline: 12px;
+    }
+  }
+
   &__toolbar {
     display: flex;
     align-items: center;

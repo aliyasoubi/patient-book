@@ -70,6 +70,10 @@ export const EDUCATION_LEVELS: readonly EducationLevel[] = [
 
 export const GENDERS: readonly Gender[] = ['female', 'male', 'unknown'];
 
+export const SURGERY_STATUSES = ['scheduled', 'completed', 'cancelled'] as const;
+
+export const ABUTMENT_TYPES = ['unknown', 'cover', 'healing', 'both', 'other'] as const;
+
 export function referralKindLabel(kind: string): string {
   switch (kind) {
     case 'patient':
