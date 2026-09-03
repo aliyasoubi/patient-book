@@ -142,3 +142,60 @@ describe('PatientsService write mapping', () => {
     expect(deleteMock).not.toHaveBeenCalled();
   });
 });
+
+describe('PatientsService.nameSuggestions', () => {
+  interface FakeQueryBuilder {
+    select: (...args: unknown[]) => FakeQueryBuilder;
+    addSelect: (...args: unknown[]) => FakeQueryBuilder;
+    where: (...args: unknown[]) => FakeQueryBuilder;
+    groupBy: (...args: unknown[]) => FakeQueryBuilder;
+    getRawMany: () => Promise<Array<{ name: string; count: string }>>;
+  }
+
+  function serviceWithRows(rows: Array<{ name: string; count: string }>): PatientsService {
+    const queryBuilder: FakeQueryBuilder = {
+      select: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(() => queryBuilder),
+      addSelect: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(() => queryBuilder),
+      where: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(() => queryBuilder),
+      groupBy: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(() => queryBuilder),
+      getRawMany: jest.fn<() => Promise<Array<{ name: string; count: string }>>>(() =>
+        Promise.resolve(rows),
+      ),
+    };
+    const patients = {
+      createQueryBuilder: jest.fn<() => FakeQueryBuilder>(() => queryBuilder),
+    } as unknown as Repository<Patient>;
+    return new PatientsService(
+      patients,
+      {} as Repository<ReferralSource>,
+      {} as DataSource,
+      {} as AuditService,
+    );
+  }
+
+  it('collapses letter-variant spellings into one suggestion, keeping the most common exact spelling', async () => {
+    const service = serviceWithRows([
+      { name: 'علی', count: '47' },
+      { name: 'علي', count: '3' }, // ARABIC YEH variant of the same name
+      { name: 'رضا', count: '10' },
+    ]);
+
+    await expect(service.nameSuggestions('firstName')).resolves.toEqual([
+      { name: 'علی', count: 50 },
+      { name: 'رضا', count: 10 },
+    ]);
+  });
+
+  it('ignores blank names and sorts by total count descending', async () => {
+    const service = serviceWithRows([
+      { name: '', count: '2' },
+      { name: 'مریم', count: '5' },
+      { name: 'زهرا', count: '9' },
+    ]);
+
+    await expect(service.nameSuggestions('lastName')).resolves.toEqual([
+      { name: 'زهرا', count: 9 },
+      { name: 'مریم', count: 5 },
+    ]);
+  });
+});

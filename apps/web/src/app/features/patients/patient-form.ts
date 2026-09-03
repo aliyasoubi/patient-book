@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +18,7 @@ import {
   treatmentColor,
 } from '../../shared/labels';
 import { iranianNationalId, iranianMobile } from '../../shared/validators';
-import type { Patient, PatientInput, ReferralSource, TreatmentType } from './data/patient.model';
+import type { NameSuggestion, Patient, PatientInput, ReferralSource, TreatmentType } from './data/patient.model';
 import type { EducationLevel, Gender } from '../../core/models/common.model';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
@@ -89,6 +90,8 @@ export class PatientForm {
   protected readonly loading = signal(false);
   protected readonly treatmentTypes = signal<TreatmentType[]>([]);
   protected readonly referralSources = signal<ReferralSource[]>([]);
+  protected readonly firstNameSuggestions = signal<NameSuggestion[]>([]);
+  protected readonly lastNameSuggestions = signal<NameSuggestion[]>([]);
   protected readonly selectedTreatments = signal<Set<string>>(new Set());
   protected readonly original = signal<Patient | null>(null);
 
@@ -121,20 +124,51 @@ export class PatientForm {
     notes: [''],
   });
 
+  private readonly referralTyped = toSignal(this.form.controls.referralSourceName.valueChanges, {
+    initialValue: '',
+  });
+  private readonly firstNameTyped = toSignal(this.form.controls.firstName.valueChanges, {
+    initialValue: '',
+  });
+  private readonly lastNameTyped = toSignal(this.form.controls.lastName.valueChanges, {
+    initialValue: '',
+  });
+
   /** Referral suggestions matching what has been typed so far. */
   protected readonly referralMatches = computed<TextFieldOption[]>(() => {
-    const typed = this.form.controls.referralSourceName.value.trim();
+    const typed = this.referralTyped().trim().toLowerCase();
     const all = this.referralSources();
-    const needle = typed.toLowerCase();
-    const matches = typed ? all.filter((r) => r.name.toLowerCase().includes(needle)) : all;
+    const matches = typed ? all.filter((r) => r.name.toLowerCase().includes(typed)) : all;
     return matches
       .slice(0, 12)
       .map((r) => ({ value: r.name, label: r.name, meta: r.patientCount }));
   });
 
+  /**
+   * Existing spellings matching what's been typed so far — picking one keeps
+   * a new record's spelling consistent with the rest of the book instead of
+   * quietly adding a fourth way to spell the same name.
+   */
+  protected readonly firstNameMatches = computed<TextFieldOption[]>(() =>
+    this.nameMatches(this.firstNameTyped(), this.firstNameSuggestions()),
+  );
+  protected readonly lastNameMatches = computed<TextFieldOption[]>(() =>
+    this.nameMatches(this.lastNameTyped(), this.lastNameSuggestions()),
+  );
+
+  private nameMatches(typed: string, all: NameSuggestion[]): TextFieldOption[] {
+    const needle = typed.trim().toLowerCase();
+    const matches = needle ? all.filter((s) => s.name.toLowerCase().includes(needle)) : all;
+    return matches.slice(0, 8).map((s) => ({ value: s.name, label: s.name }));
+  }
+
   constructor() {
     this.service.treatmentTypes().subscribe((types) => this.treatmentTypes.set(types));
     this.service.referralSources().subscribe((sources) => this.referralSources.set(sources));
+    this.service
+      .nameSuggestions('firstName')
+      .subscribe((s) => this.firstNameSuggestions.set(s));
+    this.service.nameSuggestions('lastName').subscribe((s) => this.lastNameSuggestions.set(s));
 
     effect(() => {
       const id = this.id();

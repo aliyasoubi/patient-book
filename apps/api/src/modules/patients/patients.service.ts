@@ -16,7 +16,7 @@ import { PatientQueryBuilder } from './patient-query.builder';
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
 import { PatientResponse, toPatientResponse } from './patient.mapper';
 import { JalaliDate } from '../../domain';
-import { searchKey, normalizeForDisplay } from '../../domain';
+import { searchKey, normalizeForDisplay, loosePersianKey } from '../../domain';
 import { classifyReferral } from '../../domain';
 import { DatePrecisionEnum } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
@@ -135,6 +135,41 @@ export class PatientsService {
       fullName: `${p.firstName} ${p.lastName}`.trim(),
       mobile: p.mobile,
     }));
+  }
+
+  /**
+   * Distinct first/last-name spellings already on file, for the registration
+   * form's autocomplete — folded with {@link loosePersianKey} so visual
+   * duplicates ("علي" vs "علی") collapse into one suggestion (the spelling
+   * used most often) instead of listing both, which is what nudges new
+   * entries toward the spelling already in use rather than adding a third.
+   */
+  async nameSuggestions(
+    field: 'firstName' | 'lastName',
+  ): Promise<Array<{ name: string; count: number }>> {
+    const rows = await this.patients
+      .createQueryBuilder('p')
+      .select(`p."${field}"`, 'name')
+      .addSelect('COUNT(*)', 'count')
+      .where(`p."${field}" != ''`)
+      .groupBy(`p."${field}"`)
+      .getRawMany<{ name: string; count: string }>();
+
+    const variantsByKey = new Map<string, Array<{ name: string; count: number }>>();
+    for (const row of rows) {
+      const key = loosePersianKey(row.name);
+      if (!key) continue;
+      const list = variantsByKey.get(key) ?? [];
+      list.push({ name: row.name, count: Number(row.count) });
+      variantsByKey.set(key, list);
+    }
+
+    return [...variantsByKey.values()]
+      .map((variants) => ({
+        name: variants.reduce((a, b) => (b.count > a.count ? b : a)).name,
+        count: variants.reduce((sum, v) => sum + v.count, 0),
+      }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }
 
   /** The next unused file number, so staff never have to guess one. */

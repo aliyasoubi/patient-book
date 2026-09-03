@@ -70,6 +70,12 @@ export interface PatientSuggestion {
   mobile: string | null;
 }
 
+/** A distinct first/last-name spelling on file, folded to collapse visual duplicates. */
+export interface NameSuggestion {
+  name: string;
+  count: number;
+}
+
 export interface TreatmentType {
   id: string;
   code: string;

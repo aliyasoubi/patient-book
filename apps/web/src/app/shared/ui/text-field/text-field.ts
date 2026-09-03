@@ -1,6 +1,6 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, type MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -73,7 +73,7 @@ export interface TextFieldOption {
           [attr.dir]="ltr() ? 'ltr' : null"
           [matAutocomplete]="auto"
         />
-        <mat-autocomplete #auto="matAutocomplete">
+        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)">
           @for (option of options() ?? []; track option.value) {
             <mat-option [value]="option.value">
               {{ option.label }}
@@ -157,6 +157,8 @@ export class PbTextField {
   readonly options = input<TextFieldOption[] | null>(null);
   /** Validator key → message, overriding the built-in default for that key. */
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
+  /** The full option a user picked from the panel — not just its `value`, for callers that need the rest of it (an id, a linked record). */
+  readonly optionSelected = output<TextFieldOption>();
 
   protected readonly revealed = signal(false);
   protected readonly visibleType = computed(() =>
@@ -166,5 +168,10 @@ export class PbTextField {
 
   protected errorText(): string | null {
     return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
+  }
+
+  protected onOptionSelected(event: MatAutocompleteSelectedEvent): void {
+    const option = this.options()?.find((o) => o.value === event.option.value);
+    if (option) this.optionSelected.emit(option);
   }
 }

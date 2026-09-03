@@ -1,16 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { RegistryService } from '../../core/services/registry.service';
 import { ABUTMENT_TYPES, SURGERY_STATUSES, abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
+import type { RegistryCase } from '../../core/models/common.model';
 import {
   PbButton,
   PbDateField,
@@ -20,7 +23,7 @@ import {
   PbTextareaField,
   PbTextField,
 } from '../../shared/ui';
-import type { SelectOption } from '../../shared/ui';
+import type { SelectOption, TextFieldOption } from '../../shared/ui';
 
 @Component({
   selector: 'pb-surgery-form',
@@ -72,6 +75,48 @@ export class SurgeryForm {
     status: ['scheduled'],
     notes: ['', [Validators.maxLength(2000)]],
   });
+
+  /** Implant-register cases whose recorded name matches what's been typed so far. */
+  private readonly implantMatches = signal<RegistryCase[]>([]);
+  protected readonly nameOptions = computed<TextFieldOption[]>(() =>
+    this.implantMatches().map((c) => ({ value: c.recordedName, label: c.recordedName, meta: c.registryNo })),
+  );
+
+  private readonly nameQuery = toSignal(
+    this.form.controls.recordedName.valueChanges.pipe(
+      debounceTime(300),
+      map((v) => v.trim()),
+      distinctUntilChanged(),
+    ),
+    { initialValue: '' },
+  );
+
+  constructor() {
+    effect(() => {
+      const q = this.nameQuery();
+      untracked(() => this.searchImplantCases(q));
+    });
+  }
+
+  private searchImplantCases(q: string): void {
+    if (q.length < 2) {
+      this.implantMatches.set([]);
+      return;
+    }
+    this.registry.implants({ q, page: 1, limit: 8 }).subscribe({
+      next: (result) => this.implantMatches.set(result.items),
+      error: () => this.implantMatches.set([]),
+    });
+  }
+
+  /**
+   * Picking a name from the implant register is how a row gets linked to the
+   * right case — its registry number is what the API actually matches on, so
+   * filling it in here is what makes the link real rather than just cosmetic.
+   */
+  protected onNameSelected(option: TextFieldOption): void {
+    if (option.meta) this.form.controls.implantRegistryNo.setValue(String(option.meta));
+  }
 
   protected submit(): void {
     if (this.form.invalid || this.saving()) {

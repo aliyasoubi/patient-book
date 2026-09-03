@@ -17,6 +17,8 @@
           [control]="form.controls.recordedName"
           [label]="'surgeryForm.recordedName' | translate"
           prefixIcon="badge"
+          [options]="nameOptions()"
+          (optionSelected)="onNameSelected($event)"
         />
 
         <pb-text-field

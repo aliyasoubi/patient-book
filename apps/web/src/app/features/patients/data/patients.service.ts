@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { toParams } from '../../../core/services/http-params.util';
 import { AuditEntry, PageResult } from '../../../core/models/common.model';
-import { Patient, PatientInput, PatientSuggestion, ReferralSource, TreatmentType } from './patient.model';
+import { NameSuggestion, Patient, PatientInput, PatientSuggestion, ReferralSource, TreatmentType } from './patient.model';
 
 export interface PatientQuery {
   q?: string;
@@ -44,6 +44,10 @@ export class PatientsService {
 
   nextFileNo(): Observable<{ fileNo: string }> {
     return this.http.get<{ fileNo: string }>(`${this.base}/next-file-no`);
+  }
+
+  nameSuggestions(field: 'firstName' | 'lastName'): Observable<NameSuggestion[]> {
+    return this.http.get<NameSuggestion[]>(`${this.base}/name-suggestions`, { params: { field } });
   }
 
   create(input: PatientInput): Observable<Patient> {

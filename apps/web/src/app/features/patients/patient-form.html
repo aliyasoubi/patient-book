@@ -24,11 +24,13 @@
         <pb-text-field
           [control]="form.controls.firstName"
           [label]="'patientForm.firstName' | translate"
+          [options]="firstNameMatches()"
         />
 
         <pb-text-field
           [control]="form.controls.lastName"
           [label]="'patientForm.lastName' | translate"
+          [options]="lastNameMatches()"
         />
 
         <pb-text-field

@@ -17,8 +17,9 @@ import { CreatePatientDto, UpdatePatientDto } from './dto/patient.dto';
 import { QueryPatientsDto } from './dto/query-patients.dto';
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
-import { UserRole } from '../../domain';
+import { UserRole, ErrorCode } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
+import { AppException } from '../../application/errors/app.exception';
 
 @ApiTags('patients')
 @Controller('patients')
@@ -38,6 +39,15 @@ export class PatientsController {
   @ApiOperation({ summary: 'Type-ahead suggestions for the search bar' })
   suggest(@Query('q') q: string) {
     return this.patients.suggest(q ?? '');
+  }
+
+  @Get('name-suggestions')
+  @ApiOperation({ summary: 'Distinct first/last-name spellings on file, for the registration form' })
+  nameSuggestions(@Query('field') field: string) {
+    if (field !== 'firstName' && field !== 'lastName') {
+      throw AppException.badRequest(ErrorCode.ValidationFailed, { field: 'field' });
+    }
+    return this.patients.nameSuggestions(field);
   }
 
   @Get('next-file-no')
