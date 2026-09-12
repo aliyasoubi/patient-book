@@ -36,6 +36,12 @@ export interface ReconcilePreviewResult {
   patients: PatientDiff[];
   implants: CaseDiff[];
   ortho: CaseDiff[];
+  /**
+   * Sheet rows that found their record, whether or not anything differed.
+   * Zero matched with many unmatched is the signature of a workbook uploaded
+   * into an empty register — the client uses it to point at the real import.
+   */
+  matched: { patients: number; implants: number; ortho: number };
   /** Sheet rows with no matching fileNo/registryNo in the app — counted, not detailed. */
   unmatched: { patients: number; implants: number; ortho: number };
 }

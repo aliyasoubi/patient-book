@@ -80,6 +80,27 @@ Sign in at `https://<your-domain>` with `SEED_ADMIN_USERNAME` /
 data unlocks, and doing so signs it out — that is intended; sign back in with
 the new password.
 
+## Loading the existing register
+
+Copy the practice's workbook to the server (`scp workbook.xlsx user@vps:`),
+then run the importer once, after the seed above:
+
+```bash
+./ops/deploy/import.sh ~/workbook.xlsx
+```
+
+It runs the one-shot migration importer inside the API image, prints a report
+of what it created and what it flagged for review, and refuses to run a
+second time against a populated database (pass `--force` after clearing it —
+the refusal message shows the exact `TRUNCATE`). Delete the copy on the server
+afterwards; it is patient data.
+
+Do not use the **Excel upload on the settings page** for this. That is the
+*reconcile* tool: it matches rows to records that already exist by file
+number and proposes field corrections. It never creates records, so a workbook
+uploaded into an empty register reports every row as unmatched and "no
+differences" — the page now says so, but the importer above is the answer.
+
 ## Shipping a change
 
 ```bash

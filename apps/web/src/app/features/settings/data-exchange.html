@@ -43,18 +43,23 @@
 
     @if (preview(); as p) {
       <div class="review">
-        @if (p.unmatched.patients || p.unmatched.implants || p.unmatched.ortho) {
+        @if (nothingMatched()) {
           <p class="review__unmatched">
-            {{
-              'dataExchange.unmatchedSummary'
-                | translate: { count: p.unmatched.patients + p.unmatched.implants + p.unmatched.ortho }
-            }}
+            {{ 'dataExchange.nothingMatched' | translate: { count: totalUnmatched() } }}
           </p>
+          <p class="card__empty">{{ 'dataExchange.nothingMatchedHint' | translate }}</p>
+        } @else {
+          @if (totalUnmatched() > 0) {
+            <p class="review__unmatched">
+              {{ 'dataExchange.unmatchedSummary' | translate: { count: totalUnmatched() } }}
+            </p>
+          }
+          @if (totalChanged() === 0) {
+            <p class="card__empty">{{ 'dataExchange.noChanges' | translate }}</p>
+          }
         }
 
-        @if (totalChanged() === 0) {
-          <p class="card__empty">{{ 'dataExchange.noChanges' | translate }}</p>
-        } @else {
+        @if (totalChanged() > 0) {
           <p class="review__summary">
             {{
               'dataExchange.previewSummary'

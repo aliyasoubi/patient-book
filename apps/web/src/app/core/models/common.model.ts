@@ -138,6 +138,8 @@ export interface ReconcilePreview {
   patients: PatientDiff[];
   implants: CaseDiff[];
   ortho: CaseDiff[];
+  /** Sheet rows that found their record, whether or not anything differed. */
+  matched: { patients: number; implants: number; ortho: number };
   /** Sheet rows with no matching fileNo/registryNo in the app. */
   unmatched: { patients: number; implants: number; ortho: number };
 }

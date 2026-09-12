@@ -60,6 +60,23 @@ export class DataExchange {
     return p ? p.patients.length + p.implants.length + p.ortho.length : 0;
   });
 
+  protected readonly totalUnmatched = computed(() => {
+    const p = this.preview();
+    return p ? p.unmatched.patients + p.unmatched.implants + p.unmatched.ortho : 0;
+  });
+
+  /**
+   * Every row missed and none matched: the workbook was almost certainly
+   * uploaded into an empty register. "No differences" would be true but
+   * useless — this tool corrects records, it never creates them.
+   */
+  protected readonly nothingMatched = computed(() => {
+    const p = this.preview();
+    if (!p) return false;
+    const matched = p.matched.patients + p.matched.implants + p.matched.ortho;
+    return matched === 0 && this.totalUnmatched() > 0;
+  });
+
   protected readonly selectedCount = computed(() => {
     const s = this.selected();
     return s.patients.size + s.implants.size + s.ortho.size;
@@ -258,6 +275,7 @@ export class DataExchange {
             patients: preview.patients.filter((p) => !okIds.has(p.id)),
             implants: preview.implants.filter((c) => !okIds.has(c.id)),
             ortho: preview.ortho.filter((c) => !okIds.has(c.id)),
+            matched: preview.matched,
             unmatched: preview.unmatched,
           });
           this.selected.set({

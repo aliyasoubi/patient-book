@@ -72,6 +72,11 @@ export class ReconcileWorkbookUseCase {
       patients: patients.diffs,
       implants: implants.diffs,
       ortho: ortho.diffs,
+      matched: {
+        patients: patients.matched,
+        implants: implants.matched,
+        ortho: ortho.matched,
+      },
       unmatched: {
         patients: patients.unmatched,
         implants: implants.unmatched,
@@ -107,10 +112,11 @@ export class ReconcileWorkbookUseCase {
   private diffPatients(
     reader: ExcelJsWorkbookReader,
     allPatients: Patient[],
-  ): { diffs: PatientDiff[]; unmatched: number } {
+  ): { diffs: PatientDiff[]; matched: number; unmatched: number } {
     const byFileNo = new Map(allPatients.map((p) => [p.fileNo, p]));
     const mapper = new PatientRowMapper();
     const diffs: PatientDiff[] = [];
+    let matched = 0;
     let unmatched = 0;
 
     for (const row of reader.rows(SHEET.patients)) {
@@ -122,6 +128,7 @@ export class ReconcileWorkbookUseCase {
         unmatched++;
         continue;
       }
+      matched++;
 
       const fields: FieldDiff[] = [];
       for (const [field, read] of Object.entries(PATIENT_FIELD_READERS)) {
@@ -149,15 +156,16 @@ export class ReconcileWorkbookUseCase {
       }
     }
 
-    return { diffs, unmatched };
+    return { diffs, matched, unmatched };
   }
 
   private diffRegistry<T extends RegistryLike>(
     reader: ExcelJsWorkbookReader,
     sheetName: string,
     byRegistryNo: Map<string, T>,
-  ): { diffs: CaseDiff[]; unmatched: number } {
+  ): { diffs: CaseDiff[]; matched: number; unmatched: number } {
     const diffs: CaseDiff[] = [];
+    let matched = 0;
     let unmatched = 0;
 
     for (const row of reader.rows(sheetName)) {
@@ -169,6 +177,7 @@ export class ReconcileWorkbookUseCase {
         unmatched++;
         continue;
       }
+      matched++;
 
       const proposals: Readonly<Record<string, string | null>> = {
         recordedName: row.cell(REGISTRY_COLUMN.fullName) || null,
@@ -195,6 +204,6 @@ export class ReconcileWorkbookUseCase {
       }
     }
 
-    return { diffs, unmatched };
+    return { diffs, matched, unmatched };
   }
 }

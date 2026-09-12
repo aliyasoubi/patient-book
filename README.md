@@ -76,6 +76,12 @@ Nothing is discarded and nothing is invented: unparseable values are kept
 verbatim and surfaced for review rather than being guessed at or dropped.
 Re-running against a populated database is refused unless `--force` is passed.
 
+On a deployed server the same importer runs inside the API container —
+`./ops/deploy/import.sh workbook.xlsx`, see [ops/deploy/README.md](ops/deploy/README.md).
+The Excel upload on the settings page is a different tool: it *corrects*
+records that already exist and never creates any, so it is not a way to load
+an empty register.
+
 ---
 
 ## Why the schema looks like this

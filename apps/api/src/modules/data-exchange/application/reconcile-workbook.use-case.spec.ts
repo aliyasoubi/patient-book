@@ -97,6 +97,7 @@ describe('ReconcileWorkbookUseCase', () => {
       expect(result.patients).toEqual([]);
       expect(result.implants).toEqual([]);
       expect(result.ortho).toEqual([]);
+      expect(result.matched).toEqual({ patients: 1, implants: 1, ortho: 1 });
       expect(result.unmatched).toEqual({ patients: 0, implants: 0, ortho: 0 });
     });
   });
@@ -186,6 +187,7 @@ describe('ReconcileWorkbookUseCase', () => {
         ortho: [orthoCase()],
       }).execute(buffer);
 
+      expect(result.matched).toEqual({ patients: 0, implants: 0, ortho: 0 });
       expect(result.unmatched).toEqual({ patients: 1, implants: 1, ortho: 1 });
       expect(result.patients).toEqual([]);
       expect(result.implants).toEqual([]);
