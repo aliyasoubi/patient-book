@@ -87,11 +87,20 @@
       </pb-button>
 
       @if (backup(); as b) {
-        <p class="panel__hint backup-status">
-          @if (b.lastSuccess) {
+        <p class="panel__hint backup-status" [class.backup-status--error]="backupIsFailing(b)">
+          @if (backupIsFailing(b)) {
+            {{ 'settings.backupLastFailure' | translate: { at: b.lastFailure } }}
+          } @else if (b.lastSuccess) {
             {{ 'settings.backupLastSuccess' | translate: { at: b.lastSuccess } }}
           } @else {
             {{ 'settings.backupNeverRun' | translate }}
+          }
+        </p>
+        <p class="panel__hint backup-status">
+          @if (b.lastOffsiteSuccess) {
+            {{ 'settings.backupOffsiteLastSuccess' | translate: { at: b.lastOffsiteSuccess } }}
+          } @else {
+            {{ 'settings.backupOffsiteNotConfigured' | translate }}
           }
         </p>
       }

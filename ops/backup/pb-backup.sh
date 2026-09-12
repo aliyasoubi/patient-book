@@ -46,6 +46,15 @@ readonly KEY_FILE="${PB_BACKUP_KEY:-$HOME/.patient-book/backup.key}"
 readonly KEEP_DAILY="${PB_KEEP_DAILY:-7}"
 readonly KEEP_WEEKLY="${PB_KEEP_WEEKLY:-4}"
 
+# A second, independent copy — a plain directory, typically the local folder
+# a cloud client (Dropbox, Google Drive, ...) already syncs. The script never
+# knows or cares which provider: by the time a file reaches this directory it
+# is already gzipped and AES-256 encrypted, so the provider never sees
+# readable records. Kept separate from BACKUP_DIR so a sync hiccup can never
+# take the primary, locally-restorable copy down with it. Unset by default:
+# no offsite copy is attempted until this is configured.
+readonly OFFSITE_DIR="${PB_OFFSITE_DIR:-}"
+
 readonly DAILY_DIR="$BACKUP_DIR/daily"
 readonly WEEKLY_DIR="$BACKUP_DIR/weekly"
 readonly LOG_FILE="$BACKUP_DIR/backup.log"
@@ -58,6 +67,7 @@ log() { printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >>"$LOG_FILE"; }
 # believed you had one.
 fail() {
   log "FAILED: $*"
+  date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-failure" 2>/dev/null || true
   osascript -e 'display notification "پشتیبان‌گیری پایگاه داده انجام نشد" with title "Patient Book" sound name "Basso"' 2>/dev/null || true
   echo "backup failed: $*" >&2
   exit 1
@@ -143,6 +153,23 @@ prune() {
 prune "$DAILY_DIR" "$KEEP_DAILY"
 prune "$WEEKLY_DIR" "$KEEP_WEEKLY"
 
+# -- offsite mirror -----------------------------------------------------
+if [[ -n "$OFFSITE_DIR" ]]; then
+  mkdir -p "$OFFSITE_DIR/daily" "$OFFSITE_DIR/weekly" \
+    || fail "cannot create $OFFSITE_DIR"
+  cp "$TARGET" "$OFFSITE_DIR/daily/$(basename "$TARGET")" \
+    || fail "offsite copy to $OFFSITE_DIR failed"
+  if [[ -f "$WEEKLY_DIR/$(basename "$TARGET")" ]]; then
+    cp "$TARGET" "$OFFSITE_DIR/weekly/$(basename "$TARGET")" \
+      || fail "offsite weekly copy to $OFFSITE_DIR failed"
+  fi
+  prune "$OFFSITE_DIR/daily" "$KEEP_DAILY"
+  prune "$OFFSITE_DIR/weekly" "$KEEP_WEEKLY"
+  date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-offsite-success"
+  log "mirrored $(basename "$TARGET") to $OFFSITE_DIR"
+fi
+
+rm -f "$BACKUP_DIR/last-failure"
 date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-success"
 log "OK  daily=$(ls -1 "$DAILY_DIR"/*.enc 2>/dev/null | wc -l | tr -d ' ')" \
     "weekly=$(ls -1 "$WEEKLY_DIR"/*.enc 2>/dev/null | wc -l | tr -d ' ')"

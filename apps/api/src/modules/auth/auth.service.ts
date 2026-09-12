@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
-import { User } from '../users/user.entity';
+import { BCRYPT_COST, User } from '../users/user.entity';
 import { AuthTokens, ChangePasswordDto, JwtPayload } from './dto/auth.dto';
 import type { AppConfig } from '../../config/configuration';
 import { AppException } from '../../application/errors/app.exception';
@@ -14,6 +14,15 @@ import { AuditService } from '../../application/services/audit.service';
 
 /** What `jsonwebtoken` accepts for a duration: "30m", "7d", seconds, … */
 type ExpiresIn = NonNullable<Parameters<JwtService['sign']>[1]>['expiresIn'];
+
+/**
+ * Compared against when the username is unknown, so that path costs the same
+ * ~200 ms as a real comparison. It must be a *valid* hash at the real cost: a
+ * malformed one is rejected by bcrypt in microseconds, which would reveal
+ * through timing exactly the username existence the constant-message reply
+ * is meant to hide.
+ */
+const UNKNOWN_USER_HASH = bcrypt.hashSync('unknown-user-placeholder', BCRYPT_COST);
 
 @Injectable()
 export class AuthService {
@@ -38,10 +47,7 @@ export class AuthService {
       .where('lower(u.username) = lower(:username)', { username })
       .getOne();
 
-    const hash =
-      user?.passwordHash ??
-      '$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidin';
-    const ok = await bcrypt.compare(password, hash);
+    const ok = await bcrypt.compare(password, user?.passwordHash ?? UNKNOWN_USER_HASH);
 
     if (!user || !ok) {
       await this.audit.record({
@@ -109,7 +115,7 @@ export class AuthService {
     const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!ok) throw AppException.unauthorized(ErrorCode.CurrentPasswordWrong);
 
-    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
     await this.users.manager.transaction(async (manager) => {
       const users = manager.getRepository(User);
       await users.update(user.id, {

@@ -14,7 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
-import { User } from './user.entity';
+import { BCRYPT_COST, User } from './user.entity';
 import { CreateUserDto, ResetPasswordDto, UpdateUserDto } from './dto/user.dto';
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
@@ -42,7 +42,7 @@ export class UsersController {
   @Post()
   @ApiOperation({ summary: 'Create a user' })
   async create(@Body() dto: CreateUserDto, @CurrentUser('id') actorId: string) {
-    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
     return this.users.manager.transaction(async (manager) => {
       const users = manager.getRepository(User);
       const exists = await users
@@ -147,7 +147,7 @@ export class UsersController {
     @Body() dto: ResetPasswordDto,
     @CurrentUser('id') actorId: string,
   ) {
-    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
     await this.users.manager.transaction(async (manager) => {
       const users = manager.getRepository(User);
       const user = await users.findOne({ where: { id } });

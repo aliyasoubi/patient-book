@@ -192,7 +192,11 @@
     "issueCount": "{{count}} مورد نیازمند بازبینی",
     "emptyTitle": "بیماری پیدا نشد",
     "emptyHintFiltered": "عبارت جستجو یا فیلترها را تغییر دهید.",
-    "emptyHintNone": "هنوز پرونده‌ای ثبت نشده است."
+    "emptyHintNone": "هنوز پرونده‌ای ثبت نشده است.",
+    "referralFilter": "نحوه آشنایی: {{name}}",
+    "clearReferralFilter": "حذف فیلتر نحوه آشنایی",
+    "loadFailed": "فهرست بیماران بارگذاری نشد.",
+    "loadFailedStale": "فهرست به‌روزرسانی نشد؛ نتایج قبلی نمایش داده می‌شود."
   },
   "patientForm": {
     "editTitle": "ویرایش پرونده بیمار",
@@ -307,7 +311,10 @@
     "backupDirHint": "مسیر کامل یک پوشهٔ موجود و قابل نوشتن",
     "backupDirSaved": "مسیر پشتیبان‌گیری ذخیره شد.",
     "backupLastSuccess": "آخرین پشتیبان موفق: {{at}}",
-    "backupNeverRun": "هنوز پشتیبانی گرفته نشده است."
+    "backupNeverRun": "هنوز پشتیبانی گرفته نشده است.",
+    "backupLastFailure": "آخرین پشتیبان‌گیری ناموفق بود: {{at}}",
+    "backupOffsiteLastSuccess": "آخرین کپی برون‌سایتی: {{at}}",
+    "backupOffsiteNotConfigured": "کپی برون‌سایتی (مثلاً در Google Drive یا Dropbox) هنوز پیکربندی نشده است."
   },
   "dataExchange": {
     "title": "تبادل داده اکسل",

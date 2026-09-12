@@ -3,9 +3,15 @@ import type { ConfigService } from '@nestjs/config';
 import type { JwtService } from '@nestjs/jwt';
 import type { Repository } from 'typeorm';
 
+import * as bcrypt from 'bcryptjs';
+
 import { AuthService } from './auth.service';
-import type { User } from '../users/user.entity';
-import type { AuditService } from '../../application/services/audit.service';
+import { BCRYPT_COST, type User } from '../users/user.entity';
+import type {
+  AuditEntry,
+  AuditService,
+} from '../../application/services/audit.service';
+import { ErrorCode } from '../../domain';
 
 const makeService = (options: {
   payload?: { sub: string; username: string; role: string; tv: number };
@@ -69,5 +75,49 @@ describe('AuthService logout', () => {
     await service.logout('old-refresh-token');
 
     expect(increment).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthService login', () => {
+  const makeLoginService = (user: Partial<User> | null) => {
+    const getOne = jest.fn(() => Promise.resolve(user));
+    const qb = {
+      addSelect: () => qb,
+      where: () => qb,
+      getOne,
+    };
+    const record = jest.fn<(entry: AuditEntry) => Promise<void>>(() =>
+      Promise.resolve(),
+    );
+    const service = new AuthService(
+      { createQueryBuilder: () => qb } as unknown as Repository<User>,
+      {} as JwtService,
+      {} as ConfigService,
+      { record } as unknown as AuditService,
+    );
+    return { service, record };
+  };
+
+  it('spends as long on an unknown username as on a wrong password', async () => {
+    // A malformed dummy hash is rejected by bcrypt in microseconds while a
+    // real comparison takes ~200 ms, which would reveal through timing
+    // exactly the username existence the constant message hides. Both paths
+    // are CPU-bound in this process, so the ratio holds on a loaded CI box.
+    const realHash = await bcrypt.hash('correct horse', BCRYPT_COST);
+    const started = process.hrtime.bigint();
+    await bcrypt.compare('wrong', realHash);
+    const realCompareMs = Number(process.hrtime.bigint() - started) / 1e6;
+
+    const { service, record } = makeLoginService(null);
+    const loginStarted = process.hrtime.bigint();
+    await expect(service.login('nobody', 'whatever')).rejects.toMatchObject({
+      code: ErrorCode.InvalidCredentials,
+    });
+    const unknownUserMs = Number(process.hrtime.bigint() - loginStarted) / 1e6;
+
+    expect(unknownUserMs).toBeGreaterThan(realCompareMs * 0.5);
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'login_failed', userId: null }),
+    );
   });
 });

@@ -8,6 +8,13 @@ import {
 } from 'typeorm';
 import { UserRole } from '../../domain';
 
+/**
+ * bcrypt cost for every stored password. Everything that hashes one — user
+ * creation, resets, self-service change, the seed — and the auth service's
+ * unknown-user dummy hash must all use this, or login timing diverges.
+ */
+export const BCRYPT_COST = 12;
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')

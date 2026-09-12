@@ -22,6 +22,8 @@ x-api-env: &api-env
   CORS_ORIGIN: https://${PB_DOMAIN:?set PB_DOMAIN in .env}
   DB_HOST: db
   DB_PORT: 5432
+  # The Postgres superuser: used for initdb and by `migrate` to run schema
+  # changes. Never used by the API itself — see the `api` service below.
   DB_USER: ${DB_USER:-dental}
   DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
   DB_NAME: ${DB_NAME:-patient_book}
@@ -69,7 +71,13 @@ services:
       dockerfile: apps/api/Dockerfile
     image: patient-book-api:latest
     command: ["node", "apps/api/dist/database/run-migrations.js", "run"]
-    environment: *api-env
+    environment:
+      <<: *api-env
+      # Not used to connect — read directly by ensure-app-role.ts, which
+      # (re)creates this role after migrations and grants it only DML, never
+      # schema privileges. Keeps the runtime API off the superuser above.
+      DB_APP_USER: ${DB_APP_USER:?set DB_APP_USER in .env}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?set DB_APP_PASSWORD in .env}
     depends_on:
       db:
         condition: service_healthy
@@ -91,6 +99,10 @@ services:
     init: true
     environment:
       <<: *api-env
+      # Overrides the superuser above: the API connects with a role that can
+      # only read and write rows, provisioned by `migrate` via ensure-app-role.ts.
+      DB_USER: ${DB_APP_USER:?set DB_APP_USER in .env}
+      DB_PASSWORD: ${DB_APP_PASSWORD:?set DB_APP_PASSWORD in .env}
       # Must match the mount below: BackupService reads the home directory.
       HOME: ${PB_HOME_DIR:-/srv/patient-book/home}
       # Read only by the one-off seed step, which is run through this service.

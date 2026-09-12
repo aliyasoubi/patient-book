@@ -7,6 +7,12 @@
       "runtimeArgs": ["-c", "npm run start --workspace=web -- --port ${PORT:-4200}"],
       "port": 4200,
       "autoPort": true
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start:dev", "--workspace=api"],
+      "port": 3000
     }
   ]
 }

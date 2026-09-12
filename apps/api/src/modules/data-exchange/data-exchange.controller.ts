@@ -43,8 +43,9 @@ export class DataExchangeController {
   /**
    * Audited before the bytes leave: a whole-register PII extract is exactly the
    * event an audit trail exists for. Only row counts are recorded, never the
-   * exported values. The audit is awaited rather than fire-and-forget so an
-   * export cannot outrun the record of it.
+   * exported values. `recordRequired` rather than `record`: a clinical write may
+   * proceed without its audit line, but an export whose audit failed must not
+   * be sent — here the record *is* the safeguard.
    */
   @Get('export')
   @ApiOperation({ summary: 'Download the current register as an Excel workbook' })
@@ -54,7 +55,7 @@ export class DataExchangeController {
     @CurrentUser() user: { id: string; username: string },
   ): Promise<void> {
     const { buffer, counts } = await this.exportUseCase.execute();
-    await this.audit.record({
+    await this.audit.recordRequired({
       userId: user.id,
       username: user.username,
       action: 'export',

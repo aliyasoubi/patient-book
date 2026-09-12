@@ -1,8 +1,8 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,8 +18,10 @@ import {
   distinctUntilChanged,
   EMPTY,
   map,
+  of,
   Subject,
   switchMap,
+  tap,
 } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -35,6 +37,7 @@ import {
   educationLabel,
   genderIcon,
   genderLabel,
+  referralKindIcon,
 } from '../../shared/labels';
 import {
   PbAvatar,
@@ -45,7 +48,7 @@ import {
   PbSelectField,
 } from '../../shared/ui';
 import type { SelectOption } from '../../shared/ui';
-import type { Patient, TreatmentType } from './data/patient.model';
+import type { Patient, ReferralSource, TreatmentType } from './data/patient.model';
 import type { EducationLevel, Gender } from '../../core/models/common.model';
 
 /** `inactiveMonths` filter choices. Kept as strings — see PbSelectField. */
@@ -63,6 +66,8 @@ interface Filters {
   hasIssues: boolean;
   hasMedicalHistory: boolean;
   inactiveMonths: number | null;
+  /** Only reachable from a dashboard link; there is no picker in the panel. */
+  referralSourceId: string | null;
   includeArchived: boolean;
 }
 
@@ -73,8 +78,37 @@ const EMPTY_FILTERS: Filters = {
   hasIssues: false,
   hasMedicalHistory: false,
   inactiveMonths: null,
+  referralSourceId: null,
   includeArchived: false,
 };
+
+/**
+ * The filters that live in the query string, so a dashboard tile can link
+ * straight to "needs review" or "inactive over a year" and a staff member can
+ * share the resulting URL. The rest of the panel is session-only.
+ */
+type UrlFilters = Pick<Filters, 'hasIssues' | 'inactiveMonths' | 'referralSourceId'>;
+
+function readUrlQuery(params: ParamMap): string {
+  return params.get('q')?.trim() ?? '';
+}
+
+function readUrlFilters(params: ParamMap): UrlFilters {
+  const months = Number(params.get('inactiveMonths'));
+  return {
+    hasIssues: params.get('hasIssues') === 'true',
+    inactiveMonths: Number.isInteger(months) && months > 0 ? months : null,
+    referralSourceId: params.get('referralSourceId') || null,
+  };
+}
+
+function sameUrlFilters(a: UrlFilters, b: UrlFilters): boolean {
+  return (
+    a.hasIssues === b.hasIssues &&
+    a.inactiveMonths === b.inactiveMonths &&
+    a.referralSourceId === b.referralSourceId
+  );
+}
 
 @Component({
   selector: 'pb-patient-list',
@@ -132,9 +166,10 @@ export class PatientList {
     { initialValue: false },
   );
 
-  // Seed the box from ?q= so a link into a search reproduces it.
+  // Seeded from the URL so the first fetch already carries a linked-in search
+  // or filter; the subscription in the constructor keeps them in step after.
   protected readonly searchControl = new FormControl(
-    this.route.snapshot.queryParamMap.get('q') ?? '',
+    readUrlQuery(this.route.snapshot.queryParamMap),
     { nonNullable: true },
   );
 
@@ -144,10 +179,15 @@ export class PatientList {
     by: 'lastName',
     dir: 'ASC',
   });
-  protected readonly filters = signal<Filters>({ ...EMPTY_FILTERS });
+  protected readonly filters = signal<Filters>({
+    ...EMPTY_FILTERS,
+    ...readUrlFilters(this.route.snapshot.queryParamMap),
+  });
   protected readonly filtersOpen = signal(false);
 
   protected readonly loading = signal(false);
+  /** The most recent request failed; whatever rows are shown are stale. */
+  protected readonly failed = signal(false);
   protected readonly patients = signal<Patient[]>([]);
   protected readonly total = signal(0);
   protected readonly countLabel = computed(() => {
@@ -159,14 +199,38 @@ export class PatientList {
   });
   protected readonly treatmentTypes = signal<TreatmentType[]>([]);
 
-  /** Debounced so typing does not fire a request per keystroke. */
+  /**
+   * Debounced so typing does not fire a request per keystroke. A new search
+   * starts from page 1: results for "Ali" on page 3 say nothing about page 3
+   * of "Alireza", and can be empty while matches exist.
+   */
   private readonly debouncedQuery = toSignal(
     this.searchControl.valueChanges.pipe(
       debounceTime(300),
       map((v) => v.trim()),
       distinctUntilChanged(),
+      tap(() => this.page.set(1)),
     ),
     { initialValue: this.searchControl.value.trim() },
+  );
+
+  /**
+   * The referral chip needs a name; the id in the URL means nothing to staff.
+   * There is no lookup-by-id endpoint, but the list is a clinic's handful of
+   * sources, and `switchMap` drops a lookup the filter has since moved past.
+   */
+  protected readonly referralSource = toSignal(
+    toObservable(computed(() => this.filters().referralSourceId)).pipe(
+      switchMap((id) =>
+        id
+          ? this.service.referralSources().pipe(
+              map((all) => all.find((r) => r.id === id) ?? null),
+              catchError(() => of<ReferralSource | null>(null)),
+            )
+          : of<ReferralSource | null>(null),
+      ),
+    ),
+    { initialValue: null as ReferralSource | null },
   );
 
   protected readonly columns = computed(() => [
@@ -188,6 +252,7 @@ export class PatientList {
       (f.hasIssues ? 1 : 0) +
       (f.hasMedicalHistory ? 1 : 0) +
       (f.inactiveMonths ? 1 : 0) +
+      (f.referralSourceId ? 1 : 0) +
       (f.includeArchived ? 1 : 0)
     );
   });
@@ -199,6 +264,9 @@ export class PatientList {
    */
   private readonly fetchTrigger$ = new Subject<PatientQuery>();
 
+  /** Bumped by {@link retry} to re-run the current query unchanged. */
+  private readonly reloadTick = signal(0);
+
   constructor() {
     this.service.treatmentTypes().subscribe((types) => this.treatmentTypes.set(types));
 
@@ -206,8 +274,11 @@ export class PatientList {
       .pipe(
         switchMap((query) =>
           this.service.list(query).pipe(
+            // Keep the previous rows on screen under a banner rather than
+            // blanking the register: a blank list reads as "no patients".
             catchError(() => {
               this.loading.set(false);
+              this.failed.set(true);
               return EMPTY;
             }),
           ),
@@ -220,9 +291,26 @@ export class PatientList {
         this.loading.set(false);
       });
 
+    // URL → state. The snapshot seeded the initial values; this catches the
+    // URL changing under a live component — the global search box submitting
+    // while this page is already open, a dashboard link, the Back button.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      // Compare with the last *committed* search, not the box: the box may
+      // hold keystrokes newer than the URL echo of our own last write.
+      const q = readUrlQuery(params);
+      if (q !== this.debouncedQuery()) this.searchControl.setValue(q);
+
+      const next = readUrlFilters(params);
+      if (!sameUrlFilters(next, this.filters())) {
+        this.filters.update((f) => ({ ...f, ...next }));
+        this.page.set(1);
+      }
+    });
+
     // Any change to query, paging, sorting or filters refetches. Resetting to
     // page 1 happens in the handlers, not here, so paging itself does not loop.
     effect(() => {
+      this.reloadTick();
       const query = this.buildQuery(
         this.debouncedQuery(),
         this.page(),
@@ -232,18 +320,26 @@ export class PatientList {
       );
       untracked(() => {
         this.loading.set(true);
+        this.failed.set(false);
         this.fetchTrigger$.next(query);
       });
     });
 
-    // Reflect the query in the URL so the browser Back button works and the
-    // search is shareable between staff.
+    // State → URL, so the browser Back button works and the search is
+    // shareable between staff. Writing the same URL again is a no-op for the
+    // router, which is what stops this and the subscription above looping.
     effect(() => {
       const q = this.debouncedQuery();
+      const { hasIssues, inactiveMonths, referralSourceId } = this.filters();
       untracked(() => {
         void this.router.navigate([], {
           relativeTo: this.route,
-          queryParams: q ? { q } : {},
+          queryParams: {
+            q: q || null,
+            hasIssues: hasIssues ? 'true' : null,
+            inactiveMonths,
+            referralSourceId,
+          },
           replaceUrl: true,
         });
       });
@@ -269,8 +365,13 @@ export class PatientList {
       hasIssues: filters.hasIssues || undefined,
       hasMedicalHistory: filters.hasMedicalHistory || undefined,
       inactiveMonths: filters.inactiveMonths ?? undefined,
+      referralSourceId: filters.referralSourceId ?? undefined,
       includeArchived: filters.includeArchived || undefined,
     };
+  }
+
+  protected retry(): void {
+    this.reloadTick.update((n) => n + 1);
   }
 
   protected onSortChange(event: Sort): void {
@@ -340,6 +441,7 @@ export class PatientList {
    */
   protected readonly genderLabel = genderLabel;
   protected readonly genderIcon = genderIcon;
+  protected readonly referralKindIcon = referralKindIcon;
 
   /** Track by id — rows are replaced wholesale on every fetch. */
   protected trackById(_index: number, item: { id: string }): string {

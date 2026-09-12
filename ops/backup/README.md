@@ -47,8 +47,9 @@ launchctl unload ~/Library/LaunchAgents/com.patientbook.backup.plist && rm ~/Lib
 cat ~/PatientBookBackups/last-success && ls -lh ~/PatientBookBackups/daily/
 ```
 
-If a backup fails you get a desktop notification. Details land in
-`~/PatientBookBackups/backup.log`.
+If a backup fails you get a desktop notification, and the settings screen
+shows the failure instead of the last success until a run passes again.
+Details land in `~/PatientBookBackups/backup.log`.
 
 ## Prove the backups still restore
 
@@ -87,21 +88,34 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:$HOME/.patient-book/
 
 ---
 
-## What this does not yet cover
+## Off-machine copies
 
-Backups currently live **on the same Mac as the database**. That survives
-accidental deletion, a bad migration, or a corrupted table — but not theft,
-fire, or the SSD failing.
+Backups written only to `~/PatientBookBackups/` survive accidental deletion, a
+bad migration, or a corrupted table — but not theft, fire, or the SSD failing.
+Set `PB_OFFSITE_DIR` (in `ops/backup/backup.env`) to a second directory and
+every run also mirrors the encrypted file there, independent of the primary
+copy — a sync hiccup on the second copy never puts the first at risk.
 
-Closing that gap means an off-machine copy. Two workable options:
+```bash
+PB_OFFSITE_DIR="$HOME/Library/CloudStorage/GoogleDrive-you@example.com/My Drive/PatientBookBackups"
+# or: PB_OFFSITE_DIR="$HOME/Dropbox/PatientBookBackups"
+```
 
-- **External drive** kept out of the office — copy `~/PatientBookBackups/`
-  onto it weekly. No patient data leaves your control.
-- **Encrypted cloud** — a true off-site copy, but the dumps (already
-  encrypted) would leave the premises. Needs a provider decision and a plan
-  for who holds the key.
+(Quoted because Google Drive's own folder is literally named "My Drive" —
+this file is `source`d, so an unquoted space would split into two words.)
 
-Until one of those exists, treat the current setup as protection against
+The script only ever `cp`s already-gzipped, already-AES-256-encrypted files
+into that directory — it does not know or care which provider syncs it, and
+the provider never sees readable records. On a Mac this is the easy case:
+point it at the local folder the Dropbox or Google Drive desktop app already
+keeps in sync, and the app does the rest. The settings screen shows the last
+successful offsite mirror alongside the local backup status, so a stalled
+sync is as visible as a failed backup.
+
+If you would rather not run a cloud client at all, an external drive kept out
+of the office works too — `PB_OFFSITE_DIR` just needs to be a writable path,
+so it can point at a mounted drive instead. Either way, until `PB_OFFSITE_DIR`
+is set, the only copy is on this Mac — treat that as protection against
 mistakes, not against disasters.
 
 ## Configuration
@@ -117,6 +131,7 @@ PB_KEEP_DAILY=14
 | Variable | Default |
 |---|---|
 | `PB_BACKUP_DIR` | `~/PatientBookBackups` |
+| `PB_OFFSITE_DIR` | unset — no offsite mirror until set |
 | `PB_BACKUP_KEY` | `~/.patient-book/backup.key` |
 | `PB_KEEP_DAILY` | `7` |
 | `PB_KEEP_WEEKLY` | `4` |

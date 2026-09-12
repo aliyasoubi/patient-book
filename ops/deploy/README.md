@@ -41,11 +41,18 @@ git clone <your-repo> /opt/patient-book && cd /opt/patient-book
 cp .env.production.example .env && chmod 600 .env
 ```
 
-Fill in every value. Generate the three secrets separately:
+Fill in every value. Generate each secret (`DB_PASSWORD`, `DB_APP_PASSWORD`,
+`JWT_SECRET`, `JWT_REFRESH_SECRET`) separately:
 
 ```bash
 openssl rand -base64 48
 ```
+
+`DB_USER`/`DB_PASSWORD` is the Postgres superuser, used only to initialize the
+database and run migrations. `DB_APP_USER`/`DB_APP_PASSWORD` is what the API
+actually connects with day to day; `migrate` creates that role automatically
+on first deploy and keeps its grants and password in sync on every deploy
+after — see [Database roles](#database-roles).
 
 The API refuses to boot in production with placeholder, short, or reused
 secrets, so a half-filled file fails loudly at startup rather than quietly
@@ -96,6 +103,26 @@ docker compose -f compose.prod.yml logs -f api
 docker compose -f compose.prod.yml exec db psql -U dental -d patient_book
 ```
 
+## Database roles
+
+Two roles, not one:
+
+- **`DB_USER`** (Postgres superuser) — created by the official image at
+  initdb, used by `migrate` to run schema migrations and by the nightly
+  backup to `pg_dump` everything. Nothing else connects with it.
+- **`DB_APP_USER`** — what the running API connects as. `migrate` provisions
+  it after every migration (`ensure-app-role.ts`): `SELECT`/`INSERT`/`UPDATE`/
+  `DELETE` on every table, nothing else — no `CREATE`, no `DROP`, no `ALTER`,
+  not superuser. A compromise of the web application gets read/write access
+  to patient rows, not the ability to touch the schema or any other database
+  on the server.
+
+Rotating `DB_APP_PASSWORD` takes effect on the next deploy — `migrate` runs
+`ALTER ROLE` for you, there is nothing else to update. There is no equivalent
+automation for `DB_PASSWORD` (the superuser): that one is only ever read by
+`db`, `migrate`, and the backup script, so rotating it means updating `.env`
+and restarting the stack.
+
 ## Firewall
 
 Allow SSH **before** enabling the firewall, or you will lock yourself out:
@@ -142,6 +169,38 @@ readable records. Change the destination on the app's settings screen, or with
 into the API container at the identical path, or the settings screen cannot
 verify that it exists and is writable.
 
+### Off-server copies
+
+The setup above still keeps every copy on this one VPS: losing the disk loses
+the database and every backup with it. Closing that gap needs a copy that
+lives somewhere else — the easiest way on a headless box is
+[`rclone`](https://rclone.org), which pushes straight to Dropbox, Google
+Drive, or almost anything else with no mount and no daemon to keep alive:
+
+```bash
+sudo apt install rclone
+rclone config                 # choose "n" for new remote, then Dropbox or
+                               # Drive; it opens a one-time authorization link
+```
+
+That saves a token under `/root/.config/rclone/rclone.conf`. Name the remote
+whatever you like during `rclone config` (the examples here use `dropbox`);
+then add one line to `.env`:
+
+```bash
+PB_OFFSITE_REMOTE=dropbox:PatientBookBackups
+```
+
+The next nightly run copies the new dump straight there with `rclone copyto`
+— no local mount, nothing else to install. The settings screen shows the last
+successful offsite mirror alongside the local backup status, so a broken
+remote is as visible as a failed backup.
+
+Already have a network share or an `rclone mount` and would rather point at a
+real path instead of shelling out to `rclone` per file? Set `PB_OFFSITE_DIR`
+to that directory instead (or as well) — same mirroring, just a plain `cp`.
+Either way, until one of these is set, the only copy is on this VPS.
+
 ### Prove a backup restores
 
 A backup that has never been restored is not a recovery plan. The drill
@@ -154,18 +213,79 @@ sudo ./ops/deploy/pb-restore-drill.sh
 
 ### Real recovery
 
+**Read this before you need it.** Piping the dump straight into `psql -d
+patient_book` is exactly what the drill above avoids, and for good reason:
+Postgres does not stop on a SQL error by default, so a truncated download or
+a version mismatch would not fail loudly — `psql` carries on to the next
+statement and exits looking successful, leaving `patient_book` with some
+tables dropped (the dump uses `--clean --if-exists`) and never recreated.
+Restore into a new database instead, confirm it looks right, then switch the
+app over. The app stays up for every step except the last two.
+
+**1. Restore into a new database** — `patient_book` is not touched here:
+
 ```bash
+docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
+  -c 'CREATE DATABASE patient_book_restore;'
+
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
   -pass file:/etc/patient-book/backup.key \
   -in /srv/patient-book/home/PatientBookBackups/daily/<file>.sql.gz.enc \
   | gunzip \
-  | docker compose -f compose.prod.yml exec -T db psql -U dental -d patient_book
+  | docker compose -f compose.prod.yml exec -T db psql -U dental \
+      -d patient_book_restore -v ON_ERROR_STOP=1
 ```
 
-Plain SQL rather than `pg_dump`'s custom format is on purpose: in a real
-recovery someone may be working from a different machine under time pressure,
-and this needs no matching `pg_restore` and no expertise beyond following these
-lines.
+`-v ON_ERROR_STOP=1` — the same flag `pb-restore-drill.sh` already runs
+with — is what turns a broken restore into a command that fails visibly
+instead of one that quietly leaves half a schema behind.
+
+**2. Validate before switching anything over:**
+
+```bash
+docker compose -f compose.prod.yml exec -T db psql -U dental \
+  -d patient_book_restore -tAc 'SELECT count(*) FROM patients;'
+```
+
+Compare the count against what you expect, and spot-check a patient or two by
+name while you are in there. Do not go further on any doubt — the live
+database is still untouched.
+
+**3. Stop the API**, so nothing writes to either database during the swap:
+
+```bash
+docker compose -f compose.prod.yml stop api
+```
+
+**4. Swap the names.** `DB_NAME` never changes — only which physical database
+currently holds it — so the app needs no config change to come back up
+against the restored data:
+
+```bash
+docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
+  -v ON_ERROR_STOP=1 <<'SQL'
+ALTER DATABASE patient_book RENAME TO patient_book_before_restore;
+ALTER DATABASE patient_book_restore RENAME TO patient_book;
+SQL
+
+docker compose -f compose.prod.yml start api
+```
+
+**5. Confirm the app looks right**, then drop the pre-restore database once
+you no longer need it as a fallback:
+
+```bash
+docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
+  -c 'DROP DATABASE patient_book_before_restore;'
+```
+
+Keeping `patient_book_before_restore` around costs nothing but disk space
+until you are sure — dropping it is the only step here that cannot be undone.
+
+Plain SQL rather than `pg_dump`'s custom format is on purpose throughout: in a
+real recovery someone may be working from a different machine under time
+pressure, and none of this needs a matching `pg_restore` or any expertise
+beyond following these steps in order.
 
 ---
 

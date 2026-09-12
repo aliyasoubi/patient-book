@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import dataSource from './data-source';
+import { ensureAppRole } from './ensure-app-role';
 
 /**
  * Migration runner. TypeORM 1.x's own CLI loads the DataSource file through a
@@ -17,6 +18,7 @@ async function main(): Promise<void> {
       const applied = await dataSource.runMigrations({ transaction: 'all' });
       if (applied.length === 0) console.log('✓  Schema is already up to date.');
       else applied.forEach((m) => console.log(`✓  Applied ${m.name}`));
+      await ensureAppRole(dataSource);
     }
   } finally {
     await dataSource.destroy();

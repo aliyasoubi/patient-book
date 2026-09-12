@@ -100,6 +100,11 @@ export class Settings {
     });
   }
 
+  /** True when the most recent run failed — i.e. no success since that failure. */
+  protected backupIsFailing(b: BackupSettings): boolean {
+    return !!b.lastFailure && (!b.lastSuccess || b.lastFailure > b.lastSuccess);
+  }
+
   private toast(message: string): void {
     this.snackBar.open(message, this.i18n.instant('action.dismiss'));
   }

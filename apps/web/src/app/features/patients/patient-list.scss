@@ -77,6 +77,37 @@
     border-radius: var(--mat-sys-corner-extra-small);
   }
 
+  &__linked-chip {
+    // A filter the panel cannot show or clear; colour it like the active
+    // filter button so it reads as part of the same state.
+    --mdc-chip-elevated-container-color: var(--mat-sys-secondary-container);
+    --mdc-chip-label-text-color: var(--mat-sys-on-secondary-container);
+    --mdc-chip-with-icon-icon-color: var(--mat-sys-on-secondary-container);
+  }
+
+  &__error {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pb-space-3);
+    padding: var(--pb-space-3) var(--pb-space-4);
+    border: 1px solid color-mix(in srgb, var(--mat-sys-error) 40%, transparent);
+    border-radius: var(--mat-sys-corner-medium);
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+
+  &__error-icon {
+    flex: 0 0 auto;
+    color: var(--mat-sys-error);
+  }
+
+  &__error-text {
+    flex: 1 1 auto;
+    margin: 0;
+    font: var(--mat-sys-body-medium);
+  }
+
   &__paginator {
     background: transparent;
     border-top: 1px solid var(--mat-sys-outline-variant);

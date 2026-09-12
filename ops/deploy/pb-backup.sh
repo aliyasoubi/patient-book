@@ -46,6 +46,25 @@ readonly KEY_FILE="${PB_BACKUP_KEY:-/etc/patient-book/backup.key}"
 readonly KEEP_DAILY="${PB_KEEP_DAILY:-7}"
 readonly KEEP_WEEKLY="${PB_KEEP_WEEKLY:-4}"
 
+# A second, independent copy, off this VPS. Two ways to configure one, and
+# either (or both) can be set:
+#
+#   PB_OFFSITE_REMOTE  an rclone remote:path, e.g. dropbox:PatientBookBackups
+#                       or gdrive:PatientBookBackups. `rclone copyto` pushes
+#                       straight to the provider — no mount to keep alive,
+#                       just a one-time `rclone config` to authorize it.
+#   PB_OFFSITE_DIR      a plain local directory — for an already-mounted
+#                       network share or an rclone mount, if you'd rather
+#                       have a real path than shell out to rclone per file.
+#
+# Either way the script only ever moves a file that is already gzipped and
+# AES-256 encrypted, so the provider never sees readable records. Kept
+# separate from BACKUP_DIR so a problem with either can never take the
+# primary, locally-restorable copy down with it. Unset by default: no offsite
+# copy is attempted until one of these is configured.
+readonly OFFSITE_REMOTE="${PB_OFFSITE_REMOTE:-}"
+readonly OFFSITE_DIR="${PB_OFFSITE_DIR:-}"
+
 readonly DAILY_DIR="$BACKUP_DIR/daily"
 readonly WEEKLY_DIR="$BACKUP_DIR/weekly"
 readonly LOG_FILE="$BACKUP_DIR/backup.log"
@@ -141,6 +160,48 @@ prune() {
 }
 prune "$DAILY_DIR" "$KEEP_DAILY"
 prune "$WEEKLY_DIR" "$KEEP_WEEKLY"
+
+# -- offsite mirror: rclone remote ------------------------------------------
+if [[ -n "$OFFSITE_REMOTE" ]]; then
+  command -v rclone >/dev/null || fail "PB_OFFSITE_REMOTE is set but rclone is not installed"
+  rclone copyto "$TARGET" "$OFFSITE_REMOTE/daily/$(basename "$TARGET")" \
+    || fail "rclone copy to $OFFSITE_REMOTE failed"
+  if [[ -f "$WEEKLY_DIR/$(basename "$TARGET")" ]]; then
+    rclone copyto "$TARGET" "$OFFSITE_REMOTE/weekly/$(basename "$TARGET")" \
+      || fail "rclone weekly copy to $OFFSITE_REMOTE failed"
+  fi
+  # Same "keep N newest" rule as the local prune(), just via `rclone lsf`
+  # instead of `ls`. A missing remote directory (first run) lists as empty
+  # rather than failing.
+  rclone_prune() {
+    local dir="$1" keep="$2"
+    { rclone lsf "$dir" --files-only 2>/dev/null || true; } | sort -r \
+      | tail -n +$((keep + 1)) \
+      | while IFS= read -r old; do rclone deletefile "$dir/$old" || true; done
+  }
+  rclone_prune "$OFFSITE_REMOTE/daily" "$KEEP_DAILY"
+  rclone_prune "$OFFSITE_REMOTE/weekly" "$KEEP_WEEKLY"
+  date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-offsite-success"
+  chmod 644 "$BACKUP_DIR/last-offsite-success"
+  log "mirrored $(basename "$TARGET") to $OFFSITE_REMOTE"
+fi
+
+# -- offsite mirror: local/mounted directory ---------------------------------
+if [[ -n "$OFFSITE_DIR" ]]; then
+  mkdir -p "$OFFSITE_DIR/daily" "$OFFSITE_DIR/weekly" \
+    || fail "cannot create $OFFSITE_DIR"
+  cp "$TARGET" "$OFFSITE_DIR/daily/$(basename "$TARGET")" \
+    || fail "offsite copy to $OFFSITE_DIR failed"
+  if [[ -f "$WEEKLY_DIR/$(basename "$TARGET")" ]]; then
+    cp "$TARGET" "$OFFSITE_DIR/weekly/$(basename "$TARGET")" \
+      || fail "offsite weekly copy to $OFFSITE_DIR failed"
+  fi
+  prune "$OFFSITE_DIR/daily" "$KEEP_DAILY"
+  prune "$OFFSITE_DIR/weekly" "$KEEP_WEEKLY"
+  date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-offsite-success"
+  chmod 644 "$BACKUP_DIR/last-offsite-success"
+  log "mirrored $(basename "$TARGET") to $OFFSITE_DIR"
+fi
 
 # The app's settings screen reads this file to show when the last backup ran.
 date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-success"

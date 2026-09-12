@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import * as bcrypt from 'bcryptjs';
 import dataSource from '../data-source';
-import { User } from '../../modules/users/user.entity';
+import { BCRYPT_COST, User } from '../../modules/users/user.entity';
 import { TreatmentType } from '../../modules/treatments/treatment-type.entity';
 import { UserRole } from '../../domain';
 import { TREATMENT_TYPES } from './treatment-types.seed';
@@ -57,7 +57,7 @@ async function main(): Promise<void> {
       await users.save(
         users.create({
           username,
-          passwordHash: await bcrypt.hash(password, 12),
+          passwordHash: await bcrypt.hash(password, BCRYPT_COST),
           fullName: 'مدیر سیستم',
           role: UserRole.Admin,
           isActive: true,

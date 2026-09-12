@@ -8,6 +8,8 @@ export interface BackupSettings {
   dir: string;
   isDefault: boolean;
   lastSuccess: string | null;
+  lastFailure: string | null;
+  lastOffsiteSuccess: string | null;
   lastDrill: string | null;
 }
 

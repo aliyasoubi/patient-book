@@ -33,6 +33,27 @@
     </button>
   </div>
 
+  <!-- ── Linked-in referral filter ─────────────────────────────── -->
+  <!-- Only a dashboard link can set this; nothing in the panel would otherwise
+       show why the register is suddenly short, so it gets its own chip. -->
+  @if (filters().referralSourceId) {
+    <mat-chip-set class="list__linked" [attr.aria-label]="'common.filters' | translate">
+      <mat-chip class="list__linked-chip" (removed)="updateFilter('referralSourceId', null)">
+        <mat-icon matChipAvatar aria-hidden="true">
+          {{ referralSource() ? referralKindIcon(referralSource()!.kind) : 'share' }}
+        </mat-icon>
+        {{ 'patients.referralFilter' | translate: { name: referralSource()?.name ?? '…' } }}
+        <button
+          matChipRemove
+          type="button"
+          [attr.aria-label]="'patients.clearReferralFilter' | translate"
+        >
+          <mat-icon aria-hidden="true">cancel</mat-icon>
+        </button>
+      </mat-chip>
+    </mat-chip-set>
+  }
+
   <!-- ── Filter panel ──────────────────────────────────────────── -->
   @if (filtersOpen()) {
     <section class="filters" [attr.aria-label]="'common.filters' | translate">
@@ -126,8 +147,22 @@
     <mat-progress-bar mode="indeterminate" class="list__progress" />
   }
 
+  <!-- A failed fetch keeps the previous rows (if any) under this banner: a
+       blank register would read as "no patients", which is a different fact. -->
+  @if (failed()) {
+    <div class="list__error" role="alert">
+      <mat-icon class="list__error-icon" aria-hidden="true">cloud_off</mat-icon>
+      <p class="list__error-text">
+        {{ (patients().length > 0 ? 'patients.loadFailedStale' : 'patients.loadFailed') | translate }}
+      </p>
+      <pb-button variant="stroked" type="button" icon="refresh" (click)="retry()">
+        {{ 'common.retry' | translate }}
+      </pb-button>
+    </div>
+  }
+
   <!-- ── Results ───────────────────────────────────────────────── -->
-  @if (!loading() && patients().length === 0) {
+  @if (!loading() && !failed() && patients().length === 0) {
     <pb-empty-state
       icon="person_search"
       [title]="'patients.emptyTitle' | translate"

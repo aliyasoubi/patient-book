@@ -28,7 +28,7 @@ set -a
 . "$REPO_ROOT/.env"
 set +a
 
-for required in PB_DOMAIN PB_TLS_EMAIL DB_PASSWORD JWT_SECRET JWT_REFRESH_SECRET; do
+for required in PB_DOMAIN PB_TLS_EMAIL DB_PASSWORD DB_APP_USER DB_APP_PASSWORD JWT_SECRET JWT_REFRESH_SECRET; do
   [[ -n "${!required:-}" ]] || die ".env is missing a value for $required"
 done
 
