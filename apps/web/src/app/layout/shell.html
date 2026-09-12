@@ -30,6 +30,7 @@
             class="nav__link"
             [routerLink]="item.path"
             routerLinkActive="is-active"
+            ariaCurrentWhenActive="page"
             #rla="routerLinkActive"
             (click)="closeDrawer()"
           >
@@ -105,6 +106,7 @@
             class="bottom-nav__item"
             [routerLink]="item.path"
             routerLinkActive="is-active"
+            ariaCurrentWhenActive="page"
             #rla="routerLinkActive"
           >
             <span class="bottom-nav__pill">

@@ -47,6 +47,11 @@ jobs:
       # keep it a gate, not an opt-in script nobody remembers to run.
       - run: npm run i18n:check
 
+      # The icon font ships as a generated subset; an icon added to source
+      # without regenerating it would render as its bare name.
+      - run: pip install fonttools brotli
+      - run: npm run icons:check
+
       - run: npm test
 
       - run: npm run build

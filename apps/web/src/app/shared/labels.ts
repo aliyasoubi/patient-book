@@ -263,39 +263,31 @@ export function ageBandLabel(band: string): string {
 /**
  * Chip colours for the treatment catalogue, keyed by the `color` the API seeds
  * each treatment type with. Not localised — these are visual tokens.
+ *
+ * The keys are the seed's thirteen hue names; they collapse onto the eight
+ * categorical `--pb-cat-*` tokens in styles.scss. None of them is an M3
+ * accent container: `error`, `tertiary` and `secondary` mean alert, warning
+ * and success on status chips, and a treatment is none of those.
  */
-const PRIMARY_TREATMENT = {
-  bg: 'var(--mat-sys-primary-container)',
-  fg: 'var(--mat-sys-on-primary-container)',
-};
-const SECONDARY_TREATMENT = {
-  bg: 'var(--mat-sys-secondary-container)',
-  fg: 'var(--mat-sys-on-secondary-container)',
-};
-const TERTIARY_TREATMENT = {
-  bg: 'var(--mat-sys-tertiary-container)',
-  fg: 'var(--mat-sys-on-tertiary-container)',
-};
-const ERROR_TREATMENT = {
-  bg: 'var(--mat-sys-error-container)',
-  fg: 'var(--mat-sys-on-error-container)',
-};
+function categorical(name: string): { bg: string; fg: string } {
+  return { bg: `var(--pb-cat-${name}-bg)`, fg: `var(--pb-cat-${name}-fg)` };
+}
 
 export const TREATMENT_COLORS: Record<string, { bg: string; fg: string }> = {
-  sky: PRIMARY_TREATMENT,
-  cyan: PRIMARY_TREATMENT,
-  blue: PRIMARY_TREATMENT,
-  teal: SECONDARY_TREATMENT,
-  green: SECONDARY_TREATMENT,
-  lime: SECONDARY_TREATMENT,
-  violet: TERTIARY_TREATMENT,
-  indigo: TERTIARY_TREATMENT,
-  purple: TERTIARY_TREATMENT,
-  amber: TERTIARY_TREATMENT,
-  rose: ERROR_TREATMENT,
-  orange: ERROR_TREATMENT,
-  pink: ERROR_TREATMENT,
-  primary: PRIMARY_TREATMENT,
+  sky: categorical('sky'),
+  cyan: categorical('sky'),
+  blue: categorical('sky'),
+  teal: categorical('teal'),
+  lime: categorical('teal'),
+  green: categorical('green'),
+  indigo: categorical('indigo'),
+  violet: categorical('violet'),
+  purple: categorical('violet'),
+  rose: categorical('plum'),
+  pink: categorical('plum'),
+  amber: categorical('sand'),
+  orange: categorical('sand'),
+  primary: categorical('slate'),
 };
 
 export function treatmentColor(key: string): { bg: string; fg: string } {

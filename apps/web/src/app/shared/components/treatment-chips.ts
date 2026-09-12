@@ -6,11 +6,14 @@ import type { PatientTreatment } from '../../core/models/common.model';
 import { TranslateService } from '@ngx-translate/core';
 
 /**
- * The treatments a patient has had, as coloured chips.
+ * The treatments a patient has had, as labelled, coloured chips.
  *
  * A patient can carry up to thirteen; showing all of them turns a table row
  * into three lines, so the list truncates and reports the remainder. The full
- * set is always on the detail page.
+ * set is always on the detail page. Labels are on by default: the catalogue
+ * icons (a diamond for a crown, a paint roller for a filling) are not
+ * self-explanatory, and on a phone the tooltip that would explain them needs
+ * a long-press nobody discovers.
  */
 @Component({
   selector: 'pb-treatment-chips',
@@ -26,7 +29,7 @@ import { TranslateService } from '@ngx-translate/core';
             class="chip"
             [style.--chip-bg]="color(t.color).bg"
             [style.--chip-fg]="color(t.color).fg"
-            [matTooltip]="t.nameFa"
+            [matTooltip]="showLabels() ? '' : t.nameFa"
           >
             <mat-icon class="chip__icon" aria-hidden="true">{{ t.icon }}</mat-icon>
             @if (showLabels()) {
@@ -35,7 +38,13 @@ import { TranslateService } from '@ngx-translate/core';
           </span>
         }
         @if (hidden() > 0) {
-          <span class="chip chip--more" [matTooltip]="hiddenNames()"> +{{ hidden() }} </span>
+          <span
+            class="chip chip--more"
+            [matTooltip]="hiddenNames()"
+            [attr.aria-label]="hiddenNames()"
+          >
+            +{{ hidden() }}
+          </span>
         }
       </span>
     }
@@ -54,12 +63,13 @@ import { TranslateService } from '@ngx-translate/core';
       gap: 4px;
       align-items: center;
     }
+    /* Sized like pb-status-chip so the two chip kinds read as one family. */
     .chip {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      height: 26px;
-      padding-inline: 8px;
+      min-height: 28px;
+      padding-inline: 10px;
       border-radius: var(--mat-sys-corner-full);
       background: var(--chip-bg, var(--mat-sys-secondary-container));
       color: var(--chip-fg, var(--mat-sys-on-secondary-container));
@@ -84,8 +94,8 @@ export class TreatmentChips {
   private readonly i18n = inject(TranslateService);
   readonly treatments = input.required<PatientTreatment[]>();
   /** How many to render before collapsing the rest into a "+n" chip. */
-  readonly max = input(4);
-  readonly showLabels = input(false);
+  readonly max = input(3);
+  readonly showLabels = input(true);
 
   protected color = treatmentColor;
 

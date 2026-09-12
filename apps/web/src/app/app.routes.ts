@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { ResolveFn, Routes } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { authGuard, guestGuard, roleGuard } from './core/guards/auth.guard';
+import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
 /**
  * Every feature is lazily loaded.
@@ -42,6 +43,7 @@ export const routes: Routes = [
       },
       {
         path: 'patients/new',
+        canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./features/patients/patient-form').then((m) => m.PatientForm),
         title: translatedTitle('route.patientNew'),
       },
@@ -53,6 +55,7 @@ export const routes: Routes = [
       },
       {
         path: 'patients/:id/edit',
+        canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./features/patients/patient-form').then((m) => m.PatientForm),
         title: translatedTitle('route.patientEdit'),
       },
@@ -73,6 +76,7 @@ export const routes: Routes = [
       },
       {
         path: 'surgery/new',
+        canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./features/surgery/surgery-form').then((m) => m.SurgeryForm),
         title: translatedTitle('route.surgeryNew'),
       },

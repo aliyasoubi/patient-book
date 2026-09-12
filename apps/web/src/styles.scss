@@ -78,6 +78,33 @@ html {
   // consistent with the ledgers it replaces.
   font-variant-numeric: normal;
   -webkit-tap-highlight-color: transparent;
+
+  /*
+   * Categorical colours for the treatment catalogue. Deliberately not the M3
+   * accent containers: those carry status meaning here (error = alert,
+   * tertiary = warning, secondary = success) and an extraction must never
+   * look like an alarm. The set is calm and short — the chip label carries
+   * the identity, the tint only groups — and stays out of the red/orange
+   * band the error tokens live in. `light-dark()` follows the same
+   * `color-scheme` switch the M3 tokens use, so the settings toggle and the
+   * OS preference both apply.
+   */
+  --pb-cat-sky-bg: light-dark(#e1f0fa, #123b4f);
+  --pb-cat-sky-fg: light-dark(#0b4f6c, #a9d6ee);
+  --pb-cat-teal-bg: light-dark(#dcf3ef, #12403a);
+  --pb-cat-teal-fg: light-dark(#0f5c52, #9fdcd2);
+  --pb-cat-green-bg: light-dark(#e2f3e3, #1b3d22);
+  --pb-cat-green-fg: light-dark(#1f5f2c, #a9dcb1);
+  --pb-cat-indigo-bg: light-dark(#e6e9fb, #2a3060);
+  --pb-cat-indigo-fg: light-dark(#33408f, #bcc4f2);
+  --pb-cat-violet-bg: light-dark(#efe6f9, #3c2a5c);
+  --pb-cat-violet-fg: light-dark(#5a2e8f, #d3bff0);
+  --pb-cat-plum-bg: light-dark(#f6e6f0, #4a2a3d);
+  --pb-cat-plum-fg: light-dark(#7b2c5c, #ecbcd8);
+  --pb-cat-sand-bg: light-dark(#f5ecd9, #453619);
+  --pb-cat-sand-fg: light-dark(#6b4a12, #e6cf9b);
+  --pb-cat-slate-bg: light-dark(#e8ecef, #2e3a42);
+  --pb-cat-slate-fg: light-dark(#3d4a54, #c0ccd4);
 }
 
 /**

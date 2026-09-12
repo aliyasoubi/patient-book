@@ -11,6 +11,10 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PatientsService } from './data/patients.service';
 import {
+  HasUnsavedChanges,
+  warnBeforeUnload,
+} from '../../core/guards/unsaved-changes.guard';
+import {
   EDUCATION_LEVELS,
   GENDERS,
   educationLabel,
@@ -53,7 +57,7 @@ import { applyPatientDateChanges } from './patient-form.utils';
   templateUrl: './patient-form.html',
   styleUrl: './patient-form.scss',
 })
-export class PatientForm {
+export class PatientForm implements HasUnsavedChanges {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(PatientsService);
   private readonly router = inject(Router);
@@ -93,6 +97,10 @@ export class PatientForm {
   protected readonly firstNameSuggestions = signal<NameSuggestion[]>([]);
   protected readonly lastNameSuggestions = signal<NameSuggestion[]>([]);
   protected readonly selectedTreatments = signal<Set<string>>(new Set());
+  /** Treatments live outside the reactive form, so their "dirty" is a diff. */
+  private readonly loadedTreatments = signal<Set<string>>(new Set());
+  /** Set once the save round-trips, so the post-save navigation is not challenged. */
+  private saved = false;
   protected readonly original = signal<Patient | null>(null);
 
   protected readonly isEdit = computed(() => !!this.id());
@@ -163,6 +171,7 @@ export class PatientForm {
   }
 
   constructor() {
+    warnBeforeUnload(() => this.hasUnsavedChanges());
     this.service.treatmentTypes().subscribe((types) => this.treatmentTypes.set(types));
     this.service.referralSources().subscribe((sources) => this.referralSources.set(sources));
     this.service
@@ -211,7 +220,9 @@ export class PatientForm {
           lastVisitAt: this.toDate(p.lastVisitAt?.jalali),
           notes: p.notes ?? '',
         });
-        this.selectedTreatments.set(new Set(p.treatments.map((t) => t.code)));
+        const treatments = new Set(p.treatments.map((t) => t.code));
+        this.selectedTreatments.set(treatments);
+        this.loadedTreatments.set(new Set(treatments));
         this.loading.set(false);
       },
       error: () => {
@@ -243,6 +254,15 @@ export class PatientForm {
 
   protected isSelected(code: string): boolean {
     return this.selectedTreatments().has(code);
+  }
+
+  hasUnsavedChanges(): boolean {
+    if (this.saved) return false;
+    const selected = this.selectedTreatments();
+    const loaded = this.loadedTreatments();
+    const treatmentsChanged =
+      selected.size !== loaded.size || [...selected].some((code) => !loaded.has(code));
+    return this.form.dirty || treatmentsChanged;
   }
 
   protected submit(): void {
@@ -315,6 +335,7 @@ export class PatientForm {
             : this.i18n.instant('patientForm.created'),
           this.i18n.instant('action.dismiss'),
         );
+        this.saved = true;
         void this.router.navigate(['/patients', patient.id]);
       },
       error: (error: unknown) => {

@@ -225,7 +225,7 @@
               </div>
             }
 
-            <pb-treatment-chips [treatments]="patient.treatments" [max]="5" />
+            <pb-treatment-chips [treatments]="patient.treatments" [max]="3" />
           </a>
 
           @if (patient.mobile) {
@@ -323,7 +323,7 @@
         <ng-container matColumnDef="treatments">
           <th mat-header-cell *matHeaderCellDef>{{ 'patients.treatments' | translate }}</th>
           <td mat-cell *matCellDef="let p">
-            <pb-treatment-chips [treatments]="p.treatments" [max]="4" />
+            <pb-treatment-chips [treatments]="p.treatments" [max]="2" />
           </td>
         </ng-container>
 

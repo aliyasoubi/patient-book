@@ -22,7 +22,8 @@
     "import": "npm run import --workspace=api",
     "test": "npm run test --workspace=api -- --runInBand && npm run test --workspace=web -- --watch=false",
     "test:e2e": "npm run test:e2e --workspace=api",
-    "i18n:check": "npm run i18n:check --workspace=web"
+    "i18n:check": "npm run i18n:check --workspace=web",
+    "icons:check": "npm run icons:check --workspace=web"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

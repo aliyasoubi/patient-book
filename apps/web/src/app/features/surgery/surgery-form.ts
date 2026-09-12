@@ -10,6 +10,10 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { RegistryService } from '../../core/services/registry.service';
+import {
+  HasUnsavedChanges,
+  warnBeforeUnload,
+} from '../../core/guards/unsaved-changes.guard';
 import { ABUTMENT_TYPES, IMPLANT_BRAND_KEYS, SURGERY_STATUSES, abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
@@ -43,7 +47,7 @@ import type { SelectOption, TextFieldOption } from '../../shared/ui';
   templateUrl: './surgery-form.html',
   styleUrl: './surgery-form.scss',
 })
-export class SurgeryForm {
+export class SurgeryForm implements HasUnsavedChanges {
   private readonly fb = inject(FormBuilder);
   private readonly registry = inject(RegistryService);
   private readonly router = inject(Router);
@@ -77,6 +81,8 @@ export class SurgeryForm {
   });
 
   protected readonly saving = signal(false);
+  /** Set once the save round-trips, so the post-save navigation is not challenged. */
+  private saved = false;
 
   protected readonly form = this.fb.nonNullable.group({
     recordedName: ['', [Validators.required, Validators.maxLength(160)]],
@@ -106,10 +112,15 @@ export class SurgeryForm {
   );
 
   constructor() {
+    warnBeforeUnload(() => this.hasUnsavedChanges());
     effect(() => {
       const q = this.nameQuery();
       untracked(() => this.searchImplantCases(q));
     });
+  }
+
+  hasUnsavedChanges(): boolean {
+    return !this.saved && this.form.dirty;
   }
 
   private searchImplantCases(q: string): void {
@@ -171,6 +182,7 @@ export class SurgeryForm {
           this.i18n.instant('surgeryForm.created'),
           this.i18n.instant('action.dismiss'),
         );
+        this.saved = true;
         void this.router.navigate(['/surgery']);
       },
       error: (error: unknown) => {
