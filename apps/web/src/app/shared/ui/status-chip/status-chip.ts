@@ -102,14 +102,15 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
       color: var(--mat-sys-on-primary-container);
     }
 
+    /* Fixed-hue app tokens, not brand roles: see styles.scss. */
     :host([data-tone='success']) {
-      --_bg: var(--mat-sys-secondary-container);
-      color: var(--mat-sys-on-secondary-container);
+      --_bg: var(--pb-success-container);
+      color: var(--pb-on-success-container);
     }
 
     :host([data-tone='warning']) {
-      --_bg: var(--mat-sys-tertiary-container);
-      color: var(--mat-sys-on-tertiary-container);
+      --_bg: var(--pb-warning-container);
+      color: var(--pb-on-warning-container);
     }
 
     :host([data-tone='error']) {

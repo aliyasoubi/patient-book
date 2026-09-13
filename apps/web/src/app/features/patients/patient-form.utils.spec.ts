@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PatientInput } from './data/patient.model';
-import { applyPatientDateChanges, type PatientDateControlState } from './patient-form.utils';
+import type { Patient, PatientInput } from './data/patient.model';
+import {
+  applyPatientDateChanges,
+  changedPatientFields,
+  type PatientDateControlState,
+} from './patient-form.utils';
 
 const basePayload = (): PatientInput => ({
   fileNo: '12',
@@ -41,5 +45,58 @@ describe('applyPatientDateChanges', () => {
     );
 
     expect(payload.birthDate).toBe('1405/06/05');
+  });
+});
+
+describe('changedPatientFields', () => {
+  const record = (overrides: Partial<Patient> = {}): Patient =>
+    ({
+      id: 'p1',
+      fileNo: '12',
+      firstName: 'مریم',
+      lastName: 'کریمی',
+      fullName: 'مریم کریمی',
+      fatherName: null,
+      nationalId: null,
+      gender: 'female',
+      mobile: '09121234567',
+      homePhone: null,
+      birthDate: { jalali: '1368/01/01', iso: '1989-03-21', precision: 'day' },
+      age: 36,
+      occupation: null,
+      education: 'unknown',
+      educationRaw: null,
+      referralSource: null,
+      medicalHistory: null,
+      homeAddress: null,
+      workAddress: null,
+      firstVisitAt: null,
+      lastVisitAt: null,
+      notes: null,
+      treatments: [],
+      dataIssues: [],
+      isImported: false,
+      isArchived: false,
+      createdAt: '',
+      updatedAt: '',
+      version: 1,
+      ...overrides,
+    }) as Patient;
+
+  it('reports nothing for an identical record', () => {
+    expect(changedPatientFields(record(), record({ version: 2 }))).toEqual([]);
+  });
+
+  it('names the fields another user changed, treatments included', () => {
+    const after = record({
+      mobile: '09120000000',
+      medicalHistory: 'دیابت',
+      treatments: [{ id: 't', code: 'scaling' } as Patient['treatments'][number]],
+    });
+    expect(changedPatientFields(record(), after)).toEqual([
+      'mobile',
+      'medicalHistory',
+      'treatments',
+    ]);
   });
 });

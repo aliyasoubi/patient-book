@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { PatientsService } from './data/patients.service';
 import {
@@ -18,6 +19,7 @@ import {
   EDUCATION_LEVELS,
   GENDERS,
   educationLabel,
+  fieldLabel,
   genderLabel,
   treatmentColor,
 } from '../../shared/labels';
@@ -36,7 +38,7 @@ import {
   PbTextField,
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
-import { applyPatientDateChanges } from './patient-form.utils';
+import { applyPatientDateChanges, changedPatientFields } from './patient-form.utils';
 
 @Component({
   selector: 'pb-patient-form',
@@ -170,8 +172,38 @@ export class PatientForm implements HasUnsavedChanges {
     return matches.slice(0, 8).map((s) => ({ value: s.name, label: s.name }));
   }
 
+  /**
+   * Loads go through one `switchMap` so navigating straight from one patient's
+   * edit page to another's cancels the first request: a slow response for the
+   * old id can no longer land after the new one and fill the form with the
+   * wrong patient, whose save would then go to the current route's id.
+   */
+  private readonly load$ = new Subject<string>();
+
   constructor() {
     warnBeforeUnload(() => this.hasUnsavedChanges());
+    this.load$
+      .pipe(
+        switchMap((id) =>
+          this.service.get(id).pipe(
+            map((patient) => ({ id, patient })),
+            catchError(() => of({ id, patient: null })),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ id, patient }) => {
+        // Belt and braces on top of switchMap: never accept a record for a
+        // route this component has since left.
+        if (id !== this.id()) return;
+        if (!patient) {
+          this.loading.set(false);
+          void this.router.navigate(['/patients']);
+          return;
+        }
+        this.applyPatient(patient);
+        this.loading.set(false);
+      });
     this.service.treatmentTypes().subscribe((types) => this.treatmentTypes.set(types));
     this.service.referralSources().subscribe((sources) => this.referralSources.set(sources));
     this.service
@@ -197,39 +229,34 @@ export class PatientForm implements HasUnsavedChanges {
 
   private loadPatient(id: string): void {
     this.loading.set(true);
-    this.service.get(id).subscribe({
-      next: (p) => {
-        this.original.set(p);
-        this.form.patchValue({
-          fileNo: p.fileNo,
-          firstName: p.firstName,
-          lastName: p.lastName,
-          fatherName: p.fatherName ?? '',
-          nationalId: p.nationalId ?? '',
-          gender: p.gender,
-          mobile: p.mobile ?? '',
-          homePhone: p.homePhone ?? '',
-          birthDate: this.toDate(p.birthDate?.jalali),
-          occupation: p.occupation ?? '',
-          education: p.education,
-          referralSourceName: p.referralSource?.name ?? '',
-          medicalHistory: p.medicalHistory ?? '',
-          homeAddress: p.homeAddress ?? '',
-          workAddress: p.workAddress ?? '',
-          firstVisitAt: this.toDate(p.firstVisitAt?.jalali),
-          lastVisitAt: this.toDate(p.lastVisitAt?.jalali),
-          notes: p.notes ?? '',
-        });
-        const treatments = new Set(p.treatments.map((t) => t.code));
-        this.selectedTreatments.set(treatments);
-        this.loadedTreatments.set(new Set(treatments));
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        void this.router.navigate(['/patients']);
-      },
+    this.load$.next(id);
+  }
+
+  private applyPatient(p: Patient): void {
+    this.original.set(p);
+    this.form.patchValue({
+      fileNo: p.fileNo,
+      firstName: p.firstName,
+      lastName: p.lastName,
+      fatherName: p.fatherName ?? '',
+      nationalId: p.nationalId ?? '',
+      gender: p.gender,
+      mobile: p.mobile ?? '',
+      homePhone: p.homePhone ?? '',
+      birthDate: this.toDate(p.birthDate?.jalali),
+      occupation: p.occupation ?? '',
+      education: p.education,
+      referralSourceName: p.referralSource?.name ?? '',
+      medicalHistory: p.medicalHistory ?? '',
+      homeAddress: p.homeAddress ?? '',
+      workAddress: p.workAddress ?? '',
+      firstVisitAt: this.toDate(p.firstVisitAt?.jalali),
+      lastVisitAt: this.toDate(p.lastVisitAt?.jalali),
+      notes: p.notes ?? '',
     });
+    const treatments = new Set(p.treatments.map((t) => t.code));
+    this.selectedTreatments.set(treatments);
+    this.loadedTreatments.set(new Set(treatments));
   }
 
   /**
@@ -266,6 +293,9 @@ export class PatientForm implements HasUnsavedChanges {
   }
 
   protected submit(): void {
+    // Never save while a load is in flight: the form would be a mix of the
+    // previous record and whatever has been patched in so far.
+    if (this.loading()) return;
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
       // Works regardless of whether a field binds via `formControlName` or the
@@ -323,7 +353,10 @@ export class PatientForm implements HasUnsavedChanges {
     );
 
     const request = this.isEdit()
-      ? this.service.update(this.id()!, payload)
+      ? this.service.update(this.id()!, {
+          ...payload,
+          expectedVersion: this.original()?.version,
+        })
       : this.service.create(payload);
 
     request.subscribe({
@@ -340,8 +373,41 @@ export class PatientForm implements HasUnsavedChanges {
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        this.applyServerErrors(error);
+        if (this.isConflict(error)) this.onConflict();
+        else this.applyServerErrors(error);
       },
+    });
+  }
+
+  private isConflict(error: unknown): boolean {
+    return (
+      error instanceof HttpErrorResponse &&
+      (error.error as ApiErrorBody | null)?.code === 'ERR_PATIENT_MODIFIED'
+    );
+  }
+
+  /**
+   * Someone else saved this record while it was being edited here. The draft
+   * stays exactly as typed — nothing is reset or overwritten — and the message
+   * names the fields that changed underneath it. Adopting the new version
+   * means the next save goes through; by then the user has been told what
+   * they would be overwriting.
+   */
+  private onConflict(): void {
+    const id = this.id();
+    if (!id) return;
+    this.service.get(id).subscribe((current) => {
+      const before = this.original();
+      const changed = before ? changedPatientFields(before, current) : [];
+      this.original.set(current);
+
+      const fields = changed
+        .map((key) => this.i18n.instant(fieldLabel(key)))
+        .join(this.i18n.instant('list.separator'));
+      const message = changed.length
+        ? this.i18n.instant('patientForm.conflict', { fields })
+        : this.i18n.instant('patientForm.conflictNoFields');
+      this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
     });
   }
 

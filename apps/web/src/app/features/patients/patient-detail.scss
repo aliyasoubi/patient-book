@@ -126,14 +126,18 @@
     font: var(--mat-sys-body-medium);
   }
 
+  // Medical history is the thing a dentist must not miss before treating —
+  // caution, not a broken record — so it gets the warning tone, not error.
   &--medical {
-    background: var(--mat-sys-error-container);
-    color: var(--mat-sys-on-error-container);
+    background: var(--pb-warning-container);
+    color: var(--pb-on-warning-container);
   }
 
+  // Import flags are record hygiene, not a clinical alert: neutral surface,
+  // the flag icon and resolve buttons carry the "to do" cue.
   &--issues {
-    background: var(--mat-sys-tertiary-container);
-    color: var(--mat-sys-on-tertiary-container);
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
   }
 
   &__body {

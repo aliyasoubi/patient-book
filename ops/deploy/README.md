@@ -225,8 +225,11 @@ Either way, until one of these is set, the only copy is on this VPS.
 ### Prove a backup restores
 
 A backup that has never been restored is not a recovery plan. The drill
-restores the newest backup into a throwaway database, checks that patients came
-back, and drops it. The live database is never touched.
+restores the newest backup into a throwaway database, re-provisions the
+runtime role against it exactly as step 5 below does, checks that patients
+come back **when read as that role**, and drops it. The live database is never
+touched, and the check fails if the recovery path would leave the API without
+its grants.
 
 ```bash
 sudo ./ops/deploy/pb-restore-drill.sh
@@ -288,11 +291,26 @@ docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
 ALTER DATABASE patient_book RENAME TO patient_book_before_restore;
 ALTER DATABASE patient_book_restore RENAME TO patient_book;
 SQL
+```
 
+**5. Re-grant the runtime role, then start the API.** The backup is taken
+with `--no-privileges`, and the restore ran as the superuser, so every table
+in the restored database is owned by `dental` with no grants at all — the
+API's own role (`DB_APP_USER`) cannot read a row of it. `migrate` is what
+provisions that role after every deploy (`ensure-app-role.ts`); running it
+here re-applies the grants to the database that now carries the name.
+`start api` alone would skip this and the app would come up with
+"permission denied" on its first query.
+
+```bash
+docker compose -f compose.prod.yml run --rm migrate
 docker compose -f compose.prod.yml start api
 ```
 
-**5. Confirm the app looks right**, then drop the pre-restore database once
+Expect the line `✓  Runtime role … is up to date` in the output; the
+migrations themselves are already applied in the dump and report nothing.
+
+**6. Confirm the app looks right**, then drop the pre-restore database once
 you no longer need it as a fallback:
 
 ```bash

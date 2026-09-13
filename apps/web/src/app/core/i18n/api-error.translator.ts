@@ -81,6 +81,8 @@ export class ApiErrorTranslator {
           : this.t('error.patientNotFound');
       case 'ERR_FILE_NUMBER_TAKEN':
         return this.t('error.fileNumberTaken', params);
+      case 'ERR_PATIENT_MODIFIED':
+        return this.t('error.patientModified');
       case 'ERR_REGISTRY_CASE_NOT_FOUND':
         return params['registryNo']
           ? this.t('error.registryCaseNotFoundWithNo', params)

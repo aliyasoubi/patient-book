@@ -55,6 +55,8 @@ export interface Patient {
   isArchived: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Optimistic-concurrency token; sent back as `expectedVersion` on update. */
+  version: number;
 }
 
 export interface RegistryRef {
@@ -115,4 +117,6 @@ export interface PatientInput {
   lastVisitAt?: string | null;
   notes?: string | null;
   treatments?: Array<{ code: string; performedAt?: string | null; notes?: string | null }>;
+  /** The `version` this edit was loaded from; the API refuses a stale save. */
+  expectedVersion?: number;
 }

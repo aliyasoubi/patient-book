@@ -8,7 +8,7 @@ import { PatientTreatment } from '../treatments/patient-treatment.entity';
 import { TreatmentType } from '../treatments/treatment-type.entity';
 import type { UpdatePatientDto, TreatmentInputDto } from './dto/patient.dto';
 import type { AuditService } from '../../application/services/audit.service';
-import { EducationLevel, Gender } from '../../domain';
+import { EducationLevel, ErrorCode, Gender } from '../../domain';
 
 interface PatientWriteHelpers {
   assign(
@@ -197,5 +197,60 @@ describe('PatientsService.nameSuggestions', () => {
       { name: 'زهرا', count: 9 },
       { name: 'مریم', count: 5 },
     ]);
+  });
+});
+
+describe('PatientsService.update concurrency', () => {
+  /** A transaction whose row lock reports `storedVersion` for the patient. */
+  const makeService = (storedVersion: number) => {
+    const qb = {
+      setLock: () => qb,
+      select: () => qb,
+      where: () => qb,
+      getOne: () => Promise.resolve({ id: 'patient-1', version: storedVersion }),
+    };
+    const manager = { getRepository: () => ({ createQueryBuilder: () => qb }) };
+    const dataSource = {
+      transaction: (run: (m: unknown) => Promise<void>) => run(manager),
+    } as unknown as DataSource;
+    const service = new PatientsService(
+      {} as Repository<Patient>,
+      {} as Repository<ReferralSource>,
+      dataSource,
+      {} as AuditService,
+    );
+    // Everything after the version gate is out of scope here; failing the
+    // lookup proves the gate was passed without mocking the whole write path.
+    const afterGate = jest
+      .spyOn(service as unknown as { findPatientForAudit: () => Promise<null> }, 'findPatientForAudit')
+      .mockResolvedValue(null);
+    return { service, afterGate };
+  };
+
+  it('refuses a save made from a stale copy of the record', async () => {
+    const { service, afterGate } = makeService(4);
+
+    await expect(
+      service.update('patient-1', { expectedVersion: 3 } as UpdatePatientDto, 'user-1'),
+    ).rejects.toMatchObject({ code: ErrorCode.PatientModified });
+    expect(afterGate).not.toHaveBeenCalled();
+  });
+
+  it('lets a save through when the client holds the current version', async () => {
+    const { service, afterGate } = makeService(4);
+
+    await expect(
+      service.update('patient-1', { expectedVersion: 4 } as UpdatePatientDto, 'user-1'),
+    ).rejects.toMatchObject({ code: ErrorCode.PatientNotFound });
+    expect(afterGate).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not check when the client sends no version', async () => {
+    const { service, afterGate } = makeService(4);
+
+    await expect(
+      service.update('patient-1', {} as UpdatePatientDto, 'user-1'),
+    ).rejects.toMatchObject({ code: ErrorCode.PatientNotFound });
+    expect(afterGate).toHaveBeenCalledTimes(1);
   });
 });

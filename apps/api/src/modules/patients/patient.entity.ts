@@ -11,6 +11,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from 'typeorm';
 import { DataIssue, DatePrecisionEnum, EducationLevel, Gender, searchKey } from '../../domain';
 import { ReferralSource } from '../treatments/referral-source.entity';
@@ -154,6 +155,15 @@ export class Patient {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
+
+  /**
+   * Bumped on every save. The edit form sends back the version it loaded, and
+   * `PatientsService.update` refuses to overwrite a record that has moved on
+   * since — two receptionists editing the same file no longer silently lose
+   * one set of changes.
+   */
+  @VersionColumn()
+  version!: number;
 
   /** Patient records are archived, never destroyed. */
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })

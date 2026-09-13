@@ -105,6 +105,18 @@ html {
   --pb-cat-sand-fg: light-dark(#6b4a12, #e6cf9b);
   --pb-cat-slate-bg: light-dark(#e8ecef, #2e3a42);
   --pb-cat-slate-fg: light-dark(#3d4a54, #c0ccd4);
+
+  /*
+   * Status colours with a fixed meaning. M3 has no success or warning role;
+   * riding on `secondary`/`tertiary` meant "active" turned purple under the
+   * violet palette and "overdue" was azure in every palette. These hold their
+   * hue whichever brand palette is picked, and are a notch stronger than the
+   * categorical tints above so a status reads as a status. `error` stays M3's.
+   */
+  --pb-success-container: light-dark(#d6efdb, #1d3f27);
+  --pb-on-success-container: light-dark(#0e4a1f, #b4e5c0);
+  --pb-warning-container: light-dark(#fbe8c4, #4a3710);
+  --pb-on-warning-container: light-dark(#5a3c00, #f4d68b);
 }
 
 /**

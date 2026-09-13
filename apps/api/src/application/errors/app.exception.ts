@@ -71,6 +71,7 @@ const DOMAIN_ERROR_STATUS: Partial<Record<ErrorCode, HttpStatus>> = {
   [ErrorCode.CurrentPasswordWrong]: HttpStatus.UNAUTHORIZED,
   [ErrorCode.AccountDisabled]: HttpStatus.FORBIDDEN,
   [ErrorCode.FileNumberTaken]: HttpStatus.CONFLICT,
+  [ErrorCode.PatientModified]: HttpStatus.CONFLICT,
   [ErrorCode.RegistryNumberTaken]: HttpStatus.CONFLICT,
   [ErrorCode.UsernameTaken]: HttpStatus.CONFLICT,
   [ErrorCode.RateLimited]: HttpStatus.TOO_MANY_REQUESTS,

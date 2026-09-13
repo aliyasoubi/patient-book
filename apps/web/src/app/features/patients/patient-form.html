@@ -185,6 +185,7 @@
         variant="flat"
         type="submit"
         icon="save"
+        [disabled]="loading()"
         [loading]="saving()"
         [loadingText]="'patientForm.savingLabel' | translate"
       >

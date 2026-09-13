@@ -3,12 +3,14 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
   MaxLength,
+  Min,
   Validate,
   ValidateNested,
 } from 'class-validator';
@@ -203,4 +205,16 @@ export class CreatePatientDto {
 }
 
 /** Every field optional; `fileNo` may be changed but must stay unique. */
-export class UpdatePatientDto extends PartialType(CreatePatientDto) {}
+export class UpdatePatientDto extends PartialType(CreatePatientDto) {
+  /**
+   * The `version` the client loaded. When present, the update is refused with
+   * `ERR_PATIENT_MODIFIED` if the record has been saved since. Optional so
+   * callers that already carry their own staleness check (reconcile apply)
+   * are unaffected.
+   */
+  @ApiPropertyOptional({ description: 'Version the client loaded; refused if stale' })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  expectedVersion?: number;
+}

@@ -47,6 +47,8 @@ export interface PatientResponse {
   isArchived: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Optimistic-concurrency token; send back as `expectedVersion` on update. */
+  version: number;
 }
 
 export interface JalaliValue {
@@ -123,6 +125,7 @@ export function toPatientResponse(p: Patient, detailed = false): PatientResponse
     isArchived: p.deletedAt !== null,
     createdAt: p.createdAt?.toISOString() ?? '',
     updatedAt: p.updatedAt?.toISOString() ?? '',
+    version: p.version,
   };
 
   if (detailed) {

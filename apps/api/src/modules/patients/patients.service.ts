@@ -231,6 +231,21 @@ export class PatientsService {
     userId: string | null,
   ): Promise<PatientResponse> {
     await this.dataSource.transaction(async (manager) => {
+      // Row lock first, then the version check inside it. A concurrent update
+      // blocks here until this one commits, re-reads the bumped version, and
+      // is refused — so the check and the write are atomic, not just adjacent.
+      const locked = await manager
+        .getRepository(Patient)
+        .createQueryBuilder('p')
+        .setLock('pessimistic_write')
+        .select(['p.id', 'p.version'])
+        .where('p.id = :id', { id })
+        .getOne();
+      if (!locked) throw AppException.notFound(ErrorCode.PatientNotFound);
+      if (dto.expectedVersion !== undefined && locked.version !== dto.expectedVersion) {
+        throw AppException.conflict(ErrorCode.PatientModified);
+      }
+
       const patient = await this.findPatientForAudit(manager, id, false, false);
       if (!patient) throw AppException.notFound(ErrorCode.PatientNotFound);
 

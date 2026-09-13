@@ -35,6 +35,11 @@ export enum ErrorCode {
   PatientNotFound = 'ERR_PATIENT_NOT_FOUND',
   FileNumberTaken = 'ERR_FILE_NUMBER_TAKEN',
   FileNumberInvalid = 'ERR_FILE_NUMBER_INVALID',
+  /**
+   * The record was saved by someone else after this client loaded it. The
+   * client keeps the user's draft, reloads, and lets them decide.
+   */
+  PatientModified = 'ERR_PATIENT_MODIFIED',
 
   // -- Registries -------------------------------------------------------
   RegistryCaseNotFound = 'ERR_REGISTRY_CASE_NOT_FOUND',

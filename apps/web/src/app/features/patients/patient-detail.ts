@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -9,6 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { PatientsService } from './data/patients.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -104,7 +106,36 @@ export class PatientDetail {
     return rows;
   });
 
+  /**
+   * One `switchMap` for every load, so going straight from one patient to the
+   * next cancels the first request instead of letting a slow response for the
+   * old id arrive after the new one and show the wrong patient.
+   */
+  private readonly load$ = new Subject<string>();
+
   constructor() {
+    this.load$
+      .pipe(
+        switchMap((id) =>
+          this.service.get(id).pipe(
+            map((patient) => ({ id, patient })),
+            catchError(() => of({ id, patient: null })),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ id, patient }) => {
+        // Belt and braces on top of switchMap: never show a record for a route
+        // this component has since left.
+        if (id !== this.id()) return;
+        this.loading.set(false);
+        if (!patient) {
+          void this.router.navigate(['/patients']);
+          return;
+        }
+        this.patient.set(patient);
+      });
+
     // Route inputs are bound after construction, so the id can only be read
     // inside an effect. This also re-fetches when navigating straight from one
     // patient to another, where the component instance is reused.
@@ -118,16 +149,7 @@ export class PatientDetail {
     this.loading.set(true);
     this.historyLoaded.set(false);
     this.history.set([]);
-    this.service.get(id).subscribe({
-      next: (patient) => {
-        this.patient.set(patient);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        void this.router.navigate(['/patients']);
-      },
-    });
+    this.load$.next(id);
   }
 
   /** Renders an import flag in the reader's language, from its code. */
