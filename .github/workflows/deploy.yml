@@ -1,0 +1,41 @@
+name: Deploy
+
+# Manual only, on purpose: this ships to a live server holding real patient
+# records for one clinic. CI (ci.yml) already gates every push with tests,
+# migrations, and e2e; this workflow is the separate, deliberate "go" button
+# a human presses once they're happy with what's on main.
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # No checkout needed — the VPS pulls its own copy of `main`. This
+      # workflow only has to open the SSH connection; the server-side
+      # authorized_keys entry ignores whatever command we send and always
+      # runs `cd /opt/patient-book && git pull && ./ops/deploy/deploy.sh`.
+      # That forced command is what limits this key to exactly one action
+      # even if the private key were ever to leak.
+      - name: Set up deploy key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy (git pull && ops/deploy/deploy.sh on the VPS)
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" "this command is ignored server-side"
+
+      - name: Clean up deploy key
+        if: always()
+        run: shred -u ~/.ssh/deploy_key || rm -f ~/.ssh/deploy_key
