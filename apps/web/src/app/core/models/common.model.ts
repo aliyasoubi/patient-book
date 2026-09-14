@@ -88,6 +88,16 @@ export interface SurgeryQueueItem {
   notes: string | null;
 }
 
+/** A row for the dashboard's "next up" panel — already formatted, not the full queue record. */
+export interface UpcomingSurgery {
+  id: string;
+  recordedName: string;
+  toothPosition: string;
+  implantBrand: string | null;
+  hasNameMismatch: boolean;
+  surgeryDate: string | null;
+}
+
 export interface DashboardStats {
   totals: {
     patients: number;

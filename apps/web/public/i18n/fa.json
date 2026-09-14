@@ -21,6 +21,7 @@
     "ortho": "پرونده ارتودنسی — Dentixo",
     "surgery": "لیست انتظار جراحی — Dentixo",
     "surgeryNew": "افزودن به لیست جراحی — Dentixo",
+    "surgeryEdit": "ویرایش ردیف جراحی — Dentixo",
     "settings": "تنظیمات — Dentixo",
     "account": "حساب کاربری — Dentixo",
     "dataExchange": "تبادل داده اکسل — Dentixo"
@@ -33,6 +34,7 @@
     "save": "ذخیره",
     "saving": "در حال ذخیره…",
     "edit": "ویرایش",
+    "delete": "حذف",
     "call": "تماس",
     "all": "همه",
     "filters": "فیلترها",
@@ -87,7 +89,8 @@
     "genderCount": "{{gender}}، {{count}} نفر",
     "maximum": "بیشینه {{count}}",
     "dateTimeAria": "تاریخ و ساعت امروز",
-    "loadFailed": "اطلاعات داشبورد بارگذاری نشد."
+    "loadFailed": "اطلاعات داشبورد بارگذاری نشد.",
+    "upcomingSurgeriesEmpty": "جراحی برنامه‌ریزی‌شده‌ای در پیش نیست."
   },
   "greeting": {
     "morning": "صبح بخیر",
@@ -134,6 +137,8 @@
     "scheduled": "در انتظار",
     "completed": "انجام شده",
     "mismatchOnly": "فقط موارد مغایرت نام",
+    "archivedOnly": "فقط حذف‌شده‌ها",
+    "restore": "بازگردانی به لیست",
     "noDate": "بدون تاریخ",
     "implantRegistry": "پرونده ایمپلنت {{number}}",
     "patientFile": "پرونده {{fileNo}}",
@@ -143,6 +148,7 @@
   },
   "surgeryForm": {
     "createTitle": "افزودن به لیست انتظار جراحی",
+    "editTitle": "ویرایش ردیف لیست جراحی",
     "section": "مشخصات ردیف",
     "recordedName": "نام بیمار",
     "implantRegistryNo": "شماره پرونده ایمپلنت",
@@ -157,8 +163,15 @@
     "status": "وضعیت",
     "notes": "یادداشت",
     "createLabel": "ثبت ردیف",
+    "saveLabel": "ذخیره تغییرات",
     "savingLabel": "در حال ذخیره…",
-    "created": "به لیست انتظار جراحی افزوده شد."
+    "created": "به لیست انتظار جراحی افزوده شد.",
+    "saved": "تغییرات ذخیره شد.",
+    "deleteTitle": "حذف از لیست جراحی",
+    "deleteMessage": "ردیف «{{name}}» از لیست انتظار جراحی حذف می‌شود. از بخش «فقط حذف‌شده‌ها» قابل بازگردانی است.",
+    "deleteConfirm": "حذف کن",
+    "deleted": "از لیست جراحی حذف شد.",
+    "restored": "به لیست جراحی بازگردانده شد."
   },
   "patients": {
     "title": "بیماران",

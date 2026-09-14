@@ -73,9 +73,16 @@
       gap: 10px;
     }
 
-    /** Reserve the corner only on rows that actually carry a call button. */
-    &:has(.queue__call) {
-      padding-inline-end: 66px;
+    /** Reserve the corner only on rows that actually carry an action button. */
+    &:has(.queue__action) {
+      padding-inline-end: 60px;
+    }
+
+    @media (max-width: 640px) {
+      // The actions move into normal flow at this width — see `&__actions`.
+      &:has(.queue__action) {
+        padding-inline-end: 14px;
+      }
     }
 
     &--mismatch {
@@ -175,21 +182,40 @@
     }
   }
 
-  &__call {
+  &__actions {
     position: absolute;
-    inset-inline-end: 14px;
-    top: 14px;
+    inset-inline-end: 10px;
+    top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    @media (max-width: 640px) {
+      position: static;
+      flex-direction: row;
+      align-self: flex-end;
+    }
+  }
+
+  &__action {
     display: grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+    border: none;
     border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-primary-container);
     color: var(--mat-sys-on-primary-container);
     text-decoration: none;
+    cursor: pointer;
 
     .material-symbols-rounded {
-      font-size: 20px;
+      font-size: 18px;
+    }
+
+    &--danger {
+      background: var(--mat-sys-error-container);
+      color: var(--mat-sys-on-error-container);
     }
   }
 }

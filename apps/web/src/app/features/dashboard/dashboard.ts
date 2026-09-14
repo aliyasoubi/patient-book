@@ -20,7 +20,7 @@ import {
   treatmentColor,
 } from '../../shared/labels';
 import { PbButton, PbDatetimeCard, PbPageHeader, PbSurface } from '../../shared/ui';
-import type { DashboardStats } from '../../core/models/common.model';
+import type { DashboardStats, UpcomingSurgery } from '../../core/models/common.model';
 
 interface StatTile {
   label: string;
@@ -65,6 +65,7 @@ export class Dashboard {
   protected readonly loading = signal(true);
   protected readonly failed = signal(false);
   protected readonly stats = signal<DashboardStats | null>(null);
+  protected readonly upcomingSurgeries = signal<UpcomingSurgery[]>([]);
 
   protected readonly greeting = computed(() => {
     this.i18n.currentLang();
@@ -110,14 +111,6 @@ export class Dashboard {
       });
     }
     tiles.push(
-      {
-        label: 'tile.upcomingSurgeries',
-        value: s.totals.upcomingSurgeries,
-        icon: 'event_available',
-        link: '/surgery',
-        queryParams: { status: 'scheduled' },
-        tone: 'neutral',
-      },
       {
         label: 'tile.patients',
         value: s.totals.patients,
@@ -186,6 +179,11 @@ export class Dashboard {
     return this.i18n.instant('dashboard.trendAria', { max });
   }
 
+  /** Brand and tooth position, whichever of the two is actually recorded. */
+  protected upcomingMeta(item: UpcomingSurgery): string {
+    return [item.implantBrand, item.toothPosition].filter(Boolean).join(' · ');
+  }
+
   protected genderTooltip(gender: string, count: number): string {
     const label = this.i18n.instant(genderLabel(gender));
     const formattedCount = formatPersianCount(count);
@@ -209,6 +207,11 @@ export class Dashboard {
         this.failed.set(true);
         this.loading.set(false);
       },
+    });
+    // Independent of the totals above: one failing must not block the other.
+    this.registry.upcomingSurgeries().subscribe({
+      next: (rows) => this.upcomingSurgeries.set(rows),
+      error: () => this.upcomingSurgeries.set([]),
     });
   }
 }

@@ -33,6 +33,12 @@
     <pb-checkbox-field [checked]="mismatchedOnly()" (checkedChange)="toggleMismatched($event)">
       {{ 'surgery.mismatchOnly' | translate }}
     </pb-checkbox-field>
+
+    @if (auth.can('archiveSurgery')) {
+      <pb-checkbox-field [checked]="archivedOnly()" (checkedChange)="toggleArchived($event)">
+        {{ 'surgery.archivedOnly' | translate }}
+      </pb-checkbox-field>
+    }
   </div>
 
   @if (loading()) {
@@ -126,15 +132,49 @@
             </div>
           </div>
 
-          @if (item.patient?.mobile) {
-            <a
-              class="queue__call"
-              [href]="'tel:' + item.patient!.mobile"
-              [attr.aria-label]="callLabel(item.recordedName)"
-            >
-              <mat-icon aria-hidden="true">call</mat-icon>
-            </a>
-          }
+          <div class="queue__actions">
+            @if (item.patient?.mobile) {
+              <a
+                class="queue__action"
+                [href]="'tel:' + item.patient!.mobile"
+                [attr.aria-label]="callLabel(item.recordedName)"
+              >
+                <mat-icon aria-hidden="true">call</mat-icon>
+              </a>
+            }
+            @if (archivedOnly()) {
+              @if (auth.can('archiveSurgery')) {
+                <button
+                  type="button"
+                  class="queue__action"
+                  (click)="restore(item)"
+                  [attr.aria-label]="'surgery.restore' | translate"
+                >
+                  <mat-icon aria-hidden="true">restore_from_trash</mat-icon>
+                </button>
+              }
+            } @else {
+              @if (auth.can('editSurgery')) {
+                <a
+                  class="queue__action"
+                  [routerLink]="['/surgery', item.id, 'edit']"
+                  [attr.aria-label]="'common.edit' | translate"
+                >
+                  <mat-icon aria-hidden="true">edit</mat-icon>
+                </a>
+              }
+              @if (auth.can('archiveSurgery')) {
+                <button
+                  type="button"
+                  class="queue__action queue__action--danger"
+                  (click)="delete(item)"
+                  [attr.aria-label]="'common.delete' | translate"
+                >
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                </button>
+              }
+            }
+          </div>
         </li>
       }
     </ul>

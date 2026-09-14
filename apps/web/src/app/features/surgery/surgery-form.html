@@ -1,11 +1,11 @@
 <div class="form-page">
   <pb-page-header
-    [title]="'surgeryForm.createTitle' | translate"
+    [title]="title() | translate"
     [backLabel]="'common.back' | translate"
     (back)="cancel()"
   />
 
-  @if (saving()) {
+  @if (saving() || loading()) {
     <mat-progress-bar mode="indeterminate" />
   }
 
@@ -84,7 +84,7 @@
         [loading]="saving()"
         [loadingText]="'surgeryForm.savingLabel' | translate"
       >
-        {{ 'surgeryForm.createLabel' | translate }}
+        {{ submitLabel() | translate }}
       </pb-button>
     </div>
   </form>

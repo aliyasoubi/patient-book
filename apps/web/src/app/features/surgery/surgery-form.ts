@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -17,7 +17,7 @@ import {
 import { ABUTMENT_TYPES, IMPLANT_BRAND_KEYS, SURGERY_STATUSES, abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
-import type { RegistryCase } from '../../core/models/common.model';
+import type { RegistryCase, SurgeryQueueItem } from '../../core/models/common.model';
 import {
   PbButton,
   PbDateField,
@@ -56,6 +56,16 @@ export class SurgeryForm implements HasUnsavedChanges {
   private readonly errors = inject(ApiErrorTranslator);
   private readonly i18n = inject(TranslateService);
 
+  /** Present when editing; absent on `/surgery/new`. */
+  readonly id = input<string | undefined>(undefined);
+  protected readonly isEdit = computed(() => !!this.id());
+  protected readonly title = computed(() =>
+    this.isEdit() ? 'surgeryForm.editTitle' : 'surgeryForm.createTitle',
+  );
+  protected readonly submitLabel = computed(() =>
+    this.isEdit() ? 'surgeryForm.saveLabel' : 'surgeryForm.createLabel',
+  );
+
   protected readonly statusOptions: SelectOption[] = SURGERY_STATUSES.map((s) => ({
     value: s,
     label: surgeryStatusLabel(s),
@@ -81,6 +91,7 @@ export class SurgeryForm implements HasUnsavedChanges {
   });
 
   protected readonly saving = signal(false);
+  protected readonly loading = signal(false);
   /** Set once the save round-trips, so the post-save navigation is not challenged. */
   private saved = false;
 
@@ -117,10 +128,54 @@ export class SurgeryForm implements HasUnsavedChanges {
       const q = this.nameQuery();
       untracked(() => this.searchImplantCases(q));
     });
+    effect(() => {
+      const id = this.id();
+      untracked(() => {
+        if (id) this.loadSurgery(id);
+      });
+    });
   }
 
   hasUnsavedChanges(): boolean {
     return !this.saved && this.form.dirty;
+  }
+
+  private loadSurgery(id: string): void {
+    this.loading.set(true);
+    this.registry.getSurgery(id).subscribe({
+      next: (item) => {
+        this.applyItem(item);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        void this.router.navigate(['/surgery']);
+      },
+    });
+  }
+
+  private applyItem(item: SurgeryQueueItem): void {
+    this.form.patchValue({
+      recordedName: item.recordedName,
+      implantRegistryNo: item.implantRegistryNo ?? '',
+      surgeryDate: this.toDate(item.surgeryDate?.jalali),
+      toothPosition: item.toothPosition,
+      implantBrand: item.implantBrand ?? '',
+      abutmentType: item.abutmentType,
+      prosthesisDue: item.prosthesisDue ?? '',
+      status: item.status,
+      notes: item.notes ?? '',
+    });
+  }
+
+  /**
+   * A date whose day component is imprecise (a month/year-only record) cannot
+   * seed a datepicker, which needs a full day — left empty rather than guessing.
+   */
+  private toDate(jalali: string | undefined): Date | null {
+    if (!jalali || jalali.split('/').length !== 3) return null;
+    const parsed = this.dateAdapter.parse(jalali, 'yyyy/MM/dd');
+    return parsed && this.dateAdapter.isValid(parsed) ? parsed : null;
   }
 
   private searchImplantCases(q: string): void {
@@ -144,6 +199,9 @@ export class SurgeryForm implements HasUnsavedChanges {
   }
 
   protected submit(): void {
+    // Never save while a load is in flight: the form would be a mix of the
+    // previous record and whatever has been patched in so far.
+    if (this.loading()) return;
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
       // Works regardless of whether a field binds via `formControlName` or the
@@ -175,11 +233,13 @@ export class SurgeryForm implements HasUnsavedChanges {
       payload['surgeryDate'] = this.dateAdapter.toIso8601(raw.surgeryDate);
     }
 
-    this.registry.saveSurgery(null, payload).subscribe({
+    this.registry.saveSurgery(this.id() ?? null, payload).subscribe({
       next: () => {
         this.saving.set(false);
         this.snackBar.open(
-          this.i18n.instant('surgeryForm.created'),
+          this.isEdit()
+            ? this.i18n.instant('surgeryForm.saved')
+            : this.i18n.instant('surgeryForm.created'),
           this.i18n.instant('action.dismiss'),
         );
         this.saved = true;

@@ -81,6 +81,12 @@ export const routes: Routes = [
         title: translatedTitle('route.surgeryNew'),
       },
       {
+        path: 'surgery/:id/edit',
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./features/surgery/surgery-form').then((m) => m.SurgeryForm),
+        title: translatedTitle('route.surgeryEdit'),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
         title: translatedTitle('route.settings'),

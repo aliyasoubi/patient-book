@@ -11,6 +11,7 @@ const PERMISSIONS = {
   editPatients: ['admin', 'dentist', 'receptionist'],
   editSurgery: ['admin', 'dentist', 'receptionist'],
   archivePatients: ['admin', 'dentist'],
+  archiveSurgery: ['admin', 'dentist'],
   manageUsers: ['admin'],
   viewHistory: ['admin', 'dentist'],
   manageData: ['admin'],

@@ -39,6 +39,44 @@
     </section>
 
     <div class="dash__grid">
+      <!-- ── Upcoming surgeries ─────────────────────────────────
+           Who's actually next, not just how many — a bare count told
+           nobody which patient to prep for. -->
+      <pb-surface [title]="'tile.upcomingSurgeries' | translate">
+        @if (upcomingSurgeries().length) {
+          <ul class="upcoming">
+            @for (item of upcomingSurgeries(); track item.id) {
+              <li>
+                <a [routerLink]="['/surgery']" [queryParams]="{ q: item.recordedName }">
+                  <mat-icon
+                    class="upcoming__icon"
+                    [class.upcoming__icon--warn]="item.hasNameMismatch"
+                    aria-hidden="true"
+                  >
+                    {{ item.hasNameMismatch ? 'warning' : 'event' }}
+                  </mat-icon>
+                  <span class="upcoming__body">
+                    <span class="upcoming__name">{{ item.recordedName }}</span>
+                    @if (upcomingMeta(item); as meta) {
+                      <span class="upcoming__meta">{{ meta }}</span>
+                    }
+                  </span>
+                  <span class="upcoming__date">{{
+                    (item.surgeryDate | faNum) || ('surgery.noDate' | translate)
+                  }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+          <a class="dash__view-list" routerLink="/surgery">
+            {{ 'dashboard.viewList' | translate }}
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          </a>
+        } @else {
+          <p class="panel__empty">{{ 'dashboard.upcomingSurgeriesEmpty' | translate }}</p>
+        }
+      </pb-surface>
+
       <!-- ── Recall ─────────────────────────────────────────────
            Operational follow-up work, so it leads the panels; the
            analytics below describe the practice rather than ask

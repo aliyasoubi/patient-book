@@ -3,7 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { DashboardStats, PageResult, RegistryCase, SurgeryQueueItem } from '../models/common.model';
+import {
+  DashboardStats,
+  PageResult,
+  RegistryCase,
+  SurgeryQueueItem,
+  UpcomingSurgery,
+} from '../models/common.model';
 import { toParams } from './http-params.util';
 
 export interface RegistryQuery {
@@ -18,6 +24,7 @@ export interface RegistryQuery {
 
 export interface SurgeryQuery extends Omit<RegistryQuery, 'unlinkedOnly'> {
   mismatchedOnly?: boolean;
+  archivedOnly?: boolean;
   from?: string;
   to?: string;
 }
@@ -71,6 +78,10 @@ export class RegistryService {
     });
   }
 
+  getSurgery(id: string): Observable<SurgeryQueueItem> {
+    return this.http.get<SurgeryQueueItem>(`${environment.apiUrl}/surgery-queue/${id}`);
+  }
+
   saveSurgery(id: string | null, body: Record<string, unknown>): Observable<SurgeryQueueItem> {
     const url = `${environment.apiUrl}/surgery-queue`;
     return id
@@ -82,7 +93,15 @@ export class RegistryService {
     return this.http.delete<void>(`${environment.apiUrl}/surgery-queue/${id}`);
   }
 
+  restoreSurgery(id: string): Observable<SurgeryQueueItem> {
+    return this.http.post<SurgeryQueueItem>(`${environment.apiUrl}/surgery-queue/${id}/restore`, {});
+  }
+
   dashboard(): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${environment.apiUrl}/stats/dashboard`);
+  }
+
+  upcomingSurgeries(): Observable<UpcomingSurgery[]> {
+    return this.http.get<UpcomingSurgery[]>(`${environment.apiUrl}/stats/upcoming-surgeries`);
   }
 }

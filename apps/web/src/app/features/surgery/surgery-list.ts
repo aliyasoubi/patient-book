@@ -1,15 +1,19 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryService } from '../../core/services/registry.service';
+import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import { EmptyState } from '../../shared/components/empty-state';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
@@ -21,6 +25,7 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     MatButtonToggleModule,
     MatPaginatorModule,
     MatProgressBarModule,
@@ -40,6 +45,8 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
 export class SurgeryList {
   private readonly registry = inject(RegistryService);
   private readonly i18n = inject(TranslateService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   protected readonly auth = inject(AuthService);
   protected readonly abutmentLabel = abutmentLabel;
   protected readonly statusLabel = surgeryStatusLabel;
@@ -47,6 +54,8 @@ export class SurgeryList {
   protected readonly search = new FormControl('', { nonNullable: true });
   protected readonly status = signal<'' | 'scheduled' | 'completed' | 'cancelled'>('');
   protected readonly mismatchedOnly = signal(false);
+  /** Deleted rows are only archived; this shows them so one can be brought back. */
+  protected readonly archivedOnly = signal(false);
   protected readonly page = signal(1);
   protected readonly limit = signal(25);
 
@@ -80,9 +89,10 @@ export class SurgeryList {
       const q = this.query();
       const status = this.status();
       const mismatched = this.mismatchedOnly();
+      const archived = this.archivedOnly();
       const page = this.page();
       const limit = this.limit();
-      untracked(() => this.fetch(q, status, mismatched, page, limit));
+      untracked(() => this.fetch(q, status, mismatched, archived, page, limit));
     });
   }
 
@@ -90,6 +100,7 @@ export class SurgeryList {
     q: string,
     status: string,
     mismatchedOnly: boolean,
+    archivedOnly: boolean,
     page: number,
     limit: number,
   ): void {
@@ -99,6 +110,7 @@ export class SurgeryList {
         q: q || undefined,
         status: status || undefined,
         mismatchedOnly: mismatchedOnly || undefined,
+        archivedOnly: archivedOnly || undefined,
         page,
         limit,
         sortDir: 'ASC',
@@ -118,7 +130,9 @@ export class SurgeryList {
   }
 
   protected emptyHint(): string {
-    return this.search.value || this.status() ? this.i18n.instant('filters.changeThem') : '';
+    return this.search.value || this.status() || this.archivedOnly()
+      ? this.i18n.instant('filters.changeThem')
+      : '';
   }
 
   protected setStatus(value: '' | 'scheduled' | 'completed' | 'cancelled'): void {
@@ -131,8 +145,59 @@ export class SurgeryList {
     this.page.set(1);
   }
 
+  protected toggleArchived(checked: boolean): void {
+    this.archivedOnly.set(checked);
+    this.page.set(1);
+  }
+
+  protected restore(item: SurgeryQueueItem): void {
+    this.registry.restoreSurgery(item.id).subscribe(() => {
+      this.snackBar.open(
+        this.i18n.instant('surgeryForm.restored'),
+        this.i18n.instant('action.dismiss'),
+      );
+      this.refetch();
+    });
+  }
+
   protected onPage(event: PageEvent): void {
     this.page.set(event.pageIndex + 1);
     this.limit.set(event.pageSize);
+  }
+
+  /** A soft delete — the row reappears under "archived only", where it can be restored. */
+  protected delete(item: SurgeryQueueItem): void {
+    const data: ConfirmData = {
+      title: this.i18n.instant('surgeryForm.deleteTitle'),
+      message: this.i18n.instant('surgeryForm.deleteMessage', {
+        name: item.recordedName || this.i18n.instant('patient.unnamed'),
+      }),
+      confirmLabel: this.i18n.instant('surgeryForm.deleteConfirm'),
+      tone: 'warn',
+    };
+    this.dialog
+      .open(ConfirmDialog, { data, width: '420px', maxWidth: '92vw' })
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.registry.deleteSurgery(item.id).subscribe(() => {
+          this.snackBar.open(
+            this.i18n.instant('surgeryForm.deleted'),
+            this.i18n.instant('action.dismiss'),
+          );
+          this.refetch();
+        });
+      });
+  }
+
+  private refetch(): void {
+    this.fetch(
+      this.query(),
+      this.status(),
+      this.mismatchedOnly(),
+      this.archivedOnly(),
+      this.page(),
+      this.limit(),
+    );
   }
 }
