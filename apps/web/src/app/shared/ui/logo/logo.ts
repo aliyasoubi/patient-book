@@ -4,9 +4,9 @@ import { Component, computed, input } from '@angular/core';
  * The Dentixo symbol mark.
  *
  * Inlined as SVG rather than loaded from `public/brand/dentixo-mark.svg`:
- * an `<img>` can't inherit `currentColor`, and the mark has to follow the
- * palette the user picks in settings (cyan/green/violet) and invert on the
- * login screen's coloured panel. The paths here are the same geometry the
+ * an `<img>` can't inherit `currentColor`, and the mark has to follow
+ * `--mat-sys-primary` in both light and dark mode and invert on the login
+ * screen's coloured panel. The paths here are the same geometry the
  * files in `public/brand/` carry — that directory stays the source of truth
  * for anything outside the app (favicon, app icons, documents).
  *

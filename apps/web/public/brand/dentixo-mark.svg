@@ -5,9 +5,9 @@
   belongs to the same visual family as the Material Symbols Rounded set the
   rest of the product is built from.
 
-  Stroked in `currentColor` on purpose: the app re-themes its primary colour
-  at runtime (the cyan/green/violet palettes in settings) and the mark
-  follows it rather than pinning one hex that drifts out of step.
+  Stroked in `currentColor` on purpose: the app's primary colour differs
+  between light and dark mode and the mark follows it rather than pinning
+  one hex that drifts out of step.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Dentixo">
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">

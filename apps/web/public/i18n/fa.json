@@ -308,12 +308,6 @@
     "automatic": "خودکار",
     "light": "روشن",
     "dark": "تیره",
-    "colorPalette": "پالت رنگی",
-    "palette": {
-      "cyan": "فیروزه‌ای",
-      "green": "سبز",
-      "violet": "بنفش"
-    },
     "account": "حساب کاربری",
     "changePassword": "تغییر رمز عبور",
     "treatments": "انواع درمان",

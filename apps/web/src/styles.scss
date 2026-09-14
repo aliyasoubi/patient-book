@@ -1,4 +1,5 @@
 @use '@angular/material' as mat;
+@use './styles/theme-colors' as theme;
 
 // Font faces are registered in angular.json's `styles` array rather than
 // imported here: their @font-face rules use paths relative to their own
@@ -7,17 +8,26 @@
 /**
  * Material 3 theme for a Persian, right-to-left clinical app.
  *
- * Cyan reads as clinical without being cold, and keeps enough contrast against
- * the white surfaces a clinic screen sits on all day. `theme-type: color-scheme`
- * emits both light and dark token sets and lets the OS choose, so no runtime
- * theme switch is needed for the default case.
+ * One palette, "Slate": a low-chroma blue (seed #435E91, HCT 265°/36) with a
+ * dusty lavender tertiary (seed #655975, HCT 305°/20). Blue is the hue
+ * patients already read as clinical trust; the eased chroma is what keeps it
+ * calm rather than corporate on a screen that is open all day. The tonal
+ * ramps in `styles/_theme-colors.scss` come from
+ * `ng generate @angular/material:theme-color` with those two seeds — a
+ * generated ramp is capped by its seed's chroma, so no container tone can
+ * drift louder than the seed the way Material's prebuilt cyan did. Lavender
+ * sits 40° from the primary: distinguishable at a glance on a 10px dot, never
+ * louder than it, and clear of the red band `error` owns.
+ *
+ * `theme-type: color-scheme` emits both light and dark token sets and lets the
+ * OS choose, so no runtime theme switch is needed for the default case.
  */
 html {
   @include mat.theme(
     (
       color: (
-        primary: mat.$cyan-palette,
-        tertiary: mat.$azure-palette,
+        primary: theme.$primary-palette,
+        tertiary: theme.$tertiary-palette,
         theme-type: color-scheme,
       ),
       typography: (
@@ -107,63 +117,17 @@ html {
   --pb-cat-slate-fg: light-dark(#3d4a54, #c0ccd4);
 
   /*
-   * Status colours with a fixed meaning. M3 has no success or warning role;
-   * riding on `secondary`/`tertiary` meant "active" turned purple under the
-   * violet palette and "overdue" was azure in every palette. These hold their
-   * hue whichever brand palette is picked, and are a notch stronger than the
-   * categorical tints above so a status reads as a status. `error` stays M3's.
+   * Status colours with a fixed meaning. M3 has no success or warning role,
+   * and `secondary`/`tertiary` carry no meaning of their own — tertiary is
+   * the app's second categorical accent (female, created, unlinked), so
+   * "overdue" riding on it would look like a category. These hold a hue that
+   * says what they mean, and are a notch stronger than the categorical tints
+   * above so a status reads as a status. `error` stays M3's.
    */
   --pb-success-container: light-dark(#d6efdb, #1d3f27);
   --pb-on-success-container: light-dark(#0e4a1f, #b4e5c0);
   --pb-warning-container: light-dark(#fbe8c4, #4a3710);
   --pb-on-warning-container: light-dark(#5a3c00, #f4d68b);
-}
-
-/**
- * Alternate colour palettes, picked in settings. `theme-overrides` only
- * patches individual token values, not a whole M3 tonal ramp, so this calls
- * the full `mat.theme` mixin again scoped to the attribute — CSS resolves
- * cascade per-property on whatever element carries it, so only the color
- * tokens these blocks declare are replaced; typography, shape and every
- * other token still fall through from the base block above. Not scoped to
- * `html` specifically: the settings picker also stamps this attribute on
- * each swatch button, so its `--mat-sys-primary` previews that palette
- * without a hardcoded, driftable hex value.
- */
-[data-palette='cyan'] {
-  @include mat.theme(
-    (
-      color: (
-        primary: mat.$cyan-palette,
-        tertiary: mat.$azure-palette,
-        theme-type: color-scheme,
-      ),
-    )
-  );
-}
-
-[data-palette='green'] {
-  @include mat.theme(
-    (
-      color: (
-        primary: mat.$green-palette,
-        tertiary: mat.$azure-palette,
-        theme-type: color-scheme,
-      ),
-    )
-  );
-}
-
-[data-palette='violet'] {
-  @include mat.theme(
-    (
-      color: (
-        primary: mat.$violet-palette,
-        tertiary: mat.$azure-palette,
-        theme-type: color-scheme,
-      ),
-    )
-  );
 }
 
 /** Explicit dark/light override, used when the user picks one in settings. */

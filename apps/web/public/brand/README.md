@@ -34,21 +34,22 @@ scales with the type tokens, and needs no second font.
 ## Colour
 
 The mark carries no colour of its own. In the app it inherits
-`--mat-sys-primary`, so it follows whichever palette the user picks in
-settings (cyan / green / violet) and flips to `--mat-sys-on-primary` on the
-login screen's coloured panel.
+`--mat-sys-primary` — Slate, `#435e91` in light mode and `#acc7ff` in dark —
+and flips to `--mat-sys-on-primary` on the login screen's coloured panel.
 
-The only place a hex is pinned is the icon tile — `#00808a → #004f52`, matching
-the `theme-color` meta tags — because a file on a phone's home screen can't
-resolve a CSS variable.
+The only place a hex is pinned is the icon tile — `#5c77ac → #2a4678`, tones
+50 and 30 of the Slate ramp, matching the `theme-color` meta tags and the
+manifest — because a file on a phone's home screen can't resolve a CSS
+variable.
 
-If you ever want the brand teal from the identity sheet (`#009688`) as the
-product's actual primary, don't hand-edit hexes: regenerate the M3 ramp from
-that seed, otherwise dark mode and every container/on-container pairing drift
-out of contrast.
+The product palette is generated, not hand-picked: `src/styles/_theme-colors.scss`
+comes from the two seeds below, and every container/on-container pairing and
+the whole dark scheme fall out of them. To change the colour, regenerate the
+ramp from a new seed rather than editing hexes — including the three pinned
+above, which should track tones 50/30 of whatever the new primary ramp is.
 
 ```bash
-npx ng generate @angular/material:theme-color
+cd apps/web && npx ng generate @angular/material:theme-color --primary-color='#435E91' --tertiary-color='#655975' --directory=src/styles/
 ```
 
 ## Rules

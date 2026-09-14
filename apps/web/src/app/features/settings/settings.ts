@@ -3,13 +3,11 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { BackupService, type BackupSettings } from '../../core/services/backup.service';
 import { AuthService } from '../../core/services/auth.service';
-import { PaletteService, PaletteName } from '../../core/services/palette.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { PatientsService } from '../patients/data/patients.service';
 import { roleLabel } from '../../shared/labels';
@@ -27,7 +25,6 @@ import type { TreatmentType } from '../patients/data/patient.model';
     PbPageHeader,
     PbTextField,
     MatIconModule,
-    MatTooltipModule,
     TranslatePipe,
   ],
   templateUrl: './settings.html',
@@ -36,14 +33,11 @@ import type { TreatmentType } from '../patients/data/patient.model';
 export class Settings {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
-  protected readonly palette = inject(PaletteService);
   private readonly patients = inject(PatientsService);
   private readonly backups = inject(BackupService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly errors = inject(ApiErrorTranslator);
   private readonly i18n = inject(TranslateService);
-
-  protected readonly paletteNames: readonly PaletteName[] = ['cyan', 'green', 'violet'];
 
   protected readonly roleLabel = roleLabel;
 
@@ -58,10 +52,6 @@ export class Settings {
 
   protected setTheme(mode: ThemeMode): void {
     this.theme.set(mode);
-  }
-
-  protected setPalette(palette: PaletteName): void {
-    this.palette.set(palette);
   }
 
   // ── Backup destination ──────────────────────────────────────────

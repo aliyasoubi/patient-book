@@ -12,7 +12,6 @@ import { map } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
-import { PaletteService } from '../core/services/palette.service';
 import { ThemeService } from '../core/services/theme.service';
 import { GlobalSearch } from './global-search';
 import { roleLabel } from '../shared/labels';
@@ -91,12 +90,11 @@ function navItems(): NavItem[] {
 export class Shell {
   private readonly breakpoints = inject(BreakpointObserver);
   protected readonly auth = inject(AuthService);
-  // Both are injected only to apply the stored preference on boot — their
-  // constructors are what stamp the theme onto the document. The shell never
-  // reads either one; display mode and palette are both picked in settings, so
-  // there is exactly one place in the app that changes how it looks.
+  // Injected only to apply the stored preference on boot — its constructor is
+  // what stamps the theme onto the document. The shell never reads it; display
+  // mode is picked in settings, so there is exactly one place in the app that
+  // changes how it looks.
   private readonly theme = inject(ThemeService);
-  private readonly palette = inject(PaletteService);
 
   /**
    * Three layouts, not two: a phone gets a bottom bar, a tablet gets a
