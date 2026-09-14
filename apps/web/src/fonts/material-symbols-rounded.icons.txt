@@ -79,6 +79,7 @@ person_add
 person_search
 radio
 refresh
+restore_from_trash
 rule
 save
 schedule
@@ -100,6 +101,7 @@ tag
 timeline
 tune
 unarchive
+upcoming
 update
 upload_file
 visibility
