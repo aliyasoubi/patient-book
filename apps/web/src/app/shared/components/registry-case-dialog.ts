@@ -81,10 +81,17 @@ export interface RegistryCaseDialogData {
       />
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">
+      <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
         {{ 'action.cancel' | translate }}
-      </button>
-      <pb-button type="button" (click)="submit()" [disabled]="saving()">
+      </pb-button>
+      <pb-button
+        variant="flat"
+        type="button"
+        icon="save"
+        (click)="submit()"
+        [loading]="saving()"
+        [loadingText]="'common.saving' | translate"
+      >
         {{ 'registryForm.create' | translate }}
       </pb-button>
     </mat-dialog-actions>

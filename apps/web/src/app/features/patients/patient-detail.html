@@ -247,7 +247,7 @@
             } @else {
               <p class="card__empty">{{ 'patientDetail.noImplant' | translate }}</p>
             }
-            @if (auth.can('editPatients') && !p.isArchived) {
+            @if (auth.can('editPatients') && !p.isArchived && !p.implantCases?.length) {
               <pb-button variant="text" icon="add" (click)="addCase('implant')">
                 {{ 'patientDetail.addImplantCase' | translate }}
               </pb-button>
@@ -275,7 +275,7 @@
             } @else {
               <p class="card__empty">{{ 'patientDetail.noOrtho' | translate }}</p>
             }
-            @if (auth.can('editPatients') && !p.isArchived) {
+            @if (auth.can('editPatients') && !p.isArchived && !p.orthoCases?.length) {
               <pb-button variant="text" icon="add" (click)="addCase('ortho')">
                 {{ 'patientDetail.addOrthoCase' | translate }}
               </pb-button>
