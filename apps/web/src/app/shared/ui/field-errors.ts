@@ -42,6 +42,10 @@ function defaultMessage(key: string, error: unknown, i18n: TranslateService): st
     case 'nationalIdInvalid':
       return i18n.instant('field.nationalIdInvalid');
     case 'jalaliDate':
+    // Angular Material's own datepicker sets this when the typed text doesn't
+    // parse — a date field is the one place users are expected to type
+    // free-form, so this is the common case, not an edge case.
+    case 'matDatepickerParse':
       return i18n.instant('field.jalaliDateInvalid');
     case 'mismatch':
       return i18n.instant('field.mismatch');

@@ -238,6 +238,7 @@
     "newReferralHint": "در صورت نبود، مورد جدید ساخته می‌شود",
     "firstVisit": "اولین مراجعه",
     "lastVisit": "آخرین مراجعه",
+    "visitDatePlaceholder": "۱۴۰۴/۰۶/۱۱",
     "medicalHistory": "سابقه بیماری قبلی",
     "medicalHistoryPlaceholder": "مثال: فشار خون، دیابت، مصرف داروی رقیق‌کننده خون",
     "treatments": "درمان‌های انجام‌شده",

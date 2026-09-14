@@ -125,11 +125,15 @@
         <pb-date-field
           [control]="form.controls.firstVisitAt"
           [label]="'patientForm.firstVisit' | translate"
+          [placeholder]="'patientForm.visitDatePlaceholder' | translate"
+          [hint]="'patientForm.jalaliDate' | translate"
         />
 
         <pb-date-field
           [control]="form.controls.lastVisitAt"
           [label]="'patientForm.lastVisit' | translate"
+          [placeholder]="'patientForm.visitDatePlaceholder' | translate"
+          [hint]="'patientForm.jalaliDate' | translate"
         />
 
         <pb-textarea-field
