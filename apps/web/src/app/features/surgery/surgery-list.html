@@ -105,10 +105,10 @@
                   {{ 'surgery.implantRegistry' | translate: { number: item.implantRegistryNo } }}
                 </span>
               }
-              @if (item.toothPosition) {
+              @if (toothPositionDisplay(item); as position) {
                 <span class="queue__detail">
                   <mat-icon aria-hidden="true">dentistry</mat-icon>
-                  {{ item.toothPosition }}
+                  {{ position }}
                 </span>
               }
               @if (item.implantBrand) {
@@ -132,49 +132,49 @@
             </div>
           </div>
 
-          <div class="queue__actions">
-            @if (item.patient?.mobile) {
-              <a
-                class="queue__action"
-                [href]="'tel:' + item.patient!.mobile"
-                [attr.aria-label]="callLabel(item.recordedName)"
-              >
-                <mat-icon aria-hidden="true">call</mat-icon>
-              </a>
-            }
-            @if (archivedOnly()) {
-              @if (auth.can('archiveSurgery')) {
-                <button
-                  type="button"
-                  class="queue__action"
-                  (click)="restore(item)"
-                  [attr.aria-label]="'surgery.restore' | translate"
-                >
-                  <mat-icon aria-hidden="true">restore_from_trash</mat-icon>
-                </button>
-              }
-            } @else {
-              @if (auth.can('editSurgery')) {
-                <a
-                  class="queue__action"
-                  [routerLink]="['/surgery', item.id, 'edit']"
-                  [attr.aria-label]="'common.edit' | translate"
-                >
-                  <mat-icon aria-hidden="true">edit</mat-icon>
+          <!-- One trigger regardless of how many actions apply: a stack of
+               buttons outgrew the card on short rows. Same menu pattern as
+               the patient list. -->
+          @if (hasActions(item)) {
+            <button
+              mat-icon-button
+              type="button"
+              class="queue__menu"
+              [matMenuTriggerFor]="rowMenu"
+              [attr.aria-label]="'surgery.rowActions' | translate"
+            >
+              <mat-icon aria-hidden="true">more_vert</mat-icon>
+            </button>
+            <mat-menu #rowMenu="matMenu">
+              @if (item.patient?.mobile) {
+                <a mat-menu-item [href]="'tel:' + item.patient!.mobile">
+                  <mat-icon aria-hidden="true">call</mat-icon>
+                  <span>{{ 'common.call' | translate }}</span>
                 </a>
               }
-              @if (auth.can('archiveSurgery')) {
-                <button
-                  type="button"
-                  class="queue__action queue__action--danger"
-                  (click)="delete(item)"
-                  [attr.aria-label]="'common.delete' | translate"
-                >
-                  <mat-icon aria-hidden="true">delete</mat-icon>
-                </button>
+              @if (archivedOnly()) {
+                @if (auth.can('archiveSurgery')) {
+                  <button mat-menu-item type="button" (click)="restore(item)">
+                    <mat-icon aria-hidden="true">restore_from_trash</mat-icon>
+                    <span>{{ 'surgery.restore' | translate }}</span>
+                  </button>
+                }
+              } @else {
+                @if (auth.can('editSurgery')) {
+                  <a mat-menu-item [routerLink]="['/surgery', item.id, 'edit']">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>{{ 'common.edit' | translate }}</span>
+                  </a>
+                }
+                @if (auth.can('archiveSurgery')) {
+                  <button mat-menu-item type="button" (click)="delete(item)">
+                    <mat-icon aria-hidden="true">delete</mat-icon>
+                    <span>{{ 'common.delete' | translate }}</span>
+                  </button>
+                }
               }
-            }
-          </div>
+            </mat-menu>
+          }
         </li>
       }
     </ul>

@@ -139,6 +139,7 @@
     "mismatchOnly": "فقط موارد مغایرت نام",
     "archivedOnly": "فقط حذف‌شده‌ها",
     "restore": "بازگردانی به لیست",
+    "rowActions": "عملیات ردیف",
     "noDate": "بدون تاریخ",
     "implantRegistry": "پرونده ایمپلنت {{number}}",
     "patientFile": "پرونده {{fileNo}}",

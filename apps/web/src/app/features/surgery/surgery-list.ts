@@ -2,9 +2,11 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -26,7 +28,9 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    MatButtonModule,
     MatButtonToggleModule,
+    MatMenuModule,
     MatPaginatorModule,
     MatProgressBarModule,
     EmptyState,
@@ -125,8 +129,28 @@ export class SurgeryList {
       });
   }
 
-  protected callLabel(name: string): string {
-    return this.i18n.instant('action.callPerson', { name });
+  /**
+   * `toothPosition` on legacy rows is a whole imported phrase like "زیمر، ۶ و
+   * ۷ راست پایین" — the brand is always its leading token, up to the first
+   * comma (see `extractImplantBrand` on the API). Once that brand has its own
+   * chip, repeating it here too just reads as the same word run twice.
+   */
+  protected toothPositionDisplay(item: SurgeryQueueItem): string {
+    if (!item.implantBrand) return item.toothPosition;
+    const commaIndex = item.toothPosition.search(/[,،]/);
+    if (commaIndex !== -1) return item.toothPosition.slice(commaIndex + 1).trim();
+    // No comma: the whole phrase may just be the brand name with nothing else
+    // ever recorded, in which case there is no position left to show.
+    const isBrandOnly =
+      item.toothPosition.trim().toLowerCase() === item.implantBrand.trim().toLowerCase();
+    return isBrandOnly ? '' : item.toothPosition;
+  }
+
+  protected hasActions(item: SurgeryQueueItem): boolean {
+    if (item.patient?.mobile) return true;
+    return this.archivedOnly()
+      ? this.auth.can('archiveSurgery')
+      : this.auth.can('editSurgery') || this.auth.can('archiveSurgery');
   }
 
   protected emptyHint(): string {
