@@ -10,13 +10,23 @@ import { PatientRowMapper } from '../../import/infrastructure/row-mappers/patien
 import { REGISTRY_COLUMN } from '../../import/infrastructure/row-mappers/registry-row.mapper';
 import { SHEET } from '../../import/application/import-workbook.use-case';
 import { AppException } from '../../../application/errors/app.exception';
-import { ErrorCode, LandlineNumber, MobileNumber, normalizeForDisplay } from '../../../domain';
+import {
+  ErrorCode,
+  LandlineNumber,
+  MobileNumber,
+  normalizeForDisplay,
+} from '../../../domain';
 import {
   PATIENT_FIELD_READERS,
   REGISTRY_FIELD_READERS,
   RegistryLike,
 } from './field-readers';
-import { CaseDiff, FieldDiff, PatientDiff, ReconcilePreviewResult } from '../dto/reconcile.dto';
+import {
+  CaseDiff,
+  FieldDiff,
+  PatientDiff,
+  ReconcilePreviewResult,
+} from '../dto/reconcile.dto';
 
 /**
  * A blank or unclassified sheet cell must never propose erasing an existing
@@ -43,7 +53,8 @@ const NEVER_PROPOSE_UNKNOWN: Readonly<Record<string, string>> = {
 export class ReconcileWorkbookUseCase {
   constructor(
     @InjectRepository(Patient) private readonly patients: Repository<Patient>,
-    @InjectRepository(ImplantCase) private readonly implants: Repository<ImplantCase>,
+    @InjectRepository(ImplantCase)
+    private readonly implants: Repository<ImplantCase>,
     @InjectRepository(OrthoCase) private readonly ortho: Repository<OrthoCase>,
   ) {}
 
@@ -100,7 +111,9 @@ export class ReconcileWorkbookUseCase {
     }
 
     const names = new Set(reader.sheetNames());
-    const known = [SHEET.patients, SHEET.implants, SHEET.ortho].filter((s) => names.has(s));
+    const known = [SHEET.patients, SHEET.implants, SHEET.ortho].filter((s) =>
+      names.has(s),
+    );
     if (!known.length) {
       throw AppException.badRequest(ErrorCode.WorkbookSheetsMissing, {
         expected: [SHEET.patients, SHEET.implants, SHEET.ortho].join('، '),
@@ -182,7 +195,9 @@ export class ReconcileWorkbookUseCase {
       const proposals: Readonly<Record<string, string | null>> = {
         recordedName: row.cell(REGISTRY_COLUMN.fullName) || null,
         mobile: MobileNumber.normalise(row.cell(REGISTRY_COLUMN.mobile)),
-        homePhone: LandlineNumber.normalise(row.cell(REGISTRY_COLUMN.homePhone)),
+        homePhone: LandlineNumber.normalise(
+          row.cell(REGISTRY_COLUMN.homePhone),
+        ),
       };
 
       const fields: FieldDiff[] = [];

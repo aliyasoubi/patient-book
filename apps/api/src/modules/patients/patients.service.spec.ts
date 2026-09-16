@@ -13,7 +13,7 @@ import { EducationLevel, ErrorCode, Gender } from '../../domain';
 interface PatientWriteHelpers {
   assign(
     patient: Patient,
-    dto: UpdatePatientDto,
+    dto: Partial<UpdatePatientDto>,
     referrals: Repository<ReferralSource>,
   ): Promise<void>;
   syncTreatments(
@@ -152,15 +152,25 @@ describe('PatientsService.nameSuggestions', () => {
     getRawMany: () => Promise<Array<{ name: string; count: string }>>;
   }
 
-  function serviceWithRows(rows: Array<{ name: string; count: string }>): PatientsService {
+  function serviceWithRows(
+    rows: Array<{ name: string; count: string }>,
+  ): PatientsService {
     const queryBuilder: FakeQueryBuilder = {
-      select: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(() => queryBuilder),
-      addSelect: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(() => queryBuilder),
-      where: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(() => queryBuilder),
-      groupBy: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(() => queryBuilder),
-      getRawMany: jest.fn<() => Promise<Array<{ name: string; count: string }>>>(() =>
-        Promise.resolve(rows),
+      select: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(
+        () => queryBuilder,
       ),
+      addSelect: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(
+        () => queryBuilder,
+      ),
+      where: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(
+        () => queryBuilder,
+      ),
+      groupBy: jest.fn<(...args: unknown[]) => FakeQueryBuilder>(
+        () => queryBuilder,
+      ),
+      getRawMany: jest.fn<
+        () => Promise<Array<{ name: string; count: string }>>
+      >(() => Promise.resolve(rows)),
     };
     const patients = {
       createQueryBuilder: jest.fn<() => FakeQueryBuilder>(() => queryBuilder),
@@ -207,7 +217,8 @@ describe('PatientsService.update concurrency', () => {
       setLock: () => qb,
       select: () => qb,
       where: () => qb,
-      getOne: () => Promise.resolve({ id: 'patient-1', version: storedVersion }),
+      getOne: () =>
+        Promise.resolve({ id: 'patient-1', version: storedVersion }),
     };
     const manager = { getRepository: () => ({ createQueryBuilder: () => qb }) };
     const dataSource = {
@@ -222,7 +233,10 @@ describe('PatientsService.update concurrency', () => {
     // Everything after the version gate is out of scope here; failing the
     // lookup proves the gate was passed without mocking the whole write path.
     const afterGate = jest
-      .spyOn(service as unknown as { findPatientForAudit: () => Promise<null> }, 'findPatientForAudit')
+      .spyOn(
+        service as unknown as { findPatientForAudit: () => Promise<null> },
+        'findPatientForAudit',
+      )
       .mockResolvedValue(null);
     return { service, afterGate };
   };
@@ -231,7 +245,11 @@ describe('PatientsService.update concurrency', () => {
     const { service, afterGate } = makeService(4);
 
     await expect(
-      service.update('patient-1', { expectedVersion: 3 } as UpdatePatientDto, 'user-1'),
+      service.update(
+        'patient-1',
+        { expectedVersion: 3 } as UpdatePatientDto,
+        'user-1',
+      ),
     ).rejects.toMatchObject({ code: ErrorCode.PatientModified });
     expect(afterGate).not.toHaveBeenCalled();
   });
@@ -240,17 +258,23 @@ describe('PatientsService.update concurrency', () => {
     const { service, afterGate } = makeService(4);
 
     await expect(
-      service.update('patient-1', { expectedVersion: 4 } as UpdatePatientDto, 'user-1'),
+      service.update(
+        'patient-1',
+        { expectedVersion: 4 } as UpdatePatientDto,
+        'user-1',
+      ),
     ).rejects.toMatchObject({ code: ErrorCode.PatientNotFound });
     expect(afterGate).toHaveBeenCalledTimes(1);
   });
 
-  it('does not check when the client sends no version', async () => {
+  it('refuses a save that carries no version at all', async () => {
+    // Failing closed: a caller with nothing to compare against has not read
+    // the record it is about to overwrite.
     const { service, afterGate } = makeService(4);
 
     await expect(
       service.update('patient-1', {} as UpdatePatientDto, 'user-1'),
-    ).rejects.toMatchObject({ code: ErrorCode.PatientNotFound });
-    expect(afterGate).toHaveBeenCalledTimes(1);
+    ).rejects.toMatchObject({ code: ErrorCode.PatientModified });
+    expect(afterGate).not.toHaveBeenCalled();
   });
 });

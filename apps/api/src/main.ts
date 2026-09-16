@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
@@ -8,7 +8,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 
 import { AppModule } from './app.module';
-import { ValidationException } from './presentation/http/validation.exception';
+import { configureApp } from './app.setup';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -24,36 +24,26 @@ async function bootstrap(): Promise<void> {
   // both take `req.ip`, and behind nginx that is the proxy until this is set.
   if (trustProxy > 0) app.set('trust proxy', trustProxy);
 
-  app.setGlobalPrefix('api');
+  configureApp(app);
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(compression());
   app.enableCors({ origin: corsOrigin, credentials: true });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      // Unknown fields are a client bug; failing loudly beats silently dropping
-      // a value someone believed they had saved.
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: false },
-      // Failures leave as codes keyed by field path, never as English prose:
-      // the client owns the wording so it can render Persian, or anything else.
-      exceptionFactory: (errors) => ValidationException.fromValidationErrors(errors),
-    }),
-  );
 
   if (!isProd) {
     const swagger = new DocumentBuilder()
       .setTitle('Dentixo API')
       .setDescription(
         'API for a dental practice patient register. Errors return a stable ' +
-          '`code` plus `params`; all wording is the client\'s responsibility.',
+          "`code` plus `params`; all wording is the client's responsibility.",
       )
       .setVersion('1.0.0')
       .addBearerAuth()
       .build();
-    SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, swagger));
+    SwaggerModule.setup(
+      'api/docs',
+      app,
+      SwaggerModule.createDocument(app, swagger),
+    );
   }
 
   app.enableShutdownHooks();

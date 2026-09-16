@@ -21,7 +21,11 @@ import {
 } from 'class-validator';
 
 import { EducationLevel, Gender } from '../../../domain';
-import { isValidNationalId, normalizeForDisplay } from '../../../domain';
+import {
+  isValidNationalId,
+  normalizeForDisplay,
+  toLatinDigits,
+} from '../../../domain';
 import { JalaliDate } from '../../../domain';
 
 /** Names and free text keep their spelling; only keyboard artefacts are fixed. */
@@ -31,6 +35,24 @@ const trim = ({ value }: { value: unknown }): unknown =>
 const emptyToNull = ({ value }: { value: unknown }): unknown => {
   if (value === '' || value === undefined) return null;
   return typeof value === 'string' ? normalizeForDisplay(value) || null : value;
+};
+
+/**
+ * Identifiers — file number, national id, phone numbers — are stored as ASCII
+ * digits whichever keyboard typed them. A Persian keyboard emits `۰۹۱۲…` for
+ * what the receptionist reads as `0912…`; folding here, before validation,
+ * means the `@Matches` rules below see one script and the database never
+ * holds the same number in three. The client folds too, but this side is the
+ * one that decides what gets stored.
+ */
+export const identifier = ({ value }: { value: unknown }): unknown =>
+  typeof value === 'string' ? toLatinDigits(normalizeForDisplay(value)) : value;
+
+export const optionalIdentifier = ({ value }: { value: unknown }): unknown => {
+  if (value === '' || value === undefined) return null;
+  return typeof value === 'string'
+    ? toLatinDigits(normalizeForDisplay(value)) || null
+    : value;
 };
 
 @ValidatorConstraint({ name: 'jalaliDate', async: false })
@@ -48,7 +70,13 @@ export class IsJalaliDateConstraint implements ValidatorConstraintInterface {
 export class IsNationalIdConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
     if (value === null || value === undefined || value === '') return true;
-    return isValidNationalId(String(value));
+    // Digits only: the check-digit rule alone would pass `007-898-0501` and
+    // let the dashes through to the database.
+    return (
+      typeof value === 'string' &&
+      /^\d{10}$/.test(value) &&
+      isValidNationalId(value)
+    );
   }
   defaultMessage(): string {
     return 'National id fails its check digit';
@@ -77,7 +105,7 @@ export class TreatmentInputDto {
 
 export class CreatePatientDto {
   @ApiProperty({ example: '12134', description: 'Practice file number' })
-  @Transform(trim)
+  @Transform(identifier)
   @IsString()
   @Matches(/^\d{1,24}$/)
   fileNo!: string;
@@ -104,7 +132,7 @@ export class CreatePatientDto {
   fatherName?: string | null;
 
   @ApiPropertyOptional({ example: '0078980501' })
-  @Transform(emptyToNull)
+  @Transform(optionalIdentifier)
   @Validate(IsNationalIdConstraint)
   @IsOptional()
   nationalId?: string | null;
@@ -115,13 +143,13 @@ export class CreatePatientDto {
   gender?: Gender;
 
   @ApiPropertyOptional({ example: '09121234567' })
-  @Transform(emptyToNull)
+  @Transform(optionalIdentifier)
   @Matches(/^09\d{9}$/)
   @IsOptional()
   mobile?: string | null;
 
   @ApiPropertyOptional({ example: '22334455' })
-  @Transform(emptyToNull)
+  @Transform(optionalIdentifier)
   @Matches(/^\d{4,15}$/)
   @IsOptional()
   homePhone?: string | null;
@@ -149,7 +177,9 @@ export class CreatePatientDto {
   @IsOptional()
   referralSourceId?: string | null;
 
-  @ApiPropertyOptional({ description: 'Referral source name; created if it does not already exist' })
+  @ApiPropertyOptional({
+    description: 'Referral source name; created if it does not already exist',
+  })
   @Transform(emptyToNull)
   @IsString()
   @MaxLength(120)
@@ -207,14 +237,14 @@ export class CreatePatientDto {
 /** Every field optional; `fileNo` may be changed but must stay unique. */
 export class UpdatePatientDto extends PartialType(CreatePatientDto) {
   /**
-   * The `version` the client loaded. When present, the update is refused with
-   * `ERR_PATIENT_MODIFIED` if the record has been saved since. Optional so
-   * callers that already carry their own staleness check (reconcile apply)
-   * are unaffected.
+   * The `version` the client loaded. The update is refused with
+   * `ERR_PATIENT_MODIFIED` if the record has been saved since. Required, not
+   * optional: a caller that could leave it out could also silently overwrite
+   * an edit it never saw. Reconcile apply reads the version it checked against
+   * and sends that.
    */
-  @ApiPropertyOptional({ description: 'Version the client loaded; refused if stale' })
+  @ApiProperty({ description: 'Version the client loaded; refused if stale' })
   @IsInt()
   @Min(1)
-  @IsOptional()
-  expectedVersion?: number;
+  expectedVersion!: number;
 }

@@ -72,6 +72,8 @@ export const GENDERS: readonly Gender[] = ['female', 'male', 'unknown'];
 
 export const SURGERY_STATUSES = ['scheduled', 'completed', 'cancelled'] as const;
 
+export const CASE_STATUSES = ['active', 'completed', 'on_hold'] as const;
+
 export const ABUTMENT_TYPES = ['unknown', 'cover', 'healing', 'both', 'other'] as const;
 
 /**

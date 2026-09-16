@@ -32,6 +32,7 @@ function patient(overrides: Partial<Patient> = {}): Patient {
     firstVisitRaw: null,
     lastVisitRaw: null,
     referralSource: null,
+    version: 7,
     ...overrides,
   } as unknown as Patient;
 }
@@ -42,11 +43,15 @@ function build(options: {
 }) {
   const update =
     options.update ??
-    (jest.fn(() => Promise.resolve({} as never)) as unknown as PatientsService['update']);
+    (jest.fn(() =>
+      Promise.resolve({} as never),
+    ) as unknown as PatientsService['update']);
   const patients = { update } as unknown as PatientsService;
 
   const findOne = jest.fn(() =>
-    Promise.resolve(options.current === undefined ? patient() : options.current),
+    Promise.resolve(
+      options.current === undefined ? patient() : options.current,
+    ),
   );
   const patientRepo = { findOne } as unknown as Repository<Patient>;
   const empty = {
@@ -78,7 +83,11 @@ describe('ApplyReconcileUseCase', () => {
             {
               id: 'patient-1',
               fields: [
-                { field: 'mobile', proposed: '09350000000', expectedCurrent: '09121234567' },
+                {
+                  field: 'mobile',
+                  proposed: '09350000000',
+                  expectedCurrent: '09121234567',
+                },
               ],
             },
           ],
@@ -90,7 +99,11 @@ describe('ApplyReconcileUseCase', () => {
         id: 'patient-1',
         ok: false,
         code: ErrorCode.ReconcileConflict,
-        params: { field: 'mobile', expected: '09121234567', actual: '09990000000' },
+        params: {
+          field: 'mobile',
+          expected: '09121234567',
+          actual: '09990000000',
+        },
       });
       expect(update).not.toHaveBeenCalled();
     });
@@ -104,7 +117,11 @@ describe('ApplyReconcileUseCase', () => {
             {
               id: 'patient-1',
               fields: [
-                { field: 'mobile', proposed: '09350000000', expectedCurrent: '09121234567' },
+                {
+                  field: 'mobile',
+                  proposed: '09350000000',
+                  expectedCurrent: '09121234567',
+                },
               ],
             },
           ],
@@ -120,15 +137,54 @@ describe('ApplyReconcileUseCase', () => {
       );
     });
 
+    it('sends the version it checked against, so the row lock catches a later edit', async () => {
+      // The field comparison above runs outside any lock. Forwarding the
+      // version closes the window between that read and the write: an edit
+      // landing in between bumps the version and the update is refused.
+      const { useCase, update } = build({ current: patient({ version: 12 }) });
+
+      await useCase.execute(
+        {
+          patients: [
+            {
+              id: 'patient-1',
+              fields: [
+                {
+                  field: 'mobile',
+                  proposed: '09350000000',
+                  expectedCurrent: '09121234567',
+                },
+              ],
+            },
+          ],
+        },
+        'user-1',
+      );
+
+      expect(update).toHaveBeenCalledWith(
+        'patient-1',
+        expect.objectContaining({ expectedVersion: 12 }),
+        'user-1',
+      );
+    });
+
     it('treats an absent value and an empty string as the same "not recorded"', async () => {
-      const { useCase, update } = build({ current: patient({ homeAddress: null }) });
+      const { useCase, update } = build({
+        current: patient({ homeAddress: null }),
+      });
 
       const result = await useCase.execute(
         {
           patients: [
             {
               id: 'patient-1',
-              fields: [{ field: 'homeAddress', proposed: 'تهران', expectedCurrent: null }],
+              fields: [
+                {
+                  field: 'homeAddress',
+                  proposed: 'تهران',
+                  expectedCurrent: null,
+                },
+              ],
             },
           ],
         },
@@ -150,8 +206,16 @@ describe('ApplyReconcileUseCase', () => {
             {
               id: 'patient-1',
               fields: [
-                { field: 'mobile', proposed: '09350000000', expectedCurrent: '09121234567' },
-                { field: 'homeAddress', proposed: 'تهران', expectedCurrent: 'شیراز' },
+                {
+                  field: 'mobile',
+                  proposed: '09350000000',
+                  expectedCurrent: '09121234567',
+                },
+                {
+                  field: 'homeAddress',
+                  proposed: 'تهران',
+                  expectedCurrent: 'شیراز',
+                },
               ],
             },
           ],
@@ -175,7 +239,13 @@ describe('ApplyReconcileUseCase', () => {
           patients: [
             {
               id: 'patient-1',
-              fields: [{ field: 'treatments', proposed: 'implant', expectedCurrent: null }],
+              fields: [
+                {
+                  field: 'treatments',
+                  proposed: 'implant',
+                  expectedCurrent: null,
+                },
+              ],
             },
           ],
         },
@@ -202,7 +272,11 @@ describe('ApplyReconcileUseCase', () => {
             {
               id: 'patient-1',
               fields: [
-                { field: 'mobile', proposed: '09350000000', expectedCurrent: '09121234567' },
+                {
+                  field: 'mobile',
+                  proposed: '09350000000',
+                  expectedCurrent: '09121234567',
+                },
               ],
             },
           ],
@@ -223,7 +297,12 @@ describe('ApplyReconcileUseCase', () => {
       const result = await useCase.execute(
         {
           patients: [
-            { id: 'patient-1', fields: [{ field: 'mobile', proposed: '0912', expectedCurrent: null }] },
+            {
+              id: 'patient-1',
+              fields: [
+                { field: 'mobile', proposed: '0912', expectedCurrent: null },
+              ],
+            },
           ],
         },
         'user-1',
@@ -241,7 +320,11 @@ describe('ApplyReconcileUseCase', () => {
             {
               id: 'patient-1',
               fields: [
-                { field: 'mobile', proposed: 'not-a-number', expectedCurrent: '09121234567' },
+                {
+                  field: 'mobile',
+                  proposed: 'not-a-number',
+                  expectedCurrent: '09121234567',
+                },
               ],
             },
           ],

@@ -90,7 +90,8 @@
     "maximum": "بیشینه {{count}}",
     "dateTimeAria": "تاریخ و ساعت امروز",
     "loadFailed": "اطلاعات داشبورد بارگذاری نشد.",
-    "upcomingSurgeriesEmpty": "جراحی برنامه‌ریزی‌شده‌ای در پیش نیست."
+    "upcomingSurgeriesEmpty": "جراحی برنامه‌ریزی‌شده‌ای در پیش نیست.",
+    "upcomingSurgeriesFailed": "فهرست جراحی‌های پیش‌رو بارگذاری نشد."
   },
   "greeting": {
     "morning": "صبح بخیر",
@@ -114,6 +115,11 @@
     "unlinked": "بدون اتصال به پرونده اصلی",
     "patientFile": "پرونده {{fileNo}}",
     "editRecord": "ویرایش پرونده",
+    "archivedOnly": "فقط حذف‌شده‌ها",
+    "rowActions": "عملیات ردیف",
+    "restore": "بازگردانی پرونده",
+    "loadFailed": "پرونده‌ها بارگذاری نشد.",
+    "loadFailedStale": "فهرست به‌روزرسانی نشد؛ نتایج قبلی نمایش داده می‌شود.",
     "emptyDefault": "پرونده‌ای یافت نشد"
   },
   "implant": {
@@ -145,7 +151,9 @@
     "patientFile": "پرونده {{fileNo}}",
     "identityWarning": "شماره {{number}} در پرونده ایمپلنت به «{{name}}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.",
     "prosthesis": "پروتز: {{date}}",
-    "emptyTitle": "ردیفی در لیست جراحی نیست"
+    "emptyTitle": "ردیفی در لیست جراحی نیست",
+    "loadFailed": "لیست جراحی بارگذاری نشد.",
+    "loadFailedStale": "لیست به‌روزرسانی نشد؛ نتایج قبلی نمایش داده می‌شود."
   },
   "surgeryForm": {
     "createTitle": "افزودن به لیست انتظار جراحی",
@@ -294,12 +302,26 @@
   "registryForm": {
     "newImplant": "پرونده ایمپلنت جدید",
     "newOrtho": "پرونده ارتودنسی جدید",
+    "editImplant": "ویرایش پرونده ایمپلنت",
+    "editOrtho": "ویرایش پرونده ارتودنسی",
     "registryNo": "شماره پرونده",
     "recordedName": "نام ثبت‌شده",
     "mobile": "شماره موبایل",
     "homePhone": "تلفن منزل",
     "notes": "یادداشت",
-    "create": "ثبت پرونده"
+    "create": "ثبت پرونده",
+    "status": "وضعیت پرونده",
+    "patientLink": "اتصال به پرونده اصلی",
+    "patientLinkHint": "نام یا شماره پرونده بیمار را جستجو و انتخاب کنید",
+    "patientLinkHintLinked": "برای تغییر، بیمار دیگری را جستجو کنید؛ برای قطع اتصال، ضربدر را بزنید",
+    "unlink": "قطع اتصال به پرونده اصلی",
+    "save": "ذخیره تغییرات",
+    "saved": "تغییرات پرونده ذخیره شد.",
+    "deleteTitle": "حذف پرونده",
+    "deleteMessage": "پرونده شماره {{number}} («{{name}}») حذف می‌شود. از بخش «فقط حذف‌شده‌ها» قابل بازگردانی است.",
+    "deleteConfirm": "حذف کن",
+    "deleted": "پرونده حذف شد.",
+    "restored": "پرونده بازگردانده شد."
   },
   "settings": {
     "title": "تنظیمات",

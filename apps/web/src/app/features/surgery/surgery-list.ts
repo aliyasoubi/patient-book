@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,13 +10,23 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
-import { RegistryService } from '../../core/services/registry.service';
+import { RegistryService, SurgeryQuery } from '../../core/services/registry.service';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import { EmptyState } from '../../shared/components/empty-state';
+import { LoadError } from '../../shared/components/load-error';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
 import { PbButton, PbCheckboxField, PbPageHeader, PbSearchField, PbStatusChip } from '../../shared/ui';
@@ -34,6 +44,7 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
     MatPaginatorModule,
     MatProgressBarModule,
     EmptyState,
+    LoadError,
     PersianNumberPipe,
     PbSearchField,
     PbCheckboxField,
@@ -64,6 +75,8 @@ export class SurgeryList {
   protected readonly limit = signal(25);
 
   protected readonly loading = signal(false);
+  /** The most recent request failed; whatever rows are shown are stale. */
+  protected readonly failed = signal(false);
   protected readonly items = signal<SurgeryQueueItem[]>([]);
   protected readonly total = signal(0);
   protected readonly countLabel = computed(() => {
@@ -79,54 +92,70 @@ export class SurgeryList {
     () => this.items().filter((i) => i.hasNameMismatch).length,
   );
 
+  /** A new search starts from page 1; page 3 of "Ali" says nothing about "Alireza". */
   private readonly query = toSignal(
     this.search.valueChanges.pipe(
       debounceTime(300),
       map((v) => v.trim()),
       distinctUntilChanged(),
+      tap(() => this.page.set(1)),
     ),
     { initialValue: '' },
   );
 
+  /**
+   * One persistent subscription, fed by the effect below. `switchMap` cancels
+   * the in-flight request when a newer query arrives, so a slow "Ali" request
+   * can no longer resolve after a faster "Alireza" one and overwrite it.
+   */
+  private readonly fetchTrigger$ = new Subject<SurgeryQuery>();
+
+  /** Bumped by {@link retry} and after a write, to re-run the current query unchanged. */
+  private readonly reloadTick = signal(0);
+
   constructor() {
+    this.fetchTrigger$
+      .pipe(
+        switchMap((query) =>
+          this.registry.surgeryQueue(query).pipe(
+            // Keep the previous rows on screen under a banner rather than
+            // blanking the list: an empty queue reads as "no surgeries".
+            catchError(() => {
+              this.loading.set(false);
+              this.failed.set(true);
+              return EMPTY;
+            }),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((result) => {
+        this.items.set(result.items);
+        this.total.set(result.total);
+        this.loading.set(false);
+      });
+
     effect(() => {
-      const q = this.query();
-      const status = this.status();
-      const mismatched = this.mismatchedOnly();
-      const archived = this.archivedOnly();
-      const page = this.page();
-      const limit = this.limit();
-      untracked(() => this.fetch(q, status, mismatched, archived, page, limit));
+      this.reloadTick();
+      const query: SurgeryQuery = {
+        q: this.query() || undefined,
+        status: this.status() || undefined,
+        mismatchedOnly: this.mismatchedOnly() || undefined,
+        archivedOnly: this.archivedOnly() || undefined,
+        page: this.page(),
+        limit: this.limit(),
+        sortDir: 'ASC',
+      };
+      untracked(() => {
+        this.loading.set(true);
+        this.failed.set(false);
+        this.fetchTrigger$.next(query);
+      });
     });
   }
 
-  private fetch(
-    q: string,
-    status: string,
-    mismatchedOnly: boolean,
-    archivedOnly: boolean,
-    page: number,
-    limit: number,
-  ): void {
-    this.loading.set(true);
-    this.registry
-      .surgeryQueue({
-        q: q || undefined,
-        status: status || undefined,
-        mismatchedOnly: mismatchedOnly || undefined,
-        archivedOnly: archivedOnly || undefined,
-        page,
-        limit,
-        sortDir: 'ASC',
-      })
-      .subscribe({
-        next: (result) => {
-          this.items.set(result.items);
-          this.total.set(result.total);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+  protected retry(): void {
+    this.reloadTick.update((n) => n + 1);
   }
 
   /**
@@ -180,7 +209,7 @@ export class SurgeryList {
         this.i18n.instant('surgeryForm.restored'),
         this.i18n.instant('action.dismiss'),
       );
-      this.refetch();
+      this.retry();
     });
   }
 
@@ -209,19 +238,9 @@ export class SurgeryList {
             this.i18n.instant('surgeryForm.deleted'),
             this.i18n.instant('action.dismiss'),
           );
-          this.refetch();
+          this.retry();
         });
       });
   }
 
-  private refetch(): void {
-    this.fetch(
-      this.query(),
-      this.status(),
-      this.mismatchedOnly(),
-      this.archivedOnly(),
-      this.page(),
-      this.limit(),
-    );
-  }
 }

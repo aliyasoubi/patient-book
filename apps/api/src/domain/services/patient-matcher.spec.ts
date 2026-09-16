@@ -28,7 +28,10 @@ describe('PatientNameMatcher', () => {
     const m = matcher();
     m.index('مریم', 'کریمی', 'p1');
     m.index('مریم', 'کریمی', 'p2');
-    expect(m.match('مریم کریمی')).toEqual({ patientId: null, method: 'unmatched' });
+    expect(m.match('مریم کریمی')).toEqual({
+      patientId: null,
+      method: 'unmatched',
+    });
   });
 
   it('returns unmatched for an unknown or empty name', () => {
@@ -46,13 +49,19 @@ describe('PatientNameMatcher', () => {
 
   describe('namesDiffer', () => {
     it('is false for the same name written differently', () => {
-      expect(PatientNameMatcher.namesDiffer('علی رضا نوری', 'علیرضا نوری')).toBe(false);
-      expect(PatientNameMatcher.namesDiffer('مريم كريمي', 'مریم کریمی')).toBe(false);
+      expect(
+        PatientNameMatcher.namesDiffer('علی رضا نوری', 'علیرضا نوری'),
+      ).toBe(false);
+      expect(PatientNameMatcher.namesDiffer('مريم كريمي', 'مریم کریمی')).toBe(
+        false,
+      );
     });
 
     it('is true for genuinely different people', () => {
       // This is what flags a reused implant register number.
-      expect(PatientNameMatcher.namesDiffer('مرضیه محمدی', 'محمد محمدپور')).toBe(true);
+      expect(
+        PatientNameMatcher.namesDiffer('مرضیه محمدی', 'محمد محمدپور'),
+      ).toBe(true);
     });
 
     it('is false when either name is missing, rather than claiming a mismatch', () => {

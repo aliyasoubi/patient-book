@@ -22,7 +22,10 @@ type ExpiresIn = NonNullable<Parameters<JwtService['sign']>[1]>['expiresIn'];
  * through timing exactly the username existence the constant-message reply
  * is meant to hide.
  */
-const UNKNOWN_USER_HASH = bcrypt.hashSync('unknown-user-placeholder', BCRYPT_COST);
+const UNKNOWN_USER_HASH = bcrypt.hashSync(
+  'unknown-user-placeholder',
+  BCRYPT_COST,
+);
 
 @Injectable()
 export class AuthService {
@@ -47,7 +50,10 @@ export class AuthService {
       .where('lower(u.username) = lower(:username)', { username })
       .getOne();
 
-    const ok = await bcrypt.compare(password, user?.passwordHash ?? UNKNOWN_USER_HASH);
+    const ok = await bcrypt.compare(
+      password,
+      user?.passwordHash ?? UNKNOWN_USER_HASH,
+    );
 
     if (!user || !ok) {
       await this.audit.record({

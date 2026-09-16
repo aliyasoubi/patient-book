@@ -240,6 +240,17 @@
                     >
                       {{ caseStatusLabel(c.status) | translate }}
                     </pb-status-chip>
+                    @if (auth.can('editRegistry') && !p.isArchived) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="registry__edit"
+                        (click)="editCase('implant', c)"
+                        [attr.aria-label]="'registry.editRecord' | translate"
+                      >
+                        <mat-icon aria-hidden="true">edit</mat-icon>
+                      </button>
+                    }
                   </li>
                 }
               </ul>
@@ -247,7 +258,7 @@
             } @else {
               <p class="card__empty">{{ 'patientDetail.noImplant' | translate }}</p>
             }
-            @if (auth.can('editPatients') && !p.isArchived && !p.implantCases?.length) {
+            @if (auth.can('editRegistry') && !p.isArchived && !p.implantCases?.length) {
               <pb-button variant="text" icon="add" (click)="addCase('implant')">
                 {{ 'patientDetail.addImplantCase' | translate }}
               </pb-button>
@@ -269,13 +280,24 @@
                     >
                       {{ caseStatusLabel(c.status) | translate }}
                     </pb-status-chip>
+                    @if (auth.can('editRegistry') && !p.isArchived) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="registry__edit"
+                        (click)="editCase('ortho', c)"
+                        [attr.aria-label]="'registry.editRecord' | translate"
+                      >
+                        <mat-icon aria-hidden="true">edit</mat-icon>
+                      </button>
+                    }
                   </li>
                 }
               </ul>
             } @else {
               <p class="card__empty">{{ 'patientDetail.noOrtho' | translate }}</p>
             }
-            @if (auth.can('editPatients') && !p.isArchived && !p.orthoCases?.length) {
+            @if (auth.can('editRegistry') && !p.isArchived && !p.orthoCases?.length) {
               <pb-button variant="text" icon="add" (click)="addCase('ortho')">
                 {{ 'patientDetail.addOrthoCase' | translate }}
               </pb-button>

@@ -23,7 +23,13 @@ import {
   genderLabel,
   treatmentColor,
 } from '../../shared/labels';
-import { iranianNationalId, iranianMobile } from '../../shared/validators';
+import {
+  digitString,
+  identifierValue,
+  iranianMobile,
+  iranianNationalId,
+  toLatinDigits,
+} from '../../shared/validators';
 import type { NameSuggestion, Patient, PatientInput, ReferralSource, TreatmentType } from './data/patient.model';
 import type { EducationLevel, Gender } from '../../core/models/common.model';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
@@ -114,14 +120,14 @@ export class PatientForm implements HasUnsavedChanges {
   );
 
   protected readonly form = this.fb.nonNullable.group({
-    fileNo: ['', [Validators.required, Validators.pattern(/^\d{1,24}$/)]],
+    fileNo: ['', [Validators.required, digitString(1, 24)]],
     firstName: ['', [Validators.required, Validators.maxLength(80)]],
     lastName: ['', [Validators.required, Validators.maxLength(120)]],
     fatherName: [''],
     nationalId: ['', [iranianNationalId]],
     gender: ['unknown' as Gender],
     mobile: ['', [iranianMobile]],
-    homePhone: ['', [Validators.pattern(/^\d{4,15}$/)]],
+    homePhone: ['', [digitString(4, 15)]],
     birthDate: [null as Date | null],
     occupation: [''],
     education: ['unknown' as EducationLevel],
@@ -218,6 +224,9 @@ export class PatientForm implements HasUnsavedChanges {
   }
 
   private prefillNew(): void {
+    // The instance may be reused straight from an edit route; nothing of that
+    // record may leak into a new one.
+    this.original.set(null);
     // Offer the next number in the practice's own sequence so nobody has to
     // hunt for the last one used.
     this.service.nextFileNo().subscribe(({ fileNo }) => {
@@ -313,15 +322,17 @@ export class PatientForm implements HasUnsavedChanges {
     const raw = this.form.getRawValue();
     const blank = (v: string): string | null => (v.trim() ? v.trim() : null);
 
+    // Identifiers go out digit-folded, matching what the validators accepted;
+    // the API folds again and is the side that decides what is stored.
     const payload: PatientInput = {
-      fileNo: raw.fileNo.trim(),
+      fileNo: toLatinDigits(raw.fileNo).trim(),
       firstName: raw.firstName.trim(),
       lastName: raw.lastName.trim(),
       fatherName: blank(raw.fatherName),
-      nationalId: blank(raw.nationalId),
+      nationalId: identifierValue(raw.nationalId),
       gender: raw.gender,
-      mobile: blank(raw.mobile),
-      homePhone: blank(raw.homePhone),
+      mobile: identifierValue(raw.mobile),
+      homePhone: identifierValue(raw.homePhone),
       occupation: blank(raw.occupation),
       education: raw.education,
       referralSourceName: blank(raw.referralSourceName),
@@ -352,12 +363,18 @@ export class PatientForm implements HasUnsavedChanges {
       (value) => this.dateAdapter.toIso8601(value),
     );
 
-    const request = this.isEdit()
-      ? this.service.update(this.id()!, {
-          ...payload,
-          expectedVersion: this.original()?.version,
-        })
-      : this.service.create(payload);
+    // On edit the loaded record is always here: `submit` refuses to run while
+    // a load is in flight, and the load sets `original` before it clears. The
+    // guard is belt and braces — an edit must never fall through to a create.
+    const original = this.original();
+    if (this.isEdit() && !original) {
+      this.saving.set(false);
+      return;
+    }
+    const request =
+      this.isEdit() && original
+        ? this.service.update(this.id()!, { ...payload, expectedVersion: original.version })
+        : this.service.create(payload);
 
     request.subscribe({
       next: (patient) => {

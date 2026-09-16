@@ -1,4 +1,10 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { ReferralKind } from '../../domain';
 import { Patient } from '../patients/patient.entity';
 

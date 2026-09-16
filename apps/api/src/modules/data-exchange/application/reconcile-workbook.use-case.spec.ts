@@ -65,9 +65,15 @@ function orthoCase(overrides: Partial<OrthoCase> = {}): OrthoCase {
 }
 
 /** Wires the use case to fixed repository contents. */
-function build(data: { patients?: Patient[]; implants?: ImplantCase[]; ortho?: OrthoCase[] }) {
+function build(data: {
+  patients?: Patient[];
+  implants?: ImplantCase[];
+  ortho?: OrthoCase[];
+}) {
   const repo = <T extends ObjectLiteral>(rows: T[]) =>
-    ({ find: jest.fn(() => Promise.resolve(rows)) }) as unknown as Repository<T>;
+    ({
+      find: jest.fn(() => Promise.resolve(rows)),
+    }) as unknown as Repository<T>;
   return new ReconcileWorkbookUseCase(
     repo(data.patients ?? []),
     repo(data.implants ?? []),
@@ -116,7 +122,11 @@ describe('ReconcileWorkbookUseCase', () => {
       expect(result.patients[0].fields).toEqual(
         expect.arrayContaining([
           { field: 'mobile', current: '09121234567', proposed: '09350000000' },
-          { field: 'homeAddress', current: 'تهران، خیابان ولیعصر', proposed: 'کرج' },
+          {
+            field: 'homeAddress',
+            current: 'تهران، خیابان ولیعصر',
+            proposed: 'کرج',
+          },
         ]),
       );
       expect(result.patients[0].fields).toHaveLength(2);
@@ -125,7 +135,13 @@ describe('ReconcileWorkbookUseCase', () => {
     it('never proposes erasing a value the sheet leaves blank', async () => {
       // The workbook has no address or medical history for this patient…
       const buffer = await writer.build({
-        patients: [patient({ homeAddress: null, workAddress: null, medicalHistory: null })],
+        patients: [
+          patient({
+            homeAddress: null,
+            workAddress: null,
+            medicalHistory: null,
+          }),
+        ],
         implants: [],
         ortho: [],
       });
@@ -168,7 +184,11 @@ describe('ReconcileWorkbookUseCase', () => {
         { field: 'mobile', current: '09121234567', proposed: '09350000000' },
       ]);
       expect(result.ortho[0].fields).toEqual([
-        { field: 'recordedName', current: 'علی آتشک', proposed: 'علی آتشک نژاد' },
+        {
+          field: 'recordedName',
+          current: 'علی آتشک',
+          proposed: 'علی آتشک نژاد',
+        },
       ]);
     });
   });
@@ -197,7 +217,9 @@ describe('ReconcileWorkbookUseCase', () => {
 
   describe('bad uploads', () => {
     it('rejects a file that is not a workbook with a stable 400', async () => {
-      const rejection = build({}).execute(Buffer.from('this is not a spreadsheet'));
+      const rejection = build({}).execute(
+        Buffer.from('this is not a spreadsheet'),
+      );
 
       await expect(rejection).rejects.toBeInstanceOf(AppException);
       await expect(rejection).rejects.toMatchObject({

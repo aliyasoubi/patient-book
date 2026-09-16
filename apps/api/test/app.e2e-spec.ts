@@ -3,7 +3,8 @@ import { INestApplication } from '@nestjs/common';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { AppModule } from '../src/app.module';
+import { configureApp } from '../src/app.setup';
 
 describe('HealthController (e2e)', () => {
   let app: INestApplication<App>;
@@ -14,7 +15,7 @@ describe('HealthController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
+    configureApp(app);
     await app.init();
   });
 

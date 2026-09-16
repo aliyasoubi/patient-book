@@ -74,7 +74,11 @@ export class ImportWorkbookUseCase {
 
     await this.dataSource.transaction(async (manager) => {
       const matcher = await this.importPatients(manager, report);
-      const implantsByNumber = await this.importImplants(manager, report, matcher);
+      const implantsByNumber = await this.importImplants(
+        manager,
+        report,
+        matcher,
+      );
       await this.importOrtho(manager, report, matcher);
       await this.importSurgeryQueue(manager, report, implantsByNumber);
     });
@@ -121,7 +125,10 @@ export class ImportWorkbookUseCase {
       seenFileNumbers.add(mapped.patient.fileNo);
 
       if (mapped.referralRaw) {
-        mapped.patient.referralSource = this.resolveReferral(referrals, mapped.referralRaw);
+        mapped.patient.referralSource = this.resolveReferral(
+          referrals,
+          mapped.referralRaw,
+        );
       }
       for (const issue of mapped.issues) {
         report.warnings.push({
@@ -133,7 +140,10 @@ export class ImportWorkbookUseCase {
           rawValue: issue.rawValue,
         });
       }
-      staged.push({ patient: mapped.patient, treatmentCodes: mapped.treatmentCodes });
+      staged.push({
+        patient: mapped.patient,
+        treatmentCodes: mapped.treatmentCodes,
+      });
     }
 
     const newReferrals = [...referrals.values()].filter((s) => !s.id);
@@ -189,7 +199,9 @@ export class ImportWorkbookUseCase {
     }
     if (!links.length) return;
     await manager.save(PatientTreatment, links, { chunk: 500 });
-    this.logger.log(`Linked ${links.length} treatments across ${staged.length} patients`);
+    this.logger.log(
+      `Linked ${links.length} treatments across ${staged.length} patients`,
+    );
   }
 
   // -- Registers ---------------------------------------------------------
@@ -250,11 +262,12 @@ export class ImportWorkbookUseCase {
       }
       seen.add(mapped.registryNo);
 
-      const entity = Object.assign(new Entity(), mapped) as T;
+      const entity = Object.assign(new Entity(), mapped);
       staged.push(entity);
 
       // `manual` cannot occur here — an import only ever infers a link.
-      const tallied = mapped.matchMethod === 'manual' ? 'unmatched' : mapped.matchMethod;
+      const tallied =
+        mapped.matchMethod === 'manual' ? 'unmatched' : mapped.matchMethod;
       sheet.matched[tallied]++;
       if (mapped.matchMethod === 'unmatched' && mapped.recordedName) {
         report.warnings.push({
@@ -294,8 +307,12 @@ export class ImportWorkbookUseCase {
         continue;
       }
 
-      const item = Object.assign(new SurgeryQueueItem(), mapped) as SurgeryQueueItem;
-      delete (item as Partial<SurgeryQueueItem> & { dateProblem?: unknown }).dateProblem;
+      const item = Object.assign(
+        new SurgeryQueueItem(),
+        mapped,
+      ) as SurgeryQueueItem;
+      delete (item as Partial<SurgeryQueueItem> & { dateProblem?: unknown })
+        .dateProblem;
 
       if (mapped.dateProblem) {
         report.warnings.push({
@@ -308,11 +325,19 @@ export class ImportWorkbookUseCase {
         });
       }
 
-      this.linkToImplantRegister(item, mapped.implantRegistryNo, implantsByNumber, report, row.rowNumber);
+      this.linkToImplantRegister(
+        item,
+        mapped.implantRegistryNo,
+        implantsByNumber,
+        report,
+        row.rowNumber,
+      );
       staged.push(item);
     }
 
-    const saved = await manager.save(SurgeryQueueItem, staged, { chunk: CHUNK });
+    const saved = await manager.save(SurgeryQueueItem, staged, {
+      chunk: CHUNK,
+    });
     sheet.imported = saved.length;
   }
 

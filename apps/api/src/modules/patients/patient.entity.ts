@@ -13,7 +13,13 @@ import {
   UpdateDateColumn,
   VersionColumn,
 } from 'typeorm';
-import { DataIssue, DatePrecisionEnum, EducationLevel, Gender, searchKey } from '../../domain';
+import {
+  DataIssue,
+  DatePrecisionEnum,
+  EducationLevel,
+  Gender,
+  searchKey,
+} from '../../domain';
 import { ReferralSource } from '../treatments/referral-source.entity';
 import { PatientTreatment } from '../treatments/patient-treatment.entity';
 import { ImplantCase } from '../implants/implant-case.entity';
@@ -77,7 +83,11 @@ export class Patient {
   @Column({ type: 'varchar', length: 120, nullable: true })
   occupation!: string | null;
 
-  @Column({ type: 'enum', enum: EducationLevel, default: EducationLevel.Unknown })
+  @Column({
+    type: 'enum',
+    enum: EducationLevel,
+    default: EducationLevel.Unknown,
+  })
   education!: EducationLevel;
 
   @Column({ type: 'varchar', length: 80, nullable: true })
@@ -121,7 +131,9 @@ export class Patient {
   notes!: string | null;
 
   // ── Relations ────────────────────────────────────────────
-  @OneToMany(() => PatientTreatment, (pt) => pt.patient, { cascade: ['insert'] })
+  @OneToMany(() => PatientTreatment, (pt) => pt.patient, {
+    cascade: ['insert'],
+  })
   treatments!: PatientTreatment[];
 
   @OneToMany(() => ImplantCase, (c) => c.patient)

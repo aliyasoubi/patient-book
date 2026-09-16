@@ -19,6 +19,27 @@ const PG_UNIQUE_VIOLATION = '23505';
 const PG_FOREIGN_KEY_VIOLATION = '23503';
 
 /**
+ * Which domain rule each unique index enforces. The services check these
+ * before writing, but two requests can pass that check together and let the
+ * index catch the second; naming the index here keeps the client's error the
+ * same either way instead of a generic "validation failed". Names are the ones
+ * the migrations create — the entities' own `@Index` decorators are unnamed.
+ */
+const UNIQUE_INDEX_CODES: Readonly<Record<string, ErrorCode>> = {
+  idx_patients_fileno: ErrorCode.FileNumberTaken,
+  idx_implant_registry: ErrorCode.RegistryNumberTaken,
+  idx_ortho_registry: ErrorCode.RegistryNumberTaken,
+  idx_users_username: ErrorCode.UsernameTaken,
+  IDX_users_username_lower_unique: ErrorCode.UsernameTaken,
+};
+
+/** The fields node-postgres attaches to a constraint failure. */
+interface PgDriverError extends Error {
+  code?: string;
+  constraint?: string;
+}
+
+/**
  * Normalises every failure into one {@link ErrorResponse}.
  *
  * Two rules hold here. Nothing user-facing is written in a natural language —
@@ -37,7 +58,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const resolved = this.resolve(exception);
 
-    if (resolved.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    // `statusCode` is a plain number on the wire; compare it as one.
+    const serverError: number = HttpStatus.INTERNAL_SERVER_ERROR;
+    if (resolved.statusCode >= serverError) {
       // The response body deliberately carries no detail, so this is the only
       // record of what actually failed — keep the value itself when a thrown
       // non-Error leaves us no stack to print.
@@ -55,7 +78,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     response.status(resolved.statusCode).json(body);
   }
 
-  private resolve(exception: unknown): Omit<ErrorResponse, 'path' | 'timestamp'> {
+  private resolve(
+    exception: unknown,
+  ): Omit<ErrorResponse, 'path' | 'timestamp'> {
     if (exception instanceof ValidationException) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -87,7 +112,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     if (exception instanceof QueryFailedError) {
-      return this.fromDatabase(exception);
+      return this.fromDatabase(exception as QueryFailedError<PgDriverError>);
     }
 
     if (exception instanceof HttpException) {
@@ -106,14 +131,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private fromDatabase(
-    exception: QueryFailedError,
+    exception: QueryFailedError<PgDriverError>,
   ): Omit<ErrorResponse, 'path' | 'timestamp'> {
-    const driverCode = (exception as QueryFailedError & { code?: string }).code;
+    const driver = exception.driverError;
+    const driverCode = driver.code;
 
     if (driverCode === PG_UNIQUE_VIOLATION) {
+      const known = driver.constraint
+        ? UNIQUE_INDEX_CODES[driver.constraint]
+        : undefined;
       return {
         statusCode: HttpStatus.CONFLICT,
-        code: ErrorCode.ValidationFailed,
+        code: known ?? ErrorCode.ValidationFailed,
         params: {},
         message: 'Unique constraint violated',
       };
@@ -141,7 +170,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
    * throttler, 404 from an unmatched route. Mapped onto domain codes so the
    * client has one vocabulary to render from.
    */
-  private fromHttp(exception: HttpException): Omit<ErrorResponse, 'path' | 'timestamp'> {
+  private fromHttp(
+    exception: HttpException,
+  ): Omit<ErrorResponse, 'path' | 'timestamp'> {
     const status = exception.getStatus();
     const byStatus: Partial<Record<number, ErrorCode>> = {
       [HttpStatus.UNAUTHORIZED]: ErrorCode.Unauthorized,
@@ -154,7 +185,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const payload = exception.getResponse();
     const params: ErrorParams = {};
     let message = exception.message;
-    if (typeof payload === 'object' && payload !== null && 'message' in payload) {
+    if (
+      typeof payload === 'object' &&
+      payload !== null &&
+      'message' in payload
+    ) {
       const raw = (payload as { message?: string | string[] }).message;
       message = Array.isArray(raw) ? raw.join('; ') : (raw ?? message);
     }

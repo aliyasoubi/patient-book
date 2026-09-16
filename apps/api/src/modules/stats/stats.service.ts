@@ -8,7 +8,7 @@ import { JalaliDate } from '../../domain';
 
 /** Age buckets the dashboard groups patients into. */
 export type AgeBandKey =
-  | 'under_13' | '13_19' | '20_29' | '30_39' | '40_49' | '50_64' | '65_plus';
+  'under_13' | '13_19' | '20_29' | '30_39' | '40_49' | '50_64' | '65_plus';
 
 export interface DashboardStats {
   totals: {
@@ -23,8 +23,19 @@ export interface DashboardStats {
     needsReview: number;
   };
   gender: Array<{ key: string; count: number }>;
-  topTreatments: Array<{ code: string; nameFa: string; icon: string; color: string; count: number }>;
-  topReferrals: Array<{ id: string; name: string; kind: string; count: number }>;
+  topTreatments: Array<{
+    code: string;
+    nameFa: string;
+    icon: string;
+    color: string;
+    count: number;
+  }>;
+  topReferrals: Array<{
+    id: string;
+    name: string;
+    kind: string;
+    count: number;
+  }>;
   /** New patients per Jalali month over the last two years. */
   newPatientsByMonth: Array<{ month: string; count: number }>;
   /** `band` is a stable key such as `30_39`; the client renders the label. */
@@ -37,12 +48,13 @@ export interface DashboardStats {
 export class StatsService {
   constructor(
     @InjectRepository(Patient) private readonly patients: Repository<Patient>,
-    @InjectRepository(SurgeryQueueItem) private readonly surgery: Repository<SurgeryQueueItem>,
+    @InjectRepository(SurgeryQueueItem)
+    private readonly surgery: Repository<SurgeryQueueItem>,
   ) {}
 
   async dashboard(): Promise<DashboardStats> {
     const q = <T>(sql: string, params?: unknown[]): Promise<T[]> =>
-      this.patients.query(sql, params) as Promise<T[]>;
+      this.patients.query<T[]>(sql, params);
 
     const [
       totals,
@@ -150,7 +162,10 @@ export class StatsService {
         month: JalaliDate.fromDate(new Date(m.month), 'month')?.format() ?? '',
         count: Number(m.count),
       })),
-      ageBands: ageBands.map((a) => ({ band: a.band as AgeBandKey, count: Number(a.count) })),
+      ageBands: ageBands.map((a) => ({
+        band: a.band as AgeBandKey,
+        count: Number(a.count),
+      })),
       recentlyActive: Number(activity[0]?.recent ?? 0),
       inactiveOverYear: Number(activity[0]?.inactive ?? 0),
     };

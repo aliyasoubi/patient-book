@@ -1,0 +1,76 @@
+<div class="registry-page">
+  <pb-page-header
+    [title]="ui().title | translate"
+    [subtitle]="'registry.independentNumberNotice' | translate"
+    [count]="countLabel()"
+  />
+
+  <div class="registry-page__toolbar">
+    <pb-search-field
+      class="registry-page__search"
+      [control]="search"
+      [placeholder]="'registry.searchPlaceholder' | translate"
+      [ariaLabel]="ui().searchAria | translate"
+    />
+
+    <pb-checkbox-field
+      [checked]="unlinkedOnly()"
+      (checkedChange)="toggleUnlinked($event)"
+      class="registry-page__filter"
+    >
+      {{ 'registry.unlinkedOnly' | translate }}
+    </pb-checkbox-field>
+
+    @if (auth.can('archiveRegistry')) {
+      <pb-checkbox-field
+        [checked]="archivedOnly()"
+        (checkedChange)="toggleArchived($event)"
+        class="registry-page__filter"
+      >
+        {{ 'registry.archivedOnly' | translate }}
+      </pb-checkbox-field>
+    }
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <!-- A failed fetch keeps the previous rows (if any) under this banner; it is
+       never rendered as the table's empty state, which would claim the
+       register holds nothing. -->
+  @if (failed()) {
+    <pb-load-error
+      [message]="(cases().length > 0 ? 'registry.loadFailedStale' : 'registry.loadFailed') | translate"
+      (retry)="retry()"
+    />
+  }
+
+  <!-- Rows already on screen stay through a reload or a failure; the table's
+       own empty state only ever follows a completed, successful fetch. -->
+  @if ((!loading() && !failed()) || cases().length > 0) {
+    <pb-registry-table
+      [cases]="cases()"
+      [icon]="ui().icon"
+      [emptyTitle]="ui().emptyTitle | translate"
+      [emptyHint]="emptyHint()"
+      [canEdit]="auth.can('editRegistry')"
+      [canArchive]="auth.can('archiveRegistry')"
+      [archived]="archivedOnly()"
+      (edit)="edit($event)"
+      (archive)="archive($event)"
+      (restore)="restore($event)"
+    />
+  }
+
+  @if (total() > 0) {
+    <mat-paginator
+      [length]="total()"
+      [pageIndex]="page() - 1"
+      [pageSize]="limit()"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      (page)="onPage($event)"
+      [attr.aria-label]="'common.pagination' | translate"
+    />
+  }
+</div>

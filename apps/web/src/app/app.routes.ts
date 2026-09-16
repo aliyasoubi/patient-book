@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { ResolveFn, Routes } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { authGuard, guestGuard, roleGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, permissionGuard, roleGuard } from './core/guards/auth.guard';
 import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
 /**
@@ -41,8 +41,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/patients/patient-list').then((m) => m.PatientList),
         title: translatedTitle('route.patients'),
       },
+      // Write screens carry the same permission that shows their entry
+      // button, so a viewer cannot reach a form by typing its URL. The API is
+      // still the boundary; this only spares them a screen that cannot save.
       {
         path: 'patients/new',
+        canActivate: [permissionGuard('editPatients')],
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./features/patients/patient-form').then((m) => m.PatientForm),
         title: translatedTitle('route.patientNew'),
@@ -55,18 +59,25 @@ export const routes: Routes = [
       },
       {
         path: 'patients/:id/edit',
+        canActivate: [permissionGuard('editPatients')],
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./features/patients/patient-form').then((m) => m.PatientForm),
         title: translatedTitle('route.patientEdit'),
       },
+      // One screen for both registers; `kind` reaches the component as a
+      // route-data input.
       {
         path: 'implants',
-        loadComponent: () => import('./features/implants/implant-list').then((m) => m.ImplantList),
+        data: { kind: 'implant' },
+        loadComponent: () =>
+          import('./features/registries/registry-list').then((m) => m.RegistryList),
         title: translatedTitle('route.implants'),
       },
       {
         path: 'ortho',
-        loadComponent: () => import('./features/ortho/ortho-list').then((m) => m.OrthoList),
+        data: { kind: 'ortho' },
+        loadComponent: () =>
+          import('./features/registries/registry-list').then((m) => m.RegistryList),
         title: translatedTitle('route.ortho'),
       },
       {
@@ -76,12 +87,14 @@ export const routes: Routes = [
       },
       {
         path: 'surgery/new',
+        canActivate: [permissionGuard('editSurgery')],
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./features/surgery/surgery-form').then((m) => m.SurgeryForm),
         title: translatedTitle('route.surgeryNew'),
       },
       {
         path: 'surgery/:id/edit',
+        canActivate: [permissionGuard('editSurgery')],
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./features/surgery/surgery-form').then((m) => m.SurgeryForm),
         title: translatedTitle('route.surgeryEdit'),

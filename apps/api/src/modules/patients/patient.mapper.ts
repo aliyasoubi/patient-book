@@ -83,7 +83,10 @@ function jalali(
   };
 }
 
-export function toPatientResponse(p: Patient, detailed = false): PatientResponse {
+export function toPatientResponse(
+  p: Patient,
+  detailed = false,
+): PatientResponse {
   const birth = jalali(p.birthDate, p.birthDatePrecision, p.birthDateRaw);
   const response: PatientResponse = {
     id: p.id,
@@ -97,12 +100,18 @@ export function toPatientResponse(p: Patient, detailed = false): PatientResponse
     mobile: p.mobile,
     homePhone: p.homePhone,
     birthDate: birth,
-    age: birth ? (JalaliDate.fromDate(new Date(p.birthDate!))?.ageInYears() ?? null) : null,
+    age: birth
+      ? (JalaliDate.fromDate(new Date(p.birthDate!))?.ageInYears() ?? null)
+      : null,
     occupation: p.occupation,
     education: p.education,
     educationRaw: p.educationRaw,
     referralSource: p.referralSource
-      ? { id: p.referralSource.id, name: p.referralSource.name, kind: p.referralSource.kind }
+      ? {
+          id: p.referralSource.id,
+          name: p.referralSource.name,
+          kind: p.referralSource.kind,
+        }
       : null,
     medicalHistory: p.medicalHistory,
     homeAddress: p.homeAddress,

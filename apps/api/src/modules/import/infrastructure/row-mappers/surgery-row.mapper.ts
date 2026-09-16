@@ -25,7 +25,11 @@ export interface MappedSurgeryRow {
   status: SurgeryStatus;
   searchText: string;
   /** Set when the surgery date could not be read. */
-  dateProblem: { code: ErrorCode; params: ErrorParams; rawValue: string } | null;
+  dateProblem: {
+    code: ErrorCode;
+    params: ErrorParams;
+    rawValue: string;
+  } | null;
 }
 
 export const SURGERY_COLUMN = {
@@ -71,7 +75,12 @@ export class SurgeryRowMapper {
       prosthesisDue: cell(SURGERY_COLUMN.prosthesisDue) || null,
       status: SurgeryStatus.Scheduled,
       searchText: searchKey(
-        [registryNo, recordedName, toothPosition, extractImplantBrand(toothPosition)]
+        [
+          registryNo,
+          recordedName,
+          toothPosition,
+          extractImplantBrand(toothPosition),
+        ]
           .filter(Boolean)
           .join(' '),
       ),
@@ -85,9 +94,15 @@ export class SurgeryRowMapper {
       mapped.surgeryDate = parsed.date;
       mapped.surgeryDatePrecision = parsed.precision as DatePrecisionEnum;
       // A date already past means the surgery has happened.
-      mapped.status = parsed.isBefore(now) ? SurgeryStatus.Completed : SurgeryStatus.Scheduled;
+      mapped.status = parsed.isBefore(now)
+        ? SurgeryStatus.Completed
+        : SurgeryStatus.Scheduled;
     } else {
-      mapped.dateProblem = { code: parsed.code, params: parsed.params, rawValue: surgeryRaw };
+      mapped.dateProblem = {
+        code: parsed.code,
+        params: parsed.params,
+        rawValue: surgeryRaw,
+      };
     }
     return mapped;
   }

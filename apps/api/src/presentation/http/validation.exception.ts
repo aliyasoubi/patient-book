@@ -27,12 +27,14 @@ export class ValidationException extends Error {
         const path = prefix ? `${prefix}.${node.property}` : node.property;
 
         if (node.constraints) {
-          const codes: FieldError[] = Object.keys(node.constraints).map((constraint) => ({
-            // A decorator may pin an explicit domain code via its `context`;
-            // otherwise the constraint name is a perfectly good stable key.
-            code: ValidationException.codeFor(node, constraint),
-            params: ValidationException.paramsFor(node, constraint),
-          }));
+          const codes: FieldError[] = Object.keys(node.constraints).map(
+            (constraint) => ({
+              // A decorator may pin an explicit domain code via its `context`;
+              // otherwise the constraint name is a perfectly good stable key.
+              code: ValidationException.codeFor(node, constraint),
+              params: ValidationException.paramsFor(node, constraint),
+            }),
+          );
           fieldErrors[path] = [...(fieldErrors[path] ?? []), ...codes];
         }
 
@@ -45,14 +47,17 @@ export class ValidationException extends Error {
   }
 
   private static codeFor(node: ValidationError, constraint: string): string {
-    const context = node.contexts?.[constraint] as { code?: string } | undefined;
+    const context = node.contexts?.[constraint] as
+      { code?: string } | undefined;
     return context?.code ?? constraint;
   }
 
-  private static paramsFor(node: ValidationError, constraint: string): ErrorParams {
+  private static paramsFor(
+    node: ValidationError,
+    constraint: string,
+  ): ErrorParams {
     const context = node.contexts?.[constraint] as
-      | { params?: Record<string, string | number> }
-      | undefined;
+      { params?: Record<string, string | number> } | undefined;
     return context?.params ?? {};
   }
 }

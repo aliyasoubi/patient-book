@@ -70,7 +70,9 @@ export class NationalId {
     const digits = toLatinDigits(input).replace(/\D/g, '');
     if (!digits) return null;
     if (digits.length >= 10) return digits;
-    return digits.length >= MIN_PADDABLE_LENGTH ? digits.padStart(10, '0') : digits;
+    return digits.length >= MIN_PADDABLE_LENGTH
+      ? digits.padStart(10, '0')
+      : digits;
   }
 
   /**

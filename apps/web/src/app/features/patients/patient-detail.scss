@@ -370,6 +370,17 @@
   &__status {
     margin-inline-start: auto;
   }
+
+  /* Compact: the row is one line of body text, not a 48px touch target. */
+  &__edit {
+    --mdc-icon-button-state-layer-size: 32px;
+    padding: 4px;
+    margin: -4px;
+
+    .material-symbols-rounded {
+      font-size: 18px;
+    }
+  }
 }
 
 /* ── History timeline ──────────────────────────────────────────────── */

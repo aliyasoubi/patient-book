@@ -155,7 +155,10 @@ export class PatientsService {
       .groupBy(`p."${field}"`)
       .getRawMany<{ name: string; count: string }>();
 
-    const variantsByKey = new Map<string, Array<{ name: string; count: number }>>();
+    const variantsByKey = new Map<
+      string,
+      Array<{ name: string; count: number }>
+    >();
     for (const row of rows) {
       const key = loosePersianKey(row.name);
       if (!key) continue;
@@ -242,7 +245,9 @@ export class PatientsService {
         .where('p.id = :id', { id })
         .getOne();
       if (!locked) throw AppException.notFound(ErrorCode.PatientNotFound);
-      if (dto.expectedVersion !== undefined && locked.version !== dto.expectedVersion) {
+      // Unconditional: a caller with no version to offer has not read the
+      // record it is about to overwrite, and is refused for the same reason.
+      if (locked.version !== dto.expectedVersion) {
         throw AppException.conflict(ErrorCode.PatientModified);
       }
 

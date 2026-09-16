@@ -20,7 +20,8 @@ import type { AppConfig } from '../config/configuration';
           // implicit sync — this database holds the only copy of the records.
           synchronize: false,
           migrationsRun: false,
-          logging: process.env.DB_LOGGING === 'true' ? 'all' : ['error', 'warn'],
+          logging:
+            process.env.DB_LOGGING === 'true' ? 'all' : ['error', 'warn'],
           // Persian collation for ORDER BY on names.
           extra: { max: 20 },
         };

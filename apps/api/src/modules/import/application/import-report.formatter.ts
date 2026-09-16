@@ -11,10 +11,18 @@ export class ImportReportFormatter {
   static toConsole(report: ImportReport): string {
     const lines: string[] = [];
     const seconds = report.finishedAt
-      ? ((report.finishedAt.getTime() - report.startedAt.getTime()) / 1000).toFixed(1)
+      ? (
+          (report.finishedAt.getTime() - report.startedAt.getTime()) /
+          1000
+        ).toFixed(1)
       : '?';
 
-    lines.push('', '='.repeat(64), `  Import finished in ${seconds}s`, '='.repeat(64));
+    lines.push(
+      '',
+      '='.repeat(64),
+      `  Import finished in ${seconds}s`,
+      '='.repeat(64),
+    );
 
     for (const [sheet, r] of Object.entries(report.sheets)) {
       lines.push('', `  ${sheet}`);
@@ -29,8 +37,12 @@ export class ImportReportFormatter {
       if (skipped.length) {
         const total = skipped.reduce((a, [, n]) => a + (n ?? 0), 0);
         lines.push(`    skipped       ${total}`);
-        for (const [reason, n] of skipped.sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))) {
-          lines.push(`                    ${String(n).padStart(5)} x ${reason}`);
+        for (const [reason, n] of skipped.sort(
+          (a, b) => (b[1] ?? 0) - (a[1] ?? 0),
+        )) {
+          lines.push(
+            `                    ${String(n).padStart(5)} x ${reason}`,
+          );
         }
       }
     }
@@ -42,18 +54,25 @@ export class ImportReportFormatter {
         byField.set(key, [...(byField.get(key) ?? []), w]);
       }
       lines.push('', '-'.repeat(64));
-      lines.push(`  ${report.warnings.length} values needing review (kept, flagged in the app)`);
+      lines.push(
+        `  ${report.warnings.length} values needing review (kept, flagged in the app)`,
+      );
       lines.push('-'.repeat(64));
 
-      for (const [key, list] of [...byField].sort((a, b) => b[1].length - a[1].length)) {
+      for (const [key, list] of [...byField].sort(
+        (a, b) => b[1].length - a[1].length,
+      )) {
         lines.push(`    ${key}: ${list.length}`);
         for (const w of list.slice(0, 4)) {
           const params = Object.entries(w.params)
             .map(([k, v]) => `${k}=${v}`)
             .join(' ');
-          lines.push(`        row ${w.row}: ${w.code}${params ? ' ' + params : ''}`);
+          lines.push(
+            `        row ${w.row}: ${w.code}${params ? ' ' + params : ''}`,
+          );
         }
-        if (list.length > 4) lines.push(`        … and ${list.length - 4} more`);
+        if (list.length > 4)
+          lines.push(`        … and ${list.length - 4} more`);
       }
     }
 

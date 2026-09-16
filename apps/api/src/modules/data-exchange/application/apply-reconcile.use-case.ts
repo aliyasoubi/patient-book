@@ -19,10 +19,19 @@ import {
   REGISTRY_FIELD_READERS,
   RegistryLike,
 } from './field-readers';
-import { ApplyEntityDto, ApplyFieldDto, ApplyReconcileResult, ApplyResultRow } from '../dto/reconcile.dto';
+import {
+  ApplyEntityDto,
+  ApplyFieldDto,
+  ApplyReconcileResult,
+  ApplyResultRow,
+} from '../dto/reconcile.dto';
 
 interface RegistryUpdatable {
-  update(id: string, dto: UpdateRegistryCaseDto, userId: string | null): Promise<unknown>;
+  update(
+    id: string,
+    dto: UpdateRegistryCaseDto,
+    userId: string | null,
+  ): Promise<unknown>;
 }
 
 /** A failure to report against one row, in the app's stable error vocabulary. */
@@ -44,7 +53,10 @@ interface Failure {
  *   carries the value the preview showed; if the record no longer holds it,
  *   the row is refused with {@link ErrorCode.ReconcileConflict} rather than
  *   clobbering whoever edited it in between. Bulk apply makes this race far
- *   likelier than it is for a single form.
+ *   likelier than it is for a single form. That comparison happens outside
+ *   any lock, so the `version` it was made against travels with the update
+ *   as `expectedVersion`: an edit landing between the check and the write is
+ *   caught by {@link PatientsService.update}'s row lock, not overwritten.
  * - **One bad row never aborts the batch,** and each failure reports a real
  *   code, so an admin correcting hundreds of legacy records can see *why*.
  */
@@ -54,13 +66,20 @@ export class ApplyReconcileUseCase {
     private readonly patients: PatientsService,
     private readonly implants: ImplantRegistryService,
     private readonly ortho: OrthoRegistryService,
-    @InjectRepository(Patient) private readonly patientRepo: Repository<Patient>,
-    @InjectRepository(ImplantCase) private readonly implantRepo: Repository<ImplantCase>,
-    @InjectRepository(OrthoCase) private readonly orthoRepo: Repository<OrthoCase>,
+    @InjectRepository(Patient)
+    private readonly patientRepo: Repository<Patient>,
+    @InjectRepository(ImplantCase)
+    private readonly implantRepo: Repository<ImplantCase>,
+    @InjectRepository(OrthoCase)
+    private readonly orthoRepo: Repository<OrthoCase>,
   ) {}
 
   async execute(
-    input: { patients?: ApplyEntityDto[]; implants?: ApplyEntityDto[]; ortho?: ApplyEntityDto[] },
+    input: {
+      patients?: ApplyEntityDto[];
+      implants?: ApplyEntityDto[];
+      ortho?: ApplyEntityDto[];
+    },
     userId: string | null,
   ): Promise<ApplyReconcileResult> {
     return {
@@ -71,7 +90,12 @@ export class ApplyReconcileUseCase {
         this.implants,
         this.implantRepo,
       ),
-      ortho: await this.applyRegistry(input.ortho ?? [], userId, this.ortho, this.orthoRepo),
+      ortho: await this.applyRegistry(
+        input.ortho ?? [],
+        userId,
+        this.ortho,
+        this.orthoRepo,
+      ),
     };
   }
 
@@ -87,17 +111,31 @@ export class ApplyReconcileUseCase {
         relations: { referralSource: true },
       });
       if (!current) {
-        results.push({ id: entity.id, ok: false, code: ErrorCode.PatientNotFound });
+        results.push({
+          id: entity.id,
+          ok: false,
+          code: ErrorCode.PatientNotFound,
+        });
         continue;
       }
 
-      const stale = this.firstMismatch(entity.fields, PATIENT_FIELD_READERS, current);
+      const stale = this.firstMismatch(
+        entity.fields,
+        PATIENT_FIELD_READERS,
+        current,
+      );
       if (stale) {
         results.push({ id: entity.id, ok: false, ...stale });
         continue;
       }
 
-      const built = await this.buildAndValidate(UpdatePatientDto, entity.fields);
+      const built = await this.buildAndValidate(
+        UpdatePatientDto,
+        entity.fields,
+        {
+          expectedVersion: current.version,
+        },
+      );
       if ('code' in built) {
         results.push({ id: entity.id, ok: false, ...built });
         continue;
@@ -125,17 +163,28 @@ export class ApplyReconcileUseCase {
     for (const entity of entities) {
       const current = await repo.findOne({ where: { id: entity.id } as never });
       if (!current) {
-        results.push({ id: entity.id, ok: false, code: ErrorCode.RegistryCaseNotFound });
+        results.push({
+          id: entity.id,
+          ok: false,
+          code: ErrorCode.RegistryCaseNotFound,
+        });
         continue;
       }
 
-      const stale = this.firstMismatch(entity.fields, REGISTRY_FIELD_READERS, current);
+      const stale = this.firstMismatch(
+        entity.fields,
+        REGISTRY_FIELD_READERS,
+        current,
+      );
       if (stale) {
         results.push({ id: entity.id, ok: false, ...stale });
         continue;
       }
 
-      const built = await this.buildAndValidate(UpdateRegistryCaseDto, entity.fields);
+      const built = await this.buildAndValidate(
+        UpdateRegistryCaseDto,
+        entity.fields,
+      );
       if ('code' in built) {
         results.push({ id: entity.id, ok: false, ...built });
         continue;
@@ -192,8 +241,9 @@ export class ApplyReconcileUseCase {
   private async buildAndValidate<T extends object>(
     cls: new () => T,
     fields: ApplyFieldDto[],
+    extra: Record<string, unknown> = {},
   ): Promise<{ dto: T } | Failure> {
-    const raw: Record<string, string | null> = {};
+    const raw: Record<string, unknown> = { ...extra };
     for (const f of fields) raw[f.field] = f.proposed;
 
     const dto = plainToInstance(cls, raw, { enableImplicitConversion: false });

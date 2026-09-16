@@ -60,7 +60,9 @@ export class JalaliDate {
    * Non-throwing variant. Returns the reason on failure so an import can record
    * exactly why a value was rejected instead of discarding it.
    */
-  static tryParse(input: string | null | undefined): JalaliDate | JalaliParseFailure {
+  static tryParse(
+    input: string | null | undefined,
+  ): JalaliDate | JalaliParseFailure {
     if (input === null || input === undefined) {
       return { code: ErrorCode.DateEmpty, params: {} };
     }
@@ -72,16 +74,25 @@ export class JalaliDate {
 
     const parts = raw.split(/[/\-.]/).filter((p) => p !== '');
     if (parts.length === 0 || parts.length > 3) {
-      return { code: ErrorCode.DateUnknownFormat, params: { value: String(input) } };
+      return {
+        code: ErrorCode.DateUnknownFormat,
+        params: { value: String(input) },
+      };
     }
     if (parts.some((p) => !/^\d+$/.test(p))) {
-      return { code: ErrorCode.DateNonNumeric, params: { value: String(input) } };
+      return {
+        code: ErrorCode.DateNonNumeric,
+        params: { value: String(input) },
+      };
     }
 
     const nums = parts.map(Number);
     const year = JalaliDate.expandYear(nums[0]);
     if (year === 'ambiguous') {
-      return { code: ErrorCode.DateAmbiguousYear, params: { value: String(input) } };
+      return {
+        code: ErrorCode.DateAmbiguousYear,
+        params: { value: String(input) },
+      };
     }
     if (year === 'out-of-range' || year < MIN_YEAR || year > MAX_YEAR) {
       return {
@@ -94,13 +105,20 @@ export class JalaliDate {
 
     const month = nums[1];
     if (month < 1 || month > 12) {
-      return { code: ErrorCode.DateMonthInvalid, params: { month, value: String(input) } };
+      return {
+        code: ErrorCode.DateMonthInvalid,
+        params: { month, value: String(input) },
+      };
     }
-    if (nums.length === 2) return JalaliDate.build(year, month, 1, 'month', input);
+    if (nums.length === 2)
+      return JalaliDate.build(year, month, 1, 'month', input);
 
     const day = nums[2];
     if (day < 1 || day > 31) {
-      return { code: ErrorCode.DateDayInvalid, params: { day, value: String(input) } };
+      return {
+        code: ErrorCode.DateDayInvalid,
+        params: { day, value: String(input) },
+      };
     }
     return JalaliDate.build(year, month, day, 'day', input);
   }
@@ -111,7 +129,10 @@ export class JalaliDate {
   }
 
   /** Wrap an already-stored Gregorian date, e.g. one read back from a column. */
-  static fromDate(date: Date, precision: DatePrecision = 'day'): JalaliDate | null {
+  static fromDate(
+    date: Date,
+    precision: DatePrecision = 'day',
+  ): JalaliDate | null {
     return isValid(date) ? new JalaliDate(date, precision) : null;
   }
 
@@ -123,7 +144,9 @@ export class JalaliDate {
    * Expand a two-digit year. The practice's records run 1399–1405, and the
    * shorthand in the sheets ("99/05/15") always means the nearest century.
    */
-  private static expandYear(raw: number): number | 'ambiguous' | 'out-of-range' {
+  private static expandYear(
+    raw: number,
+  ): number | 'ambiguous' | 'out-of-range' {
     if (raw >= MIN_YEAR && raw <= MAX_YEAR) return raw;
     if (raw < 100) return raw >= 50 ? 1300 + raw : 1400 + raw;
     // A three-digit value such as "140" is genuinely ambiguous between 1400 and
@@ -141,8 +164,7 @@ export class JalaliDate {
     precision: DatePrecision,
     original: unknown,
   ): JalaliDate | JalaliParseFailure {
-    const stamp =
-      `${String(y).padStart(4, '0')}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
+    const stamp = `${String(y).padStart(4, '0')}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
     const parsed = parse(stamp, 'yyyy/MM/dd', new Date());
     if (!isValid(parsed)) {
       // Reaching here means the components were individually plausible but the
@@ -186,7 +208,11 @@ export class JalaliDate {
   ageInYears(now: Date = new Date()): number | null {
     let age = now.getFullYear() - this.date.getFullYear();
     const monthDelta = now.getMonth() - this.date.getMonth();
-    if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < this.date.getDate())) age--;
+    if (
+      monthDelta < 0 ||
+      (monthDelta === 0 && now.getDate() < this.date.getDate())
+    )
+      age--;
     return age >= 0 && age < 130 ? age : null;
   }
 

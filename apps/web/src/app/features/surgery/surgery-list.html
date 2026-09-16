@@ -45,7 +45,17 @@
     <mat-progress-bar mode="indeterminate" />
   }
 
-  @if (!loading() && items().length === 0) {
+  <!-- A failed fetch keeps the previous rows (if any) under this banner. It is
+       never shown as the empty state: "no surgeries scheduled" and "the queue
+       could not be loaded" are different facts to someone prepping a theatre. -->
+  @if (failed()) {
+    <pb-load-error
+      [message]="(items().length > 0 ? 'surgery.loadFailedStale' : 'surgery.loadFailed') | translate"
+      (retry)="retry()"
+    />
+  }
+
+  @if (!loading() && !failed() && items().length === 0) {
     <pb-empty-state
       icon="event_busy"
       [title]="'surgery.emptyTitle' | translate"

@@ -14,7 +14,8 @@ const parsed = (input: string): JalaliDate => {
 /** Narrow to the failure branch and return its code. */
 const failure = (input: string | null | undefined): ErrorCode => {
   const result = JalaliDate.tryParse(input);
-  if (result instanceof JalaliDate) throw new Error(`expected "${input}" to fail`);
+  if (result instanceof JalaliDate)
+    throw new Error(`expected "${input}" to fail`);
   return result.code;
 };
 

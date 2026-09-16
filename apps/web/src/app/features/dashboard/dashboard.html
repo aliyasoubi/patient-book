@@ -43,7 +43,14 @@
            Who's actually next, not just how many — a bare count told
            nobody which patient to prep for. -->
       <pb-surface [title]="'tile.upcomingSurgeries' | translate">
-        @if (upcomingSurgeries().length) {
+        @if (upcomingFailed()) {
+          <div class="panel__failed">
+            <p class="panel__empty">{{ 'dashboard.upcomingSurgeriesFailed' | translate }}</p>
+            <pb-button variant="stroked" icon="refresh" (click)="loadUpcoming()">
+              {{ 'common.retry' | translate }}
+            </pb-button>
+          </div>
+        } @else if (upcomingSurgeries().length) {
           <ul class="upcoming">
             @for (item of upcomingSurgeries(); track item.id) {
               <li>

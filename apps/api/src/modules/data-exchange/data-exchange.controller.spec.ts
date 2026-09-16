@@ -18,7 +18,10 @@ describe('DataExchangeController export', () => {
     const controller = new DataExchangeController(
       {
         execute: () =>
-          Promise.resolve({ buffer: Buffer.from('xlsx'), counts: { patients: 3 } }),
+          Promise.resolve({
+            buffer: Buffer.from('xlsx'),
+            counts: { patients: 3 },
+          }),
       } as unknown as ExportWorkbookUseCase,
       {} as ReconcileWorkbookUseCase,
       {} as ApplyReconcileUseCase,

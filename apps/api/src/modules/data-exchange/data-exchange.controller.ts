@@ -48,7 +48,9 @@ export class DataExchangeController {
    * be sent — here the record *is* the safeguard.
    */
   @Get('export')
-  @ApiOperation({ summary: 'Download the current register as an Excel workbook' })
+  @ApiOperation({
+    summary: 'Download the current register as an Excel workbook',
+  })
   async export(
     @Res() res: Response,
     @Req() req: Request,
@@ -64,7 +66,8 @@ export class DataExchangeController {
       ip: req.ip ?? null,
     });
     res.set({
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': 'attachment; filename="patient-book.xlsx"',
     });
     res.send(buffer);
@@ -81,7 +84,9 @@ export class DataExchangeController {
       limits: { fileSize: 8 * 1024 * 1024, files: 1 },
     }),
   )
-  @ApiOperation({ summary: 'Diff an uploaded workbook against the current register' })
+  @ApiOperation({
+    summary: 'Diff an uploaded workbook against the current register',
+  })
   async preview(@UploadedFile() file?: Express.Multer.File) {
     // The extension check in the browser is a convenience, not a guarantee —
     // the real validation is parsing it, which the use case turns into a
@@ -93,7 +98,9 @@ export class DataExchangeController {
   }
 
   @Post('reconcile/apply')
-  @ApiOperation({ summary: 'Apply approved corrections from a reconcile preview' })
+  @ApiOperation({
+    summary: 'Apply approved corrections from a reconcile preview',
+  })
   apply(@Body() dto: ApplyReconcileDto, @CurrentUser('id') userId: string) {
     return this.applyUseCase.execute(dto, userId);
   }

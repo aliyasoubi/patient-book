@@ -31,6 +31,7 @@ import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { TreatmentChips } from '../../shared/components/treatment-chips';
 import { EmptyState } from '../../shared/components/empty-state';
+import { LoadError } from '../../shared/components/load-error';
 import {
   EDUCATION_LEVELS,
   GENDERS,
@@ -128,6 +129,7 @@ function sameUrlFilters(a: UrlFilters, b: UrlFilters): boolean {
     PersianNumberPipe,
     TreatmentChips,
     EmptyState,
+    LoadError,
     PbSearchField,
     PbSelectField,
     PbCheckboxField,

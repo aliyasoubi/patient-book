@@ -20,14 +20,25 @@ export interface RegistryQuery {
   sortDir?: 'ASC' | 'DESC';
   status?: string;
   unlinkedOnly?: boolean;
+  archivedOnly?: boolean;
 }
 
 export interface SurgeryQuery extends Omit<RegistryQuery, 'unlinkedOnly'> {
   mismatchedOnly?: boolean;
-  archivedOnly?: boolean;
   from?: string;
   to?: string;
 }
+
+/** The two registers share one shape and one set of endpoints; this picks which. */
+export type RegistryKind = 'implant' | 'ortho';
+
+/** What a register case's create/edit form sends; everything else is derived server-side. */
+export type RegistryCaseInput = Partial<
+  Pick<
+    RegistryCase,
+    'registryNo' | 'recordedName' | 'patientId' | 'mobile' | 'homePhone' | 'status' | 'notes'
+  >
+>;
 
 /**
  * The implant and orthodontic registers. Both number themselves independently
@@ -38,38 +49,37 @@ export interface SurgeryQuery extends Omit<RegistryQuery, 'unlinkedOnly'> {
 export class RegistryService {
   private readonly http = inject(HttpClient);
 
+  private base(kind: RegistryKind): string {
+    return `${environment.apiUrl}/${kind === 'implant' ? 'implant-cases' : 'ortho-cases'}`;
+  }
+
+  cases(kind: RegistryKind, query: RegistryQuery): Observable<PageResult<RegistryCase>> {
+    return this.http.get<PageResult<RegistryCase>>(this.base(kind), {
+      params: toParams(query),
+    });
+  }
+
   implants(query: RegistryQuery): Observable<PageResult<RegistryCase>> {
-    return this.http.get<PageResult<RegistryCase>>(`${environment.apiUrl}/implant-cases`, {
-      params: toParams(query),
-    });
+    return this.cases('implant', query);
   }
 
-  ortho(query: RegistryQuery): Observable<PageResult<RegistryCase>> {
-    return this.http.get<PageResult<RegistryCase>>(`${environment.apiUrl}/ortho-cases`, {
-      params: toParams(query),
-    });
+  getCase(kind: RegistryKind, id: string): Observable<RegistryCase> {
+    return this.http.get<RegistryCase>(`${this.base(kind)}/${id}`);
   }
 
-  saveImplant(id: string | null, body: Partial<RegistryCase>): Observable<RegistryCase> {
-    const url = `${environment.apiUrl}/implant-cases`;
+  saveCase(kind: RegistryKind, id: string | null, body: RegistryCaseInput): Observable<RegistryCase> {
     return id
-      ? this.http.patch<RegistryCase>(`${url}/${id}`, body)
-      : this.http.post<RegistryCase>(url, body);
+      ? this.http.patch<RegistryCase>(`${this.base(kind)}/${id}`, body)
+      : this.http.post<RegistryCase>(this.base(kind), body);
   }
 
-  saveOrtho(id: string | null, body: Partial<RegistryCase>): Observable<RegistryCase> {
-    const url = `${environment.apiUrl}/ortho-cases`;
-    return id
-      ? this.http.patch<RegistryCase>(`${url}/${id}`, body)
-      : this.http.post<RegistryCase>(url, body);
+  /** A soft delete on the API — the row moves to "archived only" and can be restored. */
+  deleteCase(kind: RegistryKind, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base(kind)}/${id}`);
   }
 
-  deleteImplant(id: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/implant-cases/${id}`);
-  }
-
-  deleteOrtho(id: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/ortho-cases/${id}`);
+  restoreCase(kind: RegistryKind, id: string): Observable<RegistryCase> {
+    return this.http.post<RegistryCase>(`${this.base(kind)}/${id}/restore`, {});
   }
 
   surgeryQueue(query: SurgeryQuery): Observable<PageResult<SurgeryQueueItem>> {

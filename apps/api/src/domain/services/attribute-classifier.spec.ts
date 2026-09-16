@@ -5,7 +5,12 @@ import {
   classifyReferral,
   extractImplantBrand,
 } from './attribute-classifier';
-import { AbutmentType, EducationLevel, Gender, ReferralKind } from '../model/enums';
+import {
+  AbutmentType,
+  EducationLevel,
+  Gender,
+  ReferralKind,
+} from '../model/enums';
 
 describe('classifyGender', () => {
   it('reads the two values the sheet uses', () => {

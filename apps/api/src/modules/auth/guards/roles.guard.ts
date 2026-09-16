@@ -17,10 +17,14 @@ export class RolesGuard implements CanActivate {
     ]);
     if (!required?.length) return true;
 
-    const user = context.switchToHttp().getRequest<{ user?: RequestUser }>().user;
+    const user = context
+      .switchToHttp()
+      .getRequest<{ user?: RequestUser }>().user;
     if (!user) throw AppException.forbidden(ErrorCode.Forbidden);
     if (!required.includes(user.role as UserRole)) {
-      throw AppException.forbidden(ErrorCode.Forbidden, { required: required.join(', ') });
+      throw AppException.forbidden(ErrorCode.Forbidden, {
+        required: required.join(', '),
+      });
     }
     return true;
   }

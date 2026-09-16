@@ -34,7 +34,10 @@ export class PatientTreatment {
   @Column({ type: 'uuid' })
   treatmentTypeId!: string;
 
-  @ManyToOne(() => TreatmentType, (t) => t.patientTreatments, { eager: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => TreatmentType, (t) => t.patientTreatments, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'treatmentTypeId' })
   treatmentType!: TreatmentType;
 

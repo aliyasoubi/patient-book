@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 
-import { AuthService } from '../services/auth.service';
+import { AuthService, Permission } from '../services/auth.service';
 import type { UserRole } from '../models/common.model';
 
 /** Require a signed-in user; bounce to login remembering where they wanted to go. */
@@ -27,6 +27,19 @@ export const roleGuard =
     const role = auth.role();
     if (role && roles.includes(role)) return true;
     return router.createUrlTree(['/']);
+  };
+
+/**
+ * Require a permission from the same table that decides which buttons show.
+ * The API still refuses the request either way; this keeps a viewer who types
+ * `/patients/new` into the address bar off a form every save would reject.
+ */
+export const permissionGuard =
+  (permission: Permission): CanActivateFn =>
+  () => {
+    const auth = inject(AuthService);
+    const router = inject(Router);
+    return auth.can(permission) ? true : router.createUrlTree(['/']);
   };
 
 /** Keep a signed-in user away from the login page. */

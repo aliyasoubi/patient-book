@@ -188,7 +188,8 @@ export class SurgeryService {
         item.implantBrand = extractImplantBrand(item.toothPosition);
       }
     }
-    if (dto.implantBrand !== undefined) item.implantBrand = dto.implantBrand ?? null;
+    if (dto.implantBrand !== undefined)
+      item.implantBrand = dto.implantBrand ?? null;
     if (dto.abutmentType !== undefined) item.abutmentType = dto.abutmentType;
     if (dto.prosthesisDue !== undefined)
       item.prosthesisDue = dto.prosthesisDue ?? null;

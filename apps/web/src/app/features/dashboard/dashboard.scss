@@ -138,6 +138,14 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+/* A panel whose own request failed: its message plus a retry, nothing else. */
+.panel__failed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--pb-space-3);
+}
+
 /* ── Horizontal bars ───────────────────────────────────────────────── */
 .bars {
   display: flex;

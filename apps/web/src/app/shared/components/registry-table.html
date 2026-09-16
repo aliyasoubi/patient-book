@@ -40,15 +40,38 @@
           <pb-status-chip [tone]="c.status === 'active' ? 'success' : 'neutral'">
             {{ statusLabel(c.status) | translate }}
           </pb-status-chip>
-          @if (canEdit()) {
+          <!-- One menu per row, same pattern as the patient and surgery
+               lists; which items it holds follows the caller's permissions. -->
+          @if (hasActions()) {
             <button
               mat-icon-button
               type="button"
-              (click)="edit.emit(c)"
-              [attr.aria-label]="'registry.editRecord' | translate"
+              [matMenuTriggerFor]="rowMenu"
+              [attr.aria-label]="'registry.rowActions' | translate"
             >
-              <mat-icon aria-hidden="true">edit</mat-icon>
+              <mat-icon aria-hidden="true">more_vert</mat-icon>
             </button>
+            <mat-menu #rowMenu="matMenu">
+              @if (archived()) {
+                <button mat-menu-item type="button" (click)="restore.emit(c)">
+                  <mat-icon aria-hidden="true">restore_from_trash</mat-icon>
+                  <span>{{ 'registry.restore' | translate }}</span>
+                </button>
+              } @else {
+                @if (canEdit()) {
+                  <button mat-menu-item type="button" (click)="edit.emit(c)">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>{{ 'common.edit' | translate }}</span>
+                  </button>
+                }
+                @if (canArchive()) {
+                  <button mat-menu-item type="button" (click)="archive.emit(c)">
+                    <mat-icon aria-hidden="true">delete</mat-icon>
+                    <span>{{ 'common.delete' | translate }}</span>
+                  </button>
+                }
+              }
+            </mat-menu>
           }
         </div>
       </li>

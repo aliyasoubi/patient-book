@@ -54,7 +54,11 @@ export class PatientsService {
     return this.http.post<Patient>(this.base, input);
   }
 
-  update(id: string, input: Partial<PatientInput>): Observable<Patient> {
+  /** `expectedVersion` is not optional here: the API refuses a save without one. */
+  update(
+    id: string,
+    input: Partial<PatientInput> & { expectedVersion: number },
+  ): Observable<Patient> {
     return this.http.patch<Patient>(`${this.base}/${id}`, input);
   }
 

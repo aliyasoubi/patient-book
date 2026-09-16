@@ -26,7 +26,9 @@ const stub = () => {
     qb[method] = mock;
   }
   const patients = {
-    createQueryBuilder: jest.fn(() => qb as unknown as SelectQueryBuilder<Patient>),
+    createQueryBuilder: jest.fn(
+      () => qb as unknown as SelectQueryBuilder<Patient>,
+    ),
   } as unknown as Repository<Patient>;
   return { builder: new PatientQueryBuilder(patients), calls };
 };
@@ -40,7 +42,11 @@ describe('PatientQueryBuilder sorting', () => {
 
     builder.build(query('fileNo'));
 
-    expect(calls.get('orderBy')).toHaveBeenCalledWith('p.fileNo', 'ASC', 'NULLS LAST');
+    expect(calls.get('orderBy')).toHaveBeenCalledWith(
+      'p.fileNo',
+      'ASC',
+      'NULLS LAST',
+    );
   });
 
   it('falls back to the default column when none is asked for', () => {
@@ -48,7 +54,11 @@ describe('PatientQueryBuilder sorting', () => {
 
     builder.build(query());
 
-    expect(calls.get('orderBy')).toHaveBeenCalledWith('p.lastName', 'ASC', 'NULLS LAST');
+    expect(calls.get('orderBy')).toHaveBeenCalledWith(
+      'p.lastName',
+      'ASC',
+      'NULLS LAST',
+    );
   });
 
   it('rejects a column that is not on the allow-list', () => {
@@ -63,15 +73,18 @@ describe('PatientQueryBuilder sorting', () => {
    * `SORTABLE.constructor` resolves through the prototype chain to a function,
    * which a truthiness check accepts and TypeORM would splice into ORDER BY.
    */
-  it.each(['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__'])(
-    'rejects the inherited property %s',
-    (inherited) => {
-      const { builder, calls } = stub();
+  it.each([
+    'constructor',
+    'toString',
+    'valueOf',
+    'hasOwnProperty',
+    '__proto__',
+  ])('rejects the inherited property %s', (inherited) => {
+    const { builder, calls } = stub();
 
-      expect(() => builder.build(query(inherited))).toThrow(
-        expect.objectContaining({ code: ErrorCode.SortFieldUnsupported }),
-      );
-      expect(calls.get('orderBy')).not.toHaveBeenCalled();
-    },
-  );
+    expect(() => builder.build(query(inherited))).toThrow(
+      expect.objectContaining({ code: ErrorCode.SortFieldUnsupported }),
+    );
+    expect(calls.get('orderBy')).not.toHaveBeenCalled();
+  });
 });

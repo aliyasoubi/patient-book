@@ -29,7 +29,8 @@ export interface ExportResult {
 export class ExportWorkbookUseCase {
   constructor(
     @InjectRepository(Patient) private readonly patients: Repository<Patient>,
-    @InjectRepository(ImplantCase) private readonly implants: Repository<ImplantCase>,
+    @InjectRepository(ImplantCase)
+    private readonly implants: Repository<ImplantCase>,
     @InjectRepository(OrthoCase) private readonly ortho: Repository<OrthoCase>,
     private readonly writer: ExcelJsWorkbookWriter,
   ) {}
@@ -37,7 +38,10 @@ export class ExportWorkbookUseCase {
   async execute(): Promise<ExportResult> {
     const [patients, implants, ortho] = await Promise.all([
       this.patients.find({
-        relations: { referralSource: true, treatments: { treatmentType: true } },
+        relations: {
+          referralSource: true,
+          treatments: { treatmentType: true },
+        },
         order: { fileNo: 'ASC' },
       }),
       this.implants.find({ order: { registryNo: 'ASC' } }),

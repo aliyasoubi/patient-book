@@ -49,8 +49,16 @@ export interface MappedPatientRow {
 /** The three Jalali date columns, and where each one's parts are stored. */
 const DATE_COLUMNS = [
   { column: PATIENT_COLUMN.birthDate, field: 'birthDate', raw: 'birthDateRaw' },
-  { column: PATIENT_COLUMN.firstVisit, field: 'firstVisitAt', raw: 'firstVisitRaw' },
-  { column: PATIENT_COLUMN.lastVisit, field: 'lastVisitAt', raw: 'lastVisitRaw' },
+  {
+    column: PATIENT_COLUMN.firstVisit,
+    field: 'firstVisitAt',
+    raw: 'firstVisitRaw',
+  },
+  {
+    column: PATIENT_COLUMN.lastVisit,
+    field: 'lastVisitAt',
+    raw: 'lastVisitRaw',
+  },
 ] as const;
 
 /**
@@ -97,7 +105,12 @@ export class PatientRowMapper {
     patient.education = classifyEducation(educationRaw);
     patient.educationRaw = educationRaw || null;
 
-    this.applyPhones(patient, mobileRaw, cell(PATIENT_COLUMN.homePhone), issues);
+    this.applyPhones(
+      patient,
+      mobileRaw,
+      cell(PATIENT_COLUMN.homePhone),
+      issues,
+    );
     this.applyNationalId(patient, cell(PATIENT_COLUMN.nationalId), issues);
     this.applyDates(patient, cell, issues);
 
@@ -130,24 +143,36 @@ export class PatientRowMapper {
       );
     }
     // A bare underscore is how this sheet marks "no landline".
-    patient.homePhone = homeRaw === '_' ? null : LandlineNumber.normalise(homeRaw);
+    patient.homePhone =
+      homeRaw === '_' ? null : LandlineNumber.normalise(homeRaw);
   }
 
-  private applyNationalId(patient: Patient, raw: string, issues: DataIssue[]): void {
+  private applyNationalId(
+    patient: Patient,
+    raw: string,
+    issues: DataIssue[],
+  ): void {
     if (!raw) return;
 
     const padded = NationalId.pad(raw);
     if (padded?.length === 10) {
       patient.nationalId = padded;
       if (!NationalId.isValid(padded)) {
-        issues.push(dataIssue('nationalId', ErrorCode.NationalIdChecksum, {}, raw));
+        issues.push(
+          dataIssue('nationalId', ErrorCode.NationalIdChecksum, {}, raw),
+        );
       }
       return;
     }
 
     patient.nationalId = null;
     issues.push(
-      dataIssue('nationalId', ErrorCode.NationalIdLength, { length: padded?.length ?? 0 }, raw),
+      dataIssue(
+        'nationalId',
+        ErrorCode.NationalIdLength,
+        { length: padded?.length ?? 0 },
+        raw,
+      ),
     );
   }
 
@@ -175,8 +200,8 @@ export class PatientRowMapper {
 
   /** Any non-empty mark in a treatment column counts as a yes. */
   private readTreatmentFlags(cell: (c: number) => string): string[] {
-    return TREATMENT_TYPES.filter((_, i) => cell(PATIENT_COLUMN.firstTreatment + i)).map(
-      (t) => t.code,
-    );
+    return TREATMENT_TYPES.filter((_, i) =>
+      cell(PATIENT_COLUMN.firstTreatment + i),
+    ).map((t) => t.code);
   }
 }

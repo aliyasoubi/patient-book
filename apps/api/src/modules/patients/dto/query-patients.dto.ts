@@ -20,7 +20,11 @@ import { EducationLevel, Gender } from '../../../domain';
 const toArray = ({ value }: { value: unknown }): string[] | undefined => {
   if (value === undefined || value === null || value === '') return undefined;
   if (Array.isArray(value)) return value.map(String);
-  return String(value).split(',').map((s) => s.trim()).filter(Boolean);
+  if (typeof value !== 'string') return undefined;
+  return value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 };
 
 const toBool = ({ value }: { value: unknown }): boolean | undefined => {
@@ -69,7 +73,9 @@ export class QueryPatientsDto extends PaginationDto {
   @IsOptional()
   hasIssues?: boolean;
 
-  @ApiPropertyOptional({ description: 'Patients with no visit in this many months' })
+  @ApiPropertyOptional({
+    description: 'Patients with no visit in this many months',
+  })
   @Type(() => Number)
   @IsInt()
   @Min(1)
@@ -77,19 +83,27 @@ export class QueryPatientsDto extends PaginationDto {
   @IsOptional()
   inactiveMonths?: number;
 
-  @ApiPropertyOptional({ description: 'Last visit on or after this Jalali date', example: '1403/01/01' })
+  @ApiPropertyOptional({
+    description: 'Last visit on or after this Jalali date',
+    example: '1403/01/01',
+  })
   @IsString()
   @MaxLength(20)
   @IsOptional()
   lastVisitFrom?: string;
 
-  @ApiPropertyOptional({ description: 'Last visit on or before this Jalali date', example: '1404/12/29' })
+  @ApiPropertyOptional({
+    description: 'Last visit on or before this Jalali date',
+    example: '1404/12/29',
+  })
   @IsString()
   @MaxLength(20)
   @IsOptional()
   lastVisitTo?: string;
 
-  @ApiPropertyOptional({ description: 'Only patients with a recorded medical history' })
+  @ApiPropertyOptional({
+    description: 'Only patients with a recorded medical history',
+  })
   @Transform(toBool)
   @IsBoolean()
   @IsOptional()

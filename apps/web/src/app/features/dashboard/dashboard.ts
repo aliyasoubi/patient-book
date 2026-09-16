@@ -66,6 +66,11 @@ export class Dashboard {
   protected readonly failed = signal(false);
   protected readonly stats = signal<DashboardStats | null>(null);
   protected readonly upcomingSurgeries = signal<UpcomingSurgery[]>([]);
+  /**
+   * Its own flag, not `failed`: the two requests are independent, and "no
+   * upcoming surgeries" must never be what a failed request looks like.
+   */
+  protected readonly upcomingFailed = signal(false);
 
   protected readonly greeting = computed(() => {
     this.i18n.currentLang();
@@ -209,9 +214,15 @@ export class Dashboard {
       },
     });
     // Independent of the totals above: one failing must not block the other.
+    this.loadUpcoming();
+  }
+
+  /** Also the panel's own retry, so a failed list can be re-fetched by itself. */
+  protected loadUpcoming(): void {
+    this.upcomingFailed.set(false);
     this.registry.upcomingSurgeries().subscribe({
       next: (rows) => this.upcomingSurgeries.set(rows),
-      error: () => this.upcomingSurgeries.set([]),
+      error: () => this.upcomingFailed.set(true),
     });
   }
 }

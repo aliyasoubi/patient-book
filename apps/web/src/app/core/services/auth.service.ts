@@ -10,8 +10,11 @@ import { environment } from '../../../environments/environment';
 const PERMISSIONS = {
   editPatients: ['admin', 'dentist', 'receptionist'],
   editSurgery: ['admin', 'dentist', 'receptionist'],
+  /** The implant and orthodontic registers: create and correct entries. */
+  editRegistry: ['admin', 'dentist', 'receptionist'],
   archivePatients: ['admin', 'dentist'],
   archiveSurgery: ['admin', 'dentist'],
+  archiveRegistry: ['admin', 'dentist'],
   manageUsers: ['admin'],
   viewHistory: ['admin', 'dentist'],
   manageData: ['admin'],

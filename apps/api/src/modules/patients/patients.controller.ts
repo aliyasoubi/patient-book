@@ -42,10 +42,15 @@ export class PatientsController {
   }
 
   @Get('name-suggestions')
-  @ApiOperation({ summary: 'Distinct first/last-name spellings on file, for the registration form' })
+  @ApiOperation({
+    summary:
+      'Distinct first/last-name spellings on file, for the registration form',
+  })
   nameSuggestions(@Query('field') field: string) {
     if (field !== 'firstName' && field !== 'lastName') {
-      throw AppException.badRequest(ErrorCode.ValidationFailed, { field: 'field' });
+      throw AppException.badRequest(ErrorCode.ValidationFailed, {
+        field: 'field',
+      });
     }
     return this.patients.nameSuggestions(field);
   }
@@ -109,14 +114,20 @@ export class PatientsController {
   // Archiving is a clinical-record decision, not a front-desk one.
   @Roles(UserRole.Admin, UserRole.Dentist)
   @ApiOperation({ summary: 'Archive a record (never deleted)' })
-  archive(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+  archive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
     return this.patients.archive(id, userId);
   }
 
   @Post(':id/restore')
   @Roles(UserRole.Admin, UserRole.Dentist)
   @ApiOperation({ summary: 'Restore a record from the archive' })
-  restore(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
     return this.patients.restore(id, userId);
   }
 }

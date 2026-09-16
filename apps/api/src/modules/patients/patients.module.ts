@@ -10,7 +10,12 @@ import { ReferralSource } from '../treatments/referral-source.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Patient, TreatmentType, PatientTreatment, ReferralSource]),
+    TypeOrmModule.forFeature([
+      Patient,
+      TreatmentType,
+      PatientTreatment,
+      ReferralSource,
+    ]),
   ],
   controllers: [PatientsController],
   providers: [PatientsService],

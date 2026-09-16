@@ -15,6 +15,7 @@ import {
   warnBeforeUnload,
 } from '../../core/guards/unsaved-changes.guard';
 import { ABUTMENT_TYPES, IMPLANT_BRAND_KEYS, SURGERY_STATUSES, abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
+import { digitString, identifierValue } from '../../shared/validators';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import type { RegistryCase, SurgeryQueueItem } from '../../core/models/common.model';
@@ -97,7 +98,7 @@ export class SurgeryForm implements HasUnsavedChanges {
 
   protected readonly form = this.fb.nonNullable.group({
     recordedName: ['', [Validators.required, Validators.maxLength(160)]],
-    implantRegistryNo: ['', [Validators.pattern(/^\d{1,24}$/)]],
+    implantRegistryNo: ['', [digitString(1, 24)]],
     surgeryDate: [null as Date | null],
     toothPosition: ['', [Validators.maxLength(200)]],
     implantBrand: [''],
@@ -221,7 +222,7 @@ export class SurgeryForm implements HasUnsavedChanges {
 
     const payload: Record<string, unknown> = {
       recordedName: raw.recordedName.trim(),
-      implantRegistryNo: blank(raw.implantRegistryNo),
+      implantRegistryNo: identifierValue(raw.implantRegistryNo),
       toothPosition: blank(raw.toothPosition) ?? '',
       implantBrand: raw.implantBrand || null,
       abutmentType: raw.abutmentType,
@@ -229,8 +230,15 @@ export class SurgeryForm implements HasUnsavedChanges {
       status: raw.status,
       notes: blank(raw.notes),
     };
+    // The date is only sent when this form owns it. A pristine empty picker on
+    // an edit may stand for a month-only imported date that must survive; a
+    // picker the user cleared is a request to clear, so `null` goes out —
+    // omitting it would read as "leave the date alone" on the API.
+    const date = this.form.controls.surgeryDate;
     if (raw.surgeryDate) {
       payload['surgeryDate'] = this.dateAdapter.toIso8601(raw.surgeryDate);
+    } else if (this.isEdit() && date.dirty) {
+      payload['surgeryDate'] = null;
     }
 
     this.registry.saveSurgery(this.id() ?? null, payload).subscribe({

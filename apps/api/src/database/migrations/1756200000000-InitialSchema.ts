@@ -21,20 +21,36 @@ export class InitialSchema1756200000000 implements MigrationInterface {
     await q.query(`CREATE EXTENSION IF NOT EXISTS "pg_trgm"`);
 
     // ── Enum types ────────────────────────────────────────────────
-    await q.query(`CREATE TYPE "users_role_enum" AS ENUM ('admin','dentist','receptionist','viewer')`);
-    await q.query(`CREATE TYPE "patients_gender_enum" AS ENUM ('male','female','unknown')`);
+    await q.query(
+      `CREATE TYPE "users_role_enum" AS ENUM ('admin','dentist','receptionist','viewer')`,
+    );
+    await q.query(
+      `CREATE TYPE "patients_gender_enum" AS ENUM ('male','female','unknown')`,
+    );
     await q.query(
       `CREATE TYPE "patients_education_enum" AS ENUM ('none','primary','diploma','associate','bachelor','master','doctorate','student','other','unknown')`,
     );
-    await q.query(`CREATE TYPE "patients_birthdateprecision_enum" AS ENUM ('day','month','year')`);
+    await q.query(
+      `CREATE TYPE "patients_birthdateprecision_enum" AS ENUM ('day','month','year')`,
+    );
     await q.query(
       `CREATE TYPE "referral_sources_kind_enum" AS ENUM ('patient','professional','social','website','advertising','other')`,
     );
-    await q.query(`CREATE TYPE "implant_cases_status_enum" AS ENUM ('active','completed','on_hold')`);
-    await q.query(`CREATE TYPE "ortho_cases_status_enum" AS ENUM ('active','completed','on_hold')`);
-    await q.query(`CREATE TYPE "surgery_queue_abutmenttype_enum" AS ENUM ('cover','healing','both','other','unknown')`);
-    await q.query(`CREATE TYPE "surgery_queue_status_enum" AS ENUM ('scheduled','completed','cancelled')`);
-    await q.query(`CREATE TYPE "surgery_queue_surgerydateprecision_enum" AS ENUM ('day','month','year')`);
+    await q.query(
+      `CREATE TYPE "implant_cases_status_enum" AS ENUM ('active','completed','on_hold')`,
+    );
+    await q.query(
+      `CREATE TYPE "ortho_cases_status_enum" AS ENUM ('active','completed','on_hold')`,
+    );
+    await q.query(
+      `CREATE TYPE "surgery_queue_abutmenttype_enum" AS ENUM ('cover','healing','both','other','unknown')`,
+    );
+    await q.query(
+      `CREATE TYPE "surgery_queue_status_enum" AS ENUM ('scheduled','completed','cancelled')`,
+    );
+    await q.query(
+      `CREATE TYPE "surgery_queue_surgerydateprecision_enum" AS ENUM ('day','month','year')`,
+    );
 
     // ── users ─────────────────────────────────────────────────────
     await q.query(`
@@ -50,7 +66,9 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "createdAt"     timestamptz NOT NULL DEFAULT now(),
         "updatedAt"     timestamptz NOT NULL DEFAULT now()
       )`);
-    await q.query(`CREATE UNIQUE INDEX "idx_users_username" ON "users" (lower("username"))`);
+    await q.query(
+      `CREATE UNIQUE INDEX "idx_users_username" ON "users" (lower("username"))`,
+    );
 
     // ── referral_sources ──────────────────────────────────────────
     await q.query(`
@@ -61,7 +79,9 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "kind"           "referral_sources_kind_enum" NOT NULL DEFAULT 'other',
         "isActive"       boolean NOT NULL DEFAULT true
       )`);
-    await q.query(`CREATE UNIQUE INDEX "idx_referral_normalized" ON "referral_sources" ("normalizedName")`);
+    await q.query(
+      `CREATE UNIQUE INDEX "idx_referral_normalized" ON "referral_sources" ("normalizedName")`,
+    );
 
     // ── treatment_types ───────────────────────────────────────────
     await q.query(`
@@ -75,7 +95,9 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "sortOrder" integer NOT NULL DEFAULT 0,
         "isActive"  boolean NOT NULL DEFAULT true
       )`);
-    await q.query(`CREATE UNIQUE INDEX "idx_treatment_code" ON "treatment_types" ("code")`);
+    await q.query(
+      `CREATE UNIQUE INDEX "idx_treatment_code" ON "treatment_types" ("code")`,
+    );
 
     // ── patients ──────────────────────────────────────────────────
     await q.query(`
@@ -113,15 +135,29 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "createdById"         uuid REFERENCES "users"("id") ON DELETE SET NULL,
         "updatedById"         uuid REFERENCES "users"("id") ON DELETE SET NULL
       )`);
-    await q.query(`CREATE UNIQUE INDEX "idx_patients_fileno" ON "patients" ("fileNo")`);
-    await q.query(`CREATE INDEX "idx_patients_national_id" ON "patients" ("nationalId")`);
-    await q.query(`CREATE INDEX "idx_patients_mobile" ON "patients" ("mobile")`);
-    await q.query(`CREATE INDEX "idx_patients_last_visit" ON "patients" ("lastVisitAt" DESC NULLS LAST)`);
-    await q.query(`CREATE INDEX "idx_patients_deleted" ON "patients" ("deletedAt") WHERE "deletedAt" IS NULL`);
+    await q.query(
+      `CREATE UNIQUE INDEX "idx_patients_fileno" ON "patients" ("fileNo")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_patients_national_id" ON "patients" ("nationalId")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_patients_mobile" ON "patients" ("mobile")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_patients_last_visit" ON "patients" ("lastVisitAt" DESC NULLS LAST)`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_patients_deleted" ON "patients" ("deletedAt") WHERE "deletedAt" IS NULL`,
+    );
     // Trigram index: the one that makes free-text Persian search usable.
-    await q.query(`CREATE INDEX "idx_patients_search" ON "patients" USING GIN ("searchText" gin_trgm_ops)`);
+    await q.query(
+      `CREATE INDEX "idx_patients_search" ON "patients" USING GIN ("searchText" gin_trgm_ops)`,
+    );
     // Prefix/suffix ILIKE on the same column also benefits from the GIN above.
-    await q.query(`CREATE INDEX "idx_patients_lastname" ON "patients" USING GIN ("lastName" gin_trgm_ops)`);
+    await q.query(
+      `CREATE INDEX "idx_patients_lastname" ON "patients" USING GIN ("lastName" gin_trgm_ops)`,
+    );
 
     // ── patient_treatments ────────────────────────────────────────
     await q.query(`
@@ -135,8 +171,12 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "createdAt"       timestamptz NOT NULL DEFAULT now(),
         CONSTRAINT "uq_patient_treatment" UNIQUE ("patientId","treatmentTypeId")
       )`);
-    await q.query(`CREATE INDEX "idx_pt_patient" ON "patient_treatments" ("patientId")`);
-    await q.query(`CREATE INDEX "idx_pt_type" ON "patient_treatments" ("treatmentTypeId")`);
+    await q.query(
+      `CREATE INDEX "idx_pt_patient" ON "patient_treatments" ("patientId")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_pt_type" ON "patient_treatments" ("treatmentTypeId")`,
+    );
 
     // ── implant_cases ─────────────────────────────────────────────
     await q.query(`
@@ -154,9 +194,15 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "createdAt"    timestamptz NOT NULL DEFAULT now(),
         "updatedAt"    timestamptz NOT NULL DEFAULT now()
       )`);
-    await q.query(`CREATE UNIQUE INDEX "idx_implant_registry" ON "implant_cases" ("registryNo")`);
-    await q.query(`CREATE INDEX "idx_implant_patient" ON "implant_cases" ("patientId")`);
-    await q.query(`CREATE INDEX "idx_implant_search" ON "implant_cases" USING GIN ("searchText" gin_trgm_ops)`);
+    await q.query(
+      `CREATE UNIQUE INDEX "idx_implant_registry" ON "implant_cases" ("registryNo")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_implant_patient" ON "implant_cases" ("patientId")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_implant_search" ON "implant_cases" USING GIN ("searchText" gin_trgm_ops)`,
+    );
 
     // ── ortho_cases ───────────────────────────────────────────────
     await q.query(`
@@ -174,9 +220,15 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "createdAt"    timestamptz NOT NULL DEFAULT now(),
         "updatedAt"    timestamptz NOT NULL DEFAULT now()
       )`);
-    await q.query(`CREATE UNIQUE INDEX "idx_ortho_registry" ON "ortho_cases" ("registryNo")`);
-    await q.query(`CREATE INDEX "idx_ortho_patient" ON "ortho_cases" ("patientId")`);
-    await q.query(`CREATE INDEX "idx_ortho_search" ON "ortho_cases" USING GIN ("searchText" gin_trgm_ops)`);
+    await q.query(
+      `CREATE UNIQUE INDEX "idx_ortho_registry" ON "ortho_cases" ("registryNo")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_ortho_patient" ON "ortho_cases" ("patientId")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_ortho_search" ON "ortho_cases" USING GIN ("searchText" gin_trgm_ops)`,
+    );
 
     // ── surgery_queue ─────────────────────────────────────────────
     await q.query(`
@@ -200,9 +252,15 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "createdAt"             timestamptz NOT NULL DEFAULT now(),
         "updatedAt"             timestamptz NOT NULL DEFAULT now()
       )`);
-    await q.query(`CREATE INDEX "idx_surgery_case" ON "surgery_queue" ("implantCaseId")`);
-    await q.query(`CREATE INDEX "idx_surgery_date" ON "surgery_queue" ("surgeryDate")`);
-    await q.query(`CREATE INDEX "idx_surgery_search" ON "surgery_queue" USING GIN ("searchText" gin_trgm_ops)`);
+    await q.query(
+      `CREATE INDEX "idx_surgery_case" ON "surgery_queue" ("implantCaseId")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_surgery_date" ON "surgery_queue" ("surgeryDate")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_surgery_search" ON "surgery_queue" USING GIN ("searchText" gin_trgm_ops)`,
+    );
 
     // ── audit_logs ────────────────────────────────────────────────
     await q.query(`
@@ -218,8 +276,12 @@ export class InitialSchema1756200000000 implements MigrationInterface {
         "createdAt" timestamptz NOT NULL DEFAULT now()
       )`);
     await q.query(`CREATE INDEX "idx_audit_user" ON "audit_logs" ("userId")`);
-    await q.query(`CREATE INDEX "idx_audit_entity" ON "audit_logs" ("entity","entityId")`);
-    await q.query(`CREATE INDEX "idx_audit_created" ON "audit_logs" ("createdAt" DESC)`);
+    await q.query(
+      `CREATE INDEX "idx_audit_entity" ON "audit_logs" ("entity","entityId")`,
+    );
+    await q.query(
+      `CREATE INDEX "idx_audit_created" ON "audit_logs" ("createdAt" DESC)`,
+    );
   }
 
   public async down(q: QueryRunner): Promise<void> {

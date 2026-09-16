@@ -1,4 +1,9 @@
-import { EducationLevel, Gender, ReferralKind, AbutmentType } from '../model/enums';
+import {
+  EducationLevel,
+  Gender,
+  ReferralKind,
+  AbutmentType,
+} from '../model/enums';
 import { normalizePersian } from './persian-text';
 
 /**
@@ -14,8 +19,10 @@ import { normalizePersian } from './persian-text';
 export function classifyGender(raw: string | null | undefined): Gender {
   const v = normalizePersian(raw).replace(/\s+/g, '');
   if (!v) return Gender.Unknown;
-  if (['زن', 'ز', 'ن', 'مونث', 'خانم', 'female', 'f'].includes(v.toLowerCase())) return Gender.Female;
-  if (['مرد', 'م', 'مذکر', 'اقا', 'آقا', 'male', 'm'].includes(v.toLowerCase())) return Gender.Male;
+  if (['زن', 'ز', 'ن', 'مونث', 'خانم', 'female', 'f'].includes(v.toLowerCase()))
+    return Gender.Female;
+  if (['مرد', 'م', 'مذکر', 'اقا', 'آقا', 'male', 'm'].includes(v.toLowerCase()))
+    return Gender.Male;
   return Gender.Unknown;
 }
 
@@ -23,19 +30,23 @@ export function classifyGender(raw: string | null | undefined): Gender {
  * تحصیلات — لیسانس and کارشناسی are one degree; so are فوق لیسانس,
  * کارشناسی ارشد and ارشد; so are دکتری and دکترا.
  */
-export function classifyEducation(raw: string | null | undefined): EducationLevel {
+export function classifyEducation(
+  raw: string | null | undefined,
+): EducationLevel {
   const v = normalizePersian(raw);
   if (!v) return EducationLevel.Unknown;
 
   // Order matters: "فوق دیپلم" must not fall through to the "دیپلم" test, and
   // "کارشناسی ارشد" must not be read as plain "کارشناسی".
   if (/دکتر|phd|دکترا/i.test(v)) return EducationLevel.Doctorate;
-  if (/فوق\s*لیسانس|کارشناسی\s*ارشد|^ارشد$|ارشد/.test(v)) return EducationLevel.Master;
+  if (/فوق\s*لیسانس|کارشناسی\s*ارشد|^ارشد$|ارشد/.test(v))
+    return EducationLevel.Master;
   if (/فوق\s*دیپلم|کاردانی/.test(v)) return EducationLevel.Associate;
   if (/لیسانس|کارشناسی/.test(v)) return EducationLevel.Bachelor;
   if (/دیپلم/.test(v)) return EducationLevel.Diploma;
   if (/محصل|دانش\s*اموز|دانشجو/.test(v)) return EducationLevel.Student;
-  if (/ابتدایی|سیکل|بی\s*سواد|زیر\s*دیپلم|راهنمایی/.test(v)) return EducationLevel.Primary;
+  if (/ابتدایی|سیکل|بی\s*سواد|زیر\s*دیپلم|راهنمایی/.test(v))
+    return EducationLevel.Primary;
   if (/ندارد|هیچ/.test(v)) return EducationLevel.None;
   return EducationLevel.Other;
 }
@@ -44,8 +55,11 @@ export function classifyEducation(raw: string | null | undefined): EducationLeve
 export function classifyReferral(raw: string | null | undefined): ReferralKind {
   const v = normalizePersian(raw);
   if (!v) return ReferralKind.Other;
-  if (/دکتر|دندانپزشک|کلینیک|مطب|بیمارستان|درمانگاه/.test(v)) return ReferralKind.Professional;
-  if (/اینستا|اینستاگرام|تلگرام|واتس|شبکه\s*اجتماعی|instagram|telegram/i.test(v))
+  if (/دکتر|دندانپزشک|کلینیک|مطب|بیمارستان|درمانگاه/.test(v))
+    return ReferralKind.Professional;
+  if (
+    /اینستا|اینستاگرام|تلگرام|واتس|شبکه\s*اجتماعی|instagram|telegram/i.test(v)
+  )
     return ReferralKind.Social;
   if (/سایت|وب|گوگل|اینترنت|google|site/i.test(v)) return ReferralKind.Website;
   if (/تبلیغ|بنر|تراکت|بیلبورد|بروشور/.test(v)) return ReferralKind.Advertising;
@@ -88,10 +102,14 @@ const IMPLANT_BRANDS: Array<[RegExp, string]> = [
 ];
 
 /** The brands staff can pick directly, in the order offered on the form. */
-export const IMPLANT_BRAND_NAMES: readonly string[] = IMPLANT_BRANDS.map(([, name]) => name);
+export const IMPLANT_BRAND_NAMES: readonly string[] = IMPLANT_BRANDS.map(
+  ([, name]) => name,
+);
 
 /** Pull the implant system out of a phrase like "دنتیوم، ۶ و ۷ راست پایین". */
-export function extractImplantBrand(raw: string | null | undefined): string | null {
+export function extractImplantBrand(
+  raw: string | null | undefined,
+): string | null {
   const v = normalizePersian(raw);
   if (!v) return null;
   for (const [pattern, name] of IMPLANT_BRANDS) {

@@ -1,6 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -21,6 +22,7 @@ import type { RegistryCase } from '../../core/models/common.model';
   standalone: true,
   imports: [
     MatButtonModule,
+    MatMenuModule,
     MatTooltipModule,
     EmptyState,
     PbStatusChip,
@@ -36,10 +38,19 @@ export class RegistryTable {
   readonly emptyTitle = input('');
   readonly emptyHint = input('');
   readonly canEdit = input(false);
+  readonly canArchive = input(false);
+  /** The rows are archived ones: offer restore instead of edit/archive. */
+  readonly archived = input(false);
 
   readonly edit = output<RegistryCase>();
+  readonly archive = output<RegistryCase>();
+  readonly restore = output<RegistryCase>();
 
   protected readonly statusLabel = caseStatusLabel;
+
+  protected hasActions(): boolean {
+    return this.archived() ? this.canArchive() : this.canEdit() || this.canArchive();
+  }
 
   protected patientName(c: RegistryCase): string {
     if (!c.patient) return '';

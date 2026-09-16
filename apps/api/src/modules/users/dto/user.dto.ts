@@ -1,6 +1,17 @@
-import { ApiProperty, ApiPropertyOptional, PartialType, OmitType } from '@nestjs/swagger';
 import {
-  IsBoolean, IsEnum, IsOptional, IsString, Matches, MaxLength, MinLength,
+  ApiProperty,
+  ApiPropertyOptional,
+  PartialType,
+  OmitType,
+} from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import { UserRole } from '../../../domain';
 
@@ -27,7 +38,9 @@ export class CreateUserDto {
 }
 
 /** Password is set through the dedicated reset endpoint, not a general update. */
-export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['password'] as const)) {
+export class UpdateUserDto extends PartialType(
+  OmitType(CreateUserDto, ['password'] as const),
+) {
   @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()

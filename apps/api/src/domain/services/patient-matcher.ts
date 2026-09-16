@@ -72,7 +72,11 @@ export class PatientNameMatcher {
     return this.exact.size;
   }
 
-  private static push(index: Map<string, string[]>, key: string, id: string): void {
+  private static push(
+    index: Map<string, string[]>,
+    key: string,
+    id: string,
+  ): void {
     if (!key) return;
     const existing = index.get(key);
     if (existing) existing.push(id);

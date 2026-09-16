@@ -84,15 +84,23 @@ export class PatientQueryBuilder {
       .setParameter('simKey', key);
   }
 
-  private applyFilters(qb: SelectQueryBuilder<Patient>, dto: QueryPatientsDto): void {
+  private applyFilters(
+    qb: SelectQueryBuilder<Patient>,
+    dto: QueryPatientsDto,
+  ): void {
     if (dto.gender) qb.andWhere('p.gender = :gender', { gender: dto.gender });
-    if (dto.education) qb.andWhere('p.education = :education', { education: dto.education });
+    if (dto.education)
+      qb.andWhere('p.education = :education', { education: dto.education });
     if (dto.referralSourceId) {
-      qb.andWhere('p."referralSourceId" = :rsid', { rsid: dto.referralSourceId });
+      qb.andWhere('p."referralSourceId" = :rsid', {
+        rsid: dto.referralSourceId,
+      });
     }
     if (dto.hasIssues) qb.andWhere(`jsonb_array_length(p."dataIssues") > 0`);
     if (dto.hasMedicalHistory) {
-      qb.andWhere(`p."medicalHistory" IS NOT NULL AND btrim(p."medicalHistory") <> ''`);
+      qb.andWhere(
+        `p."medicalHistory" IS NOT NULL AND btrim(p."medicalHistory") <> ''`,
+      );
     }
 
     // "Has all of these", not "has any": selecting implant and veneer should
@@ -122,15 +130,22 @@ export class PatientQueryBuilder {
       if (!raw) continue;
       // Throws a DomainError carrying the exact reason; the filter turns it
       // into a 400 the client renders in its own language.
-      qb.andWhere(`p."lastVisitAt" ${op} :${key}`, { [key]: JalaliDate.parse(raw).toIsoDate() });
+      qb.andWhere(`p."lastVisitAt" ${op} :${key}`, {
+        [key]: JalaliDate.parse(raw).toIsoDate(),
+      });
     }
   }
 
-  private applySort(qb: SelectQueryBuilder<Patient>, dto: QueryPatientsDto): void {
+  private applySort(
+    qb: SelectQueryBuilder<Patient>,
+    dto: QueryPatientsDto,
+  ): void {
     if (dto.q && !dto.sortBy) {
       // Relevance only means something when there is a query. An exact file
       // number outranks everything, then trigram closeness.
-      qb.orderBy('exact_file', 'DESC').addOrderBy('sim', 'DESC').addOrderBy('p.lastName', 'ASC');
+      qb.orderBy('exact_file', 'DESC')
+        .addOrderBy('sim', 'DESC')
+        .addOrderBy('p.lastName', 'ASC');
       return;
     }
 

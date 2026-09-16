@@ -44,7 +44,10 @@ async function main(): Promise<void> {
     }
 
     console.log(`Reading ${filePath} …`);
-    const useCase = new ImportWorkbookUseCase(dataSource, new ExcelJsWorkbookReader());
+    const useCase = new ImportWorkbookUseCase(
+      dataSource,
+      new ExcelJsWorkbookReader(),
+    );
     const report = await useCase.execute(filePath);
     console.log(ImportReportFormatter.toConsole(report));
   } finally {

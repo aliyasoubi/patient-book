@@ -25,19 +25,19 @@
 
 /** Arabic to Persian letter folding. Search only — see the note above. */
 const LETTER_MAP: Record<string, string> = {
-  'ي': 'ی', // ARABIC YEH            -> FARSI YEH
-  'ى': 'ی', // ALEF MAKSURA          -> FARSI YEH
-  'ے': 'ی', // YEH BARREE            -> FARSI YEH
-  'ئ': 'ی', // YEH WITH HAMZA ABOVE  -> FARSI YEH
-  'ك': 'ک', // ARABIC KAF            -> KEHEH
-  'ڪ': 'ک', // SWASH KAF             -> KEHEH
-  'ة': 'ه', // TEH MARBUTA           -> HEH
-  'ۀ': 'ه', // HEH WITH YEH ABOVE    -> HEH
-  'أ': 'ا', // ALEF WITH HAMZA ABOVE -> ALEF
-  'إ': 'ا', // ALEF WITH HAMZA BELOW -> ALEF
-  'آ': 'ا', // ALEF WITH MADDA ABOVE -> ALEF
-  'ٱ': 'ا', // ALEF WASLA            -> ALEF
-  'ؤ': 'و', // WAW WITH HAMZA ABOVE  -> WAW
+  ي: 'ی', // ARABIC YEH            -> FARSI YEH
+  ى: 'ی', // ALEF MAKSURA          -> FARSI YEH
+  ے: 'ی', // YEH BARREE            -> FARSI YEH
+  ئ: 'ی', // YEH WITH HAMZA ABOVE  -> FARSI YEH
+  ك: 'ک', // ARABIC KAF            -> KEHEH
+  ڪ: 'ک', // SWASH KAF             -> KEHEH
+  ة: 'ه', // TEH MARBUTA           -> HEH
+  ۀ: 'ه', // HEH WITH YEH ABOVE    -> HEH
+  أ: 'ا', // ALEF WITH HAMZA ABOVE -> ALEF
+  إ: 'ا', // ALEF WITH HAMZA BELOW -> ALEF
+  آ: 'ا', // ALEF WITH MADDA ABOVE -> ALEF
+  ٱ: 'ا', // ALEF WASLA            -> ALEF
+  ؤ: 'و', // WAW WITH HAMZA ABOVE  -> WAW
 };
 
 /** Persian (U+06F0..U+06F9) and Arabic-Indic (U+0660..U+0669) digits to ASCII. */
@@ -47,10 +47,11 @@ const DIGIT_RANGES: Array<[number, number]> = [
 ];
 
 /** Combining marks (harakat), tatweel, and bidi/format controls. */
-const STRIP_RE = /[ً-ْٓ-ٰٕـ‎‏‪-‮⁦-⁩﻿]/g;
+const STRIP_RE =
+  /[\u064B-\u0652\u0653-\u0655\u0670\u0640\u200E\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g;
 
 /** Zero-width non-joiner and joiner: the Persian half-space and its partner. */
-const ZW_JOINER_RE = /[‌‍]/g;
+const ZW_JOINER_RE = /[\u200C\u200D]/g;
 
 /**
  * Characters that collapse to a single plain space. Deliberately excludes
@@ -64,8 +65,16 @@ const SPACE_CODEPOINTS = [
   0x0020, // SPACE
   0x00a0, // NO-BREAK SPACE
   0x1680, // OGHAM SPACE MARK
-  0x2000, 0x2001, 0x2002, 0x2003, 0x2004, // EN QUAD .. THREE-PER-EM SPACE
-  0x2005, 0x2006, 0x2007, 0x2008, 0x2009, // FOUR-PER-EM .. THIN SPACE
+  0x2000,
+  0x2001,
+  0x2002,
+  0x2003,
+  0x2004, // EN QUAD .. THREE-PER-EM SPACE
+  0x2005,
+  0x2006,
+  0x2007,
+  0x2008,
+  0x2009, // FOUR-PER-EM .. THIN SPACE
   0x200a, // HAIR SPACE
   0x200b, // ZERO WIDTH SPACE -- U+200C ZWNJ is deliberately NOT in this list
   0x202f, // NARROW NO-BREAK SPACE
@@ -79,7 +88,8 @@ const SPACEY_RE = new RegExp(
 );
 
 /** The Arabic Unicode blocks, scanned for letter folding. */
-const ARABIC_BLOCK_RE = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/g;
+const ARABIC_BLOCK_RE =
+  /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g;
 
 /** Convert every Persian/Arabic digit in a string to its ASCII equivalent. */
 export function toLatinDigits(input: string): string {
@@ -94,7 +104,9 @@ export function toLatinDigits(input: string): string {
 
 /** Convert ASCII digits to Persian digits, for display only. */
 export function toPersianDigits(input: string): string {
-  return input.replace(/[0-9]/g, (d) => String.fromCharCode(0x06f0 + Number(d)));
+  return input.replace(/[0-9]/g, (d) =>
+    String.fromCharCode(0x06f0 + Number(d)),
+  );
 }
 
 /**
@@ -181,7 +193,9 @@ export function padNationalId(value: string | null | undefined): string | null {
 }
 
 /** Normalise an Iranian mobile number to local `09xxxxxxxxx` form. */
-export function normalizeMobile(value: string | null | undefined): string | null {
+export function normalizeMobile(
+  value: string | null | undefined,
+): string | null {
   if (!value) return null;
   let d = toLatinDigits(value).replace(/[^\d+]/g, '');
   if (d.startsWith('+98')) d = '0' + d.slice(3);
@@ -199,7 +213,9 @@ export function isValidMobile(value: string | null | undefined): boolean {
 }
 
 /** Normalise a landline: strip separators, keep digits only. */
-export function normalizePhone(value: string | null | undefined): string | null {
+export function normalizePhone(
+  value: string | null | undefined,
+): string | null {
   if (!value) return null;
   const d = toLatinDigits(value).replace(/\D/g, '');
   return d || null;

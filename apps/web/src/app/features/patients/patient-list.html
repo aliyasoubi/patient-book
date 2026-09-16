@@ -150,15 +150,12 @@
   <!-- A failed fetch keeps the previous rows (if any) under this banner: a
        blank register would read as "no patients", which is a different fact. -->
   @if (failed()) {
-    <div class="list__error" role="alert">
-      <mat-icon class="list__error-icon" aria-hidden="true">cloud_off</mat-icon>
-      <p class="list__error-text">
-        {{ (patients().length > 0 ? 'patients.loadFailedStale' : 'patients.loadFailed') | translate }}
-      </p>
-      <pb-button variant="stroked" type="button" icon="refresh" (click)="retry()">
-        {{ 'common.retry' | translate }}
-      </pb-button>
-    </div>
+    <pb-load-error
+      [message]="
+        (patients().length > 0 ? 'patients.loadFailedStale' : 'patients.loadFailed') | translate
+      "
+      (retry)="retry()"
+    />
   }
 
   <!-- ── Results ───────────────────────────────────────────────── -->

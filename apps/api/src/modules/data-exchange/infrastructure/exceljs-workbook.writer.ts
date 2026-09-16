@@ -59,7 +59,11 @@ export class ExcelJsWorkbookWriter {
     ]);
 
     const codesOf = (p: Patient): Set<string> =>
-      new Set((p.treatments ?? []).map((link) => link.treatmentType?.code).filter(Boolean));
+      new Set(
+        (p.treatments ?? [])
+          .map((link) => link.treatmentType?.code)
+          .filter(Boolean),
+      );
 
     for (const p of patients) {
       const owned = codesOf(p);
@@ -89,12 +93,27 @@ export class ExcelJsWorkbookWriter {
   private writeRegistry(
     workbook: ExcelJS.Workbook,
     sheetName: string,
-    cases: Array<{ registryNo: string; recordedName: string; mobile: string | null; homePhone: string | null }>,
+    cases: Array<{
+      registryNo: string;
+      recordedName: string;
+      mobile: string | null;
+      homePhone: string | null;
+    }>,
   ): void {
     const sheet = workbook.addWorksheet(sheetName);
-    sheet.addRow(['شماره پرونده', 'نام و نام خانوادگی', 'شماره موبایل', 'شماره منزل']);
+    sheet.addRow([
+      'شماره پرونده',
+      'نام و نام خانوادگی',
+      'شماره موبایل',
+      'شماره منزل',
+    ]);
     for (const c of cases) {
-      sheet.addRow([c.registryNo, c.recordedName, c.mobile ?? '', c.homePhone ?? '']);
+      sheet.addRow([
+        c.registryNo,
+        c.recordedName,
+        c.mobile ?? '',
+        c.homePhone ?? '',
+      ]);
     }
   }
 }

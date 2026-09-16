@@ -14,6 +14,7 @@ import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { PatientsService } from './data/patients.service';
 import { AuthService } from '../../core/services/auth.service';
+import { RegistryKind, RegistryService } from '../../core/services/registry.service';
 import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
@@ -31,7 +32,7 @@ import {
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { PbAvatar, PbButton, PbStatusChip, PbSurface } from '../../shared/ui';
-import type { DataIssue, Patient } from './data/patient.model';
+import type { DataIssue, Patient, RegistryRef } from './data/patient.model';
 import type { AuditEntry } from '../../core/models/common.model';
 
 @Component({
@@ -59,6 +60,7 @@ import type { AuditEntry } from '../../core/models/common.model';
 })
 export class PatientDetail {
   private readonly service = inject(PatientsService);
+  private readonly registry = inject(RegistryService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -209,28 +211,43 @@ export class PatientDetail {
   }
 
   /** Opens a new ortho or implant پرونده already linked to this patient. */
-  protected addCase(kind: RegistryCaseDialogData['kind']): void {
+  protected addCase(kind: RegistryKind): void {
     const p = this.patient();
     if (!p) return;
     const data: RegistryCaseDialogData = {
+      mode: 'create',
       kind,
-      patientId: p.id,
-      patientName: p.fullName,
-      patientMobile: p.mobile,
-      patientHomePhone: p.homePhone,
+      patient: { id: p.id, name: p.fullName, mobile: p.mobile, homePhone: p.homePhone },
     };
+    this.openCaseDialog(data, p.id, () =>
+      this.i18n.instant(
+        kind === 'ortho' ? 'patientDetail.orthoCaseCreated' : 'patientDetail.implantCaseCreated',
+      ),
+    );
+  }
+
+  /**
+   * Corrects one of this patient's register entries. The page only holds the
+   * number and status, so the full row is fetched first; the dialog needs the
+   * rest to show what it is about to change.
+   */
+  protected editCase(kind: RegistryKind, ref: RegistryRef): void {
+    const p = this.patient();
+    if (!p) return;
+    this.registry.getCase(kind, ref.id).subscribe((existing) => {
+      const data: RegistryCaseDialogData = { mode: 'edit', kind, existing };
+      this.openCaseDialog(data, p.id, () => this.i18n.instant('registryForm.saved'));
+    });
+  }
+
+  private openCaseDialog(data: RegistryCaseDialogData, patientId: string, done: () => string): void {
     this.dialog
       .open(RegistryCaseDialog, { data, width: '480px', maxWidth: '92vw' })
       .afterClosed()
-      .subscribe((created) => {
-        if (!created) return;
-        this.snackBar.open(
-          this.i18n.instant(
-            kind === 'ortho' ? 'patientDetail.orthoCaseCreated' : 'patientDetail.implantCaseCreated',
-          ),
-          this.i18n.instant('action.dismiss'),
-        );
-        this.load(p.id);
+      .subscribe((saved) => {
+        if (!saved) return;
+        this.snackBar.open(done(), this.i18n.instant('action.dismiss'));
+        this.load(patientId);
       });
   }
 

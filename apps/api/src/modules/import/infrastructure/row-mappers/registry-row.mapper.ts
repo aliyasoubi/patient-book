@@ -41,7 +41,9 @@ export class RegistryRowMapper {
 
     const recordedName = row.cell(REGISTRY_COLUMN.fullName);
     const mobile = MobileNumber.normalise(row.cell(REGISTRY_COLUMN.mobile));
-    const homePhone = LandlineNumber.normalise(row.cell(REGISTRY_COLUMN.homePhone));
+    const homePhone = LandlineNumber.normalise(
+      row.cell(REGISTRY_COLUMN.homePhone),
+    );
     const match = this.matcher.match(recordedName);
 
     return {
@@ -51,7 +53,9 @@ export class RegistryRowMapper {
       matchMethod: match.method,
       mobile,
       homePhone,
-      searchText: searchKey([registryNo, recordedName, mobile, homePhone].filter(Boolean).join(' ')),
+      searchText: searchKey(
+        [registryNo, recordedName, mobile, homePhone].filter(Boolean).join(' '),
+      ),
     };
   }
 }

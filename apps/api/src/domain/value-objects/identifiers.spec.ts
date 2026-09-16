@@ -15,7 +15,9 @@ describe('NationalId', () => {
       fail('expected a throw');
     } catch (error) {
       expect(error).toBeInstanceOf(InvalidInputError);
-      expect((error as InvalidInputError).code).toBe(ErrorCode.NationalIdChecksum);
+      expect((error as InvalidInputError).code).toBe(
+        ErrorCode.NationalIdChecksum,
+      );
     }
   });
 
@@ -24,7 +26,9 @@ describe('NationalId', () => {
       NationalId.create('12345');
       fail('expected a throw');
     } catch (error) {
-      expect((error as InvalidInputError).code).toBe(ErrorCode.NationalIdLength);
+      expect((error as InvalidInputError).code).toBe(
+        ErrorCode.NationalIdLength,
+      );
       expect((error as InvalidInputError).params).toMatchObject({ length: 5 });
     }
   });

@@ -15,7 +15,10 @@ import {
 import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
 import { AbutmentType, SurgeryStatus } from '../../../domain';
 import { normalizeForDisplay, IMPLANT_BRAND_NAMES } from '../../../domain';
-import { IsJalaliDateConstraint } from '../../patients/dto/patient.dto';
+import {
+  IsJalaliDateConstraint,
+  optionalIdentifier,
+} from '../../patients/dto/patient.dto';
 
 const toBool = ({ value }: { value: unknown }): boolean | undefined => {
   if (value === undefined || value === null || value === '') return undefined;
@@ -68,7 +71,7 @@ export class UpsertSurgeryDto {
   implantCaseId?: string | null;
 
   @ApiPropertyOptional({ description: 'Implant register number' })
-  @Transform(clean)
+  @Transform(optionalIdentifier)
   @Matches(/^\d{1,24}$/)
   @IsOptional()
   implantRegistryNo?: string | null;

@@ -135,7 +135,7 @@ are kept verbatim and surfaced as a review item on the patient's record.
 Persian data mixes Arabic and Persian codepoints for letters that read
 identically (ي/ی, ك/ک), uses three different digit sets, and relies on a
 zero-width non-joiner that carries meaning. Two normalisers live in
-`apps/api/src/common/utils/persian.util.ts` and they are **not** interchangeable:
+`apps/api/src/domain/services/persian-text.ts` and they are **not** interchangeable:
 
 - **`normalizeForDisplay`** — for anything stored and shown back. Repairs
   keyboard artefacts only. A patient who writes their name «آزمون» gets «آزمون»
@@ -148,6 +148,14 @@ or `۰۹۱۲…` (Persian digits) and find the same records. Search runs against
 denormalised `searchText` column backed by a **`pg_trgm` GIN index** — Postgres
 ships no Persian full-text dictionary, so trigram similarity is what makes
 partial Persian name search work.
+
+**Identifiers are stored in one digit script.** A Persian keyboard emits
+`۰۹۱۲…` for what the receptionist reads as `0912…`. File numbers, register
+numbers, national ids and phone numbers are folded to ASCII digits at the API
+boundary (`identifier` / `optionalIdentifier` in `patient.dto.ts`) *before*
+validation, so the same number can never exist in the database in two
+spellings. The Angular forms fold as well so what a field accepts is exactly
+what the API accepts, but the API is the side that decides.
 
 National IDs are validated by their check digit, not just their length.
 
@@ -184,10 +192,13 @@ folder rather than being scattered across four directories.
 `PatientNameMatcher` are plain classes; their tests need no container and no Nest
 testing module.
 
-**Invalid values cannot reach the database.** A `NationalId` can only be
-constructed through a factory that has already checked its length and check
-digit, so "a string that might be an id" is not a type the persistence layer can
-be handed.
+**Identifier rules live in one place.** `NationalId`, `MobileNumber` and
+`LandlineNumber` own the parsing, padding and check-digit rules; the import
+path constructs them, and the request DTOs validate with the same functions
+after folding digits. The patient write path itself still assigns validated
+strings rather than value objects — the guarantee is "nothing reaches a write
+without passing the domain's rule", not "the persistence layer cannot be
+handed a string".
 
 **Ports keep the import honest.** `ImportWorkbookUseCase` depends on
 `WorkbookPort` — "rows of text" — not on ExcelJS. The mapping rules are tested
@@ -422,12 +433,22 @@ them.
 | `npm run dev:api` / `npm run dev:web`        | Either one alone                                 |
 | `npm run build`                              | Production build of both                         |
 | `npm test`                                   | API and web unit tests (no database needed)      |
-| `npm run test:e2e`                           | API readiness test (requires PostgreSQL)         |
+| `npm run test:e2e`                           | API over HTTP against PostgreSQL (see below)     |
+| `npm run lint` / `lint:fix`                  | ESLint + Prettier on the API; CI runs `lint`     |
 | `npm run i18n:check`                         | Validate JSON keys and reject hard-coded UI text |
 | `npm run migration:run` / `migration:revert` | Schema                                           |
 | `npm run seed`                               | Treatment catalogue + admin account              |
 | `npm run import -- [file] [--force]`         | Load a source workbook                           |
 | `npm run db:up` / `db:down`                  | Postgres via Docker                              |
+
+The e2e suite signs in, writes patients and register rows, and checks the
+concurrency, uniqueness and role rules over HTTP. It writes, so it only runs
+in CI or against a database whose name ends in `_e2e`/`_test`; elsewhere those
+tests skip and only the readiness check runs. Locally:
+
+```bash
+createdb -h localhost -U dental patient_book_e2e && DB_NAME=patient_book_e2e npm run migration:run && DB_NAME=patient_book_e2e npm run test:e2e
+```
 
 ---
 
