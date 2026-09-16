@@ -161,7 +161,19 @@ export class PatientQueryBuilder {
         field: requested,
       });
     }
-    qb.orderBy(column, dto.sortDir, 'NULLS LAST');
-    if (column !== SORTABLE.fileNo) qb.addOrderBy('p.fileNo', 'ASC');
+    if (column === SORTABLE.fileNo) {
+      // File numbers are digit strings; sorting them as text puts "10"
+      // before "2" in both directions. Cast to a number instead, the same
+      // way the registry lists order their own `registryNo`. A legacy value
+      // with no digits at all (`nextFileNo` already has to allow for these)
+      // has no numeric key and sorts last regardless of direction.
+      qb.addSelect(
+        `NULLIF(regexp_replace(p."fileNo", '\\D', '', 'g'), '')::bigint`,
+        'file_num',
+      ).orderBy('file_num', dto.sortDir, 'NULLS LAST');
+    } else {
+      qb.orderBy(column, dto.sortDir, 'NULLS LAST');
+      qb.addOrderBy('p.fileNo', 'ASC');
+    }
   }
 }

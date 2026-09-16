@@ -33,18 +33,51 @@ const stub = () => {
   return { builder: new PatientQueryBuilder(patients), calls };
 };
 
-const query = (sortBy?: string): QueryPatientsDto =>
-  ({ sortBy, sortDir: 'ASC', page: 1, limit: 25 }) as QueryPatientsDto;
+const query = (
+  sortBy?: string,
+  sortDir: 'ASC' | 'DESC' = 'ASC',
+): QueryPatientsDto =>
+  ({ sortBy, sortDir, page: 1, limit: 25 }) as QueryPatientsDto;
 
 describe('PatientQueryBuilder sorting', () => {
   it('sorts by an allow-listed column', () => {
     const { builder, calls } = stub();
 
-    builder.build(query('fileNo'));
+    builder.build(query('lastName'));
 
     expect(calls.get('orderBy')).toHaveBeenCalledWith(
-      'p.fileNo',
+      'p.lastName',
       'ASC',
+      'NULLS LAST',
+    );
+  });
+
+  it('sorts fileNo numerically, not as text', () => {
+    // A text sort puts "10" before "2"; the cast is what makes ASC/DESC both
+    // read as an actual number order instead.
+    const { builder, calls } = stub();
+
+    builder.build(query('fileNo'));
+
+    expect(calls.get('addSelect')).toHaveBeenCalledWith(
+      expect.stringContaining('::bigint'),
+      'file_num',
+    );
+    expect(calls.get('orderBy')).toHaveBeenCalledWith(
+      'file_num',
+      'ASC',
+      'NULLS LAST',
+    );
+  });
+
+  it('sorts fileNo descending on the same numeric key', () => {
+    const { builder, calls } = stub();
+
+    builder.build(query('fileNo', 'DESC'));
+
+    expect(calls.get('orderBy')).toHaveBeenCalledWith(
+      'file_num',
+      'DESC',
       'NULLS LAST',
     );
   });
