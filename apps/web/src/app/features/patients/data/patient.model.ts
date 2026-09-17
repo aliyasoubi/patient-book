@@ -116,7 +116,5 @@ export interface PatientInput {
   firstVisitAt?: string | null;
   lastVisitAt?: string | null;
   notes?: string | null;
-  treatments?: Array<{ code: string; performedAt?: string | null; notes?: string | null }>;
-  /** The `version` this edit was loaded from; the API refuses a stale save. */
-  expectedVersion?: number;
+  treatments?: { code: string; performedAt?: string | null; notes?: string | null }[];
 }

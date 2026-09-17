@@ -308,9 +308,101 @@ describeIfWritable('clinic flows (e2e)', () => {
     });
   });
 
+  // ── Registers ────────────────────────────────────────────────────
+
+  describe('implant register', () => {
+    it('edits, archives and restores a case through the same audited path', async () => {
+      const registryNo = nextNumber();
+      const created = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo, recordedName: 'زهرا موسوی' })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      implantCaseIds.push(id);
+
+      // Correct the name and status; the register number stays the key.
+      const edited = await asAdmin(http().patch(`/api/implant-cases/${id}`))
+        .send({ recordedName: 'زهرا موسوی‌نژاد', status: 'completed' })
+        .expect(200);
+      expect(edited.body).toMatchObject({
+        registryNo,
+        recordedName: 'زهرا موسوی‌نژاد',
+        status: 'completed',
+      });
+
+      // Archive is a soft delete: gone from the register, listed under
+      // "archived only", and restorable without losing anything.
+      await asAdmin(http().delete(`/api/implant-cases/${id}`)).expect(204);
+      const gone = await asAdmin(http().get(`/api/implant-cases/${id}`)).expect(
+        404,
+      );
+      expect((gone.body as ErrorBody).code).toBe(
+        ErrorCode.RegistryCaseNotFound,
+      );
+
+      const archived = await asAdmin(
+        http()
+          .get('/api/implant-cases')
+          .query({ archivedOnly: 'true', q: registryNo }),
+      ).expect(200);
+      expect((archived.body as { items: Array<{ id: string }> }).items).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id })]),
+      );
+
+      const restored = await asAdmin(
+        http().post(`/api/implant-cases/${id}/restore`),
+      ).expect(201);
+      expect(restored.body).toMatchObject({
+        id,
+        recordedName: 'زهرا موسوی‌نژاد',
+      });
+      await asAdmin(http().get(`/api/implant-cases/${id}`)).expect(200);
+    });
+
+    it('keeps a non-clinical role out of archive and restore', async () => {
+      // Only a dentist or admin takes an entry out of the register; the
+      // viewer fixture stands in for every role below that.
+      const created = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo: nextNumber(), recordedName: 'رضا' })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      implantCaseIds.push(id);
+
+      const denied = await asViewer(
+        http().delete(`/api/implant-cases/${id}`),
+      ).expect(403);
+      expect((denied.body as ErrorBody).code).toBe(ErrorCode.Forbidden);
+    });
+  });
+
   // ── Surgery list identity check ──────────────────────────────────
 
   describe('surgery queue', () => {
+    it('clears a date only when told to, and leaves it alone when the field is omitted', async () => {
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'مریم کریمی', surgeryDate: '1404/06/11' })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+      expect(created.body).toMatchObject({
+        surgeryDate: { jalali: '1404/06/11' },
+      });
+
+      // A PATCH without the field is "don't touch the date".
+      const untouched = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ notes: 'یادداشت' })
+        .expect(200);
+      expect(untouched.body).toMatchObject({
+        surgeryDate: { jalali: '1404/06/11' },
+      });
+
+      // An explicit null is "clear it" — what the form sends when the picker
+      // was emptied on purpose.
+      const cleared = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ surgeryDate: null })
+        .expect(200);
+      expect((cleared.body as { surgeryDate: unknown }).surgeryDate).toBeNull();
+    });
+
     it('flags a row whose name disagrees with the implant register for that number', async () => {
       const registryNo = nextNumber();
       const implantCase = await asAdmin(http().post('/api/implant-cases'))
