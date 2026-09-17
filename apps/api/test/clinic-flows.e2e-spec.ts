@@ -374,6 +374,85 @@ describeIfWritable('clinic flows (e2e)', () => {
     });
   });
 
+  // ── Dashboard ────────────────────────────────────────────────────
+
+  describe('dashboard', () => {
+    type Totals = {
+      totals: { implantCases: number; upcomingSurgeries: number };
+    };
+    const totals = async (): Promise<Totals['totals']> =>
+      (
+        (await asAdmin(http().get('/api/stats/dashboard')).expect(200))
+          .body as Totals
+      ).totals;
+
+    it('counts only active register cases and scheduled surgeries', async () => {
+      // Archived is not deleted, so the raw-SQL counts have to exclude
+      // `deletedAt` themselves — TypeORM's soft-delete filter does not reach
+      // a hand-written query.
+      const before = await totals();
+
+      const implant = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo: nextNumber(), recordedName: 'سارا رضایی' })
+        .expect(201);
+      const implantId = (implant.body as { id: string }).id;
+      implantCaseIds.push(implantId);
+
+      const surgery = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'سارا رضایی', status: 'scheduled' })
+        .expect(201);
+      const surgeryId = (surgery.body as { id: string }).id;
+      surgeryIds.push(surgeryId);
+
+      const added = await totals();
+      expect(added.implantCases).toBe(before.implantCases + 1);
+      expect(added.upcomingSurgeries).toBe(before.upcomingSurgeries + 1);
+
+      await asAdmin(http().delete(`/api/implant-cases/${implantId}`)).expect(
+        204,
+      );
+      await asAdmin(http().delete(`/api/surgery-queue/${surgeryId}`)).expect(
+        204,
+      );
+
+      const archived = await totals();
+      expect(archived.implantCases).toBe(before.implantCases);
+      expect(archived.upcomingSurgeries).toBe(before.upcomingSurgeries);
+    });
+
+    it('buckets new patients by Jalali month, not Gregorian', async () => {
+      // 22 and 23 September 2025 are the last day of Shahrivar and the first
+      // of Mehr; a Gregorian grouping would put both under one label.
+      const months = async (): Promise<Record<string, number>> => {
+        const body = (
+          await asAdmin(http().get('/api/stats/dashboard')).expect(200)
+        ).body as {
+          newPatientsByMonth: Array<{ month: string; count: number }>;
+        };
+        return Object.fromEntries(
+          body.newPatientsByMonth.map((m) => [m.month, m.count]),
+        );
+      };
+      const before = await months();
+
+      for (const firstVisitAt of ['1404/06/31', '1404/07/01']) {
+        const created = await asAdmin(http().post('/api/patients'))
+          .send({
+            fileNo: nextNumber(),
+            firstName: 'نرگس',
+            lastName: 'یوسفی',
+            firstVisitAt,
+          })
+          .expect(201);
+        patientIds.push((created.body as { id: string }).id);
+      }
+
+      const after = await months();
+      expect(after['1404/06']).toBe((before['1404/06'] ?? 0) + 1);
+      expect(after['1404/07']).toBe((before['1404/07'] ?? 0) + 1);
+    });
+  });
+
   // ── Surgery list identity check ──────────────────────────────────
 
   describe('surgery queue', () => {

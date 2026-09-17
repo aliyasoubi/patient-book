@@ -44,6 +44,24 @@ export interface DashboardStats {
   inactiveOverYear: number;
 }
 
+/**
+ * Count dates per Jalali month, oldest first. `yyyy/MM` keys sort as text,
+ * and a date the calendar cannot place is skipped rather than invented.
+ */
+export function countByJalaliMonth(
+  dates: ReadonlyArray<Date | string>,
+): Array<{ month: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const value of dates) {
+    const month = JalaliDate.fromDate(new Date(value), 'month')?.format();
+    if (!month) continue;
+    counts.set(month, (counts.get(month) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, count]) => ({ month, count }));
+}
+
 @Injectable()
 export class StatsService {
   constructor(
@@ -97,15 +115,17 @@ export class StatsService {
         FROM patients p JOIN referral_sources rs ON rs.id = p."referralSourceId"
         WHERE p."deletedAt" IS NULL
         GROUP BY rs.id, rs.name, rs.kind ORDER BY count(*) DESC LIMIT 10`),
-      // Grouped on the Gregorian month, then relabelled in Jalali below —
-      // Postgres has no Jalali date_trunc.
-      q<{ month: string; count: string }>(`
-        SELECT to_char(date_trunc('month', "firstVisitAt"), 'YYYY-MM-DD') AS month,
-               count(*)::text AS count
+      // The dates come out raw and are bucketed by Jalali month in
+      // {@link countByJalaliMonth}. Grouping in SQL would mean Gregorian
+      // months — Postgres has no Jalali date_trunc — and a Gregorian month
+      // straddles two Jalali ones, so "September" relabelled as Shahrivar
+      // would carry a week of Mehr's patients. Two years of first visits is
+      // a few hundred rows; counting them here is cheaper than being wrong.
+      q<{ date: Date | string }>(`
+        SELECT "firstVisitAt" AS date
         FROM patients
         WHERE "deletedAt" IS NULL AND "firstVisitAt" IS NOT NULL
-          AND "firstVisitAt" >= (now() - interval '24 months')
-        GROUP BY 1 ORDER BY 1`),
+          AND "firstVisitAt" >= (now() - interval '24 months')`),
       q<{ band: string; count: string }>(`
         -- Stable band keys, not labels: the client owns the wording, and the
         -- bounds travel with them so it can format them for any locale.
@@ -158,10 +178,7 @@ export class StatsService {
         kind: r.kind,
         count: Number(r.count),
       })),
-      newPatientsByMonth: monthly.map((m) => ({
-        month: JalaliDate.fromDate(new Date(m.month), 'month')?.format() ?? '',
-        count: Number(m.count),
-      })),
+      newPatientsByMonth: countByJalaliMonth(monthly.map((m) => m.date)),
       ageBands: ageBands.map((a) => ({
         band: a.band as AgeBandKey,
         count: Number(a.count),
