@@ -233,6 +233,18 @@ mat-icon.material-symbols-rounded {
   background: transparent;
 }
 
+/* ── Search suggestions ────────────────────────────────────────────── */
+/**
+ * The search bar's suggestion panel is an M3 search view: its rows are list
+ * items (headline plus supporting text), not menu options. The panel is
+ * rendered in the CDK overlay, outside any component's encapsulation, so the
+ * row height that suits two lines has to be set here.
+ */
+.pb-search-panel .mat-mdc-option {
+  min-height: 56px;
+  padding-block: 8px;
+}
+
 /* ── Motion ────────────────────────────────────────────────────────── */
 /**
  * Material's dialog/snackbar entrances ship the plain M2 "standard decelerate"

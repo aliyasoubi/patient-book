@@ -22,8 +22,8 @@
   gap: 14px;
   padding: 18px;
   border-radius: var(--mat-sys-corner-large);
+  // Tonal surface: the container tone alone marks it off from the page.
   background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
 
   @media (max-width: 700px) {
     flex-wrap: wrap;
@@ -200,6 +200,7 @@
   padding-top: 16px;
 }
 
+/* An M3 large badge: a pill, secondary-container, label-small. */
 .tab__badge {
   display: inline-grid;
   place-items: center;
@@ -207,7 +208,7 @@
   height: 20px;
   margin-inline-start: 6px;
   padding-inline: 6px;
-  border-radius: var(--mat-sys-corner-medium);
+  border-radius: var(--mat-sys-corner-full);
   background: var(--mat-sys-secondary-container);
   color: var(--mat-sys-on-secondary-container);
   font: var(--mat-sys-label-small);

@@ -148,8 +148,10 @@ const MIN_PATIENT_QUERY = 2;
       <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
         {{ 'action.cancel' | translate }}
       </pb-button>
+      <!-- Text buttons on both sides: M3 dialog actions differ by position,
+           not by fill; the filled button belongs to full-screen dialogs. -->
       <pb-button
-        variant="flat"
+        variant="text"
         type="button"
         icon="save"
         (click)="submit()"

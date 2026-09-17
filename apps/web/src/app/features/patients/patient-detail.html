@@ -133,6 +133,8 @@
     <mat-tab-group
       class="detail__tabs"
       animationDuration="200ms"
+      [mat-stretch-tabs]="isCompact()"
+      mat-align-tabs="start"
       (selectedTabChange)="loadHistory()"
     >
       <mat-tab [label]="'patientDetail.informationTab' | translate">

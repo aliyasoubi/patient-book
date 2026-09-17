@@ -1,7 +1,9 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -31,7 +33,7 @@ import {
 } from '../../shared/components/registry-case-dialog';
 import { RegistryTable } from '../../shared/components/registry-table';
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
-import { PbCheckboxField, PbPageHeader, PbSearchField } from '../../shared/ui';
+import { PbPageHeader, PbSearchField } from '../../shared/ui';
 import type { RegistryCase } from '../../core/models/common.model';
 
 /** Everything that differs between the two registers' screens. */
@@ -64,12 +66,13 @@ const KINDS: Record<
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    MatChipsModule,
+    MatIconModule,
     MatPaginatorModule,
     MatProgressBarModule,
     RegistryTable,
     LoadError,
     PbSearchField,
-    PbCheckboxField,
     PbPageHeader,
     TranslatePipe,
   ],
@@ -150,8 +153,9 @@ export class RegistryList {
         this.loading.set(false);
       });
 
-    // Going from one register to the other reuses this instance; `kind` is a
-    // dependency here so that switch refetches like any filter change would.
+    // `kind` is read inside the effect like any other input: the two routes
+    // are separate entries so each gets its own instance today, and this
+    // keeps that an implementation detail rather than something to remember.
     effect(() => {
       this.reloadTick();
       const kind = this.kind();

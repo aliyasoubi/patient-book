@@ -63,23 +63,24 @@ import { TranslateService } from '@ngx-translate/core';
       gap: 4px;
       align-items: center;
     }
-    /* Sized like pb-status-chip so the two chip kinds read as one family. */
+    /* Sized like pb-status-chip (M3's 32dp, label-large) so the two chip
+       kinds read as one family. */
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      min-height: 28px;
-      padding-inline: 10px;
-      border-radius: var(--mat-sys-corner-full);
+      gap: 8px;
+      min-height: 32px;
+      padding-inline: 12px;
+      border-radius: var(--mat-sys-corner-small);
       background: var(--chip-bg, var(--mat-sys-secondary-container));
       color: var(--chip-fg, var(--mat-sys-on-secondary-container));
-      font: var(--mat-sys-label-medium);
-      letter-spacing: var(--mat-sys-label-medium-tracking);
+      font: var(--mat-sys-label-large);
+      letter-spacing: var(--mat-sys-label-large-tracking);
       white-space: nowrap;
       cursor: default;
     }
     .chip__icon {
-      font-size: 16px;
+      font-size: 18px;
       width: 16px;
       height: 16px;
     }

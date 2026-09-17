@@ -5,7 +5,10 @@
 
 .shell {
   height: 100%;
-  background: var(--mat-sys-surface-container-lowest);
+  // The page ground is `surface`; cards are outlined on it (same tone, an
+  // outline-variant border) or tonal (a container tone, no border) — never
+  // both, and never darker than the ground they sit on.
+  background: var(--mat-sys-surface);
 
   &__nav {
     width: 264px;

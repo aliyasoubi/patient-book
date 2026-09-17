@@ -97,11 +97,14 @@
           [attr.aria-label]="'patients.treatmentFilterAria' | translate"
         >
           @for (type of treatmentTypes(); track type.id) {
+            <!-- `matChipAvatar` puts the icon in the chip's leading slot, so
+                 selecting swaps it for M3's checkmark instead of stacking
+                 two glyphs at the front. -->
             <mat-chip-option
               [selected]="filters().treatments.includes(type.code)"
               (selectionChange)="toggleTreatment(type.code)"
             >
-              <mat-icon class="chip-icon" aria-hidden="true">{{ type.icon }}</mat-icon>
+              <mat-icon matChipAvatar class="chip-icon" aria-hidden="true">{{ type.icon }}</mat-icon>
               {{ type.nameFa }}
             </mat-chip-option>
           }

@@ -13,23 +13,29 @@
       [ariaLabel]="ui().searchAria | translate"
     />
 
-    <pb-checkbox-field
-      [checked]="unlinkedOnly()"
-      (checkedChange)="toggleUnlinked($event)"
+    <!-- Independent toggles on a list are M3 filter chips, not checkboxes. -->
+    <mat-chip-listbox
+      multiple
       class="registry-page__filter"
+      [attr.aria-label]="'common.filters' | translate"
     >
-      {{ 'registry.unlinkedOnly' | translate }}
-    </pb-checkbox-field>
-
-    @if (auth.can('archiveRegistry')) {
-      <pb-checkbox-field
-        [checked]="archivedOnly()"
-        (checkedChange)="toggleArchived($event)"
-        class="registry-page__filter"
+      <mat-chip-option
+        [selected]="unlinkedOnly()"
+        (selectionChange)="toggleUnlinked($event.selected)"
       >
-        {{ 'registry.archivedOnly' | translate }}
-      </pb-checkbox-field>
-    }
+        <mat-icon matChipAvatar aria-hidden="true">link_off</mat-icon>
+        {{ 'registry.unlinkedOnly' | translate }}
+      </mat-chip-option>
+      @if (auth.can('archiveRegistry')) {
+        <mat-chip-option
+          [selected]="archivedOnly()"
+          (selectionChange)="toggleArchived($event.selected)"
+        >
+          <mat-icon matChipAvatar aria-hidden="true">inventory_2</mat-icon>
+          {{ 'registry.archivedOnly' | translate }}
+        </mat-chip-option>
+      }
+    </mat-chip-listbox>
   </div>
 
   @if (loading()) {

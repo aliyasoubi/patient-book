@@ -30,15 +30,30 @@
       <mat-button-toggle value="completed">{{ 'surgery.completed' | translate }}</mat-button-toggle>
     </mat-button-toggle-group>
 
-    <pb-checkbox-field [checked]="mismatchedOnly()" (checkedChange)="toggleMismatched($event)">
-      {{ 'surgery.mismatchOnly' | translate }}
-    </pb-checkbox-field>
-
-    @if (auth.can('archiveSurgery')) {
-      <pb-checkbox-field [checked]="archivedOnly()" (checkedChange)="toggleArchived($event)">
-        {{ 'surgery.archivedOnly' | translate }}
-      </pb-checkbox-field>
-    }
+    <!-- Independent toggles on a list are M3 filter chips, not checkboxes;
+         the patient list's treatment filter uses the same idiom. -->
+    <mat-chip-listbox
+      multiple
+      class="surgery__toggles"
+      [attr.aria-label]="'common.filters' | translate"
+    >
+      <mat-chip-option
+        [selected]="mismatchedOnly()"
+        (selectionChange)="toggleMismatched($event.selected)"
+      >
+        <mat-icon matChipAvatar aria-hidden="true">warning</mat-icon>
+        {{ 'surgery.mismatchOnly' | translate }}
+      </mat-chip-option>
+      @if (auth.can('archiveSurgery')) {
+        <mat-chip-option
+          [selected]="archivedOnly()"
+          (selectionChange)="toggleArchived($event.selected)"
+        >
+          <mat-icon matChipAvatar aria-hidden="true">inventory_2</mat-icon>
+          {{ 'surgery.archivedOnly' | translate }}
+        </mat-chip-option>
+      }
+    </mat-chip-listbox>
   </div>
 
   @if (loading()) {

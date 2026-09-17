@@ -7,7 +7,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 
 import { RegistryService } from '../../core/services/registry.service';
 import {
@@ -108,27 +108,33 @@ export class SurgeryForm implements HasUnsavedChanges {
     notes: ['', [Validators.maxLength(2000)]],
   });
 
-  /** Implant-register cases whose recorded name matches what's been typed so far. */
-  private readonly implantMatches = signal<RegistryCase[]>([]);
-  protected readonly nameOptions = computed<TextFieldOption[]>(() =>
-    this.implantMatches().map((c) => ({ value: c.recordedName, label: c.recordedName, meta: c.registryNo })),
-  );
-
-  private readonly nameQuery = toSignal(
+  /**
+   * Implant-register cases whose recorded name matches what's been typed so
+   * far. `switchMap` drops the response to an earlier, slower query, so a
+   * result for "Ali" cannot land after — and replace — the one for "Alireza".
+   */
+  private readonly implantMatches = toSignal(
     this.form.controls.recordedName.valueChanges.pipe(
       debounceTime(300),
       map((v) => v.trim()),
       distinctUntilChanged(),
+      switchMap((q) =>
+        q.length < 2
+          ? of<RegistryCase[]>([])
+          : this.registry.implants({ q, page: 1, limit: 8 }).pipe(
+              map((result) => result.items),
+              catchError(() => of<RegistryCase[]>([])),
+            ),
+      ),
     ),
-    { initialValue: '' },
+    { initialValue: [] as RegistryCase[] },
+  );
+  protected readonly nameOptions = computed<TextFieldOption[]>(() =>
+    this.implantMatches().map((c) => ({ value: c.recordedName, label: c.recordedName, meta: c.registryNo })),
   );
 
   constructor() {
     warnBeforeUnload(() => this.hasUnsavedChanges());
-    effect(() => {
-      const q = this.nameQuery();
-      untracked(() => this.searchImplantCases(q));
-    });
     effect(() => {
       const id = this.id();
       untracked(() => {
@@ -177,17 +183,6 @@ export class SurgeryForm implements HasUnsavedChanges {
     if (!jalali || jalali.split('/').length !== 3) return null;
     const parsed = this.dateAdapter.parse(jalali, 'yyyy/MM/dd');
     return parsed && this.dateAdapter.isValid(parsed) ? parsed : null;
-  }
-
-  private searchImplantCases(q: string): void {
-    if (q.length < 2) {
-      this.implantMatches.set([]);
-      return;
-    }
-    this.registry.implants({ q, page: 1, limit: 8 }).subscribe({
-      next: (result) => this.implantMatches.set(result.items),
-      error: () => this.implantMatches.set([]),
-    });
   }
 
   /**

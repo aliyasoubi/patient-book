@@ -2,11 +2,15 @@ import { Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 /**
- * The bordered, rounded panel every page is built from — a form section, a
- * dashboard chart, a detail-page card. Every screen in this app used to
- * define its own `.panel`/`.card`/`.section` CSS for what is visually one
- * pattern; this is that pattern as a single component, so its radius,
- * border, and header layout change in one place.
+ * The rounded panel every page is built from — a form section, a dashboard
+ * chart, a detail-page card. Every screen in this app used to define its own
+ * `.panel`/`.card`/`.section` CSS for what is visually one pattern; this is
+ * that pattern as a single component, so its radius, border, and header
+ * layout change in one place.
+ *
+ * By default an M3 *outlined* card: the page's own `surface` tone with an
+ * outline-variant border. `pb-surface--low` is the *tonal* alternative — a
+ * container tone and no border. One signal or the other, never both.
  */
 @Component({
   selector: 'pb-surface',
@@ -47,6 +51,7 @@ import { MatIconModule } from '@angular/material/icon';
     }
 
     :host(.pb-surface--low) {
+      border-color: transparent;
       background: var(--mat-sys-surface-container-low);
     }
 

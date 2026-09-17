@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -29,7 +30,7 @@ import { EmptyState } from '../../shared/components/empty-state';
 import { LoadError } from '../../shared/components/load-error';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
-import { PbButton, PbCheckboxField, PbPageHeader, PbSearchField, PbStatusChip } from '../../shared/ui';
+import { PbButton, PbPageHeader, PbSearchField, PbStatusChip } from '../../shared/ui';
 import type { SurgeryQueueItem } from '../../core/models/common.model';
 
 @Component({
@@ -40,6 +41,7 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
     RouterLink,
     MatButtonModule,
     MatButtonToggleModule,
+    MatChipsModule,
     MatMenuModule,
     MatPaginatorModule,
     MatProgressBarModule,
@@ -47,7 +49,6 @@ import type { SurgeryQueueItem } from '../../core/models/common.model';
     LoadError,
     PersianNumberPipe,
     PbSearchField,
-    PbCheckboxField,
     PbPageHeader,
     PbButton,
     PbStatusChip,

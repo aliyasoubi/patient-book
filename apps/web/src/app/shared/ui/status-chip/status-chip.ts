@@ -7,9 +7,15 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
 
 /**
  * The app's one tag/chip primitive — status labels, record metadata, brand
- * tags, and, with `routerLink` set, a tappable link to another record (an
- * M3 assist chip). Every hand-rolled pill used to size and colour itself
- * separately; this is the single place that decides what a "tag" looks like.
+ * tags, and, with `routerLink` set, a tappable link to another record. Every
+ * hand-rolled pill used to size and colour itself separately; this is the
+ * single place that decides what a "tag" looks like.
+ *
+ * Two looks, following M3's chip family: a static label is a tonal pill (the
+ * status colour carries the meaning), while a link is an **assist chip** —
+ * outlined on the surface with its icon in primary. Tonal fill on something
+ * tappable would read as a *selected* filter chip, not as "go there". Both
+ * share M3's 32dp height and label-large type.
  */
 @Component({
   selector: 'pb-status-chip',
@@ -49,22 +55,23 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
        * keeps the chip content-sized inside either kind of parent.
        */
       width: fit-content;
-      gap: 5px;
-      min-height: 28px;
-      padding-inline: 10px;
-      border-radius: var(--mat-sys-corner-full);
+      gap: 8px;
+      min-height: 32px;
+      padding-inline: 12px;
+      border: 1px solid transparent;
+      border-radius: var(--mat-sys-corner-small);
       background: var(--_bg);
       color: var(--mat-sys-on-surface-variant);
-      font: var(--mat-sys-label-medium);
-      letter-spacing: var(--mat-sys-label-medium-tracking);
+      font: var(--mat-sys-label-large);
+      letter-spacing: var(--mat-sys-label-large-tracking);
       line-height: 1;
       white-space: nowrap;
     }
 
     .pb-status-chip__icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
 
     /*
@@ -82,14 +89,26 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
       display: inline-flex;
       align-items: center;
       align-self: stretch;
-      gap: 5px;
-      padding-inline: 10px;
+      gap: 8px;
+      padding-inline: 12px;
       color: inherit;
       text-decoration: none;
     }
 
+    /* Assist chip: outlined, text on-surface, icon in primary; hover is the
+       M3 on-surface state layer rather than a tint of the container. */
+    :host(:has(.pb-status-chip__link)) {
+      --_bg: transparent;
+      border-color: var(--mat-sys-outline-variant);
+      color: var(--mat-sys-on-surface);
+    }
+
+    :host(:has(.pb-status-chip__link)) .pb-status-chip__icon {
+      color: var(--mat-sys-primary);
+    }
+
     :host(:has(.pb-status-chip__link:hover)) {
-      filter: brightness(0.94);
+      --_bg: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
     }
 
     :host(:has(.pb-status-chip__link:focus-visible)) {
@@ -120,19 +139,12 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
   `,
 })
 export class PbStatusChip {
-  /** Leave unset to get 'primary' on a link chip, 'neutral' otherwise — see `effectiveTone`. */
+  /** Colour of a static label; ignored on a link chip, which is always outlined. */
   readonly tone = input<StatusTone | null>(null);
   readonly icon = input<string | null>(null);
   /** Renders as a real `<a>` (middle-click, open-in-new-tab all work) instead of a static pill. */
   readonly routerLink = input<string | readonly unknown[] | null>(null);
 
-  /**
-   * A link chip left at the default tone would be colour-identical to every
-   * inert label around it — nothing marks it as tappable. Defaulting it to
-   * 'primary' gives clickable chips a distinct colour without every call site
-   * having to remember to set one; an explicit `tone` still wins.
-   */
-  protected readonly effectiveTone = computed(
-    () => this.tone() ?? (this.routerLink() ? 'primary' : 'neutral'),
-  );
+  /** A link chip is drawn as an outlined assist chip; `tone` only colours static labels. */
+  protected readonly effectiveTone = computed(() => this.tone() ?? 'neutral');
 }

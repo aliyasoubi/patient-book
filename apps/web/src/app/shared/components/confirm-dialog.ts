@@ -26,7 +26,7 @@ export interface ConfirmData {
         {{ data.cancelLabel ?? ('action.cancel' | translate) }}
       </button>
       <button
-        mat-flat-button
+        mat-button
         type="button"
         [class.confirm--danger]="data.tone === 'warn'"
         (click)="ref.close(true)"
@@ -44,25 +44,18 @@ export interface ConfirmData {
     }
 
     /*
-     * Archiving a record is irreversible from the user's point of view, so the
-     * confirm button has to read as destructive.
-     *
-     * M3 dropped the \`color\` input — it is documented as having no effect under
-     * an M3 theme, and this dialog previously relied on \`[color]="warn"\`, so the
-     * button rendered as an ordinary primary one. The M3 way is to override the
-     * filled button's own tokens with the error role, which recolours the hover,
-     * focus and pressed state layers along with the container rather than
-     * repainting the background and leaving the overlays keyed to the wrong hue.
+     * M3 basic dialogs use text buttons for every action — a filled button is
+     * the full-screen dialog's idiom. Archiving is still destructive from the
+     * user's point of view, so that one action takes the error role. Done by
+     * overriding the text button's own tokens rather than \`color\`, which M3
+     * ignores: this recolours the hover/focus/pressed state layers along with
+     * the label instead of repainting the text and leaving the overlays keyed
+     * to the primary hue.
      */
     .confirm--danger {
-      --mat-button-filled-container-color: var(--mat-sys-error);
-      --mat-button-filled-label-text-color: var(--mat-sys-on-error);
-      --mat-button-filled-state-layer-color: var(--mat-sys-on-error);
-      --mat-button-filled-ripple-color: color-mix(
-        in srgb,
-        var(--mat-sys-on-error) 12%,
-        transparent
-      );
+      --mat-button-text-label-text-color: var(--mat-sys-error);
+      --mat-button-text-state-layer-color: var(--mat-sys-error);
+      --mat-button-text-ripple-color: color-mix(in srgb, var(--mat-sys-error) 12%, transparent);
     }
   `,
 })

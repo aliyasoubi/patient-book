@@ -1,5 +1,6 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -64,12 +65,23 @@ export class PatientDetail {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly breakpoints = inject(BreakpointObserver);
   protected readonly auth = inject(AuthService);
   private readonly errors = inject(ApiErrorTranslator);
   private readonly i18n = inject(TranslateService);
 
   /** Bound from the `:id` route parameter. */
   readonly id = input.required<string>();
+
+  /**
+   * M3 primary tabs stretch to fill the row only at compact width; on a wide
+   * page they sit start-aligned at their natural width, or three tabs end up
+   * 300px each with the labels lost in the middle.
+   */
+  protected readonly isCompact = toSignal(
+    this.breakpoints.observe('(max-width: 700px)').pipe(map((r) => r.matches)),
+    { initialValue: false },
+  );
 
   protected readonly genderLabel = genderLabel;
   protected readonly genderIcon = genderIcon;
@@ -87,7 +99,7 @@ export class PatientDetail {
     this.i18n.currentLang();
     const p = this.patient();
     if (!p) return [];
-    const rows: Array<{ icon: string; label: string; value: string; ltr?: boolean }> = [];
+    const rows: { icon: string; label: string; value: string; ltr?: boolean }[] = [];
     const push = (icon: string, label: string, value: string | null | undefined, ltr = false) => {
       if (value) rows.push({ icon, label, value, ltr });
     };
@@ -271,7 +283,7 @@ export class PatientDetail {
     }
   }
 
-  protected changeEntries(changes: AuditEntry['changes']): Array<[string, unknown]> {
+  protected changeEntries(changes: AuditEntry['changes']): [string, unknown][] {
     return changes ? Object.entries(changes) : [];
   }
 

@@ -20,11 +20,13 @@ export interface SearchFieldOption {
 }
 
 /**
- * One Material 3 search pattern for app bars and data lists.
+ * One Material 3 search bar for app bars and data lists.
  *
- * The compact variant is reserved for the top app bar; page/list search uses
- * the standard 56px container. Both variants share interaction, focus, clear,
- * autocomplete and accessibility behaviour.
+ * M3's search bar is a 56dp pill on `surface-container-high` with a leading
+ * search icon and a trailing clear; it has no focus outline — the container
+ * stays put and the caret and suggestion panel are what signal focus. A ring
+ * here would make it read as an outlined text field, which is the one thing
+ * next to it in every list toolbar.
  */
 @Component({
   selector: 'pb-search-field',
@@ -38,7 +40,7 @@ export interface SearchFieldOption {
     TranslatePipe,
   ],
   template: `
-    <div class="pb-search-field" [class.pb-search-field--compact]="compact()">
+    <div class="pb-search-field">
       <mat-icon class="pb-search-field__leading" aria-hidden="true">search</mat-icon>
       <input
         #searchInput
@@ -71,7 +73,11 @@ export interface SearchFieldOption {
       }
     </div>
 
-    <mat-autocomplete #autocomplete="matAutocomplete" (optionSelected)="selectOption($event)">
+    <mat-autocomplete
+      #autocomplete="matAutocomplete"
+      panelClass="pb-search-panel"
+      (optionSelected)="selectOption($event)"
+    >
       @for (option of options(); track option.value) {
         <mat-option [value]="option.value">
           <div class="pb-search-option">
@@ -115,31 +121,24 @@ export interface SearchFieldOption {
       width: 100%;
       height: var(--pb-search-height);
       padding-inline: var(--pb-space-4) var(--pb-space-1);
-      border: 1px solid transparent;
       border-radius: var(--mat-sys-corner-full);
       background: var(--mat-sys-surface-container-high);
       color: var(--mat-sys-on-surface);
-      transition:
-        background-color 140ms ease,
-        border-color 140ms ease,
-        box-shadow 140ms ease;
+      transition: background-color 140ms ease;
 
-      &:hover {
-        background: var(--mat-sys-surface-container-highest);
-      }
-
+      /* M3 state layer: on-surface at 8% over the container, no outline. */
+      &:hover,
       &:focus-within {
-        border-color: var(--mat-sys-primary);
-        box-shadow: 0 0 0 1px var(--mat-sys-primary);
+        background: color-mix(
+          in srgb,
+          var(--mat-sys-on-surface) 8%,
+          var(--mat-sys-surface-container-high)
+        );
       }
 
       &:has(input:disabled) {
         opacity: 0.5;
         pointer-events: none;
-      }
-
-      &--compact {
-        height: var(--pb-control-height);
       }
     }
 
@@ -222,7 +221,6 @@ export class PbSearchField {
   readonly control = input.required<FormControl<string>>();
   readonly placeholder = input('');
   readonly ariaLabel = input('');
-  readonly compact = input(false);
   readonly loading = input(false);
   readonly options = input<readonly SearchFieldOption[]>([]);
   readonly showEmpty = input(false);
