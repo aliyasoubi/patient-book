@@ -169,30 +169,32 @@
         }
       </pb-surface>
 
-      <!-- ── Gender ────────────────────────────────────────────── -->
+      <!-- ── Gender ────────────────────────────────────────────
+           Women and men as two columns, each drawn the way an age band is:
+           label, bar, count. A record with no gender is a footnote. -->
       <pb-surface [title]="'dashboard.genderTitle' | translate">
-        <div class="split">
-          <div class="split__bar" role="img" [attr.aria-label]="'dashboard.genderAria' | translate">
-            @for (g of genderSplit(); track g.key) {
-              <span
-                class="split__seg"
-                [attr.data-gender]="g.key"
-                [style.width.%]="g.percent"
-                [matTooltip]="genderTooltip(g.key, g.count)"
-              ></span>
-            }
-          </div>
-          <ul class="split__legend">
-            @for (g of genderSplit(); track g.key) {
-              <li>
-                <span class="split__dot" [attr.data-gender]="g.key"></span>
-                <span>{{ genderLabel(g.key) | translate }}</span>
-                <strong>{{ g.count | faCount }}</strong>
+        <div class="gender" role="group" [attr.aria-label]="'dashboard.genderAria' | translate">
+          @for (g of genderColumns(); track g.key) {
+            <div class="gender__col" [attr.data-gender]="g.key">
+              <span class="bars__label">
+                <mat-icon class="bars__icon gender__icon" aria-hidden="true">{{ genderIcon(g.key) }}</mat-icon>
+                {{ genderLabel(g.key) | translate }}
+              </span>
+              <span class="bars__track">
+                <span class="bars__fill gender__fill" [style.width.%]="g.percent"></span>
+              </span>
+              <span class="gender__value">
+                <span class="bars__value">{{ g.count | faCount }}</span>
                 <small>{{ g.percent | faNum }}{{ 'common.percentSign' | translate }}</small>
-              </li>
-            }
-          </ul>
+              </span>
+            </div>
+          }
         </div>
+        @if (genderUnknown(); as unknown) {
+          <p class="gender__unknown">
+            {{ 'dashboard.genderUnknown' | translate: { count: (unknown | faCount) } }}
+          </p>
+        }
       </pb-surface>
 
       <!-- ── Age ───────────────────────────────────────────────── -->

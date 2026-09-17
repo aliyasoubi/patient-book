@@ -2,18 +2,14 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { RegistryService } from '../../core/services/registry.service';
 import { AuthService } from '../../core/services/auth.service';
-import {
-  formatPersianCount,
-  PersianCountPipe,
-  PersianNumberPipe,
-} from '../../shared/pipes/persian-number.pipe';
+import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import {
   ageBandLabel,
+  genderIcon,
   genderLabel,
   referralKindIcon,
   referralKindLabel,
@@ -37,7 +33,6 @@ interface StatTile {
   imports: [
     RouterLink,
     MatProgressBarModule,
-    MatTooltipModule,
     PersianCountPipe,
     PersianNumberPipe,
     PbButton,
@@ -56,6 +51,7 @@ export class Dashboard {
   protected readonly auth = inject(AuthService);
 
   protected readonly genderLabel = genderLabel;
+  protected readonly genderIcon = genderIcon;
   protected readonly ageBandLabel = ageBandLabel;
   protected readonly referralKindLabel = referralKindLabel;
   protected readonly referralKindIcon = referralKindIcon;
@@ -154,11 +150,25 @@ export class Dashboard {
     return list.map((b) => ({ ...b, percent: Math.round((b.count / max) * 100) }));
   });
 
-  protected readonly genderSplit = computed(() => {
+  /**
+   * Women and men as two fixed columns — always both, in this order, even
+   * when one count is zero, so the panel keeps its shape as the register
+   * fills. Shares are of every patient, including those with no gender
+   * recorded, so the two columns need not sum to 100%.
+   */
+  protected readonly genderColumns = computed(() => {
     const list = this.stats()?.gender ?? [];
     const total = list.reduce((sum, g) => sum + g.count, 0) || 1;
-    return list.map((g) => ({ ...g, percent: Math.round((g.count / total) * 100) }));
+    return (['female', 'male'] as const).map((key) => {
+      const count = list.find((g) => g.key === key)?.count ?? 0;
+      return { key, count, percent: Math.round((count / total) * 100) };
+    });
   });
+
+  /** Records with no gender on file; shown only when there are any. */
+  protected readonly genderUnknown = computed(
+    () => this.stats()?.gender.find((g) => g.key === 'unknown')?.count ?? 0,
+  );
 
   /** Last twelve months of new patients, as a sparkline path. */
   protected readonly trend = computed(() => {
@@ -187,12 +197,6 @@ export class Dashboard {
   /** Brand and tooth position, whichever of the two is actually recorded. */
   protected upcomingMeta(item: UpcomingSurgery): string {
     return [item.implantBrand, item.toothPosition].filter(Boolean).join(' · ');
-  }
-
-  protected genderTooltip(gender: string, count: number): string {
-    const label = this.i18n.instant(genderLabel(gender));
-    const formattedCount = formatPersianCount(count);
-    return this.i18n.instant('dashboard.genderCount', { gender: label, count: formattedCount });
   }
 
   constructor() {

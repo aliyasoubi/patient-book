@@ -252,72 +252,50 @@
 }
 
 /* ── Gender split ──────────────────────────────────────────────────── */
-.split {
-  &__bar {
-    display: flex;
-    height: 12px;
-    border-radius: var(--mat-sys-corner-full);
-    overflow: hidden;
-    background: var(--mat-sys-surface-container-high);
-  }
+/* Two columns in the age-band idiom: label, track, value. The gender colour
+   comes from the same tokens the rest of the app uses for the two. */
+.gender {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 
-  &__seg {
-    height: 100%;
-    transition: width 500ms cubic-bezier(0.2, 0, 0, 1);
+  &__col {
+    --_tone: var(--mat-sys-primary);
 
-    &[data-gender='female'] {
-      background: var(--mat-sys-tertiary);
-    }
-    &[data-gender='male'] {
-      background: var(--mat-sys-primary);
-    }
-    &[data-gender='unknown'] {
-      background: var(--mat-sys-outline);
-    }
-  }
-
-  &__legend {
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    margin: 14px 0 0;
-    padding: 0;
-    list-style: none;
+    gap: 8px;
+    min-width: 0;
 
-    li {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font: var(--mat-sys-body-medium);
+    &[data-gender='female'] {
+      --_tone: var(--mat-sys-tertiary);
     }
+  }
 
-    strong {
-      margin-inline-start: auto;
-      font-variant-numeric: tabular-nums;
-    }
+  &__icon {
+    color: var(--_tone);
+  }
+
+  &__fill {
+    background: var(--_tone);
+  }
+
+  &__value {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
 
     small {
-      min-width: 4ch;
-      text-align: end;
+      font: var(--mat-sys-body-small);
       color: var(--mat-sys-on-surface-variant);
     }
   }
 
-  &__dot {
-    width: 10px;
-    height: 10px;
-    border-radius: var(--mat-sys-corner-full);
-    flex: 0 0 auto;
-
-    &[data-gender='female'] {
-      background: var(--mat-sys-tertiary);
-    }
-    &[data-gender='male'] {
-      background: var(--mat-sys-primary);
-    }
-    &[data-gender='unknown'] {
-      background: var(--mat-sys-outline);
-    }
+  &__unknown {
+    margin: 12px 0 0;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
   }
 }
 
