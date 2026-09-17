@@ -66,10 +66,6 @@ export enum ErrorCode {
   UnknownTreatmentCode = 'ERR_UNKNOWN_TREATMENT_CODE',
   SortFieldUnsupported = 'ERR_SORT_FIELD_UNSUPPORTED',
 
-  // -- Import -----------------------------------------------------------
-  WorkbookNotFound = 'ERR_WORKBOOK_NOT_FOUND',
-  DatabaseNotEmpty = 'ERR_DATABASE_NOT_EMPTY',
-
   // -- Data exchange ----------------------------------------------------
   /** The upload could not be parsed as a workbook at all. */
   WorkbookUnreadable = 'ERR_WORKBOOK_UNREADABLE',
@@ -82,14 +78,6 @@ export enum ErrorCode {
   ReconcileConflict = 'ERR_RECONCILE_CONFLICT',
   /** A field name that is not one this reconcile is allowed to write. */
   ReconcileFieldUnknown = 'ERR_RECONCILE_FIELD_UNKNOWN',
-
-  // -- Backup -----------------------------------------------------------
-  /** Not an absolute path, or carrying characters a path may not hold. */
-  BackupDirInvalid = 'ERR_BACKUP_DIR_INVALID',
-  /** The path does not exist, or exists but is not a directory. */
-  BackupDirMissing = 'ERR_BACKUP_DIR_MISSING',
-  /** The directory exists but this process cannot write into it. */
-  BackupDirNotWritable = 'ERR_BACKUP_DIR_NOT_WRITABLE',
 }
 
 /** Values interpolated into a rendered message, e.g. `{ fileNo: '11559' }`. */

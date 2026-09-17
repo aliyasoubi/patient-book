@@ -17,9 +17,9 @@ set -euo pipefail
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly COMPOSE_FILE="$REPO_ROOT/compose.prod.yml"
 
-# Operator-authored configuration. Sourced, like the compose file itself reads
-# it — unlike `backup-dir` below, which originates from a web form and is only
-# ever read as text.
+# Operator-authored configuration, sourced like the compose file reads it.
+# The backup destination is `PB_BACKUP_DIR` here and nowhere else — set it on
+# the server, in this file; the application has no say in where dumps go.
 set -a
 [[ -f "$REPO_ROOT/.env" ]] && . "$REPO_ROOT/.env"
 set +a
@@ -28,19 +28,11 @@ readonly DB_USER="${DB_USER:-dental}"
 readonly DB_NAME="${DB_NAME:-patient_book}"
 readonly PB_HOME_DIR="${PB_HOME_DIR:-/srv/patient-book/home}"
 
-# The destination the app's settings screen writes, if it has been changed.
-# Read as plain text and quoted, never sourced: sourcing it would turn a value
-# typed into a browser form into shell executed as root by the nightly job.
-readonly CONFIGURED_DIR_FILE="$PB_HOME_DIR/.patient-book/backup-dir"
-if [[ -z "${PB_BACKUP_DIR:-}" && -s "$CONFIGURED_DIR_FILE" ]]; then
-  PB_BACKUP_DIR="$(head -n 1 "$CONFIGURED_DIR_FILE")"
-fi
-
 readonly BACKUP_DIR="${PB_BACKUP_DIR:-$PB_HOME_DIR/PatientBookBackups}"
 
-# Deliberately outside PB_HOME_DIR, which is bind-mounted into the API
-# container: a compromise of the web application should not hand over the key
-# that decrypts every backup of the records it holds.
+# Deliberately apart from the backups themselves and from anything the API
+# image can reach: a compromise of the web application should not hand over
+# the key that decrypts every backup of the records it holds.
 readonly KEY_FILE="${PB_BACKUP_KEY:-/etc/patient-book/backup.key}"
 
 readonly KEEP_DAILY="${PB_KEEP_DAILY:-7}"
@@ -203,7 +195,7 @@ if [[ -n "$OFFSITE_DIR" ]]; then
   log "mirrored $(basename "$TARGET") to $OFFSITE_DIR"
 fi
 
-# The app's settings screen reads this file to show when the last backup ran.
+# `cat $BACKUP_DIR/last-success` is how an operator checks the last good run.
 date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-success"
 chmod 644 "$BACKUP_DIR/last-success"
 rm -f "$BACKUP_DIR/last-failure"

@@ -3,7 +3,6 @@ add
 apartment
 arrow_back
 arrow_forward
-backup
 badge
 brightness_auto
 cake
@@ -30,7 +29,6 @@ deployed_code
 description
 details
 diamond
-download
 edit
 edit_note
 error
@@ -77,10 +75,8 @@ pattern
 person
 person_add
 person_search
-radio
 refresh
 restore_from_trash
-rule
 save
 schedule
 school
@@ -94,7 +90,6 @@ start
 stethoscope
 straighten
 surgical
-sync_alt
 tab
 table
 tag
@@ -103,7 +98,6 @@ tune
 unarchive
 upcoming
 update
-upload_file
 visibility
 visibility_off
 warning

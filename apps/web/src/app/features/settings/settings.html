@@ -48,48 +48,4 @@
       }
     </ul>
   </pb-surface>
-
-  @if (auth.can('manageData')) {
-    <pb-surface icon="backup" [title]="'settings.backup' | translate">
-      <p class="panel__hint">{{ 'settings.backupHint' | translate }}</p>
-
-      <pb-text-field
-        [control]="backupDir"
-        [label]="'settings.backupDir' | translate"
-        [hint]="'settings.backupDirHint' | translate"
-        [ltr]="true"
-        prefixIcon="folder"
-      />
-
-      <pb-button icon="save" [disabled]="savingBackup()" (click)="saveBackupDir()">
-        {{ (savingBackup() ? 'common.saving' : 'common.save') | translate }}
-      </pb-button>
-
-      @if (backup(); as b) {
-        <p class="panel__hint backup-status" [class.backup-status--error]="backupIsFailing(b)">
-          @if (backupIsFailing(b)) {
-            {{ 'settings.backupLastFailure' | translate: { at: b.lastFailure } }}
-          } @else if (b.lastSuccess) {
-            {{ 'settings.backupLastSuccess' | translate: { at: b.lastSuccess } }}
-          } @else {
-            {{ 'settings.backupNeverRun' | translate }}
-          }
-        </p>
-        <p class="panel__hint backup-status">
-          @if (b.lastOffsiteSuccess) {
-            {{ 'settings.backupOffsiteLastSuccess' | translate: { at: b.lastOffsiteSuccess } }}
-          } @else {
-            {{ 'settings.backupOffsiteNotConfigured' | translate }}
-          }
-        </p>
-      }
-    </pb-surface>
-
-    <pb-surface icon="sync_alt" [title]="'settings.dataExchange' | translate">
-      <p class="panel__hint">{{ 'settings.dataExchangeHint' | translate }}</p>
-      <pb-button variant="stroked" routerLink="/settings/data-exchange" icon="sync_alt">
-        {{ 'settings.openDataExchange' | translate }}
-      </pb-button>
-    </pb-surface>
-  }
 </div>

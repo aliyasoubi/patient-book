@@ -26,10 +26,6 @@ readonly DB_APP_USER="${DB_APP_USER:?DB_APP_USER must be set in .env}"
 readonly DB_APP_PASSWORD="${DB_APP_PASSWORD:?DB_APP_PASSWORD must be set in .env}"
 readonly PB_HOME_DIR="${PB_HOME_DIR:-/srv/patient-book/home}"
 
-readonly CONFIGURED_DIR_FILE="$PB_HOME_DIR/.patient-book/backup-dir"
-if [[ -z "${PB_BACKUP_DIR:-}" && -s "$CONFIGURED_DIR_FILE" ]]; then
-  PB_BACKUP_DIR="$(head -n 1 "$CONFIGURED_DIR_FILE")"
-fi
 readonly BACKUP_DIR="${PB_BACKUP_DIR:-$PB_HOME_DIR/PatientBookBackups}"
 readonly KEY_FILE="${PB_BACKUP_KEY:-/etc/patient-book/backup.key}"
 readonly DRILL_DB="patient_book_drill_$$"

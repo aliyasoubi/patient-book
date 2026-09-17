@@ -1,29 +1,28 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
-import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { BackupService, type BackupSettings } from '../../core/services/backup.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { PatientsService } from '../patients/data/patients.service';
 import { roleLabel } from '../../shared/labels';
-import { PbButton, PbPageHeader, PbSurface, PbTextField } from '../../shared/ui';
+import { PbButton, PbPageHeader, PbSurface } from '../../shared/ui';
 import type { TreatmentType } from '../patients/data/patient.model';
 
+/**
+ * Appearance, account and the treatment catalogue. Backups and the Excel
+ * export/reconcile tools are deliberately not here: they are operated from
+ * the server's terminal (see the README), not from the clinic's screens.
+ */
 @Component({
   selector: 'pb-settings',
   standalone: true,
   imports: [
     MatButtonToggleModule,
-    ReactiveFormsModule,
     PbButton,
     PbSurface,
     PbPageHeader,
-    PbTextField,
     MatIconModule,
     TranslatePipe,
   ],
@@ -34,68 +33,16 @@ export class Settings {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
   private readonly patients = inject(PatientsService);
-  private readonly backups = inject(BackupService);
-  private readonly snackBar = inject(MatSnackBar);
-  private readonly errors = inject(ApiErrorTranslator);
-  private readonly i18n = inject(TranslateService);
 
   protected readonly roleLabel = roleLabel;
 
   protected readonly treatments = signal<TreatmentType[]>([]);
 
   constructor() {
-    // Only an admin can read backup settings; asking as anyone else would just
-    // produce a 403 in the console on every settings visit.
-    if (this.auth.can('manageData')) this.loadBackupSettings();
     this.patients.treatmentTypes().subscribe((t) => this.treatments.set(t));
   }
 
   protected setTheme(mode: ThemeMode): void {
     this.theme.set(mode);
-  }
-
-  // ── Backup destination ──────────────────────────────────────────
-
-  protected readonly backupDir = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required],
-  });
-  protected readonly backup = signal<BackupSettings | null>(null);
-  protected readonly savingBackup = signal(false);
-
-  private loadBackupSettings(): void {
-    this.backups.settings().subscribe((s) => {
-      this.backup.set(s);
-      this.backupDir.setValue(s.dir);
-    });
-  }
-
-  protected saveBackupDir(): void {
-    const dir = this.backupDir.value.trim();
-    if (!dir || this.savingBackup()) return;
-    this.savingBackup.set(true);
-    this.backups.setDir(dir).subscribe({
-      next: (s) => {
-        this.backup.set(s);
-        this.backupDir.setValue(s.dir);
-        this.savingBackup.set(false);
-        this.toast(this.i18n.instant('settings.backupDirSaved'));
-      },
-      // The API's reason is the useful part here — "that folder is not
-      // writable" tells someone what to fix, where a generic failure does not.
-      error: (error: unknown) => {
-        this.savingBackup.set(false);
-        this.toast(this.errors.translate(error));
-      },
-    });
-  }
-
-  /** True when the most recent run failed — i.e. no success since that failure. */
-  protected backupIsFailing(b: BackupSettings): boolean {
-    return !!b.lastFailure && (!b.lastSuccess || b.lastFailure > b.lastSuccess);
-  }
-
-  private toast(message: string): void {
-    this.snackBar.open(message, this.i18n.instant('action.dismiss'));
   }
 }

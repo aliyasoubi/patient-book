@@ -78,9 +78,35 @@ Re-running against a populated database is refused unless `--force` is passed.
 
 On a deployed server the same importer runs inside the API container —
 `./ops/deploy/import.sh workbook.xlsx`, see [ops/deploy/README.md](ops/deploy/README.md).
-The Excel upload on the settings page is a different tool: it *corrects*
-records that already exist and never creates any, so it is not a way to load
-an empty register.
+
+### Exporting and correcting from Excel
+
+Two more terminal tools cover the rest of the Excel round-trip. They are
+deliberately **not** in the web app: a whole-register export is a bulk PII
+extract, and a bulk correction rewrites clinical records, so both stay on the
+machine that already holds the database credentials, run by the person who
+has shell access to it, and both are written to the audit log as `cli:<user>`.
+
+```bash
+npm run export -- [patient-book.xlsx]        # snapshot the register (default: patient-book-<date>.xlsx)
+npm run reconcile -- workbook.xlsx           # preview: print every field that would change
+npm run reconcile -- workbook.xlsx --apply   # write exactly those changes
+```
+
+`reconcile` matches sheet rows to existing records by file number or register
+number and never creates one — that is `import`'s job — so a workbook fed into
+an empty register reports every row as unmatched. Nothing is written without
+`--apply`, and each change is still checked against the record's current value
+and version, so anything edited in the app since the workbook was exported is
+refused rather than overwritten. The usual workflow is export → edit in Excel →
+preview → apply.
+
+On the VPS the same tools run inside the API image:
+
+```bash
+./ops/deploy/export.sh [output.xlsx]
+./ops/deploy/reconcile.sh workbook.xlsx [--apply]
+```
 
 ---
 
@@ -343,6 +369,27 @@ safe to point `PB_BACKUP_DIR` at an external drive or a cloud-synced folder: the
 sync provider never sees plaintext. A backup that has never been restored is not
 a recovery plan — run the drill.
 
+Where backups go is configured on the server and nowhere else — the application
+has no backup screen or API. On the VPS, set it in `.env` and the nightly timer
+picks it up on its next run:
+
+```bash
+# /opt/patient-book/.env
+PB_BACKUP_DIR=/mnt/backups/patient-book        # default: $PB_HOME_DIR/PatientBookBackups
+PB_OFFSITE_REMOTE=dropbox:PatientBookBackups   # optional second copy, via rclone
+```
+
+To check on it:
+
+```bash
+systemctl list-timers patient-book-backup.timer         # when it runs next
+cat "$PB_BACKUP_DIR"/last-success                        # last good run
+journalctl -u patient-book-backup.service -n 50          # why the last one failed
+sudo systemctl start patient-book-backup.service         # run one now
+```
+
+On macOS the same variables live in `ops/backup/backup.env`.
+
 ---
 
 ## Internationalisation
@@ -434,11 +481,13 @@ them.
 | `npm run build`                              | Production build of both                         |
 | `npm test`                                   | API and web unit tests (no database needed)      |
 | `npm run test:e2e`                           | API over HTTP against PostgreSQL (see below)     |
-| `npm run lint` / `lint:fix`                  | ESLint + Prettier on the API; CI runs `lint`     |
+| `npm run lint` / `lint:fix`                  | ESLint on both apps (+ Prettier on the API); CI  |
 | `npm run i18n:check`                         | Validate JSON keys and reject hard-coded UI text |
 | `npm run migration:run` / `migration:revert` | Schema                                           |
 | `npm run seed`                               | Treatment catalogue + admin account              |
-| `npm run import -- [file] [--force]`         | Load a source workbook                           |
+| `npm run import -- [file] [--force]`         | Load a source workbook into an empty register    |
+| `npm run export -- [file]`                   | Snapshot the register to an Excel workbook       |
+| `npm run reconcile -- <file> [--apply]`      | Preview, then apply, corrections from a workbook |
 | `npm run db:up` / `db:down`                  | Postgres via Docker                              |
 
 The e2e suite signs in, writes patients and register rows, and checks the

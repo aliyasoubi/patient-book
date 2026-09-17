@@ -108,68 +108,21 @@ export interface DashboardStats {
     overdueSurgeries: number;
     needsReview: number;
   };
-  gender: Array<{ key: string; count: number }>;
-  topTreatments: Array<{
+  gender: { key: string; count: number }[];
+  topTreatments: {
     code: string;
     nameFa: string;
     icon: string;
     color: string;
     count: number;
-  }>;
-  topReferrals: Array<{ id: string; name: string; kind: string; count: number }>;
-  newPatientsByMonth: Array<{ month: string; count: number }>;
-  ageBands: Array<{ band: string; count: number }>;
+  }[];
+  topReferrals: { id: string; name: string; kind: string; count: number }[];
+  newPatientsByMonth: { month: string; count: number }[];
+  ageBands: { band: string; count: number }[];
   recentlyActive: number;
   inactiveOverYear: number;
 }
 
-/** One field a reconcile preview proposes changing, with the current value. */
-export interface FieldDiff {
-  field: string;
-  current: string | null;
-  proposed: string | null;
-}
-
-export interface PatientDiff {
-  id: string;
-  fileNo: string;
-  fullName: string;
-  fields: FieldDiff[];
-}
-
-export interface CaseDiff {
-  id: string;
-  registryNo: string;
-  recordedName: string;
-  fields: FieldDiff[];
-}
-
-export interface ReconcilePreview {
-  patients: PatientDiff[];
-  implants: CaseDiff[];
-  ortho: CaseDiff[];
-  /** Sheet rows that found their record, whether or not anything differed. */
-  matched: { patients: number; implants: number; ortho: number };
-  /** Sheet rows with no matching fileNo/registryNo in the app. */
-  unmatched: { patients: number; implants: number; ortho: number };
-}
-
-/**
- * Per-row outcome of an apply. A failure carries the same stable code the rest
- * of the API speaks, so `ApiErrorTranslator` renders a real reason.
- */
-export interface ApplyResultRow {
-  id: string;
-  ok: boolean;
-  code?: string;
-  params?: Readonly<Record<string, string | number>>;
-}
-
-export interface ApplyReconcileResult {
-  patients: ApplyResultRow[];
-  implants: ApplyResultRow[];
-  ortho: ApplyResultRow[];
-}
 
 export interface AuditEntry {
   id: string;

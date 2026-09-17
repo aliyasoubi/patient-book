@@ -7,10 +7,9 @@
 # This is the one-shot migration importer (apps/api/src/modules/import) run
 # inside the API image, which is the only place the compiled code and the
 # database credentials both exist. It creates patients, registry cases and
-# treatments from the sheet. It is *not* the "reconcile" upload on the
-# settings page: that one only corrects records that already exist, and
-# reports every row of a workbook uploaded into an empty register as
-# unmatched.
+# treatments from the sheet. It is *not* reconcile.sh: that one only corrects
+# records that already exist, and reports every row of a workbook fed into an
+# empty register as unmatched.
 #
 # Run the seed first (treatment types must exist), then this, once. A second
 # run against a populated database is refused unless --force is passed.

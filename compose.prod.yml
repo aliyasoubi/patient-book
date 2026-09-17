@@ -103,18 +103,11 @@ services:
       # only read and write rows, provisioned by `migrate` via ensure-app-role.ts.
       DB_USER: ${DB_APP_USER:?set DB_APP_USER in .env}
       DB_PASSWORD: ${DB_APP_PASSWORD:?set DB_APP_PASSWORD in .env}
-      # Must match the mount below: BackupService reads the home directory.
-      HOME: ${PB_HOME_DIR:-/srv/patient-book/home}
       # Read only by the one-off seed step, which is run through this service.
       # Safe to clear from .env once the first administrator exists — seeding
       # never touches an account that is already there.
       SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
-    volumes:
-      # Mounted at the identical path inside and out. The settings screen then
-      # shows a directory that genuinely exists on the host, and the nightly
-      # backup job reads the same `.patient-book/backup-dir` the app writes.
-      - ${PB_HOME_DIR:-/srv/patient-book/home}:${PB_HOME_DIR:-/srv/patient-book/home}
     depends_on:
       db:
         condition: service_healthy

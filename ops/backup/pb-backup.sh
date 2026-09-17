@@ -32,15 +32,8 @@ readonly DB_PORT="${DB_PORT:-5432}"
 readonly DB_USER="${DB_USER:-dental}"
 readonly DB_NAME="${DB_NAME:-patient_book}"
 
-# The destination the app's settings screen writes, if it has been set. Read as
-# plain text and quoted, never sourced: this file's contents originate from a
-# web form, and `source`-ing it would turn a typed setting into shell executed
-# by the nightly job. An explicit PB_BACKUP_DIR in the environment still wins.
-readonly CONFIGURED_DIR_FILE="$HOME/.patient-book/backup-dir"
-if [[ -z "${PB_BACKUP_DIR:-}" && -s "$CONFIGURED_DIR_FILE" ]]; then
-  PB_BACKUP_DIR="$(head -n 1 "$CONFIGURED_DIR_FILE")"
-fi
-
+# The destination is `PB_BACKUP_DIR` (ops/backup/backup.env) and nowhere
+# else; the application has no say in where dumps go.
 readonly BACKUP_DIR="${PB_BACKUP_DIR:-$HOME/PatientBookBackups}"
 readonly KEY_FILE="${PB_BACKUP_KEY:-$HOME/.patient-book/backup.key}"
 readonly KEEP_DAILY="${PB_KEEP_DAILY:-7}"

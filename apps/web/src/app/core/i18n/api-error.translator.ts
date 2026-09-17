@@ -128,22 +128,6 @@ export class ApiErrorTranslator {
       case 'ERR_SORT_FIELD_UNSUPPORTED':
         return this.t('error.sortUnsupported');
 
-      // -- Data exchange -------------------------------------------------
-      case 'ERR_WORKBOOK_UNREADABLE':
-        return this.t('error.workbookUnreadable');
-      case 'ERR_WORKBOOK_SHEETS_MISSING':
-        return this.t('error.workbookSheetsMissing', params);
-      case 'ERR_RECONCILE_CONFLICT':
-        return this.t('error.reconcileConflict', params);
-      case 'ERR_RECONCILE_FIELD_UNKNOWN':
-        return this.t('error.reconcileFieldUnknown', params);
-
-      case 'ERR_BACKUP_DIR_INVALID':
-        return this.t('error.backupDirInvalid', params);
-      case 'ERR_BACKUP_DIR_MISSING':
-        return this.t('error.backupDirMissing', params);
-      case 'ERR_BACKUP_DIR_NOT_WRITABLE':
-        return this.t('error.backupDirNotWritable', params);
 
       default:
         return this.unexpected();
@@ -157,7 +141,7 @@ export class ApiErrorTranslator {
    * keyed by field path. The field is what makes the wording specific, so the
    * two are resolved together.
    */
-  field(field: string, code: string, params: ApiErrorParams = {}): string {
+  field(field: string, code: string, _params: ApiErrorParams = {}): string {
     const specific = this.fieldSpecific(field, code);
     if (specific) return specific;
 

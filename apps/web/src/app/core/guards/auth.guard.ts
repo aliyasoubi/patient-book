@@ -2,7 +2,6 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 
 import { AuthService, Permission } from '../services/auth.service';
-import type { UserRole } from '../models/common.model';
 
 /** Require a signed-in user; bounce to login remembering where they wanted to go. */
 export const authGuard: CanActivateFn = (_route, state) => {
@@ -17,17 +16,6 @@ export const authGuard: CanActivateFn = (_route, state) => {
   }
   return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 };
-
-/** Require one of the given roles. */
-export const roleGuard =
-  (...roles: UserRole[]): CanActivateFn =>
-  () => {
-    const auth = inject(AuthService);
-    const router = inject(Router);
-    const role = auth.role();
-    if (role && roles.includes(role)) return true;
-    return router.createUrlTree(['/']);
-  };
 
 /**
  * Require a permission from the same table that decides which buttons show.

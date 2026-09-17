@@ -47,8 +47,8 @@ launchctl unload ~/Library/LaunchAgents/com.patientbook.backup.plist && rm ~/Lib
 cat ~/PatientBookBackups/last-success && ls -lh ~/PatientBookBackups/daily/
 ```
 
-If a backup fails you get a desktop notification, and the settings screen
-shows the failure instead of the last success until a run passes again.
+If a backup fails you get a desktop notification, and `last-failure` sits
+beside `last-success` in the backup directory until a run passes again.
 Details land in `~/PatientBookBackups/backup.log`.
 
 ## Prove the backups still restore
@@ -108,9 +108,9 @@ The script only ever `cp`s already-gzipped, already-AES-256-encrypted files
 into that directory — it does not know or care which provider syncs it, and
 the provider never sees readable records. On a Mac this is the easy case:
 point it at the local folder the Dropbox or Google Drive desktop app already
-keeps in sync, and the app does the rest. The settings screen shows the last
-successful offsite mirror alongside the local backup status, so a stalled
-sync is as visible as a failed backup.
+keeps in sync, and the script does the rest. `last-offsite-success` in the
+backup directory records the last successful mirror, and a failed one fails
+the whole run, so a stalled sync is as visible as a failed backup.
 
 If you would rather not run a cloud client at all, an external drive kept out
 of the office works too — `PB_OFFSITE_DIR` just needs to be a writable path,

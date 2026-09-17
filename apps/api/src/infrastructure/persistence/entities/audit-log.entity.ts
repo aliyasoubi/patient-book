@@ -27,7 +27,7 @@ export class AuditLog {
     | 'restore'
     | 'login'
     | 'login_failed'
-    /** A bulk PII extract of the whole register — see the data-exchange controller. */
+    /** A bulk PII extract of the whole register — the `export` terminal tool. */
     | 'export';
 
   @Index()

@@ -95,11 +95,26 @@ second time against a populated database (pass `--force` after clearing it —
 the refusal message shows the exact `TRUNCATE`). Delete the copy on the server
 afterwards; it is patient data.
 
-Do not use the **Excel upload on the settings page** for this. That is the
-*reconcile* tool: it matches rows to records that already exist by file
-number and proposes field corrections. It never creates records, so a workbook
-uploaded into an empty register reports every row as unmatched and "no
-differences" — the page now says so, but the importer above is the answer.
+Do not use `reconcile.sh` for this. That tool matches rows to records that
+already exist by file number and corrects fields on them; it never creates
+records, so a workbook fed into an empty register reports every row as
+unmatched. The importer above is the answer.
+
+### Export and reconcile
+
+The other half of the Excel round-trip, also run inside the API image:
+
+```bash
+./ops/deploy/export.sh [output.xlsx]              # snapshot the register; default ./patient-book-<date>.xlsx
+./ops/deploy/reconcile.sh workbook.xlsx           # preview: print every field that would change
+./ops/deploy/reconcile.sh workbook.xlsx --apply   # write exactly those changes
+```
+
+Neither has a screen in the app on purpose: an export is a bulk extract of
+patient data and a reconcile rewrites records, so both stay with whoever has
+shell access to this server. Both are recorded in the audit log as
+`cli:<user>`. An exported workbook is patient data — keep it off the server
+once you have it, and delete the copy you upload for a reconcile afterwards.
 
 ## Shipping a change
 
@@ -109,6 +124,12 @@ git pull && ./ops/deploy/deploy.sh
 
 Migrations run as their own one-shot service that the API waits on, so the
 schema is always current before new code serves a request.
+
+**Upgrading from a build that had a backup screen in Settings:** the backup
+path is now read from `PB_BACKUP_DIR` in `.env` only; the
+`.patient-book/backup-dir` file that screen wrote is ignored. If you ever
+changed the path there, copy it into `.env` before the next nightly run, or
+backups quietly return to the default `$PB_HOME_DIR/PatientBookBackups`.
 
 ## Everyday commands
 
@@ -185,10 +206,14 @@ without it, every backup is unreadable.
 
 Because dumps are encrypted before they are written, pointing the destination
 at a cloud-synced folder is a supported setup; the sync provider never holds
-readable records. Change the destination on the app's settings screen, or with
-`PB_BACKUP_DIR`. A destination outside `PB_HOME_DIR` must also be bind-mounted
-into the API container at the identical path, or the settings screen cannot
-verify that it exists and is writable.
+readable records. The destination is `PB_BACKUP_DIR` in `.env` — the
+application has no backup settings, so this file is the only place it is
+configured — and the timer picks a change up on its next run:
+
+```bash
+cat "${PB_BACKUP_DIR:-/srv/patient-book/home/PatientBookBackups}"/last-success   # last good run
+cat "${PB_BACKUP_DIR:-/srv/patient-book/home/PatientBookBackups}"/last-failure   # present only while failing
+```
 
 ### Off-server copies
 
@@ -213,9 +238,9 @@ PB_OFFSITE_REMOTE=dropbox:PatientBookBackups
 ```
 
 The next nightly run copies the new dump straight there with `rclone copyto`
-— no local mount, nothing else to install. The settings screen shows the last
-successful offsite mirror alongside the local backup status, so a broken
-remote is as visible as a failed backup.
+— no local mount, nothing else to install. `last-offsite-success` in the
+backup directory records the last successful mirror, and a failed one fails
+the whole run, so a broken remote is as visible as a failed backup.
 
 Already have a network share or an `rclone mount` and would rather point at a
 real path instead of shelling out to `rclone` per file? Set `PB_OFFSITE_DIR`

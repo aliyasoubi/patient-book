@@ -11,8 +11,8 @@ set -euo pipefail
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly HERE="$REPO_ROOT/ops/deploy"
 readonly UNIT_DIR="/etc/systemd/system"
-# The `node` user inside the API image. The bind-mounted state directory has to
-# be writable by that uid or the settings screen cannot save a backup path.
+# The `node` user inside the API image; the state directory is created owned
+# by it so the one-off tools run through that image can write there too.
 readonly APP_UID=1000
 readonly APP_GID=1000
 
@@ -39,14 +39,13 @@ chmod 600 "$REPO_ROOT/.env"
 echo "✓  .env permissions set to 600"
 
 # -- state directory --------------------------------------------------------
-mkdir -p "$PB_HOME_DIR/.patient-book" "$PB_HOME_DIR/PatientBookBackups"
+mkdir -p "$PB_HOME_DIR/PatientBookBackups"
 chown -R "$APP_UID:$APP_GID" "$PB_HOME_DIR"
-chmod 700 "$PB_HOME_DIR/.patient-book"
 echo "✓  state directory ready at $PB_HOME_DIR (owned by uid $APP_UID)"
 
 # -- backup key directory ---------------------------------------------------
-# Outside PB_HOME_DIR on purpose: that path is bind-mounted into the API
-# container, and the key that decrypts every backup should not be reachable
+# Kept apart from the backups and from anything the API image can see: the
+# key that decrypts every backup should not sit beside them, nor be reachable
 # from the web application.
 mkdir -p /etc/patient-book
 chmod 700 /etc/patient-book

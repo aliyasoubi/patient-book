@@ -50,15 +50,7 @@ export type ApiErrorCode =
   | 'ERR_DATE_NOT_ON_CALENDAR'
   // Catalogue
   | 'ERR_UNKNOWN_TREATMENT_CODE'
-  | 'ERR_SORT_FIELD_UNSUPPORTED'
-  // Data exchange
-  | 'ERR_WORKBOOK_UNREADABLE'
-  | 'ERR_WORKBOOK_SHEETS_MISSING'
-  | 'ERR_RECONCILE_CONFLICT'
-  | 'ERR_RECONCILE_FIELD_UNKNOWN'
-  | 'ERR_BACKUP_DIR_INVALID'
-  | 'ERR_BACKUP_DIR_MISSING'
-  | 'ERR_BACKUP_DIR_NOT_WRITABLE';
+  | 'ERR_SORT_FIELD_UNSUPPORTED';
 
 /** Values the API sends for interpolation, e.g. `{ fileNo: '11559' }`. */
 export type ApiErrorParams = Readonly<Record<string, string | number>>;
@@ -70,7 +62,7 @@ export interface ApiErrorBody {
   params: ApiErrorParams;
   /** English, for developers. Never shown to the user. */
   message: string;
-  fieldErrors?: Record<string, Array<{ code: string; params: ApiErrorParams }>>;
+  fieldErrors?: Record<string, { code: string; params: ApiErrorParams }[]>;
   path: string;
   timestamp: string;
 }

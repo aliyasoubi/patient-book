@@ -26,13 +26,8 @@ readonly DB_PORT="${DB_PORT:-5432}"
 readonly DB_USER="${DB_USER:-dental}"
 readonly DB_NAME="${DB_NAME:-patient_book}"
 
-# Same precedence as pb-backup.sh, so the drill always tests the directory the
-# backups are actually being written to. Read as text, never sourced.
-readonly CONFIGURED_DIR_FILE="$HOME/.patient-book/backup-dir"
-if [[ -z "${PB_BACKUP_DIR:-}" && -s "$CONFIGURED_DIR_FILE" ]]; then
-  PB_BACKUP_DIR="$(head -n 1 "$CONFIGURED_DIR_FILE")"
-fi
-
+# Same `PB_BACKUP_DIR` as pb-backup.sh, so the drill always tests the
+# directory the backups are actually being written to.
 readonly BACKUP_DIR="${PB_BACKUP_DIR:-$HOME/PatientBookBackups}"
 readonly KEY_FILE="${PB_BACKUP_KEY:-$HOME/.patient-book/backup.key}"
 readonly SCRATCH_DB="${PB_SCRATCH_DB:-patient_book_restore_check}"
