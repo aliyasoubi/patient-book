@@ -23,8 +23,13 @@
       min-width: 0;
     }
 
-    &__filter {
+    &__filter,
+    &__sort {
       flex: 0 0 auto;
+    }
+
+    &__sort {
+      gap: 6px;
     }
 
     mat-paginator {

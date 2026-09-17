@@ -160,7 +160,7 @@
           <!-- One trigger regardless of how many actions apply: a stack of
                buttons outgrew the card on short rows. Same menu pattern as
                the patient list. -->
-          @if (hasActions(item)) {
+          @if (hasActions()) {
             <button
               mat-icon-button
               type="button"
@@ -171,12 +171,6 @@
               <mat-icon aria-hidden="true">more_vert</mat-icon>
             </button>
             <mat-menu #rowMenu="matMenu">
-              @if (item.patient?.mobile) {
-                <a mat-menu-item [href]="'tel:' + item.patient!.mobile">
-                  <mat-icon aria-hidden="true">call</mat-icon>
-                  <span>{{ 'common.call' | translate }}</span>
-                </a>
-              }
               @if (archivedOnly()) {
                 @if (auth.can('archiveSurgery')) {
                   <button mat-menu-item type="button" (click)="restore(item)">

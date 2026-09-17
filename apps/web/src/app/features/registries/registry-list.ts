@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -66,6 +67,7 @@ const KINDS: Record<
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    MatButtonModule,
     MatChipsModule,
     MatIconModule,
     MatPaginatorModule,
@@ -96,6 +98,11 @@ export class RegistryList {
   protected readonly unlinkedOnly = signal(false);
   /** Deleted rows are only archived; this shows them so one can be brought back. */
   protected readonly archivedOnly = signal(false);
+  /**
+   * By register number — the one order this book has. Newest first by
+   * default: the highest numbers are the cases being worked on now.
+   */
+  protected readonly sortDir = signal<'ASC' | 'DESC'>('DESC');
 
   protected readonly loading = signal(false);
   /** The most recent request failed; whatever rows are shown are stale. */
@@ -165,6 +172,8 @@ export class RegistryList {
         limit: this.limit(),
         unlinkedOnly: this.unlinkedOnly() || undefined,
         archivedOnly: this.archivedOnly() || undefined,
+        sortBy: 'registryNo',
+        sortDir: this.sortDir(),
       };
       untracked(() => {
         this.loading.set(true);
@@ -187,6 +196,11 @@ export class RegistryList {
   protected onPage(event: PageEvent): void {
     this.page.set(event.pageIndex + 1);
     this.limit.set(event.pageSize);
+  }
+
+  protected toggleSort(): void {
+    this.sortDir.update((dir) => (dir === 'DESC' ? 'ASC' : 'DESC'));
+    this.page.set(1);
   }
 
   protected toggleUnlinked(checked: boolean): void {

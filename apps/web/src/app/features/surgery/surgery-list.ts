@@ -145,7 +145,8 @@ export class SurgeryList {
         archivedOnly: this.archivedOnly() || undefined,
         page: this.page(),
         limit: this.limit(),
-        sortDir: 'ASC',
+        // Newest date first; the API keeps undated rows at the end either way.
+        sortDir: 'DESC',
       };
       untracked(() => {
         this.loading.set(true);
@@ -176,8 +177,7 @@ export class SurgeryList {
     return isBrandOnly ? '' : item.toothPosition;
   }
 
-  protected hasActions(item: SurgeryQueueItem): boolean {
-    if (item.patient?.mobile) return true;
+  protected hasActions(): boolean {
     return this.archivedOnly()
       ? this.auth.can('archiveSurgery')
       : this.auth.can('editSurgery') || this.auth.can('archiveSurgery');
