@@ -177,7 +177,6 @@
     "followUpOn": "تاریخ پیگیری: {{date}}",
     "followUpNeedsDate": "با ثبت تاریخ جراحی، تاریخ پیگیری محاسبه می‌شود",
     "followUpLegacy": "یادداشت قدیمی پروتز: {{note}}",
-    "followUpStatus": "وضعیت پیگیری",
     "notes": "یادداشت",
     "createLabel": "ثبت ردیف",
     "saveLabel": "ذخیره تغییرات",
@@ -654,12 +653,8 @@
   "list": {
     "separator": "، "
   },
-  "followUpStatus": {
-    "pending": "در انتظار",
-    "done": "انجام شده"
-  },
   "surgeryKind": {
-    "implant": "ایمپلنت",
-    "extraction": "کشیدن دندان"
+    "implant": "پروتز ایمپلنت",
+    "extraction": "کاشت ایمپلنت"
   }
 }

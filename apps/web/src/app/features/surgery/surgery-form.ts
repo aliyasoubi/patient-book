@@ -16,8 +16,6 @@ import {
   HasUnsavedChanges,
   warnBeforeUnload,
 } from '../../core/guards/unsaved-changes.guard';
-import { format as formatJalali } from 'date-fns-jalali';
-
 import {
   ABUTMENT_TYPES,
   FOLLOW_UP_MONTHS,
@@ -81,15 +79,6 @@ export class SurgeryForm implements HasUnsavedChanges {
     this.isEdit() ? 'surgeryForm.saveLabel' : 'surgeryForm.createLabel',
   );
 
-  /**
-   * Where the follow-up stands. Two values the receptionist sets by hand;
-   * "due" and "overdue" are what the list works out from the date, not
-   * something to choose.
-   */
-  protected readonly followUpStatusOptions: SelectOption[] = [
-    { value: 'pending', label: 'followUpStatus.pending', translate: true },
-    { value: 'done', label: 'followUpStatus.done', translate: true },
-  ];
   protected readonly kinds = SURGERY_KINDS;
   protected readonly kindLabel = surgeryKindLabel;
   protected readonly abutmentOptions: SelectOption[] = ABUTMENT_TYPES.map((a) => ({
@@ -139,11 +128,8 @@ export class SurgeryForm implements HasUnsavedChanges {
     implantBrand: [''],
     abutmentType: ['unknown'],
     followUpMonths: ['3'],
-    followUpStatus: ['pending' as 'pending' | 'done'],
     notes: ['', [Validators.maxLength(2000)]],
   });
-  /** What the row held on load, so submit only sends a status that actually changed. */
-  private loadedFollowUpDone = false;
 
   /** Register number, brand and cover belong to an implant; an extraction has a tooth and a date. */
   protected readonly isImplant = toSignal(
@@ -271,10 +257,8 @@ export class SurgeryForm implements HasUnsavedChanges {
       implantBrand: item.implantBrand ?? '',
       abutmentType: item.abutmentType,
       followUpMonths: item.followUpMonths ? String(item.followUpMonths) : '',
-      followUpStatus: item.followUpDoneAt ? 'done' : 'pending',
       notes: item.notes ?? '',
     });
-    this.loadedFollowUpDone = !!item.followUpDoneAt;
     this.legacyProsthesisDue.set(item.prosthesisDue);
   }
 
@@ -331,12 +315,8 @@ export class SurgeryForm implements HasUnsavedChanges {
       followUpMonths: raw.followUpMonths ? Number(raw.followUpMonths) : null,
       notes: blank(raw.notes),
     };
-    // Only a changed status is sent: "done" stamps today, "pending" reopens,
-    // and an unchanged one must not overwrite the date it was done on.
-    const done = raw.followUpStatus === 'done';
-    if (done !== this.loadedFollowUpDone) {
-      payload['followUpDoneAt'] = done ? formatJalali(new Date(), 'yyyy/MM/dd') : null;
-    }
+    // Whether the follow-up happened is the switch on the card, not a form
+    // field: every row added here is waiting for its follow-up.
     // The date is only sent when this form owns it. A pristine empty picker on
     // an edit may stand for a month-only imported date that must survive; a
     // picker the user cleared is a request to clear, so `null` goes out —
