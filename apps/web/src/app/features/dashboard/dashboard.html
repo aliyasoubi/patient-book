@@ -39,20 +39,20 @@
     </section>
 
     <div class="dash__grid">
-      <!-- ── Upcoming surgeries ─────────────────────────────────
-           Who's actually next, not just how many — a bare count told
-           nobody which patient to prep for. -->
-      <pb-surface [title]="'tile.upcomingSurgeries' | translate">
-        @if (upcomingFailed()) {
+      <!-- ── Follow-ups this week ───────────────────────────────
+           Who to call: the surgeries whose follow-up falls in the coming
+           seven days and has not happened yet, soonest first. -->
+      <pb-surface [title]="'dashboard.followUpsTitle' | translate">
+        @if (followUpsFailed()) {
           <div class="panel__failed">
-            <p class="panel__empty">{{ 'dashboard.upcomingSurgeriesFailed' | translate }}</p>
-            <pb-button variant="stroked" icon="refresh" (click)="loadUpcoming()">
+            <p class="panel__empty">{{ 'dashboard.followUpsFailed' | translate }}</p>
+            <pb-button variant="stroked" icon="refresh" (click)="loadFollowUps()">
               {{ 'common.retry' | translate }}
             </pb-button>
           </div>
-        } @else if (upcomingSurgeries().length) {
+        } @else if (followUps().length) {
           <ul class="upcoming">
-            @for (item of upcomingSurgeries(); track item.id) {
+            @for (item of followUps(); track item.id) {
               <li>
                 <a [routerLink]="['/surgery']" [queryParams]="{ q: item.recordedName }">
                   <mat-icon
@@ -60,27 +60,27 @@
                     [class.upcoming__icon--warn]="item.hasNameMismatch"
                     aria-hidden="true"
                   >
-                    {{ item.hasNameMismatch ? 'warning' : 'event' }}
+                    {{ item.hasNameMismatch ? 'warning' : 'event_repeat' }}
                   </mat-icon>
                   <span class="upcoming__body">
                     <span class="upcoming__name">{{ item.recordedName }}</span>
-                    @if (upcomingMeta(item); as meta) {
-                      <span class="upcoming__meta">{{ meta }}</span>
+                    @if (item.implantRegistryNo) {
+                      <span class="upcoming__meta">
+                        {{ 'surgery.implantRegistry' | translate: { number: item.implantRegistryNo } }}
+                      </span>
                     }
                   </span>
-                  <span class="upcoming__date">{{
-                    (item.surgeryDate | faNum) || ('surgery.noDate' | translate)
-                  }}</span>
+                  <span class="upcoming__date">{{ item.followUpDate | faNum }}</span>
                 </a>
               </li>
             }
           </ul>
-          <a class="dash__view-list" routerLink="/surgery">
+          <a class="dash__view-list" routerLink="/surgery" [queryParams]="{ followUp: 'week' }">
             {{ 'dashboard.viewList' | translate }}
             <mat-icon aria-hidden="true">arrow_back</mat-icon>
           </a>
         } @else {
-          <p class="panel__empty">{{ 'dashboard.upcomingSurgeriesEmpty' | translate }}</p>
+          <p class="panel__empty">{{ 'dashboard.followUpsEmpty' | translate }}</p>
         }
       </pb-surface>
 

@@ -40,10 +40,6 @@
     min-width: 0;
   }
 
-  &__status-filter {
-    height: 42px;
-  }
-
   mat-paginator {
     background: transparent;
     border-top: 1px solid var(--mat-sys-outline-variant);
@@ -157,6 +153,19 @@
    * chips for interactive things, so pills here would compete with the two
    * that are (the patient link and the status).
    */
+  &__follow-up {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 8px;
+  }
+
+  /* The switch's label is the action; keep it the size of the chip beside it. */
+  &__done {
+    --mat-slide-toggle-label-text-size: var(--mat-sys-label-large-size);
+  }
+
   &__details {
     display: flex;
     flex-wrap: wrap;

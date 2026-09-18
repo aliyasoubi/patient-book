@@ -6,6 +6,8 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { DataSource } from 'typeorm';
 
+import { addMonths, format as formatJalali } from 'date-fns-jalali';
+
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { BCRYPT_COST, User } from '../src/modules/users/user.entity';
@@ -378,7 +380,7 @@ describeIfWritable('clinic flows (e2e)', () => {
 
   describe('dashboard', () => {
     type Totals = {
-      totals: { implantCases: number; upcomingSurgeries: number };
+      totals: { implantCases: number; followUpsThisWeek: number };
     };
     const totals = async (): Promise<Totals['totals']> =>
       (
@@ -386,7 +388,7 @@ describeIfWritable('clinic flows (e2e)', () => {
           .body as Totals
       ).totals;
 
-    it('counts only active register cases and scheduled surgeries', async () => {
+    it('counts only active register cases and open follow-ups', async () => {
       // Archived is not deleted, so the raw-SQL counts have to exclude
       // `deletedAt` themselves — TypeORM's soft-delete filter does not reach
       // a hand-written query.
@@ -398,15 +400,20 @@ describeIfWritable('clinic flows (e2e)', () => {
       const implantId = (implant.body as { id: string }).id;
       implantCaseIds.push(implantId);
 
+      // A surgery three months ago with the default follow-up: due now.
       const surgery = await asAdmin(http().post('/api/surgery-queue'))
-        .send({ recordedName: 'سارا رضایی', status: 'scheduled' })
+        .send({
+          recordedName: 'سارا رضایی',
+          surgeryDate: formatJalali(addMonths(new Date(), -3), 'yyyy/MM/dd'),
+          followUpMonths: 3,
+        })
         .expect(201);
       const surgeryId = (surgery.body as { id: string }).id;
       surgeryIds.push(surgeryId);
 
       const added = await totals();
       expect(added.implantCases).toBe(before.implantCases + 1);
-      expect(added.upcomingSurgeries).toBe(before.upcomingSurgeries + 1);
+      expect(added.followUpsThisWeek).toBe(before.followUpsThisWeek + 1);
 
       await asAdmin(http().delete(`/api/implant-cases/${implantId}`)).expect(
         204,
@@ -417,7 +424,37 @@ describeIfWritable('clinic flows (e2e)', () => {
 
       const archived = await totals();
       expect(archived.implantCases).toBe(before.implantCases);
-      expect(archived.upcomingSurgeries).toBe(before.upcomingSurgeries);
+      expect(archived.followUpsThisWeek).toBe(before.followUpsThisWeek);
+    });
+
+    it("lists the coming week's follow-ups by name, soonest first", async () => {
+      const surgery = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'لیلا حسینی',
+          surgeryDate: formatJalali(addMonths(new Date(), -2), 'yyyy/MM/dd'),
+          followUpMonths: 2,
+        })
+        .expect(201);
+      const { id } = surgery.body as { id: string };
+      surgeryIds.push(id);
+
+      const panel = await asAdmin(http().get('/api/stats/follow-ups')).expect(
+        200,
+      );
+      const rows = panel.body as Array<{
+        id: string;
+        recordedName: string;
+        followUpState: string;
+      }>;
+      expect(rows).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id,
+            recordedName: 'لیلا حسینی',
+            followUpState: 'due',
+          }),
+        ]),
+      );
     });
 
     it('buckets new patients by Jalali month, not Gregorian', async () => {
@@ -450,6 +487,189 @@ describeIfWritable('clinic flows (e2e)', () => {
       const after = await months();
       expect(after['1404/06']).toBe((before['1404/06'] ?? 0) + 1);
       expect(after['1404/07']).toBe((before['1404/07'] ?? 0) + 1);
+    });
+  });
+
+  // ── Follow-ups ───────────────────────────────────────────────────
+
+  describe('surgery follow-ups', () => {
+    const today = formatJalali(new Date(), 'yyyy/MM/dd');
+    const monthsAgo = (n: number): string =>
+      formatJalali(addMonths(new Date(), -n), 'yyyy/MM/dd');
+
+    it('falls due today three months after the surgery, and every window that holds today lists it', async () => {
+      // Surgery three Jalali months ago at the default three months: the
+      // follow-up is today. Today is in "this week", "this month" and
+      // "pending"; it is not "overdue" and not "next month".
+      const weekBefore = await followUpsThisWeek();
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'نرگس یوسفی',
+          surgeryDate: monthsAgo(3),
+          followUpMonths: 3,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+      expect(created.body).toMatchObject({
+        followUpMonths: 3,
+        followUpState: 'due',
+        followUpDate: { jalali: today },
+      });
+
+      for (const window of ['pending', 'week', 'thisMonth'] as const) {
+        expect(await listFollowUps(window)).toContain(id);
+      }
+      for (const window of ['nextMonth', 'overdue'] as const) {
+        expect(await listFollowUps(window)).not.toContain(id);
+      }
+      expect(await followUpsThisWeek()).toBe(weekBefore + 1);
+    });
+
+    it('leaves every window once the follow-up is marked done, and comes back when reopened', async () => {
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'نرگس یوسفی',
+          surgeryDate: monthsAgo(3),
+          followUpMonths: 3,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+
+      const done = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ followUpDoneAt: today })
+        .expect(200);
+      expect(done.body).toMatchObject({
+        followUpState: 'done',
+        followUpDoneAt: today,
+      });
+      expect(await listFollowUps('pending')).not.toContain(id);
+      expect(await listFollowUps('week')).not.toContain(id);
+
+      // The switch went the wrong way: reopening puts it straight back.
+      await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ followUpDoneAt: null })
+        .expect(200);
+      expect(await listFollowUps('week')).toContain(id);
+    });
+
+    it('is overdue once its month has passed, and moves when the surgery date moves', async () => {
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'رضا احمدی',
+          surgeryDate: monthsAgo(5),
+          followUpMonths: 2,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+      expect((created.body as { followUpState: string }).followUpState).toBe(
+        'overdue',
+      );
+      expect(await listFollowUps('overdue')).toContain(id);
+      expect(await listFollowUps('pending')).toContain(id);
+
+      // The date is derived, so correcting the surgery date recomputes it —
+      // two months from today lands in "next month" or later, not this month.
+      const moved = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ surgeryDate: today })
+        .expect(200);
+      expect((moved.body as { followUpState: string }).followUpState).toBe(
+        'pending',
+      );
+      expect(await listFollowUps('overdue')).not.toContain(id);
+    });
+
+    it('is an extraction or an implant, and an extraction carries no implant fields', async () => {
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          kind: 'extraction',
+          recordedName: 'لیلا حسینی',
+          surgeryDate: today,
+          followUpMonths: 2,
+        })
+        .expect(201);
+      surgeryIds.push((created.body as { id: string }).id);
+      expect(created.body).toMatchObject({
+        kind: 'extraction',
+        implantRegistryNo: null,
+        implantCaseId: null,
+        implantBrand: null,
+      });
+    });
+
+    async function listFollowUps(followUp: string): Promise<string[]> {
+      const res = await asAdmin(
+        http().get('/api/surgery-queue').query({ followUp, limit: 100 }),
+      ).expect(200);
+      return (res.body as { items: Array<{ id: string }> }).items.map(
+        (i) => i.id,
+      );
+    }
+
+    async function followUpsThisWeek(): Promise<number> {
+      const res = await asAdmin(http().get('/api/stats/dashboard')).expect(200);
+      return (res.body as { totals: { followUpsThisWeek: number } }).totals
+        .followUpsThisWeek;
+    }
+  });
+
+  // ── Register numbers on the surgery list ─────────────────────────
+
+  describe('surgery register numbers', () => {
+    it("offers the implant book's next number, and opens the book entry when it is used", async () => {
+      // The next number is one past the book's highest, never a patient's
+      // file number. Saving a row with it registers the case, so the book
+      // and the list cannot drift apart.
+      const highest = nextNumber();
+      const seed = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo: highest, recordedName: 'کاظم نوری' })
+        .expect(201);
+      implantCaseIds.push((seed.body as { id: string }).id);
+
+      const next = await asAdmin(
+        http().get('/api/surgery-queue/next-registry-no'),
+      ).expect(200);
+      const { registryNo } = next.body as { registryNo: string };
+      expect(Number(registryNo)).toBe(Number(highest) + 1);
+
+      const surgery = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'کاظم نوری', implantRegistryNo: registryNo })
+        .expect(201);
+      const body = surgery.body as {
+        id: string;
+        implantCaseId: string | null;
+        hasNameMismatch: boolean;
+      };
+      surgeryIds.push(body.id);
+      expect(body.implantCaseId).not.toBeNull();
+      expect(body.hasNameMismatch).toBe(false);
+      implantCaseIds.push(body.implantCaseId!);
+
+      const registered = await asAdmin(
+        http().get(`/api/implant-cases/${body.implantCaseId}`),
+      ).expect(200);
+      expect(registered.body).toMatchObject({
+        registryNo,
+        recordedName: 'کاظم نوری',
+      });
+
+      // The book moved on: the next offer is one further along.
+      const after = await asAdmin(
+        http().get('/api/surgery-queue/next-registry-no'),
+      ).expect(200);
+      expect(Number((after.body as { registryNo: string }).registryNo)).toBe(
+        Number(registryNo) + 1,
+      );
+    });
+
+    it('is written as done, not scheduled: the list records surgeries that happened', async () => {
+      const surgery = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'کاظم نوری' })
+        .expect(201);
+      surgeryIds.push((surgery.body as { id: string }).id);
+      expect((surgery.body as { status: string }).status).toBe('completed');
     });
   });
 

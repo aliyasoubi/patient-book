@@ -13,9 +13,9 @@ export class StatsController {
     return this.stats.dashboard();
   }
 
-  @Get('upcoming-surgeries')
-  @ApiOperation({ summary: 'Upcoming surgeries' })
-  upcoming() {
-    return this.stats.upcomingSurgeries();
+  @Get('follow-ups')
+  @ApiOperation({ summary: "The coming week's follow-ups, soonest first" })
+  followUps() {
+    return this.stats.followUpsThisWeek();
   }
 }

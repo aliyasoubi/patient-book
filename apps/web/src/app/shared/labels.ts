@@ -70,9 +70,10 @@ export const EDUCATION_LEVELS: readonly EducationLevel[] = [
 
 export const GENDERS: readonly Gender[] = ['female', 'male', 'unknown'];
 
-export const SURGERY_STATUSES = ['scheduled', 'completed', 'cancelled'] as const;
-
 export const CASE_STATUSES = ['active', 'completed', 'on_hold'] as const;
+
+/** Follow-up offsets a dentist chooses from, in months after the surgery. */
+export const FOLLOW_UP_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
 export const ABUTMENT_TYPES = ['unknown', 'cover', 'healing', 'both', 'other'] as const;
 
@@ -141,6 +142,12 @@ export function roleLabel(role: UserRole | string | null): string {
   }
 }
 
+export const SURGERY_KINDS = ['implant', 'extraction'] as const;
+
+export function surgeryKindLabel(kind: string): string {
+  return kind === 'extraction' ? 'surgeryKind.extraction' : 'surgeryKind.implant';
+}
+
 export function caseStatusLabel(status: string): string {
   switch (status) {
     case 'active':
@@ -149,17 +156,6 @@ export function caseStatusLabel(status: string): string {
       return 'caseStatus.completed';
     default:
       return 'caseStatus.onHold';
-  }
-}
-
-export function surgeryStatusLabel(status: string): string {
-  switch (status) {
-    case 'scheduled':
-      return 'surgeryStatus.scheduled';
-    case 'completed':
-      return 'surgeryStatus.completed';
-    default:
-      return 'surgeryStatus.cancelled';
   }
 }
 

@@ -3,6 +3,8 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
@@ -14,11 +16,21 @@ import {
   HasUnsavedChanges,
   warnBeforeUnload,
 } from '../../core/guards/unsaved-changes.guard';
-import { ABUTMENT_TYPES, IMPLANT_BRAND_KEYS, SURGERY_STATUSES, abutmentLabel, surgeryStatusLabel } from '../../shared/labels';
+import { format as formatJalali } from 'date-fns-jalali';
+
+import {
+  ABUTMENT_TYPES,
+  FOLLOW_UP_MONTHS,
+  IMPLANT_BRAND_KEYS,
+  SURGERY_KINDS,
+  abutmentLabel,
+  surgeryKindLabel,
+} from '../../shared/labels';
+import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
 import { digitString, identifierValue } from '../../shared/validators';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
-import type { RegistryCase, SurgeryQueueItem } from '../../core/models/common.model';
+import type { RegistryCase, SurgeryKind, SurgeryQueueItem } from '../../core/models/common.model';
 import {
   PbButton,
   PbDateField,
@@ -35,6 +47,8 @@ import type { SelectOption, TextFieldOption } from '../../shared/ui';
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    MatButtonToggleModule,
+    MatIconModule,
     MatProgressBarModule,
     PbTextField,
     PbTextareaField,
@@ -67,11 +81,17 @@ export class SurgeryForm implements HasUnsavedChanges {
     this.isEdit() ? 'surgeryForm.saveLabel' : 'surgeryForm.createLabel',
   );
 
-  protected readonly statusOptions: SelectOption[] = SURGERY_STATUSES.map((s) => ({
-    value: s,
-    label: surgeryStatusLabel(s),
-    translate: true,
-  }));
+  /**
+   * Where the follow-up stands. Two values the receptionist sets by hand;
+   * "due" and "overdue" are what the list works out from the date, not
+   * something to choose.
+   */
+  protected readonly followUpStatusOptions: SelectOption[] = [
+    { value: 'pending', label: 'followUpStatus.pending', translate: true },
+    { value: 'done', label: 'followUpStatus.done', translate: true },
+  ];
+  protected readonly kinds = SURGERY_KINDS;
+  protected readonly kindLabel = surgeryKindLabel;
   protected readonly abutmentOptions: SelectOption[] = ABUTMENT_TYPES.map((a) => ({
     value: a,
     label: abutmentLabel(a),
@@ -96,16 +116,69 @@ export class SurgeryForm implements HasUnsavedChanges {
   /** Set once the save round-trips, so the post-save navigation is not challenged. */
   private saved = false;
 
+  /**
+   * How long after the surgery the follow-up falls. The defaults are the
+   * healing windows: two months after an extraction before an implant can
+   * be planned, three after an implant before its prosthesis. The API turns
+   * the choice into a date.
+   */
+  protected readonly followUpOptions = computed<SelectOption[]>(() => {
+    this.i18n.currentLang();
+    return FOLLOW_UP_MONTHS.map((months) => ({
+      value: String(months),
+      label: this.i18n.instant('surgeryForm.followUpAfter', { months: formatPersianCount(months) }),
+    }));
+  });
+
   protected readonly form = this.fb.nonNullable.group({
+    kind: ['implant' as SurgeryKind],
     recordedName: ['', [Validators.required, Validators.maxLength(160)]],
     implantRegistryNo: ['', [digitString(1, 24)]],
     surgeryDate: [null as Date | null],
     toothPosition: ['', [Validators.maxLength(200)]],
     implantBrand: [''],
     abutmentType: ['unknown'],
-    prosthesisDue: ['', [Validators.maxLength(60)]],
-    status: ['scheduled'],
+    followUpMonths: ['3'],
+    followUpStatus: ['pending' as 'pending' | 'done'],
     notes: ['', [Validators.maxLength(2000)]],
+  });
+  /** What the row held on load, so submit only sends a status that actually changed. */
+  private loadedFollowUpDone = false;
+
+  /** Register number, brand and cover belong to an implant; an extraction has a tooth and a date. */
+  protected readonly isImplant = toSignal(
+    this.form.controls.kind.valueChanges.pipe(map((kind) => kind === 'implant')),
+    { initialValue: true },
+  );
+
+  private readonly surgeryDateValue = toSignal(this.form.controls.surgeryDate.valueChanges, {
+    initialValue: null as Date | null,
+  });
+  private readonly followUpMonthsValue = toSignal(this.form.controls.followUpMonths.valueChanges, {
+    initialValue: '3',
+  });
+  /**
+   * LEGACY: the row's imported prosthesis note, shown when no date can be
+   * derived. Delete with apps/api/src/modules/surgery/legacy-prosthesis-due.ts.
+   */
+  private readonly legacyProsthesisDue = signal<string | null>(null);
+
+  /** What the chosen months resolve to, so the dentist sees the date, not just "3". */
+  protected readonly followUpHint = computed(() => {
+    this.i18n.currentLang();
+    const date = this.surgeryDateValue();
+    const months = Number(this.followUpMonthsValue());
+    if (date && months) {
+      const due = this.dateAdapter.addCalendarMonths(date, months);
+      // The adapter already renders Persian numerals.
+      return this.i18n.instant('surgeryForm.followUpOn', {
+        date: this.dateAdapter.format(due, 'yyyy/MM/dd'),
+      });
+    }
+    if (!months) return null;
+    const legacy = this.legacyProsthesisDue();
+    if (legacy) return this.i18n.instant('surgeryForm.followUpLegacy', { note: legacy });
+    return this.i18n.instant('surgeryForm.followUpNeedsDate');
   });
 
   /**
@@ -137,9 +210,36 @@ export class SurgeryForm implements HasUnsavedChanges {
     warnBeforeUnload(() => this.hasUnsavedChanges());
     effect(() => {
       const id = this.id();
-      untracked(() => {
-        if (id) this.loadSurgery(id);
-      });
+      untracked(() => (id ? this.loadSurgery(id) : this.prefillNew()));
+    });
+  }
+
+  /**
+   * Switching kind resets what the other kind does not have, and offers that
+   * kind's usual follow-up — only on a new row, where nothing has been
+   * decided yet; editing keeps whatever was recorded.
+   */
+  protected onKindChange(kind: SurgeryKind): void {
+    this.form.controls.kind.setValue(kind);
+    if (this.isEdit()) return;
+    this.form.controls.followUpMonths.setValue(kind === 'implant' ? '3' : '2');
+    if (kind === 'extraction') {
+      this.form.patchValue({ implantRegistryNo: '', implantBrand: '', abutmentType: 'unknown' });
+    } else {
+      this.prefillNew();
+    }
+  }
+
+  /**
+   * Offer the implant book's next number so nobody has to look one up — or
+   * reach for the patient's file number instead, which has happened. Picking
+   * an existing case from the name list still overrides it.
+   */
+  private prefillNew(): void {
+    this.registry.nextRegistryNo().subscribe(({ registryNo }) => {
+      if (!this.form.controls.implantRegistryNo.value) {
+        this.form.controls.implantRegistryNo.setValue(registryNo);
+      }
     });
   }
 
@@ -163,16 +263,19 @@ export class SurgeryForm implements HasUnsavedChanges {
 
   private applyItem(item: SurgeryQueueItem): void {
     this.form.patchValue({
+      kind: item.kind,
       recordedName: item.recordedName,
       implantRegistryNo: item.implantRegistryNo ?? '',
       surgeryDate: this.toDate(item.surgeryDate?.jalali),
       toothPosition: item.toothPosition,
       implantBrand: item.implantBrand ?? '',
       abutmentType: item.abutmentType,
-      prosthesisDue: item.prosthesisDue ?? '',
-      status: item.status,
+      followUpMonths: item.followUpMonths ? String(item.followUpMonths) : '',
+      followUpStatus: item.followUpDoneAt ? 'done' : 'pending',
       notes: item.notes ?? '',
     });
+    this.loadedFollowUpDone = !!item.followUpDoneAt;
+    this.legacyProsthesisDue.set(item.prosthesisDue);
   }
 
   /**
@@ -215,16 +318,25 @@ export class SurgeryForm implements HasUnsavedChanges {
     const raw = this.form.getRawValue();
     const blank = (v: string): string | null => (v.trim() ? v.trim() : null);
 
+    const implant = raw.kind === 'implant';
     const payload: Record<string, unknown> = {
+      kind: raw.kind,
       recordedName: raw.recordedName.trim(),
-      implantRegistryNo: identifierValue(raw.implantRegistryNo),
       toothPosition: blank(raw.toothPosition) ?? '',
-      implantBrand: raw.implantBrand || null,
-      abutmentType: raw.abutmentType,
-      prosthesisDue: blank(raw.prosthesisDue),
-      status: raw.status,
+      // An extraction carries none of the implant fields; clear them so a row
+      // whose kind was corrected does not keep a stale number or brand.
+      implantRegistryNo: implant ? identifierValue(raw.implantRegistryNo) : null,
+      implantBrand: implant ? raw.implantBrand || null : null,
+      abutmentType: implant ? raw.abutmentType : 'unknown',
+      followUpMonths: raw.followUpMonths ? Number(raw.followUpMonths) : null,
       notes: blank(raw.notes),
     };
+    // Only a changed status is sent: "done" stamps today, "pending" reopens,
+    // and an unchanged one must not overwrite the date it was done on.
+    const done = raw.followUpStatus === 'done';
+    if (done !== this.loadedFollowUpDone) {
+      payload['followUpDoneAt'] = done ? formatJalali(new Date(), 'yyyy/MM/dd') : null;
+    }
     // The date is only sent when this form owns it. A pristine empty picker on
     // an edit may stand for a month-only imported date that must survive; a
     // picker the user cleared is a request to clear, so `null` goes out —

@@ -140,6 +140,28 @@ register's current holder. Such rows are flagged `hasNameMismatch`, and the app
 asks staff to confirm identity before operating rather than silently attaching
 the row to whoever holds the number today.
 
+A row is written *after* the surgery — it is a log, not a booking list — and
+is one of two **kinds**: an implant placement, which carries the register
+number, the brand and the cover; or an extraction, which carries only the tooth.
+What both owe the patient is a **follow-up**: the check at which an implant is
+planned (two months after an extraction), or the prosthesis (three after an
+implant). It is chosen as *months after the surgery* and resolved by the API to
+a date on the Jalali calendar; the status the screens show is the follow-up's,
+and a switch on the card marks it done. One pure module
+(`apps/api/src/modules/surgery/follow-up.ts`) defines the windows the list
+filters by — every open one, this week, this month, next month, overdue — and
+the dashboard counts the coming week from the same definition, so the two never
+disagree. The imported sheets' free-text «تاریخ پروتز» (a bare month name) was
+converted into this model by the `BackfillSurgeryFollowUps` migration; what is
+left of it is a small, clearly marked wrapper —
+`apps/api/src/modules/surgery/legacy-prosthesis-due.ts` lists the handful of
+places to delete together once every deployment has run that migration.
+
+Adding a row offers the implant book's next unused number; saving with a number
+the book does not know yet opens that register entry, so the book and the list
+never drift apart (three imported rows quote what are plainly patient file
+numbers — exactly the mix-up this prevents).
+
 ### Dates are free-form Jalali, and often imprecise
 
 Handwritten birth dates arrive as a bare year, a year and month, a full date, or

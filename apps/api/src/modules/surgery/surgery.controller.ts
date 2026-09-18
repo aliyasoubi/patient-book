@@ -33,6 +33,13 @@ export class SurgeryController {
     return this.surgery.findAll(query);
   }
 
+  @Get('next-registry-no')
+  @Roles(UserRole.Admin, UserRole.Dentist, UserRole.Receptionist)
+  @ApiOperation({ summary: 'Next unused implant register number' })
+  nextRegistryNo() {
+    return this.surgery.nextRegistryNo();
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.surgery.findOne(id);

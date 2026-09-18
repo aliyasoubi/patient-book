@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { addMonths } from 'date-fns-jalali';
+import { EntityManager, Repository } from 'typeorm';
 
 import { SurgeryQueueItem } from './surgery-queue-item.entity';
 import { ImplantCase } from '../implants/implant-case.entity';
@@ -13,6 +14,7 @@ import { DatePrecisionEnum } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { ErrorCode } from '../../domain';
+import { followUpState, followUpWindow } from './follow-up';
 
 @Injectable()
 export class SurgeryService {
@@ -43,6 +45,14 @@ export class SurgeryService {
     if (dto.archivedOnly) {
       qb.withDeleted().andWhere('s."deletedAt" IS NOT NULL');
     }
+    if (dto.followUp) {
+      const { from, to } = followUpWindow(dto.followUp);
+      qb.andWhere('s."followUpDoneAt" IS NULL').andWhere(
+        's."followUpDate" IS NOT NULL',
+      );
+      if (from) qb.andWhere('s."followUpDate" >= :from', { from });
+      if (to) qb.andWhere('s."followUpDate" <= :to', { to });
+    }
     if (dto.from) {
       const from = JalaliDate.tryParse(dto.from);
       if (from instanceof JalaliDate) {
@@ -58,11 +68,17 @@ export class SurgeryService {
 
     // Property path, not raw SQL: combining take/skip with a join makes
     // TypeORM wrap the query, and it mangles a quoted identifier when it does.
-    qb.orderBy(
-      's.surgeryDate',
-      dto.sortDir === 'DESC' ? 'DESC' : 'ASC',
-      'NULLS LAST',
-    ).addOrderBy('s.id', 'ASC');
+    // A follow-up list is read soonest-first whichever way the queue is sorted.
+    if (dto.followUp) {
+      qb.orderBy('s.followUpDate', 'ASC');
+    } else {
+      qb.orderBy(
+        's.surgeryDate',
+        dto.sortDir === 'DESC' ? 'DESC' : 'ASC',
+        'NULLS LAST',
+      );
+    }
+    qb.addOrderBy('s.id', 'ASC');
     const [items, total] = await qb.getManyAndCount();
     return PageResult.of(
       items.map((i) => this.toResponse(i)),
@@ -80,12 +96,29 @@ export class SurgeryService {
     return this.toResponse(item);
   }
 
+  /**
+   * The next unused number in the implant book, offered when a row is added
+   * so nobody has to look one up — or, as has happened, reach for the
+   * patient's file number instead.
+   */
+  async nextRegistryNo(): Promise<{ registryNo: string }> {
+    const row = await this.implants.query<Array<{ max: string | null }>>(
+      `SELECT max("registryNo"::bigint)::text AS max FROM implant_cases WHERE "registryNo" ~ '^[0-9]+$'`,
+    );
+    return { registryNo: String(Number(row[0]?.max ?? 0) + 1) };
+  }
+
   async create(dto: UpsertSurgeryDto, userId: string | null): Promise<unknown> {
     const id = await this.queue.manager.transaction(async (manager) => {
       const queue = manager.getRepository(SurgeryQueueItem);
       const item = queue.create();
-      await this.assign(item, dto, manager.getRepository(ImplantCase));
+      const registered = await this.assign(
+        item,
+        dto,
+        manager.getRepository(ImplantCase),
+      );
       const saved = await queue.save(item);
+      if (registered) await this.auditRegistered(registered, userId, manager);
       await this.audit.recordRequired(
         {
           userId,
@@ -104,6 +137,28 @@ export class SurgeryService {
     return this.findOne(id);
   }
 
+  /** The implant register entry a surgery row opened on its own behalf. */
+  private auditRegistered(
+    created: ImplantCase,
+    userId: string | null,
+    manager: EntityManager,
+  ): Promise<void> {
+    return this.audit.recordRequired(
+      {
+        userId,
+        action: 'create',
+        entity: 'implant_case',
+        entityId: created.id,
+        changes: {
+          registryNo: created.registryNo,
+          recordedName: created.recordedName,
+          via: 'surgery_queue',
+        },
+      },
+      manager,
+    );
+  }
+
   async update(
     id: string,
     dto: Partial<UpsertSurgeryDto>,
@@ -113,8 +168,13 @@ export class SurgeryService {
       const queue = manager.getRepository(SurgeryQueueItem);
       const item = await queue.findOne({ where: { id } });
       if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
-      await this.assign(item, dto, manager.getRepository(ImplantCase));
+      const registered = await this.assign(
+        item,
+        dto,
+        manager.getRepository(ImplantCase),
+      );
       await queue.save(item);
+      if (registered) await this.auditRegistered(registered, userId, manager);
       await this.audit.recordRequired(
         {
           userId,
@@ -177,7 +237,9 @@ export class SurgeryService {
     item: SurgeryQueueItem,
     dto: Partial<UpsertSurgeryDto>,
     implants: Repository<ImplantCase> = this.implants,
-  ): Promise<void> {
+  ): Promise<ImplantCase | null> {
+    let registered: ImplantCase | null = null;
+    if (dto.kind !== undefined) item.kind = dto.kind;
     if (dto.recordedName !== undefined)
       item.recordedName = dto.recordedName ?? '';
     if (dto.toothPosition !== undefined) {
@@ -191,8 +253,13 @@ export class SurgeryService {
     if (dto.implantBrand !== undefined)
       item.implantBrand = dto.implantBrand ?? null;
     if (dto.abutmentType !== undefined) item.abutmentType = dto.abutmentType;
-    if (dto.prosthesisDue !== undefined)
-      item.prosthesisDue = dto.prosthesisDue ?? null;
+    if (dto.followUpMonths !== undefined)
+      item.followUpMonths = dto.followUpMonths ?? null;
+    if (dto.followUpDoneAt !== undefined) {
+      item.followUpDoneAt = dto.followUpDoneAt
+        ? JalaliDate.parse(dto.followUpDoneAt).date
+        : null;
+    }
     if (dto.status !== undefined) item.status = dto.status;
     if (dto.notes !== undefined) item.notes = dto.notes ?? null;
     if (dto.implantRegistryNo !== undefined)
@@ -212,6 +279,15 @@ export class SurgeryService {
       }
     }
 
+    // The follow-up date is derived, never typed: surgery date plus the
+    // chosen months on the Jalali calendar (an end-of-month date clamps to
+    // the shorter month). Either input changing moves it; either missing
+    // clears it.
+    item.followUpDate =
+      item.surgeryDate && item.followUpMonths
+        ? addMonths(new Date(item.surgeryDate), item.followUpMonths)
+        : null;
+
     // Resolve the implant case: an explicit id wins, otherwise look the
     // register number up.
     let implantCase: ImplantCase | null = null;
@@ -224,6 +300,27 @@ export class SurgeryService {
       implantCase = await implants.findOne({
         where: { registryNo: dto.implantRegistryNo },
       });
+      // A number the book does not know yet is a new entry in the book: the
+      // list is where a surgery gets written down first, and the register
+      // has to grow with it or the two drift apart. The patient link is
+      // left for staff to make from the register screen.
+      if (!implantCase && item.recordedName) {
+        implantCase = await implants.save(
+          implants.create({
+            registryNo: dto.implantRegistryNo,
+            recordedName: item.recordedName,
+            patientId: null,
+            matchMethod: 'unmatched',
+            mobile: null,
+            homePhone: null,
+            notes: null,
+            searchText: searchKey(
+              `${dto.implantRegistryNo} ${item.recordedName}`,
+            ),
+          }),
+        );
+        registered = implantCase;
+      }
       item.implantCaseId = implantCase?.id ?? null;
     } else if (item.implantCaseId) {
       implantCase = await implants.findOne({
@@ -251,6 +348,7 @@ export class SurgeryService {
         .filter(Boolean)
         .join(' '),
     );
+    return registered;
   }
 
   private formatDate(
@@ -265,6 +363,7 @@ export class SurgeryService {
   private toResponse(item: SurgeryQueueItem): Record<string, unknown> {
     return {
       id: item.id,
+      kind: item.kind,
       implantCaseId: item.implantCaseId,
       implantRegistryNo: item.implantRegistryNo,
       recordedName: item.recordedName,
@@ -297,6 +396,19 @@ export class SurgeryService {
       abutmentType: item.abutmentType,
       abutmentRaw: item.abutmentRaw,
       prosthesisDue: item.prosthesisDue,
+      followUpMonths: item.followUpMonths,
+      followUpDate: item.followUpDate
+        ? {
+            jalali: this.formatDate(item.followUpDate, null),
+            iso:
+              JalaliDate.fromDate(new Date(item.followUpDate))?.toIsoDate() ??
+              '',
+          }
+        : null,
+      followUpDoneAt: item.followUpDoneAt
+        ? this.formatDate(item.followUpDoneAt, null)
+        : null,
+      followUpState: followUpState(item),
       status: item.status,
       notes: item.notes,
     };

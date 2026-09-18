@@ -19,38 +19,18 @@
       [ariaLabel]="'surgery.searchAria' | translate"
     />
 
-    <mat-button-toggle-group
-      [value]="status()"
-      (valueChange)="setStatus($event)"
-      class="surgery__status-filter"
-      [attr.aria-label]="'surgery.statusFilter' | translate"
-    >
-      <mat-button-toggle value="">{{ 'surgery.all' | translate }}</mat-button-toggle>
-      <mat-button-toggle value="scheduled">{{ 'surgery.scheduled' | translate }}</mat-button-toggle>
-      <mat-button-toggle value="completed">{{ 'surgery.completed' | translate }}</mat-button-toggle>
-    </mat-button-toggle-group>
-
-    <!-- Independent toggles on a list are M3 filter chips, not checkboxes;
-         the patient list's treatment filter uses the same idiom. -->
+    <!-- The questions staff ask of the list, one at a time: clicking the
+         selected chip clears it and shows everything again. -->
     <mat-chip-listbox
-      multiple
-      class="surgery__toggles"
-      [attr.aria-label]="'common.filters' | translate"
+      class="surgery__filters"
+      [value]="followUp() || null"
+      (change)="setFollowUp($event.value)"
+      [attr.aria-label]="'surgery.followUpFilter' | translate"
     >
-      <mat-chip-option
-        [selected]="mismatchedOnly()"
-        (selectionChange)="toggleMismatched($event.selected)"
-      >
-        <mat-icon matChipAvatar aria-hidden="true">warning</mat-icon>
-        {{ 'surgery.mismatchOnly' | translate }}
-      </mat-chip-option>
-      @if (auth.can('archiveSurgery')) {
-        <mat-chip-option
-          [selected]="archivedOnly()"
-          (selectionChange)="toggleArchived($event.selected)"
-        >
-          <mat-icon matChipAvatar aria-hidden="true">inventory_2</mat-icon>
-          {{ 'surgery.archivedOnly' | translate }}
+      @for (filter of followUpFilters; track filter.value) {
+        <mat-chip-option [value]="filter.value">
+          <mat-icon matChipAvatar aria-hidden="true">{{ filter.icon }}</mat-icon>
+          {{ filter.label | translate }}
         </mat-chip-option>
       }
     </mat-chip-listbox>
@@ -61,8 +41,8 @@
   }
 
   <!-- A failed fetch keeps the previous rows (if any) under this banner. It is
-       never shown as the empty state: "no surgeries scheduled" and "the queue
-       could not be loaded" are different facts to someone prepping a theatre. -->
+       never shown as the empty state: "nothing to follow up" and "the list
+       could not be loaded" are different facts. -->
   @if (failed()) {
     <pb-load-error
       [message]="(items().length > 0 ? 'surgery.loadFailedStale' : 'surgery.loadFailed') | translate"
@@ -80,6 +60,7 @@
     <ul class="queue">
       @for (item of items(); track item.id) {
         <li class="queue__item" [class.queue__item--mismatch]="item.hasNameMismatch">
+          <!-- What was done, and when. -->
           <div class="queue__date">
             @if (item.surgeryDate) {
               <span class="queue__date-value">{{ item.surgeryDate.jalali | faNum }}</span>
@@ -88,16 +69,8 @@
                 'surgery.noDate' | translate
               }}</span>
             }
-            <pb-status-chip
-              [tone]="
-                item.status === 'completed'
-                  ? 'success'
-                  : item.status === 'cancelled'
-                    ? 'error'
-                    : 'warning'
-              "
-            >
-              {{ statusLabel(item.status) | translate }}
+            <pb-status-chip [icon]="item.kind === 'implant' ? 'deployed_code' : 'dentistry'">
+              {{ kindLabel(item.kind) | translate }}
             </pb-status-chip>
           </div>
 
@@ -142,24 +115,55 @@
                   {{ item.implantBrand }}
                 </span>
               }
-              @if (item.abutmentType !== 'unknown') {
+              @if (item.kind === 'implant' && item.abutmentType !== 'unknown') {
                 <span class="queue__detail">
                   <mat-icon aria-hidden="true">hardware</mat-icon>
                   {{ abutmentLabel(item.abutmentType) | translate }}
                 </span>
               }
-              @if (item.prosthesisDue) {
-                <span class="queue__detail">
-                  <mat-icon aria-hidden="true">schedule</mat-icon>
-                  {{ 'surgery.prosthesis' | translate: { date: item.prosthesisDue } }}
-                </span>
-              }
             </div>
+
+            <!-- The follow-up is the row's status: what the surgery still owes
+                 the patient, and where it stands. The switch is the one thing
+                 staff change from the list — a visit happened, or it did not
+                 after all — so it sits right here, not behind a menu. -->
+            @if (item.followUpDate; as followUp) {
+              <div class="queue__follow-up">
+                <pb-status-chip icon="event_repeat" [tone]="toneFor(item.followUpState)">
+                  @switch (item.followUpState) {
+                    @case ('done') {
+                      {{ 'surgery.followUpDoneOn' | translate: { date: (item.followUpDoneAt | faNum) } }}
+                    }
+                    @case ('overdue') {
+                      {{ 'surgery.followUpMissed' | translate: { date: (followUp.jalali | faNum) } }}
+                    }
+                    @default {
+                      {{ 'surgery.followUpOn' | translate: { date: (followUp.jalali | faNum) } }}
+                    }
+                  }
+                </pb-status-chip>
+                @if (auth.can('editSurgery')) {
+                  <mat-slide-toggle
+                    class="queue__done"
+                    [checked]="item.followUpState === 'done'"
+                    [disabled]="updating() === item.id"
+                    (change)="setFollowUpDone(item, $event.checked)"
+                  >
+                    {{ 'surgery.followUpDoneSwitch' | translate }}
+                  </mat-slide-toggle>
+                }
+              </div>
+            } @else if (item.prosthesisDue) {
+              <!-- LEGACY: an imported note the backfill could not read. Delete
+                   with apps/api/src/modules/surgery/legacy-prosthesis-due.ts. -->
+              <span class="queue__detail">
+                <mat-icon aria-hidden="true">schedule</mat-icon>
+                {{ 'surgery.prosthesis' | translate: { date: item.prosthesisDue } }}
+              </span>
+            }
           </div>
 
-          <!-- One trigger regardless of how many actions apply: a stack of
-               buttons outgrew the card on short rows. Same menu pattern as
-               the patient list. -->
+          <!-- Edit and archive/restore only; the status lives on the card. -->
           @if (hasActions()) {
             <button
               mat-icon-button
@@ -171,26 +175,17 @@
               <mat-icon aria-hidden="true">more_vert</mat-icon>
             </button>
             <mat-menu #rowMenu="matMenu">
-              @if (archivedOnly()) {
-                @if (auth.can('archiveSurgery')) {
-                  <button mat-menu-item type="button" (click)="restore(item)">
-                    <mat-icon aria-hidden="true">restore_from_trash</mat-icon>
-                    <span>{{ 'surgery.restore' | translate }}</span>
-                  </button>
-                }
-              } @else {
-                @if (auth.can('editSurgery')) {
-                  <a mat-menu-item [routerLink]="['/surgery', item.id, 'edit']">
-                    <mat-icon aria-hidden="true">edit</mat-icon>
-                    <span>{{ 'common.edit' | translate }}</span>
-                  </a>
-                }
-                @if (auth.can('archiveSurgery')) {
-                  <button mat-menu-item type="button" (click)="delete(item)">
-                    <mat-icon aria-hidden="true">delete</mat-icon>
-                    <span>{{ 'common.delete' | translate }}</span>
-                  </button>
-                }
+              @if (auth.can('editSurgery')) {
+                <a mat-menu-item [routerLink]="['/surgery', item.id, 'edit']">
+                  <mat-icon aria-hidden="true">edit</mat-icon>
+                  <span>{{ 'common.edit' | translate }}</span>
+                </a>
+              }
+              @if (auth.can('archiveSurgery')) {
+                <button mat-menu-item type="button" (click)="delete(item)">
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                  <span>{{ 'common.delete' | translate }}</span>
+                </button>
               }
             </mat-menu>
           }

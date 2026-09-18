@@ -18,9 +18,9 @@
     "patientEdit": "ویرایش پرونده — Dentixo",
     "implants": "پرونده ایمپلنت — Dentixo",
     "ortho": "پرونده ارتودنسی — Dentixo",
-    "surgery": "لیست انتظار جراحی — Dentixo",
-    "surgeryNew": "افزودن به لیست جراحی — Dentixo",
-    "surgeryEdit": "ویرایش ردیف جراحی — Dentixo",
+    "surgery": "لیست انتظار — Dentixo",
+    "surgeryNew": "افزودن به لیست انتظار — Dentixo",
+    "surgeryEdit": "ویرایش ردیف لیست انتظار — Dentixo",
     "settings": "تنظیمات — Dentixo",
     "account": "حساب کاربری — Dentixo"
   },
@@ -54,7 +54,7 @@
   "nav": {
     "dashboard": "داشبورد",
     "patients": "بیماران",
-    "surgery": "لیست جراحی",
+    "surgery": "لیست انتظار",
     "implants": "پرونده ایمپلنت",
     "ortho": "پرونده ارتودنسی",
     "settings": "تنظیمات"
@@ -71,6 +71,9 @@
     "noChartData": "داده کافی برای نمودار وجود ندارد.",
     "genderTitle": "ترکیب جنسیتی",
     "genderAria": "نسبت بیماران بر اساس جنسیت",
+    "followUpsTitle": "پیگیری‌های هفتهٔ پیش رو",
+    "followUpsEmpty": "در هفته آینده پیگیری‌ای در انتظار نیست.",
+    "followUpsFailed": "فهرست پیگیری‌ها بارگذاری نشد.",
     "genderUnknown": "جنسیت {{count}} پرونده ثبت نشده است.",
     "ageGroups": "گروه‌های سنی",
     "referralsTitle": "نحوه آشنایی",
@@ -82,9 +85,7 @@
     "trendAria": "روند بیماران جدید، بیشینه {{max}} نفر در ماه",
     "maximum": "بیشینه {{count}}",
     "dateTimeAria": "تاریخ و ساعت امروز",
-    "loadFailed": "اطلاعات داشبورد بارگذاری نشد.",
-    "upcomingSurgeriesEmpty": "جراحی برنامه‌ریزی‌شده‌ای در پیش نیست.",
-    "upcomingSurgeriesFailed": "فهرست جراحی‌های پیش‌رو بارگذاری نشد."
+    "loadFailed": "اطلاعات داشبورد بارگذاری نشد."
   },
   "greeting": {
     "morning": "صبح بخیر",
@@ -96,9 +97,9 @@
     "patients": "کل بیماران",
     "implants": "پرونده‌های ایمپلنت",
     "ortho": "پرونده‌های ارتودنسی",
-    "upcomingSurgeries": "جراحی‌های پیش‌رو",
-    "overdueSurgeries": "جراحی‌های عقب‌افتاده",
-    "needsReview": "نیازمند بازبینی"
+    "followUpsOverdue": "پیگیری‌های عقب‌افتاده",
+    "needsReview": "نیازمند بازبینی",
+    "followUpsThisWeek": "پیگیری‌های این هفته"
   },
   "registry": {
     "independentNumberNotice": "شماره‌گذاری این پرونده مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره نمی‌کند.",
@@ -129,54 +130,64 @@
     "emptyTitle": "پرونده ارتودنسی یافت نشد"
   },
   "surgery": {
-    "title": "لیست انتظار جراحی",
+    "title": "لیست انتظار",
     "subtitle": "شماره‌های این فهرست به پرونده ایمپلنت اشاره دارند، نه به شماره پرونده اصلی بیمار.",
     "new": "افزودن به لیست",
     "searchPlaceholder": "جستجوی نام، شماره یا دندان…",
-    "searchAria": "جستجو در لیست جراحی",
-    "statusFilter": "فیلتر وضعیت",
-    "all": "همه",
-    "scheduled": "در انتظار",
-    "completed": "انجام شده",
-    "mismatchOnly": "فقط موارد مغایرت نام",
-    "archivedOnly": "فقط حذف‌شده‌ها",
-    "restore": "بازگردانی به لیست",
+    "searchAria": "جستجو در لیست انتظار",
+    "followUpFilter": "فیلتر پیگیری",
+    "filterPending": "در انتظار",
+    "filterWeek": "این هفته",
+    "filterThisMonth": "ماه جاری",
+    "filterNextMonth": "ماه بعد",
+    "followUpDoneSwitch": "انجام شد",
+    "followUpOn": "پیگیری: {{date}}",
+    "followUpMissed": "پیگیری عقب‌افتاده از {{date}}",
+    "followUpDoneOn": "پیگیری انجام شد ({{date}})",
+    "followUpMarkedDone": "پیگیری انجام‌شده ثبت شد.",
+    "followUpReopened": "پیگیری دوباره در انتظار قرار گرفت.",
     "rowActions": "عملیات ردیف",
     "noDate": "بدون تاریخ",
     "implantRegistry": "پرونده ایمپلنت {{number}}",
     "patientFile": "پرونده {{fileNo}}",
     "identityWarning": "شماره {{number}} در پرونده ایمپلنت به «{{name}}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.",
     "prosthesis": "پروتز: {{date}}",
-    "emptyTitle": "ردیفی در لیست جراحی نیست",
-    "loadFailed": "لیست جراحی بارگذاری نشد.",
+    "emptyTitle": "ردیفی در لیست انتظار نیست",
+    "loadFailed": "لیست انتظار بارگذاری نشد.",
     "loadFailedStale": "لیست به‌روزرسانی نشد؛ نتایج قبلی نمایش داده می‌شود."
   },
   "surgeryForm": {
-    "createTitle": "افزودن به لیست انتظار جراحی",
-    "editTitle": "ویرایش ردیف لیست جراحی",
+    "createTitle": "افزودن به لیست انتظار",
+    "editTitle": "ویرایش ردیف لیست انتظار",
     "section": "مشخصات ردیف",
+    "kind": "نوع جراحی",
     "recordedName": "نام بیمار",
     "implantRegistryNo": "شماره پرونده ایمپلنت",
     "implantRegistryNoPlaceholder": "به پرونده هم‌شماره متصل می‌شود",
+    "implantRegistryNoNext": "شمارهٔ بعدی دفتر ایمپلنت",
     "surgeryDate": "تاریخ جراحی",
     "surgeryDatePlaceholder": "۱۴۰۴/۰۶/۱۱",
     "toothPosition": "موقعیت دندان",
     "implantBrand": "برند ایمپلنت",
     "brandUnspecified": "نامشخص",
-    "abutmentType": "نوع اباتمنت",
-    "prosthesisDue": "موعد پروتز",
-    "status": "وضعیت",
+    "abutmentType": "نوع پوشش",
+    "followUp": "پیگیری",
+    "followUpAfter": "{{months}} ماه بعد از جراحی",
+    "noFollowUp": "بدون پیگیری",
+    "followUpOn": "تاریخ پیگیری: {{date}}",
+    "followUpNeedsDate": "با ثبت تاریخ جراحی، تاریخ پیگیری محاسبه می‌شود",
+    "followUpLegacy": "یادداشت قدیمی پروتز: {{note}}",
+    "followUpStatus": "وضعیت پیگیری",
     "notes": "یادداشت",
     "createLabel": "ثبت ردیف",
     "saveLabel": "ذخیره تغییرات",
     "savingLabel": "در حال ذخیره…",
-    "created": "به لیست انتظار جراحی افزوده شد.",
+    "created": "به لیست انتظار افزوده شد.",
     "saved": "تغییرات ذخیره شد.",
-    "deleteTitle": "حذف از لیست جراحی",
-    "deleteMessage": "ردیف «{{name}}» از لیست انتظار جراحی حذف می‌شود. از بخش «فقط حذف‌شده‌ها» قابل بازگردانی است.",
+    "deleteTitle": "حذف از لیست انتظار",
+    "deleteMessage": "ردیف «{{name}}» از لیست انتظار حذف می‌شود.",
     "deleteConfirm": "حذف کن",
-    "deleted": "از لیست جراحی حذف شد.",
-    "restored": "به لیست جراحی بازگردانده شد."
+    "deleted": "از لیست انتظار حذف شد."
   },
   "patients": {
     "title": "بیماران",
@@ -401,11 +412,6 @@
     "active": "در جریان",
     "completed": "تکمیل شده",
     "onHold": "متوقف"
-  },
-  "surgeryStatus": {
-    "scheduled": "در انتظار",
-    "completed": "انجام شده",
-    "cancelled": "لغو شده"
   },
   "abutment": {
     "cover": "کاور اسکرو",
@@ -647,5 +653,13 @@
   },
   "list": {
     "separator": "، "
+  },
+  "followUpStatus": {
+    "pending": "در انتظار",
+    "done": "انجام شده"
+  },
+  "surgeryKind": {
+    "implant": "ایمپلنت",
+    "extraction": "کشیدن دندان"
   }
 }

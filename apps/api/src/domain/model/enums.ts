@@ -60,6 +60,16 @@ export enum AbutmentType {
   Unknown = 'unknown',
 }
 
+/**
+ * What was done. An implant placement carries a register number, a brand and
+ * a cover; an extraction carries none of those — its follow-up is the check
+ * at which an implant gets planned.
+ */
+export enum SurgeryKind {
+  Implant = 'implant',
+  Extraction = 'extraction',
+}
+
 export enum SurgeryStatus {
   Scheduled = 'scheduled',
   Completed = 'completed',

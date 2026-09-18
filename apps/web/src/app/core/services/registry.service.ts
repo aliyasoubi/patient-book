@@ -5,10 +5,11 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   DashboardStats,
+  FollowUpDue,
+  FollowUpFilter,
   PageResult,
   RegistryCase,
   SurgeryQueueItem,
-  UpcomingSurgery,
 } from '../models/common.model';
 import { toParams } from './http-params.util';
 
@@ -25,6 +26,8 @@ export interface RegistryQuery {
 
 export interface SurgeryQuery extends Omit<RegistryQuery, 'unlinkedOnly'> {
   mismatchedOnly?: boolean;
+  /** Open follow-ups within a window; the API decides the dates. */
+  followUp?: FollowUpFilter;
   from?: string;
   to?: string;
 }
@@ -111,7 +114,15 @@ export class RegistryService {
     return this.http.get<DashboardStats>(`${environment.apiUrl}/stats/dashboard`);
   }
 
-  upcomingSurgeries(): Observable<UpcomingSurgery[]> {
-    return this.http.get<UpcomingSurgery[]>(`${environment.apiUrl}/stats/upcoming-surgeries`);
+  /** The coming week's open follow-ups, soonest first. */
+  followUpsThisWeek(): Observable<FollowUpDue[]> {
+    return this.http.get<FollowUpDue[]>(`${environment.apiUrl}/stats/follow-ups`);
+  }
+
+  /** The implant book's next unused number, offered when a surgery row is added. */
+  nextRegistryNo(): Observable<{ registryNo: string }> {
+    return this.http.get<{ registryNo: string }>(
+      `${environment.apiUrl}/surgery-queue/next-registry-no`,
+    );
   }
 }

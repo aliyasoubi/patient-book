@@ -12,6 +12,22 @@
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
     <pb-surface icon="event" [title]="'surgeryForm.section' | translate">
       <div class="grid">
+        <!-- What was done decides the rest of the form: an implant has a
+             register number, a brand and a cover; an extraction has a tooth. -->
+        <mat-button-toggle-group
+          class="grid__full form__kind"
+          [value]="form.controls.kind.value"
+          (valueChange)="onKindChange($event)"
+          [attr.aria-label]="'surgeryForm.kind' | translate"
+        >
+          @for (kind of kinds; track kind) {
+            <mat-button-toggle [value]="kind">
+              <mat-icon aria-hidden="true">{{ kind === 'implant' ? 'deployed_code' : 'dentistry' }}</mat-icon>
+              {{ kindLabel(kind) | translate }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+
         <pb-text-field
           class="grid__full"
           [control]="form.controls.recordedName"
@@ -19,14 +35,6 @@
           prefixIcon="badge"
           [options]="nameOptions()"
           (optionSelected)="onNameSelected($event)"
-        />
-
-        <pb-text-field
-          [control]="form.controls.implantRegistryNo"
-          [label]="'surgeryForm.implantRegistryNo' | translate"
-          [ltr]="true"
-          inputmode="numeric"
-          [placeholder]="'surgeryForm.implantRegistryNoPlaceholder' | translate"
         />
 
         <pb-date-field
@@ -40,28 +48,41 @@
           [label]="'surgeryForm.toothPosition' | translate"
         />
 
+        @if (isImplant()) {
+          <pb-text-field
+            [control]="form.controls.implantRegistryNo"
+            [label]="'surgeryForm.implantRegistryNo' | translate"
+            [ltr]="true"
+            inputmode="numeric"
+            [hint]="(isEdit() ? 'surgeryForm.implantRegistryNoPlaceholder' : 'surgeryForm.implantRegistryNoNext') | translate"
+          />
+
+          <pb-select-field
+            [control]="form.controls.implantBrand"
+            [options]="brandOptions()"
+            [anyLabel]="'surgeryForm.brandUnspecified' | translate"
+            [label]="'surgeryForm.implantBrand' | translate"
+          />
+
+          <pb-select-field
+            [control]="form.controls.abutmentType"
+            [options]="abutmentOptions"
+            [label]="'surgeryForm.abutmentType' | translate"
+          />
+        }
+
         <pb-select-field
-          [control]="form.controls.implantBrand"
-          [options]="brandOptions()"
-          [anyLabel]="'surgeryForm.brandUnspecified' | translate"
-          [label]="'surgeryForm.implantBrand' | translate"
+          [control]="form.controls.followUpMonths"
+          [options]="followUpOptions()"
+          [anyLabel]="'surgeryForm.noFollowUp' | translate"
+          [label]="'surgeryForm.followUp' | translate"
+          [hint]="followUpHint()"
         />
 
         <pb-select-field
-          [control]="form.controls.abutmentType"
-          [options]="abutmentOptions"
-          [label]="'surgeryForm.abutmentType' | translate"
-        />
-
-        <pb-text-field
-          [control]="form.controls.prosthesisDue"
-          [label]="'surgeryForm.prosthesisDue' | translate"
-        />
-
-        <pb-select-field
-          [control]="form.controls.status"
-          [options]="statusOptions"
-          [label]="'surgeryForm.status' | translate"
+          [control]="form.controls.followUpStatus"
+          [options]="followUpStatusOptions"
+          [label]="'surgeryForm.followUpStatus' | translate"
         />
 
         <pb-textarea-field

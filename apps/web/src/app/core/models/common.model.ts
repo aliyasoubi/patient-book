@@ -69,8 +69,11 @@ export interface RegistryCase {
   notes: string | null;
 }
 
+export type SurgeryKind = 'implant' | 'extraction';
+
 export interface SurgeryQueueItem {
   id: string;
+  kind: SurgeryKind;
   implantCaseId: string | null;
   implantRegistryNo: string | null;
   recordedName: string;
@@ -83,19 +86,33 @@ export interface SurgeryQueueItem {
   implantBrand: string | null;
   abutmentType: 'cover' | 'healing' | 'both' | 'other' | 'unknown';
   abutmentRaw: string | null;
+  /** Legacy free text ("آذر ماه") from the import; new rows use the fields below. */
   prosthesisDue: string | null;
+  /** Months after the surgery the follow-up is due; the API derives the date. */
+  followUpMonths: number | null;
+  followUpDate: { jalali: string; iso: string } | null;
+  followUpDoneAt: string | null;
+  followUpState: FollowUpState;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string | null;
 }
 
-/** A row for the dashboard's "next up" panel — already formatted, not the full queue record. */
-export interface UpcomingSurgery {
+/** Judged by the API against the current Jalali month. */
+export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'done';
+
+/** The list's follow-up windows; the API owns what each means in dates. */
+export type FollowUpFilter = 'pending' | 'week' | 'thisMonth' | 'nextMonth' | 'overdue';
+
+/** A row for the dashboard's follow-up panel — already formatted, not the full queue record. */
+export interface FollowUpDue {
   id: string;
   recordedName: string;
-  toothPosition: string;
-  implantBrand: string | null;
+  implantRegistryNo: string | null;
+  patientId: string | null;
+  mobile: string | null;
+  followUpDate: string | null;
+  followUpState: FollowUpState;
   hasNameMismatch: boolean;
-  surgeryDate: string | null;
 }
 
 export interface DashboardStats {
@@ -104,8 +121,8 @@ export interface DashboardStats {
     archived: number;
     implantCases: number;
     orthoCases: number;
-    upcomingSurgeries: number;
-    overdueSurgeries: number;
+    followUpsThisWeek: number;
+    followUpsOverdue: number;
     needsReview: number;
   };
   gender: { key: string; count: number }[];

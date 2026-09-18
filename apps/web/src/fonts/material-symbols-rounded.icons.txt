@@ -25,12 +25,14 @@ contrast
 crown
 dark_mode
 dashboard
+date_range
 delete
 dentistry
 deployed_code
 description
 details
 diamond
+done
 edit
 edit_note
 error
@@ -38,6 +40,8 @@ escalator_warning
 event
 event_available
 event_busy
+event_repeat
+event_upcoming
 expand
 female
 filter_alt_off
@@ -74,6 +78,8 @@ note
 notes
 password
 pattern
+pending
+pending_actions
 person
 person_add
 person_search

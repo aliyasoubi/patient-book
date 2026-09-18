@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 
 import { Patient } from '../patients/patient.entity';
 import { SurgeryQueueItem } from '../surgery/surgery-queue-item.entity';
+import { followUpState, followUpWindow } from '../surgery/follow-up';
 import { JalaliDate } from '../../domain';
 
 /** Age buckets the dashboard groups patients into. */
@@ -16,10 +17,10 @@ export interface DashboardStats {
     archived: number;
     implantCases: number;
     orthoCases: number;
-    /** Scheduled surgeries still ahead — undated ones included, they are outstanding too. */
-    upcomingSurgeries: number;
-    /** Scheduled but the date has passed: either done and never closed off, or missed. */
-    overdueSurgeries: number;
+    /** Open follow-ups in the coming seven days — who to call this week. */
+    followUpsThisWeek: number;
+    /** Follow-ups whose month has passed without being marked done. */
+    followUpsOverdue: number;
     needsReview: number;
   };
   gender: Array<{ key: string; count: number }>;
@@ -73,6 +74,8 @@ export class StatsService {
   async dashboard(): Promise<DashboardStats> {
     const q = <T>(sql: string, params?: unknown[]): Promise<T[]> =>
       this.patients.query<T[]>(sql, params);
+    const week = followUpWindow('week');
+    const overdue = followUpWindow('overdue');
 
     const [
       totals,
@@ -83,23 +86,26 @@ export class StatsService {
       ageBands,
       activity,
     ] = await Promise.all([
-      q<Record<string, string>>(`
+      q<Record<string, string>>(
+        `
         SELECT
           (SELECT count(*) FROM patients WHERE "deletedAt" IS NULL)                    AS patients,
           (SELECT count(*) FROM patients WHERE "deletedAt" IS NOT NULL)                AS archived,
           (SELECT count(*) FROM implant_cases WHERE "deletedAt" IS NULL)                 AS "implantCases",
           (SELECT count(*) FROM ortho_cases WHERE "deletedAt" IS NULL)                   AS "orthoCases",
-          -- An undated scheduled row is still outstanding work, so it counts as
-          -- upcoming; only a date that has already passed moves it to overdue.
+          -- Windows come from followUpWindow(), on the Jalali calendar, so
+          -- these agree with the list's own filters to the day.
           (SELECT count(*) FROM surgery_queue
-            WHERE status = 'scheduled' AND "deletedAt" IS NULL
-              AND ("surgeryDate" IS NULL OR "surgeryDate" >= CURRENT_DATE))              AS "upcomingSurgeries",
+            WHERE "deletedAt" IS NULL AND "followUpDoneAt" IS NULL
+              AND "followUpDate" BETWEEN $1 AND $2)                                      AS "followUpsThisWeek",
           (SELECT count(*) FROM surgery_queue
-            WHERE status = 'scheduled' AND "deletedAt" IS NULL
-              AND "surgeryDate" < CURRENT_DATE)                                          AS "overdueSurgeries",
+            WHERE "deletedAt" IS NULL AND "followUpDoneAt" IS NULL
+              AND "followUpDate" <= $3)                                                  AS "followUpsOverdue",
           (SELECT count(*) FROM patients
             WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview"
-      `),
+      `,
+        [week.from, week.to, overdue.to],
+      ),
       q<{ key: string; count: string }>(`
         SELECT gender AS key, count(*)::text AS count FROM patients
         WHERE "deletedAt" IS NULL GROUP BY gender ORDER BY count(*) DESC`),
@@ -160,8 +166,8 @@ export class StatsService {
         archived: Number(t.archived ?? 0),
         implantCases: Number(t.implantCases ?? 0),
         orthoCases: Number(t.orthoCases ?? 0),
-        upcomingSurgeries: Number(t.upcomingSurgeries ?? 0),
-        overdueSurgeries: Number(t.overdueSurgeries ?? 0),
+        followUpsThisWeek: Number(t.followUpsThisWeek ?? 0),
+        followUpsOverdue: Number(t.followUpsOverdue ?? 0),
         needsReview: Number(t.needsReview ?? 0),
       },
       gender: gender.map((g) => ({ key: g.key, count: Number(g.count) })),
@@ -189,31 +195,34 @@ export class StatsService {
   }
 
   /**
-   * Surgeries coming up, for the dashboard's "next up" panel. Deliberately the
-   * same set the `upcomingSurgeries` total counts — a list that disagreed with
-   * the tile above it would be worse than no list at all. Undated rows sort
-   * last (Postgres orders NULLs last on ASC) but are still shown: they are
-   * outstanding work, and half the imported queue has no date at all.
+   * Who to call in the coming week, for the dashboard panel — exactly the
+   * rows the `followUpsThisWeek` total counts, soonest first, so the panel
+   * and the tile above it can never disagree. Missed ones have their own
+   * tile and list.
    */
-  async upcomingSurgeries(limit = 8): Promise<unknown[]> {
+  async followUpsThisWeek(limit = 8): Promise<unknown[]> {
+    const { from, to } = followUpWindow('week');
     const rows = await this.surgery
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.implantCase', 'ic')
-      .where('s.status = :status', { status: 'scheduled' })
-      .andWhere('(s."surgeryDate" IS NULL OR s."surgeryDate" >= CURRENT_DATE)')
-      .orderBy('s.surgeryDate', 'ASC')
+      .leftJoinAndSelect('ic.patient', 'p')
+      .where('s."followUpDoneAt" IS NULL')
+      .andWhere('s."followUpDate" BETWEEN :from AND :to', { from, to })
+      .orderBy('s.followUpDate', 'ASC')
       .limit(limit)
       .getMany();
 
     return rows.map((s) => ({
       id: s.id,
       recordedName: s.recordedName,
-      toothPosition: s.toothPosition,
-      implantBrand: s.implantBrand,
-      hasNameMismatch: s.hasNameMismatch,
-      surgeryDate: s.surgeryDate
-        ? (JalaliDate.fromDate(new Date(s.surgeryDate))?.format() ?? null)
+      implantRegistryNo: s.implantRegistryNo,
+      patientId: s.implantCase?.patient?.id ?? null,
+      mobile: s.implantCase?.patient?.mobile ?? null,
+      followUpDate: s.followUpDate
+        ? (JalaliDate.fromDate(new Date(s.followUpDate))?.format() ?? null)
         : null,
+      followUpState: followUpState(s),
+      hasNameMismatch: s.hasNameMismatch,
     }));
   }
 }

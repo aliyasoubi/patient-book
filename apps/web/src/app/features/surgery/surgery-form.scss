@@ -39,3 +39,15 @@
   padding: 14px 0;
   background: linear-gradient(to top, var(--mat-sys-surface) 60%, transparent);
 }
+
+/* The kind selector leads the form; the segmented button is M3's control for
+   two or three mutually exclusive choices that shape what follows. */
+.form__kind {
+  justify-self: start;
+  margin-bottom: 4px;
+
+  .material-symbols-rounded {
+    font-size: 18px;
+    margin-inline-end: 6px;
+  }
+}

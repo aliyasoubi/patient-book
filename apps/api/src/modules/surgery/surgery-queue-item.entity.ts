@@ -9,7 +9,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { AbutmentType, DatePrecisionEnum, SurgeryStatus } from '../../domain';
+import {
+  AbutmentType,
+  DatePrecisionEnum,
+  SurgeryKind,
+  SurgeryStatus,
+} from '../../domain';
 import { ImplantCase } from '../implants/implant-case.entity';
 
 /**
@@ -35,6 +40,9 @@ export class SurgeryQueueItem {
   })
   @JoinColumn({ name: 'implantCaseId' })
   implantCase!: ImplantCase | null;
+
+  @Column({ type: 'enum', enum: SurgeryKind, default: SurgeryKind.Implant })
+  kind!: SurgeryKind;
 
   /** The register number as written on the waiting list. */
   @Column({ type: 'varchar', length: 24, nullable: true })
@@ -79,14 +87,42 @@ export class SurgeryQueueItem {
   @Column({ type: 'varchar', length: 60, nullable: true })
   abutmentRaw!: string | null;
 
-  /** تاریخ پروتز — recorded as a Jalali month name, e.g. "آذر ماه". */
+  /**
+   * تاریخ پروتز as the imported sheets recorded it — a bare Jalali month name
+   * such as "آذر ماه". Legacy only: new rows carry the structured follow-up
+   * below, and this is shown as a hint when that is missing.
+   */
   @Column({ type: 'varchar', length: 60, nullable: true })
   prosthesisDue!: string | null;
 
+  /**
+   * The follow-up a surgery implies: a check after an extraction to plan the
+   * implant, or the prosthesis after an implant. Chosen as months after the
+   * surgery — bone heals on that timescale, so "three months" is what the
+   * dentist actually decides — and resolved to a date so the list can be
+   * asked "who is due this month".
+   */
+  @Column({ type: 'smallint', nullable: true })
+  followUpMonths!: number | null;
+
+  /** `surgeryDate` plus `followUpMonths` Jalali months; recomputed when either changes. */
+  @Index()
+  @Column({ type: 'date', nullable: true })
+  followUpDate!: Date | null;
+
+  /** Set when the patient came in for it; a due follow-up stays due until then. */
+  @Column({ type: 'date', nullable: true })
+  followUpDoneAt!: Date | null;
+
+  /**
+   * Rows are written after the surgery, so a new one is `completed`; the
+   * value is kept for the odd row that is genuinely still ahead, and for
+   * the imported history.
+   */
   @Column({
     type: 'enum',
     enum: SurgeryStatus,
-    default: SurgeryStatus.Scheduled,
+    default: SurgeryStatus.Completed,
   })
   status!: SurgeryStatus;
 

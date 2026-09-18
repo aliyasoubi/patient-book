@@ -4,16 +4,20 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
+  Min,
   Validate,
 } from 'class-validator';
 
 import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
-import { AbutmentType, SurgeryStatus } from '../../../domain';
+import { AbutmentType, SurgeryKind, SurgeryStatus } from '../../../domain';
+import { FOLLOW_UP_FILTERS, FollowUpFilter } from '../follow-up';
 import { normalizeForDisplay, IMPLANT_BRAND_NAMES } from '../../../domain';
 import {
   IsJalaliDateConstraint,
@@ -47,6 +51,12 @@ export class QuerySurgeryDto extends PaginationDto {
   @IsOptional()
   mismatchedOnly?: boolean;
 
+  /** Open follow-ups within the named window (see `followUpWindow`), soonest first. */
+  @ApiPropertyOptional({ enum: FOLLOW_UP_FILTERS })
+  @IsIn(FOLLOW_UP_FILTERS)
+  @IsOptional()
+  followUp?: FollowUpFilter;
+
   @ApiPropertyOptional({ description: 'Only archived entries' })
   @Transform(toBool)
   @IsBoolean()
@@ -65,6 +75,11 @@ export class QuerySurgeryDto extends PaginationDto {
 }
 
 export class UpsertSurgeryDto {
+  @ApiPropertyOptional({ enum: SurgeryKind, default: SurgeryKind.Implant })
+  @IsEnum(SurgeryKind)
+  @IsOptional()
+  kind?: SurgeryKind;
+
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()
@@ -105,12 +120,19 @@ export class UpsertSurgeryDto {
   @IsOptional()
   abutmentType?: AbutmentType;
 
-  @ApiPropertyOptional({ example: 'آذر ماه' })
-  @Transform(clean)
-  @IsString()
-  @MaxLength(60)
+  /** Months after the surgery date; the API resolves the date. `null` clears it. */
+  @ApiPropertyOptional({ minimum: 1, maximum: 12, example: 3 })
+  @IsInt()
+  @Min(1)
+  @Max(12)
   @IsOptional()
-  prosthesisDue?: string | null;
+  followUpMonths?: number | null;
+
+  /** When the follow-up happened, as a Jalali date; `null` reopens it. */
+  @ApiPropertyOptional({ example: '1405/09/27' })
+  @Validate(IsJalaliDateConstraint)
+  @IsOptional()
+  followUpDoneAt?: string | null;
 
   @ApiPropertyOptional({ enum: SurgeryStatus })
   @IsEnum(SurgeryStatus)

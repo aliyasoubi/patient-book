@@ -16,7 +16,7 @@ import {
   treatmentColor,
 } from '../../shared/labels';
 import { PbButton, PbDatetimeCard, PbPageHeader, PbSurface } from '../../shared/ui';
-import type { DashboardStats, UpcomingSurgery } from '../../core/models/common.model';
+import type { DashboardStats, FollowUpDue } from '../../core/models/common.model';
 
 interface StatTile {
   label: string;
@@ -61,12 +61,12 @@ export class Dashboard {
   protected readonly loading = signal(true);
   protected readonly failed = signal(false);
   protected readonly stats = signal<DashboardStats | null>(null);
-  protected readonly upcomingSurgeries = signal<UpcomingSurgery[]>([]);
+  protected readonly followUps = signal<FollowUpDue[]>([]);
   /**
    * Its own flag, not `failed`: the two requests are independent, and "no
-   * upcoming surgeries" must never be what a failed request looks like.
+   * follow-ups this week" must never be what a failed request looks like.
    */
-  protected readonly upcomingFailed = signal(false);
+  protected readonly followUpsFailed = signal(false);
 
   protected readonly greeting = computed(() => {
     this.i18n.currentLang();
@@ -99,18 +99,29 @@ export class Dashboard {
         tone: 'warn',
       },
     ];
-    // A permanently-zero warning tile trains people to ignore warnings, so this
-    // one appears only when there is actually something overdue.
-    if (s.totals.overdueSurgeries > 0) {
+    // A permanently-zero warning tile trains people to ignore warnings, so
+    // these appear only when there is actually something overdue.
+    if (s.totals.followUpsOverdue > 0) {
       tiles.push({
-        label: 'tile.overdueSurgeries',
-        value: s.totals.overdueSurgeries,
+        label: 'tile.followUpsOverdue',
+        value: s.totals.followUpsOverdue,
         icon: 'event_busy',
         link: '/surgery',
-        queryParams: { status: 'scheduled' },
+        // The open list, soonest first: the missed ones lead it.
+        queryParams: { followUp: 'pending' },
         tone: 'warn',
       });
     }
+    // Who to call this week: the operational number a receptionist opens
+    // the dashboard for.
+    tiles.push({
+      label: 'tile.followUpsThisWeek',
+      value: s.totals.followUpsThisWeek,
+      icon: 'event_repeat',
+      link: '/surgery',
+      queryParams: { followUp: 'week' },
+      tone: 'neutral',
+    });
     tiles.push(
       {
         label: 'tile.patients',
@@ -194,11 +205,6 @@ export class Dashboard {
     return this.i18n.instant('dashboard.trendAria', { max });
   }
 
-  /** Brand and tooth position, whichever of the two is actually recorded. */
-  protected upcomingMeta(item: UpcomingSurgery): string {
-    return [item.implantBrand, item.toothPosition].filter(Boolean).join(' · ');
-  }
-
   constructor() {
     this.load();
   }
@@ -218,15 +224,15 @@ export class Dashboard {
       },
     });
     // Independent of the totals above: one failing must not block the other.
-    this.loadUpcoming();
+    this.loadFollowUps();
   }
 
   /** Also the panel's own retry, so a failed list can be re-fetched by itself. */
-  protected loadUpcoming(): void {
-    this.upcomingFailed.set(false);
-    this.registry.upcomingSurgeries().subscribe({
-      next: (rows) => this.upcomingSurgeries.set(rows),
-      error: () => this.upcomingFailed.set(true),
+  protected loadFollowUps(): void {
+    this.followUpsFailed.set(false);
+    this.registry.followUpsThisWeek().subscribe({
+      next: (rows) => this.followUps.set(rows),
+      error: () => this.followUpsFailed.set(true),
     });
   }
 }
