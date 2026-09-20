@@ -1,5 +1,38 @@
 @use '../../../styles/a11y';
 
+:host {
+  display: block;
+}
+
+/*
+ * Desktop: the register is fitted to the screen. Header, toolbar and
+ * paginator stay where they are and the rows scroll inside the table, so
+ * the sticky column header has a scroll container that actually scrolls —
+ * inserted into a page that scrolled as a whole, it scrolled away with it.
+ * The paginator is always in view for the same reason.
+ *
+ * The card layout (`.is-compact`, set by the component from its own width)
+ * keeps the page-scrolling flow: a phone scrolls its whole screen.
+ */
+:host:not(.is-compact) {
+  height: 100%;
+
+  .list {
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .list__results,
+  .table-wrap {
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+
+  .table-wrap {
+    overflow: auto;
+  }
+}
+
 .list {
   display: flex;
   flex-direction: column;
@@ -11,6 +44,10 @@
   @media (max-width: 700px) {
     padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
     gap: 12px;
+  }
+
+  > * {
+    flex: 0 0 auto;
   }
 
   &__new {
@@ -157,7 +194,10 @@
 
 /* ── Desktop table ─────────────────────────────────────────────────── */
 .table-wrap {
-  overflow-x: auto;
+  // Its own stacking context: the sticky header cells carry Material's
+  // z-index and would otherwise paint over the progress bar laid above.
+  position: relative;
+  z-index: 0;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--mat-sys-corner-large);
   background: var(--mat-sys-surface);

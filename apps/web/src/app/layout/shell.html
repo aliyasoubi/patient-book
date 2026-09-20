@@ -61,7 +61,7 @@
         <pb-logo class="topbar__logo" [size]="28" />
       }
 
-      <pb-global-search class="topbar__search" />
+      <pb-global-search class="topbar__search" [compact]="onPatientList()" />
 
       <span class="spacer"></span>
 
@@ -94,7 +94,7 @@
       </mat-menu>
     </mat-toolbar>
 
-    <main class="page" [class.page--with-bottom-nav]="isHandset()">
+    <main #page class="page" [class.page--with-bottom-nav]="isHandset()">
       <router-outlet />
     </main>
 

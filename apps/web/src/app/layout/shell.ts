@@ -1,17 +1,18 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { map } from 'rxjs';
+import { filter, map, startWith } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
+import { PageScroll } from '../core/services/page-scroll.service';
 import { ThemeService } from '../core/services/theme.service';
 import { GlobalSearch } from './global-search';
 import { roleLabel } from '../shared/labels';
@@ -25,6 +26,11 @@ export interface NavItem {
   /** Shown in the mobile bottom bar; the rest live behind the menu. */
   primary: boolean;
   roles?: UserRole[];
+}
+
+/** The list itself, at any query — not a patient's page beneath it. */
+function isPatientList(url: string): boolean {
+  return url.split('?')[0] === '/patients';
 }
 
 /**
@@ -89,6 +95,8 @@ function navItems(): NavItem[] {
 })
 export class Shell {
   private readonly breakpoints = inject(BreakpointObserver);
+  private readonly router = inject(Router);
+  private readonly pageScroll = inject(PageScroll);
   protected readonly auth = inject(AuthService);
   // Injected only to apply the stored preference on boot — its constructor is
   // what stamps the theme onto the document. The shell never reads it; display
@@ -112,6 +120,27 @@ export class Shell {
   );
 
   protected readonly drawerOpen = signal(false);
+
+  /**
+   * The patient register carries a search of its own that does everything
+   * the top bar's does and more, so there the top bar's folds to a button.
+   * The registry and surgery lists search their own books, not patients, and
+   * keep the full field.
+   */
+  protected readonly onPatientList = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map(() => isPatientList(this.router.url)),
+      startWith(isPatientList(this.router.url)),
+    ),
+    { initialValue: false },
+  );
+
+  private readonly page = viewChild<ElementRef<HTMLElement>>('page');
+
+  constructor() {
+    effect(() => this.pageScroll.attach(this.page()?.nativeElement ?? null));
+  }
 
   protected readonly navItems = computed(() =>
     navItems().filter((item) => {

@@ -14,6 +14,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { PatientsService } from './data/patients.service';
+import { PatientListContext } from './patient-list-context';
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryKind, RegistryService } from '../../core/services/registry.service';
 import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
@@ -64,6 +65,7 @@ import type { AuditEntry } from '../../core/models/common.model';
 export class PatientDetail {
   private readonly service = inject(PatientsService);
   private readonly registry = inject(RegistryService);
+  private readonly listContext = inject(PatientListContext);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -84,6 +86,16 @@ export class PatientDetail {
     this.breakpoints.observe('(max-width: 700px)').pipe(map((r) => r.matches)),
     { initialValue: false },
   );
+
+  /**
+   * Back to the register as it was left — same search, filters, page and
+   * sort — when there is one to go back to; a fresh list otherwise (a
+   * bookmark, a link from the dashboard's follow-ups).
+   */
+  protected readonly backLink = computed(() => {
+    const url = this.listContext.url();
+    return url ? this.router.parseUrl(url) : '/patients';
+  });
 
   protected readonly genderLabel = genderLabel;
   protected readonly genderIcon = genderIcon;

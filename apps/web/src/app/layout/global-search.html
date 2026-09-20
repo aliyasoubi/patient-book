@@ -1,13 +1,26 @@
-<form class="search" (submit)="onSubmit($event)" role="search">
-  <pb-search-field
-    #searchField
-    [control]="control"
-    [loading]="loading()"
-    [options]="searchOptions()"
-    [showEmpty]="displayEmpty()"
-    [emptyMessage]="'globalSearch.empty' | translate"
-    (optionSelected)="onSelect($event)"
-    [placeholder]="'globalSearch.placeholder' | translate"
-    [ariaLabel]="'globalSearch.aria' | translate"
-  />
-</form>
+@if (compact() && !expanded()) {
+  <button
+    mat-icon-button
+    type="button"
+    class="search__open"
+    (click)="open()"
+    [attr.aria-label]="'globalSearch.aria' | translate"
+    [matTooltip]="'globalSearch.openTooltip' | translate"
+  >
+    <mat-icon aria-hidden="true">search</mat-icon>
+  </button>
+} @else {
+  <form class="search" (submit)="onSubmit($event)" (focusout)="onFocusOut()" role="search">
+    <pb-search-field
+      #searchField
+      [control]="control"
+      [loading]="loading()"
+      [options]="searchOptions()"
+      [showEmpty]="displayEmpty()"
+      [emptyMessage]="'globalSearch.empty' | translate"
+      (optionSelected)="onSelect($event)"
+      [placeholder]="'globalSearch.placeholder' | translate"
+      [ariaLabel]="'globalSearch.aria' | translate"
+    />
+  </form>
+}

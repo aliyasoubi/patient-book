@@ -3,3 +3,9 @@
   display: block;
   min-width: 0;
 }
+
+// The host keeps its flexible width in the top bar so the field has room
+// when it opens; the button itself takes only its own.
+:host:has(.search__open) {
+  flex: 0 0 auto;
+}

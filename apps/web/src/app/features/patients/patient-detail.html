@@ -8,7 +8,7 @@
     <header class="hero" [class.hero--archived]="p.isArchived">
       <a
         class="hero__back"
-        routerLink="/patients"
+        [routerLink]="backLink()"
         [attr.aria-label]="'patientDetail.backAria' | translate"
       >
         <mat-icon aria-hidden="true">arrow_forward</mat-icon>
