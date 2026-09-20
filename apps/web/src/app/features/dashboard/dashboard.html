@@ -1,13 +1,14 @@
 <div class="dash">
+  <!-- Date and clock ride in the header row as supporting content; a card of
+       their own pushed the first real number a full section down the page. -->
   <pb-page-header [title]="greeting()" [subtitle]="'dashboard.subtitle' | translate">
+    <pb-datetime-card />
     @if (auth.can('editPatients')) {
       <pb-button routerLink="/patients/new" icon="person_add">{{
         'dashboard.newPatient' | translate
       }}</pb-button>
     }
   </pb-page-header>
-
-  <pb-datetime-card />
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />
@@ -42,7 +43,7 @@
       <!-- ── Follow-ups this week ───────────────────────────────
            Who to call: the surgeries whose follow-up falls in the coming
            seven days and has not happened yet, soonest first. -->
-      <pb-surface [title]="'dashboard.followUpsTitle' | translate">
+      <pb-surface class="dash__panel--follow-ups" [title]="'dashboard.followUpsTitle' | translate">
         @if (followUpsFailed()) {
           <div class="panel__failed">
             <p class="panel__empty">{{ 'dashboard.followUpsFailed' | translate }}</p>
@@ -88,7 +89,7 @@
            Operational follow-up work, so it leads the panels; the
            analytics below describe the practice rather than ask
            anything of it. -->
-      <pb-surface [title]="'dashboard.recallTitle' | translate">
+      <pb-surface class="dash__panel--recall" [title]="'dashboard.recallTitle' | translate">
         <div class="recall">
           <a class="recall__item" routerLink="/patients">
             <span class="recall__value">{{ s.recentlyActive | faCount }}</span>
@@ -111,7 +112,7 @@
 
       <!-- ── Treatments ────────────────────────────────────────── -->
       <pb-surface
-        class="panel--wide"
+        class="dash__panel--treatments"
         [title]="'dashboard.treatmentsTitle' | translate"
         [hint]="'dashboard.treatmentsHint' | translate"
       >
@@ -139,6 +140,7 @@
 
       <!-- ── Growth ────────────────────────────────────────────── -->
       <pb-surface
+        class="dash__panel--growth"
         [title]="'dashboard.newPatientsTitle' | translate"
         [hint]="'dashboard.lastTwelveMonths' | translate"
       >
@@ -172,7 +174,7 @@
       <!-- ── Gender ────────────────────────────────────────────
            Women and men as two columns, each drawn the way an age band is:
            label, bar, count. A record with no gender is a footnote. -->
-      <pb-surface [title]="'dashboard.genderTitle' | translate">
+      <pb-surface class="dash__panel--gender" [title]="'dashboard.genderTitle' | translate">
         <div class="gender" role="group" [attr.aria-label]="'dashboard.genderAria' | translate">
           @for (g of genderColumns(); track g.key) {
             <div class="gender__col" [attr.data-gender]="g.key">
@@ -198,7 +200,7 @@
       </pb-surface>
 
       <!-- ── Age ───────────────────────────────────────────────── -->
-      <pb-surface [title]="'dashboard.ageGroups' | translate">
+      <pb-surface class="dash__panel--age" [title]="'dashboard.ageGroups' | translate">
         <ul class="bars bars--compact">
           @for (b of ageBars(); track b.band) {
             <li class="bars__row">
@@ -214,6 +216,7 @@
 
       <!-- ── Referrals ─────────────────────────────────────────── -->
       <pb-surface
+        class="dash__panel--referrals"
         [title]="'dashboard.referralsTitle' | translate"
         [hint]="'dashboard.topTen' | translate"
       >
@@ -231,7 +234,6 @@
           }
         </ul>
       </pb-surface>
-
     </div>
   }
 </div>

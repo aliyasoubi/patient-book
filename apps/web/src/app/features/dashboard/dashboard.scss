@@ -7,17 +7,55 @@
   margin-inline: auto;
 
   @media (max-width: 700px) {
-    padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
-    gap: 14px;
+    padding: var(--pb-space-4) var(--pb-page-inline-compact) var(--pb-space-5);
+    gap: var(--pb-space-4);
   }
 
+  // M3 canonical layout: a 12-column grid on expanded windows, 2 columns on
+  // medium, 1 on compact. Every panel names its span so the rows pack with no
+  // holes (auto-fit plus a `span 2` panel used to leave an empty cell whenever
+  // three columns fit), and rows stretch so neighbours share a bottom edge.
   &__grid {
     display: grid;
-    // min() lets the column give way below 320px (a 320px phone has ~296px
-    // inside the page padding) instead of forcing a horizontal scroll.
-    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-    gap: 14px;
-    align-items: start;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--pb-space-4);
+
+    > * {
+      grid-column: span 4;
+      min-width: 0;
+    }
+
+    @media (max-width: 1199px) {
+      > * {
+        grid-column: span 6;
+      }
+    }
+
+    @media (max-width: 839px) {
+      > * {
+        grid-column: span 12;
+      }
+    }
+  }
+
+  // Expanded: work first (follow-ups, recall, growth), then the two long
+  // lists side by side, then the two short demographic panels.
+  @media (min-width: 1200px) {
+    &__panel--treatments {
+      grid-column: span 8;
+    }
+
+    &__panel--gender,
+    &__panel--age {
+      grid-column: span 6;
+    }
+  }
+
+  // Medium: pairs, with the long treatment list taking a full row.
+  @media (min-width: 840px) and (max-width: 1199px) {
+    &__panel--treatments {
+      grid-column: span 12;
+    }
   }
 
   &__error {
@@ -44,8 +82,8 @@
   &__view-list {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    margin-top: 8px;
+    gap: var(--pb-space-1);
+    margin-top: var(--pb-space-3);
     font-size: var(--mat-sys-body-small-size);
     font-weight: 600;
     color: var(--mat-sys-primary);
@@ -64,15 +102,19 @@
 /* ── Stat tiles ────────────────────────────────────────────────────── */
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: var(--pb-space-4);
+
+  @media (max-width: 700px) {
+    gap: var(--pb-space-3);
+  }
 }
 
 .tile {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 16px;
+  gap: var(--pb-space-1);
+  padding: var(--pb-space-4);
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--mat-sys-corner-large);
   background: var(--mat-sys-surface);
@@ -88,9 +130,9 @@
   }
 
   &__icon {
-    font-size: 24px;
+    font-size: var(--pb-icon-md);
     color: var(--mat-sys-primary);
-    margin-bottom: 6px;
+    margin-bottom: var(--pb-space-1);
   }
 
   &__value {
@@ -122,16 +164,8 @@
 }
 
 /* ── Panels ────────────────────────────────────────────────────────── */
-// pb-surface owns the bordered-panel look and its title+hint header now;
-// this page only adds its own grid-span modifier and one body-content style.
-.panel--wide {
-  grid-column: span 2;
-
-  @media (max-width: 900px) {
-    grid-column: span 1;
-  }
-}
-
+// pb-surface owns the bordered-panel look and its title+hint header; the
+// grid placement lives on `.dash__panel--*` above.
 .panel__empty {
   margin: 0;
   font: var(--mat-sys-body-medium);
@@ -150,7 +184,7 @@
 .bars {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: var(--pb-space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -159,13 +193,13 @@
     display: grid;
     grid-template-columns: minmax(96px, 132px) 1fr auto;
     align-items: center;
-    gap: 10px;
+    gap: var(--pb-space-3);
   }
 
   &__label {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--pb-space-2);
     font: var(--mat-sys-body-medium);
     white-space: nowrap;
     overflow: hidden;
@@ -173,7 +207,7 @@
   }
 
   &__icon {
-    font-size: 17px;
+    font-size: var(--pb-icon-sm);
     flex: 0 0 auto;
   }
 
@@ -238,8 +272,8 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 8px;
-    margin-top: 10px;
+    gap: var(--pb-space-2);
+    margin-top: var(--pb-space-3);
     font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
 
@@ -260,14 +294,14 @@
 .gender {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--pb-space-4);
 
   &__col {
     --_tone: var(--mat-sys-primary);
 
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--pb-space-2);
     min-width: 0;
 
     &[data-gender='female'] {
@@ -296,7 +330,7 @@
   }
 
   &__unknown {
-    margin: 12px 0 0;
+    margin: var(--pb-space-3) 0 0;
     font: var(--mat-sys-body-small);
     color: var(--mat-sys-on-surface-variant);
   }
@@ -314,8 +348,8 @@
   a {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 7px 9px;
+    gap: var(--pb-space-3);
+    padding: var(--pb-space-2) var(--pb-space-3);
     border-radius: var(--mat-sys-corner-medium);
     text-decoration: none;
     color: inherit;
@@ -327,7 +361,7 @@
   }
 
   &__icon {
-    font-size: 17px;
+    font-size: var(--pb-icon-sm);
     color: var(--mat-sys-on-surface-variant);
   }
 
@@ -359,8 +393,8 @@
   a {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 7px 9px;
+    gap: var(--pb-space-3);
+    padding: var(--pb-space-2) var(--pb-space-3);
     border-radius: var(--mat-sys-corner-medium);
     text-decoration: none;
     color: inherit;
@@ -372,7 +406,7 @@
 
   &__icon {
     flex: 0 0 auto;
-    font-size: 17px;
+    font-size: var(--pb-icon-sm);
     color: var(--mat-sys-on-surface-variant);
 
     &--warn {
@@ -418,13 +452,13 @@
 .recall {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--pb-space-2);
 
   &__item {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 14px;
+    gap: var(--pb-space-1);
+    padding: var(--pb-space-4);
     border-radius: var(--mat-sys-corner-large);
     background: var(--mat-sys-surface-container-low);
     text-decoration: none;
@@ -454,8 +488,8 @@
   &__cta {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    margin-top: 6px;
+    gap: var(--pb-space-1);
+    margin-top: var(--pb-space-2);
     font-size: var(--mat-sys-body-small-size);
     font-weight: 600;
 

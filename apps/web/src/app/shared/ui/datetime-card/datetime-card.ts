@@ -32,31 +32,27 @@ import { formatPersianNumber } from '../../pipes/persian-number.pipe';
       display: block;
     }
 
+    /* Supporting content for a page header, not a card: date and clock in one
+       quiet row so the first real number sits right under the title. The
+       clock is the widest thing here, so it gets the medium weight. */
     .pb-datetime {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       flex-wrap: wrap;
-      gap: var(--pb-space-3);
-      padding: 14px 18px;
-      border: 1px solid var(--mat-sys-outline-variant);
-      border-radius: var(--mat-sys-corner-large);
-      background: linear-gradient(
-        135deg,
-        color-mix(in srgb, var(--mat-sys-primary) 10%, var(--mat-sys-surface)),
-        var(--mat-sys-surface)
-      );
+      gap: var(--pb-space-2) var(--pb-space-4);
+      min-height: var(--pb-control-height);
+      color: var(--mat-sys-on-surface-variant);
 
       &__date,
       &__time {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--pb-space-2);
+        white-space: nowrap;
       }
 
       &__date {
-        font: var(--mat-sys-title-medium);
-        color: var(--mat-sys-on-surface);
+        font: var(--mat-sys-body-medium);
       }
 
       &__icon {
@@ -65,19 +61,12 @@ import { formatPersianNumber } from '../../pipes/persian-number.pipe';
       }
 
       &__clock {
-        font-size: var(--mat-sys-headline-small-size);
-        font-weight: 700;
+        font: var(--mat-sys-title-medium);
         font-variant-numeric: tabular-nums;
         // Farsi-Digits Vazirmatn's tabular glyph set rides the 'onum'
         // feature, not 'tnum' — see the note on .ltr-nums in styles.scss.
         font-feature-settings: 'onum';
-        letter-spacing: 0.5px;
         color: var(--mat-sys-on-surface);
-      }
-
-      @media (max-width: 480px) {
-        justify-content: center;
-        text-align: center;
       }
     }
   `,
