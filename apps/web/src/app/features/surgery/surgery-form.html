@@ -13,20 +13,31 @@
     <pb-surface icon="event" [title]="'surgeryForm.section' | translate">
       <div class="grid">
         <!-- What was done decides the rest of the form: an implant has a
-             register number, a brand and a cover; an extraction has a tooth. -->
-        <mat-button-toggle-group
-          class="grid__full form__kind"
-          [value]="form.controls.kind.value"
-          (valueChange)="onKindChange($event)"
-          [attr.aria-label]="'surgeryForm.kind' | translate"
-        >
-          @for (kind of kinds; track kind) {
-            <mat-button-toggle [value]="kind">
-              <mat-icon aria-hidden="true">{{ kind === 'implant' ? 'deployed_code' : 'dentistry' }}</mat-icon>
-              {{ kindLabel(kind) | translate }}
-            </mat-button-toggle>
-          }
-        </mat-button-toggle-group>
+             register number, a brand and a cover; an extraction has a tooth.
+             Chosen once, when the row is added; an edit shows it and no more —
+             a row under the wrong kind is deleted and added again. -->
+        @if (isEdit()) {
+          <div class="grid__full form__kind-fixed">
+            <pb-status-chip [icon]="kindIcon(form.controls.kind.value)">
+              {{ kindLabel(form.controls.kind.value) | translate }}
+            </pb-status-chip>
+            <span class="form__kind-hint">{{ 'surgeryForm.kindFixedHint' | translate }}</span>
+          </div>
+        } @else {
+          <mat-button-toggle-group
+            class="grid__full form__kind"
+            [value]="form.controls.kind.value"
+            (valueChange)="onKindChange($event)"
+            [attr.aria-label]="'surgeryForm.kind' | translate"
+          >
+            @for (kind of kinds; track kind) {
+              <mat-button-toggle [value]="kind">
+                <mat-icon aria-hidden="true">{{ kindIcon(kind) }}</mat-icon>
+                {{ kindLabel(kind) | translate }}
+              </mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+        }
 
         <pb-text-field
           class="grid__full"

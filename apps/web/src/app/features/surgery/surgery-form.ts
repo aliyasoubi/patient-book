@@ -34,6 +34,7 @@ import {
   PbDateField,
   PbPageHeader,
   PbSelectField,
+  PbStatusChip,
   PbSurface,
   PbTextareaField,
   PbTextField,
@@ -54,6 +55,7 @@ import type { SelectOption, TextFieldOption } from '../../shared/ui';
     PbDateField,
     PbButton,
     PbSurface,
+    PbStatusChip,
     PbPageHeader,
     TranslatePipe,
   ],
@@ -81,6 +83,9 @@ export class SurgeryForm implements HasUnsavedChanges {
 
   protected readonly kinds = SURGERY_KINDS;
   protected readonly kindLabel = surgeryKindLabel;
+  protected kindIcon(kind: SurgeryKind): string {
+    return kind === 'implant' ? 'deployed_code' : 'dentistry';
+  }
   protected readonly abutmentOptions: SelectOption[] = ABUTMENT_TYPES.map((a) => ({
     value: a,
     label: abutmentLabel(a),
@@ -202,12 +207,13 @@ export class SurgeryForm implements HasUnsavedChanges {
 
   /**
    * Switching kind resets what the other kind does not have, and offers that
-   * kind's usual follow-up — only on a new row, where nothing has been
-   * decided yet; editing keeps whatever was recorded.
+   * kind's usual follow-up. Only a new row offers the choice: a saved row's
+   * kind is settled, and one recorded under the wrong kind is deleted and
+   * added again rather than converted in place — the fewer things an edit
+   * can change, the fewer a slip can change.
    */
   protected onKindChange(kind: SurgeryKind): void {
     this.form.controls.kind.setValue(kind);
-    if (this.isEdit()) return;
     this.form.controls.followUpMonths.setValue(kind === 'implant' ? '3' : '2');
     if (kind === 'extraction') {
       this.form.patchValue({ implantRegistryNo: '', implantBrand: '', abutmentType: 'unknown' });
@@ -304,17 +310,19 @@ export class SurgeryForm implements HasUnsavedChanges {
 
     const implant = raw.kind === 'implant';
     const payload: Record<string, unknown> = {
-      kind: raw.kind,
       recordedName: raw.recordedName.trim(),
       toothPosition: blank(raw.toothPosition) ?? '',
-      // An extraction carries none of the implant fields; clear them so a row
-      // whose kind was corrected does not keep a stale number or brand.
+      // An extraction carries none of the implant fields; clear them so a new
+      // row whose kind was switched before saving does not keep a stale
+      // number or brand typed under the other one.
       implantRegistryNo: implant ? identifierValue(raw.implantRegistryNo) : null,
       implantBrand: implant ? raw.implantBrand || null : null,
       abutmentType: implant ? raw.abutmentType : 'unknown',
       followUpMonths: raw.followUpMonths ? Number(raw.followUpMonths) : null,
       notes: blank(raw.notes),
     };
+    // Sent only when the row is created; the edit form does not offer it.
+    if (!this.isEdit()) payload['kind'] = raw.kind;
     // Whether the follow-up happened is the switch on the card, not a form
     // field: every row added here is waiting for its follow-up.
     // The date is only sent when this form owns it. A pristine empty picker on

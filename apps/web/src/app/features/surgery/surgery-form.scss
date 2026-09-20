@@ -42,6 +42,19 @@
 
 /* The kind selector leads the form; the segmented button is M3's control for
    two or three mutually exclusive choices that shape what follows. */
+.form__kind-fixed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.form__kind-hint {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .form__kind {
   justify-self: start;
   margin-bottom: 4px;
