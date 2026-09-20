@@ -9,8 +9,15 @@ import compression from 'compression';
 
 import { AppModule } from './app.module';
 import { configureApp } from './app.setup';
+import { buildConfiguration } from './config/configuration';
 
 async function bootstrap(): Promise<void> {
+  // Before the application exists: Node reads TZ on first use of the local
+  // clock, and every "today" the API computes — follow-up windows, ages,
+  // Jalali formatting — goes through that clock. The same zone is handed to
+  // Postgres by the database module.
+  process.env.TZ = buildConfiguration().clinic.timezone;
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });

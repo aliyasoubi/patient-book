@@ -120,7 +120,7 @@ export class PatientForm implements HasUnsavedChanges {
   );
 
   protected readonly form = this.fb.nonNullable.group({
-    fileNo: ['', [Validators.required, digitString(1, 24)]],
+    fileNo: ['', [Validators.required, digitString(1, 18)]],
     firstName: ['', [Validators.required, Validators.maxLength(80)]],
     lastName: ['', [Validators.required, Validators.maxLength(120)]],
     fatherName: [''],

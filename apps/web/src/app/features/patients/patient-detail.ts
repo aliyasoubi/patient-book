@@ -32,6 +32,7 @@ import {
   treatmentColor,
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
+import { LoadError } from '../../shared/components/load-error';
 import { PbAvatar, PbButton, PbStatusChip, PbSurface } from '../../shared/ui';
 import type { DataIssue, Patient, RegistryRef } from './data/patient.model';
 import type { AuditEntry } from '../../core/models/common.model';
@@ -49,6 +50,7 @@ import type { AuditEntry } from '../../core/models/common.model';
     MatDialogModule,
     JalaliPipe,
     PersianNumberPipe,
+    LoadError,
     PbButton,
     PbSurface,
     PbAvatar,
@@ -92,7 +94,11 @@ export class PatientDetail {
   protected readonly loading = signal(true);
   protected readonly patient = signal<Patient | null>(null);
   protected readonly history = signal<AuditEntry[]>([]);
-  protected readonly historyLoaded = signal(false);
+  /**
+   * Kept apart from the entries themselves: an empty list means "nothing
+   * ever changed" only once a load has actually come back.
+   */
+  protected readonly historyState = signal<'idle' | 'loading' | 'loaded' | 'failed'>('idle');
 
   /** Grouped for the "details" tab, skipping anything the record does not hold. */
   protected readonly detailRows = computed(() => {
@@ -127,6 +133,12 @@ export class PatientDetail {
    */
   private readonly load$ = new Subject<string>();
 
+  /**
+   * Same shape for the history tab: a slow response for the previous patient
+   * must not land under the next one's heading.
+   */
+  private readonly history$ = new Subject<string>();
+
   constructor() {
     this.load$
       .pipe(
@@ -150,6 +162,22 @@ export class PatientDetail {
         this.patient.set(patient);
       });
 
+    this.history$
+      .pipe(
+        switchMap((id) =>
+          this.service.history(id).pipe(
+            map((entries) => ({ id, entries, failed: false })),
+            catchError(() => of({ id, entries: [] as AuditEntry[], failed: true })),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ id, entries, failed }) => {
+        if (id !== this.id()) return;
+        this.history.set(entries);
+        this.historyState.set(failed ? 'failed' : 'loaded');
+      });
+
     // Route inputs are bound after construction, so the id can only be read
     // inside an effect. This also re-fetches when navigating straight from one
     // patient to another, where the component instance is reused.
@@ -161,9 +189,21 @@ export class PatientDetail {
 
   private load(id: string): void {
     this.loading.set(true);
-    this.historyLoaded.set(false);
+    // A different record from the one on screen: take the old one down rather
+    // than leave its buttons live while the new one is in flight. An action
+    // taken in that window would pair the new route id with the old patient.
+    if (this.patient()?.id !== id) this.patient.set(null);
     this.history.set([]);
+    this.historyState.set('idle');
     this.load$.next(id);
+  }
+
+  /**
+   * False once the screen has moved on to another record. A late response
+   * for the old one must neither be shown nor acted on here.
+   */
+  private stillShowing(patientId: string): boolean {
+    return this.id() === patientId;
   }
 
   /** Renders an import flag in the reader's language, from its code. */
@@ -172,14 +212,24 @@ export class PatientDetail {
   }
 
   protected loadHistory(): void {
-    if (this.historyLoaded() || !this.auth.can('viewHistory')) return;
-    this.historyLoaded.set(true);
-    this.service.history(this.id()).subscribe((entries) => this.history.set(entries));
+    if (this.historyState() !== 'idle' || !this.auth.can('viewHistory')) return;
+    this.historyState.set('loading');
+    this.history$.next(this.id());
+  }
+
+  protected retryHistory(): void {
+    this.historyState.set('idle');
+    this.loadHistory();
   }
 
   /** Dismiss an import warning once staff have checked the underlying value. */
   protected resolveIssue(field: string): void {
-    this.service.resolveIssue(this.id(), field).subscribe((patient) => {
+    // The record the warning belongs to, not the route: the two differ while
+    // a navigation to another patient is still loading.
+    const p = this.patient();
+    if (!p) return;
+    this.service.resolveIssue(p.id, field).subscribe((patient) => {
+      if (!this.stillShowing(patient.id)) return;
       this.patient.set(patient);
       this.snackBar.open(
         this.i18n.instant('patient.issueResolved'),
@@ -203,6 +253,7 @@ export class PatientDetail {
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this.service.archive(p.id).subscribe(() => {
+          if (!this.stillShowing(p.id)) return;
           this.snackBar.open(
             this.i18n.instant('archive.done'),
             this.i18n.instant('action.dismiss'),
@@ -213,7 +264,10 @@ export class PatientDetail {
   }
 
   protected restore(): void {
-    this.service.restore(this.id()).subscribe((patient) => {
+    const p = this.patient();
+    if (!p) return;
+    this.service.restore(p.id).subscribe((patient) => {
+      if (!this.stillShowing(patient.id)) return;
       this.patient.set(patient);
       this.snackBar.open(
         this.i18n.instant('archive.restored'),
@@ -259,7 +313,7 @@ export class PatientDetail {
       .subscribe((saved) => {
         if (!saved) return;
         this.snackBar.open(done(), this.i18n.instant('action.dismiss'));
-        this.load(patientId);
+        if (this.stillShowing(patientId)) this.load(patientId);
       });
   }
 

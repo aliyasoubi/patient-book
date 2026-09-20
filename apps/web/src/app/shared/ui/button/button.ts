@@ -28,15 +28,22 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
  * routed through the label's `ng-template`. Material decides which of its
  * content slots an element belongs to from the static markup, so an icon
  * arriving through `ngTemplateOutlet` lands in the generic slot and loses the
- * leading-edge spacing that belongs to the icon slot. That costs one repeated
- * block, which is why only the label — the part that carries projected
- * content, and so can exist only once — still goes through the template.
+ * leading-edge spacing that belongs to the icon slot. That costs a repeated
+ * block per element, which is why only the label — the part that carries
+ * projected content, and so can exist only once — still goes through the
+ * template.
  *
  * Passing `routerLink` or `href` renders an `<a>` instead of a `<button>` — a
  * "New patient" action or a "Call" link is a real navigation the user can
  * middle-click or open in a new tab, which only an anchor supports; a
  * `<button>` with a click handler that calls the router or sets
  * `location.href` does not.
+ *
+ * The two anchors are separate branches, not one anchor with both bindings.
+ * `RouterLink` host-binds `attr.href` to the URL it computes, and with no
+ * `routerLink` that is `null` — so a `tel:` href set by the template was
+ * removed again by the directive on the same element, and the Call button
+ * rendered with no destination at all.
  */
 @Component({
   selector: 'pb-button',
@@ -47,12 +54,35 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
     '[class.pb-button--large]': "size() === 'large'",
   },
   template: `
-    @if (isLink()) {
+    @if (routerLink() !== null) {
       <a
         [matButton]="appearance()"
         [routerLink]="isDisabled() ? null : routerLink()"
-        [attr.href]="isDisabled() ? null : href()"
         [queryParams]="queryParams()"
+        class="pb-btn"
+        [class.pb-btn--full]="fullWidth()"
+        [class.pb-btn--disabled]="isDisabled()"
+        [attr.aria-disabled]="isDisabled() ? 'true' : null"
+        [attr.tabindex]="isDisabled() ? -1 : null"
+        (click)="isDisabled() && $event.preventDefault()"
+      >
+        @if (loading()) {
+          <mat-progress-spinner
+            mode="indeterminate"
+            diameter="18"
+            strokeWidth="2.5"
+            class="pb-btn__spinner"
+            aria-hidden="true"
+          />
+        } @else if (icon()) {
+          <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+        }
+        <ng-container [ngTemplateOutlet]="label" />
+      </a>
+    } @else if (href() !== null) {
+      <a
+        [matButton]="appearance()"
+        [attr.href]="isDisabled() ? null : href()"
         class="pb-btn"
         [class.pb-btn--full]="fullWidth()"
         [class.pb-btn--disabled]="isDisabled()"
@@ -175,5 +205,4 @@ export class PbButton {
 
   protected readonly appearance = computed(() => APPEARANCE[this.variant()]);
   protected readonly isDisabled = computed(() => this.disabled() || this.loading());
-  protected readonly isLink = computed(() => this.routerLink() !== null || this.href() !== null);
 }

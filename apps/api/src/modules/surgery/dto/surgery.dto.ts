@@ -22,6 +22,7 @@ import { normalizeForDisplay, IMPLANT_BRAND_NAMES } from '../../../domain';
 import {
   IsJalaliDateConstraint,
   optionalIdentifier,
+  REGISTER_NUMBER,
 } from '../../patients/dto/patient.dto';
 
 const toBool = ({ value }: { value: unknown }): boolean | undefined => {
@@ -87,7 +88,7 @@ export class UpsertSurgeryDto {
 
   @ApiPropertyOptional({ description: 'Implant register number' })
   @Transform(optionalIdentifier)
-  @Matches(/^\d{1,24}$/)
+  @Matches(REGISTER_NUMBER)
   @IsOptional()
   implantRegistryNo?: string | null;
 

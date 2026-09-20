@@ -22,6 +22,25 @@ export interface JalaliParseFailure {
 const MIN_YEAR = 1250;
 const MAX_YEAR = 1500;
 
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * A `date` column's value as a local-calendar `Date`.
+ *
+ * TypeORM hands `date` columns back as `YYYY-MM-DD` strings, and
+ * `new Date('YYYY-MM-DD')` reads that as UTC midnight — which on any host
+ * west of Greenwich is still the previous local day, so 1404/07/01 came out
+ * as 1404/06/31. Reading the three components directly makes the result
+ * independent of the server's timezone. Anything else — a `Date` already, or
+ * a full timestamp string — is passed through unchanged.
+ */
+export function storedDate(value: Date | string): Date {
+  if (value instanceof Date) return value;
+  const match = DATE_ONLY.exec(value);
+  if (!match) return new Date(value);
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
 /**
  * A date on the Jalali (Shamsi) calendar, carrying the precision it was
  * recorded at.
@@ -134,6 +153,14 @@ export class JalaliDate {
     precision: DatePrecision = 'day',
   ): JalaliDate | null {
     return isValid(date) ? new JalaliDate(date, precision) : null;
+  }
+
+  /** Wrap a value read back from a `date` column — see {@link storedDate}. */
+  static fromStored(
+    value: Date | string,
+    precision: DatePrecision = 'day',
+  ): JalaliDate | null {
+    return JalaliDate.fromDate(storedDate(value), precision);
   }
 
   static today(): JalaliDate {

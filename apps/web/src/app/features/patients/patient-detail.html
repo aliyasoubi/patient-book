@@ -312,7 +312,14 @@
         <mat-tab [label]="'patientDetail.historyTab' | translate">
           <div class="tab">
             <pb-surface>
-              @if (history().length === 0) {
+              @if (historyState() === 'failed') {
+                <pb-load-error
+                  [message]="'patientDetail.historyFailed' | translate"
+                  (retry)="retryHistory()"
+                />
+              } @else if (historyState() !== 'loaded') {
+                <p class="card__empty">{{ 'patientDetail.historyLoading' | translate }}</p>
+              } @else if (history().length === 0) {
                 <p class="card__empty">{{ 'patientDetail.noHistory' | translate }}</p>
               } @else {
                 <ol class="timeline">

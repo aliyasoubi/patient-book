@@ -1,3 +1,5 @@
+@use '../../../styles/a11y';
+
 .detail {
   max-width: var(--pb-page-content);
   margin-inline: auto;
@@ -95,7 +97,7 @@
   @media (max-width: 460px) {
     &__call-label,
     &__edit-label {
-      display: none;
+      @include a11y.visually-hidden;
     }
   }
 }

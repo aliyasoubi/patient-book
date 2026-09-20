@@ -1,3 +1,5 @@
+@use '../../../styles/a11y';
+
 .list {
   display: flex;
   flex-direction: column;
@@ -18,11 +20,7 @@
     @media (max-width: 560px) {
       .list__new-label {
         // Icon-only on the narrowest screens; the label crowds the title.
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
+        @include a11y.visually-hidden;
       }
       min-width: 48px;
       padding-inline: 12px;
@@ -51,8 +49,8 @@
     }
 
     @media (max-width: 560px) {
-      span:not(.material-symbols-rounded):not(.list__filter-badge) {
-        display: none;
+      .list__filter-label {
+        @include a11y.visually-hidden;
       }
       min-width: 48px;
       padding-inline: 12px;
@@ -73,7 +71,21 @@
     letter-spacing: var(--mat-sys-label-small-tracking);
   }
 
+  &__results {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: inherit;
+  }
+
   &__progress {
+    // Over the top edge of the results, not in the flow above them: inserted
+    // as a sibling it pushed the rows down by its height plus the page gap
+    // for every refetch and let them jump back after.
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    z-index: 1;
     border-radius: var(--mat-sys-corner-extra-small);
   }
 
@@ -372,14 +384,16 @@
     }
   }
 
+  // Same meaning as the detail page's banner — caution before treating, not a
+  // broken record — so the same warning tone, not error red.
   &__medical {
     display: flex;
     align-items: flex-start;
     gap: 6px;
     padding: 7px 10px;
     border-radius: var(--mat-sys-corner-medium);
-    background: var(--mat-sys-error-container);
-    color: var(--mat-sys-on-error-container);
+    background: var(--pb-warning-container);
+    color: var(--pb-on-warning-container);
     font-size: var(--mat-sys-body-small-size);
     font-weight: var(--mat-sys-body-small-weight);
     letter-spacing: var(--mat-sys-body-small-tracking);

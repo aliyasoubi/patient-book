@@ -13,7 +13,11 @@ import {
 import { PaginationDto } from '../../presentation/http/dto/pagination.dto';
 import { CaseStatus } from '../../domain';
 import { normalizeForDisplay } from '../../domain';
-import { identifier, optionalIdentifier } from '../patients/dto/patient.dto';
+import {
+  identifier,
+  optionalIdentifier,
+  REGISTER_NUMBER,
+} from '../patients/dto/patient.dto';
 
 const toBool = ({ value }: { value: unknown }): boolean | undefined => {
   if (value === undefined || value === null || value === '') return undefined;
@@ -55,7 +59,7 @@ export class UpsertRegistryCaseDto {
       'Number within this register (independent of the main file number)',
   })
   @Transform(identifier)
-  @Matches(/^\d{1,24}$/)
+  @Matches(REGISTER_NUMBER)
   registryNo!: string;
 
   @ApiPropertyOptional()

@@ -303,6 +303,8 @@
     "addOrthoCase": "پرونده ارتودنسی جدید",
     "orthoCaseCreated": "پرونده ارتودنسی جدید ثبت شد.",
     "historyTab": "تاریخچه",
+    "historyLoading": "در حال بارگذاری تاریخچه…",
+    "historyFailed": "تاریخچه بارگذاری نشد.",
     "noHistory": "تغییری ثبت نشده است."
   },
   "registryForm": {

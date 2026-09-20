@@ -31,6 +31,8 @@ x-api-env: &api-env
   JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET in .env}
   JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30m}
   JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+  # The clinic's calendar; the container's own clock is UTC.
+  CLINIC_TIMEZONE: ${CLINIC_TIMEZONE:-Asia/Tehran}
 
 services:
   db:

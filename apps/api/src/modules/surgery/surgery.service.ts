@@ -7,7 +7,7 @@ import { SurgeryQueueItem } from './surgery-queue-item.entity';
 import { ImplantCase } from '../implants/implant-case.entity';
 import { QuerySurgeryDto, UpsertSurgeryDto } from './dto/surgery.dto';
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
-import { JalaliDate } from '../../domain';
+import { JalaliDate, storedDate } from '../../domain';
 import { loosePersianKey, searchKey } from '../../domain';
 import { extractImplantBrand } from '../../domain';
 import { DatePrecisionEnum } from '../../domain';
@@ -105,7 +105,7 @@ export class SurgeryService {
     const row = await this.implants.query<Array<{ max: string | null }>>(
       `SELECT max("registryNo"::bigint)::text AS max FROM implant_cases WHERE "registryNo" ~ '^[0-9]+$'`,
     );
-    return { registryNo: String(Number(row[0]?.max ?? 0) + 1) };
+    return { registryNo: String(BigInt(row[0]?.max ?? '0') + 1n) };
   }
 
   async create(dto: UpsertSurgeryDto, userId: string | null): Promise<unknown> {
@@ -285,7 +285,7 @@ export class SurgeryService {
     // clears it.
     item.followUpDate =
       item.surgeryDate && item.followUpMonths
-        ? addMonths(new Date(item.surgeryDate), item.followUpMonths)
+        ? addMonths(storedDate(item.surgeryDate), item.followUpMonths)
         : null;
 
     // Resolve the implant case: an explicit id wins, otherwise look the
@@ -355,9 +355,7 @@ export class SurgeryService {
     value: Date | string,
     precision: DatePrecisionEnum | null,
   ): string {
-    return (
-      JalaliDate.fromDate(new Date(value), precision ?? 'day')?.format() ?? ''
-    );
+    return JalaliDate.fromStored(value, precision ?? 'day')?.format() ?? '';
   }
 
   private toResponse(item: SurgeryQueueItem): Record<string, unknown> {
@@ -384,9 +382,7 @@ export class SurgeryService {
               item.surgeryDate,
               item.surgeryDatePrecision,
             ),
-            iso:
-              JalaliDate.fromDate(new Date(item.surgeryDate))?.toIsoDate() ??
-              '',
+            iso: JalaliDate.fromStored(item.surgeryDate)?.toIsoDate() ?? '',
             precision: item.surgeryDatePrecision ?? 'day',
             raw: item.surgeryDateRaw,
           }
@@ -400,9 +396,7 @@ export class SurgeryService {
       followUpDate: item.followUpDate
         ? {
             jalali: this.formatDate(item.followUpDate, null),
-            iso:
-              JalaliDate.fromDate(new Date(item.followUpDate))?.toIsoDate() ??
-              '',
+            iso: JalaliDate.fromStored(item.followUpDate)?.toIsoDate() ?? '',
           }
         : null,
       followUpDoneAt: item.followUpDoneAt

@@ -1,0 +1,19 @@
+/**
+ * Keep an element in the accessibility tree while taking it off screen.
+ *
+ * For a control whose text label is dropped at narrow widths in favour of its
+ * icon alone. The icon is `aria-hidden`, so hiding the label with
+ * `display: none` leaves a button or link with no accessible name at all —
+ * this clips it to a pixel instead, so a screen reader still hears it.
+ */
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

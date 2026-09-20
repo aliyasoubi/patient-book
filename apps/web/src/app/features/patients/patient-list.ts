@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
@@ -184,6 +184,11 @@ export class PatientList {
   protected readonly page = signal(1);
   protected readonly limit = signal(25);
   protected readonly sort = signal<{ by: string; dir: 'ASC' | 'DESC' }>(DEFAULT_SORT);
+  /**
+   * Whether the column above came from a header click. A search is ranked by
+   * relevance until then; a column the user picked stays in force through it.
+   */
+  private readonly sortChosen = signal(false);
   protected readonly filters = signal<Filters>({
     ...EMPTY_FILTERS,
     ...readUrlFilters(this.route.snapshot.queryParamMap),
@@ -195,9 +200,14 @@ export class PatientList {
   protected readonly failed = signal(false);
   protected readonly patients = signal<Patient[]>([]);
   protected readonly total = signal(0);
+  /**
+   * Stays up during a refetch, like the rows it counts: the previous result
+   * is still on screen under the progress bar, and dropping the label would
+   * shift the header for the length of the request.
+   */
   protected readonly countLabel = computed(() => {
     const total = this.total();
-    if (this.loading() || total === 0) return null;
+    if (total === 0) return null;
     this.i18n.currentLang();
     const count = formatPersianCount(total);
     return this.i18n.instant('count.records', { count });
@@ -218,6 +228,13 @@ export class PatientList {
     ),
     { initialValue: this.searchControl.value.trim() },
   );
+
+  /** What the header arrows show: nothing while a search is ranked by relevance. */
+  protected readonly headerSort = computed<{ active: string; direction: SortDirection }>(() => {
+    if (this.debouncedQuery() && !this.sortChosen()) return { active: '', direction: '' };
+    const sort = this.sort();
+    return { active: sort.by, direction: sort.dir === 'ASC' ? 'asc' : 'desc' };
+  });
 
   /**
    * The referral chip needs a name; the id in the URL means nothing to staff.
@@ -321,6 +338,7 @@ export class PatientList {
         this.page(),
         this.limit(),
         this.sort(),
+        this.sortChosen(),
         this.filters(),
       );
       untracked(() => {
@@ -356,13 +374,15 @@ export class PatientList {
     page: number,
     limit: number,
     sort: { by: string; dir: 'ASC' | 'DESC' },
+    sortChosen: boolean,
     filters: Filters,
   ): PatientQuery {
     return {
       q: q || undefined,
       page,
       limit,
-      sortBy: q ? undefined : sort.by,
+      // No column means the API ranks a search by relevance.
+      sortBy: q && !sortChosen ? undefined : sort.by,
       sortDir: sort.dir,
       gender: filters.gender || undefined,
       education: filters.education || undefined,
@@ -382,8 +402,10 @@ export class PatientList {
   protected onSortChange(event: Sort): void {
     if (!event.direction) {
       this.sort.set(DEFAULT_SORT);
+      this.sortChosen.set(false);
     } else {
       this.sort.set({ by: event.active, dir: event.direction === 'desc' ? 'DESC' : 'ASC' });
+      this.sortChosen.set(true);
     }
     this.page.set(1);
   }
@@ -448,7 +470,10 @@ export class PatientList {
   protected readonly genderIcon = genderIcon;
   protected readonly referralKindIcon = referralKindIcon;
 
-  /** Track by id — rows are replaced wholesale on every fetch. */
+  /**
+   * Bound to the table so a refetch that returns the same patients updates
+   * the rows in place rather than tearing every one down and back up.
+   */
   protected trackById(_index: number, item: { id: string }): string {
     return item.id;
   }

@@ -21,6 +21,10 @@ export interface AppConfig {
     refreshCookieName: string;
     refreshCookieMaxAgeMs: number;
   };
+  clinic: {
+    /** IANA zone the practice keeps its calendar in, e.g. `Asia/Tehran`. */
+    timezone: string;
+  };
 }
 
 const csv = (v: string | undefined, fallback: string[]): string[] =>
@@ -59,6 +63,22 @@ const nonNegativeInteger = (
     throw new Error(`${name} must be a non-negative integer`);
   }
   return parsed;
+};
+
+const ianaTimeZone = (
+  value: string | undefined,
+  fallback: string,
+  name: string,
+): string => {
+  const zone = value?.trim() || fallback;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: zone });
+  } catch {
+    throw new Error(
+      `${name} must be an IANA time zone name such as ${fallback}`,
+    );
+  }
+  return zone;
 };
 
 const looksLikePlaceholder = (value: string): boolean =>
@@ -156,6 +176,18 @@ export function buildConfiguration(
         env.REFRESH_COOKIE_MAX_AGE_MS,
         7 * 24 * 60 * 60 * 1000,
         'REFRESH_COOKIE_MAX_AGE_MS',
+      ),
+    },
+    clinic: {
+      // "Today" is a clinic-calendar question — whether a follow-up is
+      // overdue, how old a patient is, which visits fall in the last six
+      // months — and a container's clock is UTC unless told otherwise. The
+      // bootstrap applies this to the process clock and every database
+      // session, so both agree with the front desk on what day it is.
+      timezone: ianaTimeZone(
+        env.CLINIC_TIMEZONE,
+        'Asia/Tehran',
+        'CLINIC_TIMEZONE',
       ),
     },
   };

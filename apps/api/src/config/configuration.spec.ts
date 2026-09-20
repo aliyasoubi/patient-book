@@ -72,4 +72,23 @@ describe('buildConfiguration', () => {
 
     expect(() => buildConfiguration(env)).toThrow('TRUST_PROXY');
   });
+
+  it('keeps the clinic calendar in Tehran unless told otherwise', () => {
+    expect(buildConfiguration({}).clinic.timezone).toBe('Asia/Tehran');
+    expect(buildConfiguration({ CLINIC_TIMEZONE: '  ' }).clinic.timezone).toBe(
+      'Asia/Tehran',
+    );
+  });
+
+  it('accepts any IANA zone name for the clinic calendar', () => {
+    expect(
+      buildConfiguration({ CLINIC_TIMEZONE: 'Europe/Berlin' }).clinic.timezone,
+    ).toBe('Europe/Berlin');
+  });
+
+  it('refuses a clinic zone the runtime cannot resolve', () => {
+    expect(() => buildConfiguration({ CLINIC_TIMEZONE: 'Tehran' })).toThrow(
+      'CLINIC_TIMEZONE',
+    );
+  });
 });

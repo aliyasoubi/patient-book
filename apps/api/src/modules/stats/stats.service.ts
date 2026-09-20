@@ -54,7 +54,7 @@ export function countByJalaliMonth(
 ): Array<{ month: string; count: number }> {
   const counts = new Map<string, number>();
   for (const value of dates) {
-    const month = JalaliDate.fromDate(new Date(value), 'month')?.format();
+    const month = JalaliDate.fromStored(value, 'month')?.format();
     if (!month) continue;
     counts.set(month, (counts.get(month) ?? 0) + 1);
   }
@@ -219,7 +219,7 @@ export class StatsService {
       patientId: s.implantCase?.patient?.id ?? null,
       mobile: s.implantCase?.patient?.mobile ?? null,
       followUpDate: s.followUpDate
-        ? (JalaliDate.fromDate(new Date(s.followUpDate))?.format() ?? null)
+        ? (JalaliDate.fromStored(s.followUpDate)?.format() ?? null)
         : null,
       followUpState: followUpState(s),
       hasNameMismatch: s.hasNameMismatch,

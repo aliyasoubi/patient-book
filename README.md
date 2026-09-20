@@ -367,6 +367,14 @@ Caddy rather than nginx with certbot: certificates are obtained and renewed
 without a cron job, so an expired certificate is not a way for the practice to
 lose access to its records on a Sunday.
 
+`CLINIC_TIMEZONE` (default `Asia/Tehran`) is the calendar the API decides
+"today" on — whether a follow-up is overdue, a patient's age, which visits fall
+in the last six months. It is applied to the process clock and to every
+Postgres session at startup, so both agree with the front desk rather than with
+the container, whose own clock is UTC. Dates stored as calendar days
+(`birthDate`, `firstVisitAt`, `followUpDate`) are read as days and never pass
+through a timezone conversion at all.
+
 ---
 
 ## Backups

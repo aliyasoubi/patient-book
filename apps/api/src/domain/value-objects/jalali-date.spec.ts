@@ -1,6 +1,6 @@
 import { ErrorCode } from '../errors/error-code';
 import { InvalidInputError } from '../errors/domain.error';
-import { JalaliDate } from './jalali-date';
+import { JalaliDate, storedDate } from './jalali-date';
 
 /** Narrow a parse result to the success branch, failing loudly if it is not. */
 const parsed = (input: string): JalaliDate => {
@@ -108,6 +108,24 @@ describe('JalaliDate.parse', () => {
     } catch (error) {
       expect((error as Error).message).toMatch(/^Cannot read/);
     }
+  });
+});
+
+describe('storedDate', () => {
+  it('reads a date-only column value as a local calendar day', () => {
+    // `new Date('2025-09-23')` is UTC midnight, which west of Greenwich is
+    // still the 22nd locally. The result must not depend on the host's zone.
+    const d = storedDate('2025-09-23');
+    expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([2025, 8, 23]);
+    expect(JalaliDate.fromStored('2025-09-23')?.format()).toBe('1404/07/01');
+  });
+
+  it('passes a Date or a full timestamp through unchanged', () => {
+    const date = new Date(2025, 8, 23, 10, 30);
+    expect(storedDate(date)).toBe(date);
+    expect(storedDate('2025-09-23T10:30:00.000Z').toISOString()).toBe(
+      '2025-09-23T10:30:00.000Z',
+    );
   });
 });
 

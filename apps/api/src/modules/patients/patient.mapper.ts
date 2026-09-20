@@ -70,8 +70,8 @@ function jalali(
   raw?: string | null,
 ): JalaliValue | null {
   if (!date) return null;
-  const value = JalaliDate.fromDate(
-    date instanceof Date ? date : new Date(date),
+  const value = JalaliDate.fromStored(
+    date,
     (precision as DatePrecision) ?? 'day',
   );
   if (!value) return null;
@@ -101,7 +101,7 @@ export function toPatientResponse(
     homePhone: p.homePhone,
     birthDate: birth,
     age: birth
-      ? (JalaliDate.fromDate(new Date(p.birthDate!))?.ageInYears() ?? null)
+      ? (JalaliDate.fromStored(p.birthDate!)?.ageInYears() ?? null)
       : null,
     occupation: p.occupation,
     education: p.education,

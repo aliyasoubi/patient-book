@@ -122,7 +122,7 @@ export class SurgeryForm implements HasUnsavedChanges {
   protected readonly form = this.fb.nonNullable.group({
     kind: ['implant' as SurgeryKind],
     recordedName: ['', [Validators.required, Validators.maxLength(160)]],
-    implantRegistryNo: ['', [digitString(1, 24)]],
+    implantRegistryNo: ['', [digitString(1, 18)]],
     surgeryDate: [null as Date | null],
     toothPosition: ['', [Validators.maxLength(200)]],
     implantBrand: [''],

@@ -55,6 +55,15 @@ export const optionalIdentifier = ({ value }: { value: unknown }): unknown => {
     : value;
 };
 
+/**
+ * A file or register number: digits only, and never more than fit a
+ * PostgreSQL `bigint`. The lists sort these by casting to that type, so one
+ * accepted value beyond its range (19 digits and up, in part) would fail the
+ * default patient query for everyone. Eighteen is the longest length that
+ * always fits, with room for "next number" to add one.
+ */
+export const REGISTER_NUMBER = /^\d{1,18}$/;
+
 @ValidatorConstraint({ name: 'jalaliDate', async: false })
 export class IsJalaliDateConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
@@ -107,7 +116,7 @@ export class CreatePatientDto {
   @ApiProperty({ example: '12134', description: 'Practice file number' })
   @Transform(identifier)
   @IsString()
-  @Matches(/^\d{1,24}$/)
+  @Matches(REGISTER_NUMBER)
   fileNo!: string;
 
   @ApiProperty({ example: 'مریم' })

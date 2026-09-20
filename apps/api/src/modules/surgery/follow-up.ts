@@ -1,6 +1,6 @@
 import { addDays, addMonths, endOfMonth, startOfMonth } from 'date-fns-jalali';
 
-import { JalaliDate } from '../../domain';
+import { JalaliDate, storedDate } from '../../domain';
 
 /**
  * Where a row's follow-up stands, judged against today on the Jalali
@@ -65,7 +65,7 @@ export function followUpState(
 ): FollowUpState {
   if (!item.followUpDate) return 'none';
   if (item.followUpDoneAt) return 'done';
-  const due = iso(new Date(item.followUpDate));
+  const due = iso(storedDate(item.followUpDate));
   const { from, to } = followUpWindow('thisMonth', now);
   if (due < from!) return 'overdue';
   return due <= to! ? 'due' : 'pending';

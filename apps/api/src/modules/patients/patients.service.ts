@@ -180,8 +180,8 @@ export class PatientsService {
     const row = await this.dataSource.query<Array<{ max: string | null }>>(
       `SELECT max("fileNo"::bigint)::text AS max FROM patients WHERE "fileNo" ~ '^[0-9]+$'`,
     );
-    const max = Number(row[0]?.max ?? 0);
-    return { fileNo: String(max + 1) };
+    // BigInt, not Number: a file number can be longer than Number keeps exact.
+    return { fileNo: String(BigInt(row[0]?.max ?? '0') + 1n) };
   }
 
   // ── Write ────────────────────────────────────────────────────────

@@ -26,7 +26,7 @@
       [attr.aria-expanded]="filtersOpen()"
     >
       <mat-icon aria-hidden="true">tune</mat-icon>
-      <span>{{ 'common.filters' | translate }}</span>
+      <span class="list__filter-label">{{ 'common.filters' | translate }}</span>
       @if (activeFilterCount() > 0) {
         <span class="list__filter-badge">{{ activeFilterCount() | faNum }}</span>
       }
@@ -148,242 +148,249 @@
     </section>
   }
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" class="list__progress" />
-  }
+  <!-- One box for everything a fetch can replace, so the progress bar can lie
+       over its top edge instead of pushing it down for the length of the request. -->
+  <div class="list__results">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" class="list__progress" />
+    }
 
-  <!-- A failed fetch keeps the previous rows (if any) under this banner: a
-       blank register would read as "no patients", which is a different fact. -->
-  @if (failed()) {
-    <pb-load-error
-      [message]="
-        (patients().length > 0 ? 'patients.loadFailedStale' : 'patients.loadFailed') | translate
-      "
-      (retry)="retry()"
-    />
-  }
+    <!-- A failed fetch keeps the previous rows (if any) under this banner: a
+         blank register would read as "no patients", which is a different fact. -->
+    @if (failed()) {
+      <pb-load-error
+        [message]="
+          (patients().length > 0 ? 'patients.loadFailedStale' : 'patients.loadFailed') | translate
+        "
+        (retry)="retry()"
+      />
+    }
 
-  <!-- ── Results ───────────────────────────────────────────────── -->
-  @if (!loading() && !failed() && patients().length === 0) {
-    <pb-empty-state
-      icon="person_search"
-      [title]="'patients.emptyTitle' | translate"
-      [hint]="emptyHint()"
-    >
-      @if (searchControl.value || activeFilterCount() > 0) {
-        <pb-button variant="stroked" type="button" (click)="clearSearch(); clearFilters()">
-          {{ 'patients.clearSearchAndFilters' | translate }}
-        </pb-button>
-      }
-    </pb-empty-state>
-  } @else if (isCompact()) {
-    <!-- Phone / small tablet: cards. A seven-column table is unusable here. -->
-    <ul class="cards">
-      @for (patient of patients(); track patient.id) {
-        <li class="card" [class.card--archived]="patient.isArchived">
-          <a class="card__link" [routerLink]="['/patients', patient.id]">
-            <div class="card__head">
-              <pb-avatar
-                size="medium"
-                [tone]="patient.gender"
-                [icon]="genderIcon(patient.gender)"
-              />
-              <div class="card__identity">
-                <strong class="card__name">{{
-                  patient.fullName || ('patient.unnamed' | translate)
-                }}</strong>
-                <span class="card__file">
-                  {{ 'patients.file' | translate: { fileNo: patient.fileNo } }}
-                  @if (patient.age !== null) {
-                    <span aria-hidden="true">·</span>
-                    {{ 'patients.yearsOld' | translate: { age: (patient.age | faNum) } }}
-                  }
-                </span>
-              </div>
-              @if (patient.dataIssues.length > 0) {
-                <span class="card__flag" [matTooltip]="issueTooltip(patient.dataIssues.length)">
-                  <mat-icon aria-hidden="true">error</mat-icon>
-                </span>
-              }
-            </div>
-
-            <div class="card__meta">
-              @if (patient.mobile) {
-                <span class="card__meta-item">
-                  <mat-icon aria-hidden="true">smartphone</mat-icon>
-                  <span class="ltr-nums">{{ patient.mobile }}</span>
-                </span>
-              }
-              <span class="card__meta-item">
-                <mat-icon aria-hidden="true">event</mat-icon>
-                {{ patient.lastVisitAt | jalali }}
-              </span>
-            </div>
-
-            @if (patient.medicalHistory) {
-              <div class="card__medical">
-                <mat-icon aria-hidden="true">medical_information</mat-icon>
-                <span>{{ patient.medicalHistory }}</span>
-              </div>
-            }
-
-            <pb-treatment-chips [treatments]="patient.treatments" [max]="3" />
-          </a>
-
-          @if (patient.mobile) {
-            <a
-              class="card__call"
-              [href]="'tel:' + patient.mobile"
-              [attr.aria-label]="callLabel(patient.fullName)"
-            >
-              <mat-icon aria-hidden="true">call</mat-icon>
-            </a>
-          }
-        </li>
-      }
-    </ul>
-  } @else {
-    <!-- Desktop: sortable table. -->
-    <div class="table-wrap">
-      <table
-        mat-table
-        [dataSource]="patients()"
-        matSort
-        [matSortActive]="sort().by"
-        [matSortDirection]="sort().dir === 'ASC' ? 'asc' : 'desc'"
-        (matSortChange)="onSortChange($event)"
-        class="table"
+    <!-- ── Results ───────────────────────────────────────────────── -->
+    @if (!loading() && !failed() && patients().length === 0) {
+      <pb-empty-state
+        icon="person_search"
+        [title]="'patients.emptyTitle' | translate"
+        [hint]="emptyHint()"
       >
-        <ng-container matColumnDef="fileNo">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="fileNo" start="desc">
-            {{ 'patients.fileNumber' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let p">
-            <a class="ltr-nums table__file" [routerLink]="['/patients', p.id]">{{ p.fileNo }}</a>
-          </td>
-        </ng-container>
+        @if (searchControl.value || activeFilterCount() > 0) {
+          <pb-button variant="stroked" type="button" (click)="clearSearch(); clearFilters()">
+            {{ 'patients.clearSearchAndFilters' | translate }}
+          </pb-button>
+        }
+      </pb-empty-state>
+    } @else if (isCompact()) {
+      <!-- Phone / small tablet: cards. A seven-column table is unusable here. -->
+      <ul class="cards">
+        @for (patient of patients(); track patient.id) {
+          <li class="card" [class.card--archived]="patient.isArchived">
+            <a class="card__link" [routerLink]="['/patients', patient.id]">
+              <div class="card__head">
+                <pb-avatar
+                  size="medium"
+                  [tone]="patient.gender"
+                  [icon]="genderIcon(patient.gender)"
+                />
+                <div class="card__identity">
+                  <strong class="card__name">{{
+                    patient.fullName || ('patient.unnamed' | translate)
+                  }}</strong>
+                  <span class="card__file">
+                    {{ 'patients.file' | translate: { fileNo: patient.fileNo } }}
+                    @if (patient.age !== null) {
+                      <span aria-hidden="true">·</span>
+                      {{ 'patients.yearsOld' | translate: { age: (patient.age | faNum) } }}
+                    }
+                  </span>
+                </div>
+                @if (patient.dataIssues.length > 0) {
+                  <span class="card__flag" [matTooltip]="issueTooltip(patient.dataIssues.length)">
+                    <mat-icon aria-hidden="true">error</mat-icon>
+                  </span>
+                }
+              </div>
 
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="lastName">
-            {{ 'patients.patientName' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let p">
-            <a class="table__identity" [routerLink]="['/patients', p.id]">
-              <pb-avatar size="small" [tone]="p.gender" [icon]="genderIcon(p.gender)" />
-              <div class="table__name-block">
-                <span class="table__name">{{ p.fullName || ('patient.unnamed' | translate) }}</span>
-                <span class="table__sub">
-                  {{ genderLabel(p.gender) | translate }}
-                  @if (p.fatherName) {
-                    <span aria-hidden="true">·</span>
-                    {{ 'patients.childOf' | translate: { name: p.fatherName } }}
-                  }
+              <div class="card__meta">
+                @if (patient.mobile) {
+                  <span class="card__meta-item">
+                    <mat-icon aria-hidden="true">smartphone</mat-icon>
+                    <span class="ltr-nums">{{ patient.mobile }}</span>
+                  </span>
+                }
+                <span class="card__meta-item">
+                  <mat-icon aria-hidden="true">event</mat-icon>
+                  {{ patient.lastVisitAt | jalali }}
                 </span>
               </div>
-              @if (p.dataIssues.length > 0) {
-                <span class="table__flag" [matTooltip]="issueTooltip(p.dataIssues.length)">
-                  <mat-icon aria-hidden="true">error</mat-icon>
-                </span>
+
+              @if (patient.medicalHistory) {
+                <div class="card__medical">
+                  <mat-icon aria-hidden="true">medical_information</mat-icon>
+                  <span>{{ patient.medicalHistory }}</span>
+                </div>
               }
-              @if (p.isArchived) {
-                <span class="table__archived" [matTooltip]="'patients.archived' | translate">
-                  <mat-icon aria-hidden="true">inventory_2</mat-icon>
-                </span>
-              }
+
+              <pb-treatment-chips [treatments]="patient.treatments" [max]="3" />
             </a>
-          </td>
-        </ng-container>
 
-        <ng-container matColumnDef="contact">
-          <th mat-header-cell *matHeaderCellDef>{{ 'patients.contact' | translate }}</th>
-          <td mat-cell *matCellDef="let p">
-            @if (p.mobile) {
-              <a class="table__phone ltr-nums" [href]="'tel:' + p.mobile">
-                {{ p.mobile }}
+            @if (patient.mobile) {
+              <a
+                class="card__call"
+                [href]="'tel:' + patient.mobile"
+                [attr.aria-label]="callLabel(patient.fullName)"
+              >
+                <mat-icon aria-hidden="true">call</mat-icon>
               </a>
-            } @else if (p.homePhone) {
-              <span class="ltr-nums table__phone--muted">{{ p.homePhone }}</span>
-            } @else {
-              <span class="table__muted">—</span>
             }
-          </td>
-        </ng-container>
+          </li>
+        }
+      </ul>
+    } @else {
+      <!-- Desktop: sortable table. -->
+      <div class="table-wrap">
+        <table
+          mat-table
+          [dataSource]="patients()"
+          [trackBy]="trackById"
+          matSort
+          [matSortActive]="headerSort().active"
+          [matSortDirection]="headerSort().direction"
+          (matSortChange)="onSortChange($event)"
+          class="table"
+        >
+          <ng-container matColumnDef="fileNo">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="fileNo" start="desc">
+              {{ 'patients.fileNumber' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let p">
+              <a class="ltr-nums table__file" [routerLink]="['/patients', p.id]">{{ p.fileNo }}</a>
+            </td>
+          </ng-container>
 
-        <ng-container matColumnDef="age">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="birthDate">
-            {{ 'patients.age' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let p">
-            @if (p.age !== null) {
-              <span>{{ p.age | faNum }}</span>
-            } @else {
-              <span class="table__muted">—</span>
-            }
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="treatments">
-          <th mat-header-cell *matHeaderCellDef>{{ 'patients.treatments' | translate }}</th>
-          <td mat-cell *matCellDef="let p">
-            <pb-treatment-chips [treatments]="p.treatments" [max]="2" />
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="lastVisit">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="lastVisitAt">
-            {{ 'patients.lastVisit' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let p">
-            <span class="table__date">{{ p.lastVisitAt | jalali }}</span>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="actions">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            [attr.aria-label]="'patients.operations' | translate"
-          ></th>
-          <td mat-cell *matCellDef="let p">
-            <button
-              mat-icon-button
-              type="button"
-              [matMenuTriggerFor]="rowMenu"
-              [attr.aria-label]="'patients.recordOperations' | translate"
-            >
-              <mat-icon aria-hidden="true">more_vert</mat-icon>
-            </button>
-            <mat-menu #rowMenu="matMenu">
-              <a mat-menu-item [routerLink]="['/patients', p.id]">
-                <mat-icon aria-hidden="true">visibility</mat-icon>
-                <span>{{ 'patients.viewRecord' | translate }}</span>
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="lastName">
+              {{ 'patients.patientName' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let p">
+              <a class="table__identity" [routerLink]="['/patients', p.id]">
+                <pb-avatar size="small" [tone]="p.gender" [icon]="genderIcon(p.gender)" />
+                <div class="table__name-block">
+                  <span class="table__name">{{
+                    p.fullName || ('patient.unnamed' | translate)
+                  }}</span>
+                  <span class="table__sub">
+                    {{ genderLabel(p.gender) | translate }}
+                    @if (p.fatherName) {
+                      <span aria-hidden="true">·</span>
+                      {{ 'patients.childOf' | translate: { name: p.fatherName } }}
+                    }
+                  </span>
+                </div>
+                @if (p.dataIssues.length > 0) {
+                  <span class="table__flag" [matTooltip]="issueTooltip(p.dataIssues.length)">
+                    <mat-icon aria-hidden="true">error</mat-icon>
+                  </span>
+                }
+                @if (p.isArchived) {
+                  <span class="table__archived" [matTooltip]="'patients.archived' | translate">
+                    <mat-icon aria-hidden="true">inventory_2</mat-icon>
+                  </span>
+                }
               </a>
-              @if (auth.can('editPatients')) {
-                <a mat-menu-item [routerLink]="['/patients', p.id, 'edit']">
-                  <mat-icon aria-hidden="true">edit</mat-icon>
-                  <span>{{ 'common.edit' | translate }}</span>
-                </a>
-              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="contact">
+            <th mat-header-cell *matHeaderCellDef>{{ 'patients.contact' | translate }}</th>
+            <td mat-cell *matCellDef="let p">
               @if (p.mobile) {
-                <a mat-menu-item [href]="'tel:' + p.mobile">
-                  <mat-icon aria-hidden="true">call</mat-icon>
-                  <span>{{ 'common.call' | translate }}</span>
+                <a class="table__phone ltr-nums" [href]="'tel:' + p.mobile">
+                  {{ p.mobile }}
                 </a>
+              } @else if (p.homePhone) {
+                <span class="ltr-nums table__phone--muted">{{ p.homePhone }}</span>
+              } @else {
+                <span class="table__muted">—</span>
               }
-            </mat-menu>
-          </td>
-        </ng-container>
+            </td>
+          </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="columns(); sticky: true"></tr>
-        <tr
-          mat-row
-          *matRowDef="let row; columns: columns()"
-          class="table__row"
-          [class.table__row--archived]="row.isArchived"
-        ></tr>
-      </table>
-    </div>
-  }
+          <ng-container matColumnDef="age">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="birthDate">
+              {{ 'patients.age' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let p">
+              @if (p.age !== null) {
+                <span>{{ p.age | faNum }}</span>
+              } @else {
+                <span class="table__muted">—</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="treatments">
+            <th mat-header-cell *matHeaderCellDef>{{ 'patients.treatments' | translate }}</th>
+            <td mat-cell *matCellDef="let p">
+              <pb-treatment-chips [treatments]="p.treatments" [max]="2" />
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="lastVisit">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="lastVisitAt">
+              {{ 'patients.lastVisit' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let p">
+              <span class="table__date">{{ p.lastVisitAt | jalali }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              [attr.aria-label]="'patients.operations' | translate"
+            ></th>
+            <td mat-cell *matCellDef="let p">
+              <button
+                mat-icon-button
+                type="button"
+                [matMenuTriggerFor]="rowMenu"
+                [attr.aria-label]="'patients.recordOperations' | translate"
+              >
+                <mat-icon aria-hidden="true">more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                <a mat-menu-item [routerLink]="['/patients', p.id]">
+                  <mat-icon aria-hidden="true">visibility</mat-icon>
+                  <span>{{ 'patients.viewRecord' | translate }}</span>
+                </a>
+                @if (auth.can('editPatients')) {
+                  <a mat-menu-item [routerLink]="['/patients', p.id, 'edit']">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>{{ 'common.edit' | translate }}</span>
+                  </a>
+                }
+                @if (p.mobile) {
+                  <a mat-menu-item [href]="'tel:' + p.mobile">
+                    <mat-icon aria-hidden="true">call</mat-icon>
+                    <span>{{ 'common.call' | translate }}</span>
+                  </a>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns(); sticky: true"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columns()"
+            class="table__row"
+            [class.table__row--archived]="row.isArchived"
+          ></tr>
+        </table>
+      </div>
+    }
+  </div>
 
   @if (total() > 0) {
     <mat-paginator

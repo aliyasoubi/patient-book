@@ -236,7 +236,7 @@ export class RegistryCaseDialog {
   protected readonly form = this.fb.nonNullable.group({
     registryNo: [
       this.existing?.registryNo ?? '',
-      [Validators.required, digitString(1, 24)],
+      [Validators.required, digitString(1, 18)],
     ],
     recordedName: [
       this.existing?.recordedName ?? (this.data.mode === 'create' ? this.data.patient.name : ''),
