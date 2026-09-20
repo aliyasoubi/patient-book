@@ -52,6 +52,12 @@ import type { SelectOption } from '../../shared/ui';
 import type { Patient, ReferralSource, TreatmentType } from './data/patient.model';
 import type { EducationLevel, Gender } from '../../core/models/common.model';
 
+/**
+ * File number, newest first — matches the registry and surgery lists'
+ * default ordering, and is what staff scan for first: the newest chart.
+ */
+const DEFAULT_SORT: { by: string; dir: 'ASC' | 'DESC' } = { by: 'fileNo', dir: 'DESC' };
+
 /** `inactiveMonths` filter choices. Kept as strings — see PbSelectField. */
 const INACTIVE_MONTHS_OPTIONS: SelectOption[] = [
   { value: '6', label: 'filter.inactive6m', translate: true },
@@ -177,10 +183,7 @@ export class PatientList {
 
   protected readonly page = signal(1);
   protected readonly limit = signal(25);
-  protected readonly sort = signal<{ by: string; dir: 'ASC' | 'DESC' }>({
-    by: 'lastName',
-    dir: 'ASC',
-  });
+  protected readonly sort = signal<{ by: string; dir: 'ASC' | 'DESC' }>(DEFAULT_SORT);
   protected readonly filters = signal<Filters>({
     ...EMPTY_FILTERS,
     ...readUrlFilters(this.route.snapshot.queryParamMap),
@@ -378,7 +381,7 @@ export class PatientList {
 
   protected onSortChange(event: Sort): void {
     if (!event.direction) {
-      this.sort.set({ by: 'lastName', dir: 'ASC' });
+      this.sort.set(DEFAULT_SORT);
     } else {
       this.sort.set({ by: event.active, dir: event.direction === 'desc' ? 'DESC' : 'ASC' });
     }

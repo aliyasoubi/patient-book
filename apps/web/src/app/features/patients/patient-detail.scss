@@ -182,7 +182,11 @@
     padding: 2px 7px;
     border-radius: var(--mat-sys-corner-extra-small);
     background: color-mix(in srgb, var(--mat-sys-on-surface) 10%, transparent);
-    font-family: 'SF Mono', ui-monospace, monospace;
+    // Vazirmatn rather than a monospace: the mono stacks have no Persian
+    // digit glyphs, so numbers here would fall back to Latin. `tnum` keeps the
+    // even column rhythm a code chip wants.
+    font-family: Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
+    font-variant-numeric: tabular-nums;
     font-size: var(--mat-sys-body-small-size);
     font-weight: var(--mat-sys-body-small-weight);
     line-height: var(--mat-sys-body-small-line-height);
