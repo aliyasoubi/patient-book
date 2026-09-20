@@ -63,9 +63,9 @@ import { formatPersianNumber } from '../../pipes/persian-number.pipe';
       &__clock {
         font: var(--mat-sys-title-medium);
         font-variant-numeric: tabular-nums;
-        // Farsi-Digits Vazirmatn's tabular glyph set rides the 'onum'
-        // feature, not 'tnum' — see the note on .ltr-nums in styles.scss.
-        font-feature-settings: 'onum';
+        // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
+        // 'onum', which is Latin in this font. See .ltr-nums in styles.scss.
+        font-feature-settings: 'ss01', 'tnum';
         color: var(--mat-sys-on-surface);
       }
     }

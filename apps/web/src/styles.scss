@@ -211,19 +211,21 @@ mat-icon.material-symbols-rounded {
  * paragraph. Without an explicit direction the bidi algorithm reorders the
  * leading/trailing punctuation and 0912-345 renders as 345-0912.
  *
- * Farsi-Digits Vazirmatn draws each digit at its natural proportional width
- * ('1' is narrow, '3' is wide), so a phone or file number shifts length
- * digit-by-digit as it's typed — the CSS `tabular-nums` feature ('tnum')
- * doesn't fix this because the font wires its tabular glyph set to the
- * (confusingly named) 'onum' feature instead. 'onum' is scoped to exactly
- * the ten digit glyphs in this font, so it's safe to enable wherever digits
- * need to hold a fixed width.
+ * Farsi-Digits Vazirmatn draws each ASCII digit at its natural proportional
+ * width ('1' is narrow, '3' is wide), so a phone or file number shifts length
+ * digit-by-digit as it's typed. Its 'tnum' feature only covers the ۰-۹ code
+ * points, so for ASCII text we first map 0-9 onto those glyphs with 'ss01'
+ * (an earlier lookup, so the two chain) and then 'tnum' makes them tabular.
+ *
+ * Never enable 'onum' with this font: the FD build inherited the standard
+ * face's Latin old-style figures under that tag, so digits come out as a mix
+ * of Latin and Persian shapes.
  */
 .ltr-nums {
   direction: ltr;
   unicode-bidi: isolate;
   display: inline-block;
-  font-feature-settings: 'tnum', 'onum';
+  font-feature-settings: 'ss01', 'tnum';
 }
 
 /* ── Scrollbars ────────────────────────────────────────────────────── */
