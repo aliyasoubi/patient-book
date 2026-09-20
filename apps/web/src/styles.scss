@@ -3,7 +3,8 @@
 
 // Font faces are registered in angular.json's `styles` array rather than
 // imported here: their @font-face rules use paths relative to their own
-// package, which Sass would flatten and break.
+// file, which Sass would flatten and break. `fonts/vazirmatn.css` picks the
+// Farsi-Digits build of the family; see the note there.
 
 /**
  * Material 3 theme for a Persian, right-to-left clinical app.
@@ -85,7 +86,11 @@ html {
   --pb-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --pb-ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
   // Persian numerals are what staff read on paper charts; keep the app
-  // consistent with the ledgers it replaces.
+  // consistent with the ledgers it replaces. The digits themselves come from
+  // the Farsi-Digits build of Vazirmatn (`fonts/vazirmatn.css`), so every
+  // number on screen — counts, dates, phone numbers, file numbers, and
+  // whatever is typed into an input — renders as ۰-۹ while the underlying
+  // text stays ASCII.
   font-variant-numeric: normal;
   -webkit-tap-highlight-color: transparent;
 
@@ -202,15 +207,23 @@ mat-icon.material-symbols-rounded {
 
 /* ── RTL corrections ───────────────────────────────────────────────── */
 /**
- * Phone numbers, file numbers and national ids are Latin digits inside an RTL
+ * Phone numbers, file numbers and national ids are ASCII digits inside an RTL
  * paragraph. Without an explicit direction the bidi algorithm reorders the
  * leading/trailing punctuation and 0912-345 renders as 345-0912.
+ *
+ * Farsi-Digits Vazirmatn draws each digit at its natural proportional width
+ * ('1' is narrow, '3' is wide), so a phone or file number shifts length
+ * digit-by-digit as it's typed — the CSS `tabular-nums` feature ('tnum')
+ * doesn't fix this because the font wires its tabular glyph set to the
+ * (confusingly named) 'onum' feature instead. 'onum' is scoped to exactly
+ * the ten digit glyphs in this font, so it's safe to enable wherever digits
+ * need to hold a fixed width.
  */
 .ltr-nums {
   direction: ltr;
   unicode-bidi: isolate;
   display: inline-block;
-  font-feature-settings: 'tnum';
+  font-feature-settings: 'tnum', 'onum';
 }
 
 /* ── Scrollbars ────────────────────────────────────────────────────── */

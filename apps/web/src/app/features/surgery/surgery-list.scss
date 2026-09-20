@@ -100,6 +100,9 @@
     font-size: var(--mat-sys-body-medium-size);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    // Farsi-Digits Vazirmatn's tabular glyph set rides the 'onum'
+    // feature, not 'tnum' — see the note on `.ltr-nums` in styles.scss.
+    font-feature-settings: 'onum';
     white-space: nowrap;
 
     &--none {

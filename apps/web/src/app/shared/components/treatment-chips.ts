@@ -88,6 +88,9 @@ import { TranslateService } from '@ngx-translate/core';
       background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
       color: var(--mat-sys-on-surface-variant);
       font-variant-numeric: tabular-nums;
+      // Farsi-Digits Vazirmatn's tabular glyph set rides the 'onum'
+      // feature, not 'tnum' — see the note on .ltr-nums in styles.scss.
+      font-feature-settings: 'onum';
     }
   `,
 })

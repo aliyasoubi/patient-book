@@ -77,7 +77,11 @@ mat-button-toggle-group .material-symbols-rounded {
   }
 
   &__code {
-    font-family: 'SF Mono', ui-monospace, monospace;
+    // Vazirmatn rather than a monospace: the mono stacks have no Persian
+    // digit glyphs, so numbers here would fall back to Latin. `tnum` keeps the
+    // even column rhythm a code chip wants.
+    font-family: Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
+    font-variant-numeric: tabular-nums;
     font-size: var(--mat-sys-label-small-size);
     font-weight: var(--mat-sys-label-small-weight);
     line-height: var(--mat-sys-label-small-line-height);

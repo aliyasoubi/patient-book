@@ -31,7 +31,7 @@
               }
             ],
             "styles": [
-              "../../node_modules/vazirmatn/Vazirmatn-Variable-font-face.css",
+              "src/fonts/vazirmatn.css",
               "src/fonts/material-symbols-rounded.css",
               "src/styles.scss"
             ],

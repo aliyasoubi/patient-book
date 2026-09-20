@@ -68,6 +68,9 @@ import { formatPersianNumber } from '../../pipes/persian-number.pipe';
         font-size: var(--mat-sys-headline-small-size);
         font-weight: 700;
         font-variant-numeric: tabular-nums;
+        // Farsi-Digits Vazirmatn's tabular glyph set rides the 'onum'
+        // feature, not 'tnum' — see the note on .ltr-nums in styles.scss.
+        font-feature-settings: 'onum';
         letter-spacing: 0.5px;
         color: var(--mat-sys-on-surface);
       }
