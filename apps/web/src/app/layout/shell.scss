@@ -127,8 +127,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 64px;
-  padding-inline: 12px;
+  // Sized by content, not a fixed 64px: the 56px search pill then gets an equal
+  // 8px above and below regardless of the 1px border (a fixed border-box height
+  // left it 3.5px on top and 4.5px underneath).
+  height: auto;
+  padding: 8px 12px;
   background: var(--mat-sys-surface);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
   // Sits above the page; the shadow only appears once content scrolls under it.
@@ -146,6 +149,13 @@
 
   &__avatar-btn {
     flex: 0 0 auto;
+    // The icon button assumes a 24px glyph and pads to it, so the 32px avatar
+    // overflowed its content box and sat off-centre inside the state layer.
+    // Size the slot to the avatar and give the hover ring an 8px band around it.
+    --mat-icon-button-icon-size: var(--pb-avatar-sm);
+    --mat-icon-button-state-layer-size: 48px;
+    display: inline-grid;
+    place-items: center;
   }
 }
 

@@ -117,10 +117,11 @@ export interface SearchFieldOption {
     .pb-search-field {
       display: flex;
       align-items: center;
-      gap: var(--pb-space-2);
+      /* M3 spec: 16dp edge → leading icon, 16dp icon → text, 16dp text/trailing icon → edge. */
+      gap: var(--pb-space-4);
       width: 100%;
       height: var(--pb-search-height);
-      padding-inline: var(--pb-space-4) var(--pb-space-1);
+      padding-inline: var(--pb-space-4);
       border-radius: var(--mat-sys-corner-full);
       background: var(--mat-sys-surface-container-high);
       color: var(--mat-sys-on-surface);
@@ -171,14 +172,18 @@ export interface SearchFieldOption {
       }
     }
 
+    /* The 40px icon button insets its 24px glyph by 8px; pull it back so the
+       glyph (not the state layer) sits 16px from the edge like the leading icon. */
     .pb-search-field__clear {
       flex: 0 0 auto;
+      margin-inline: calc(-1 * var(--pb-space-2));
       color: var(--mat-sys-on-surface-variant);
     }
 
+    /* 20px spinner centred where the 24px trailing icon would be. */
     .pb-search-field__spinner {
       flex: 0 0 auto;
-      margin-inline: var(--pb-space-3);
+      margin-inline: 0 2px;
     }
 
     .pb-search-option {
