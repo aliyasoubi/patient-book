@@ -40,19 +40,28 @@ import type { RegistryCase } from '../../core/models/common.model';
 /** Everything that differs between the two registers' screens. */
 const KINDS: Record<
   RegistryKind,
-  { icon: string; title: string; searchAria: string; emptyTitle: string }
+  {
+    icon: string;
+    title: string;
+    searchAria: string;
+    emptyTitle: string;
+    /** Whether rows show phone and status; the implant book keeps neither. */
+    showDetails: boolean;
+  }
 > = {
   implant: {
     icon: 'deployed_code',
     title: 'implant.title',
     searchAria: 'implant.searchAria',
     emptyTitle: 'implant.emptyTitle',
+    showDetails: false,
   },
   ortho: {
     icon: 'straighten',
     title: 'ortho.title',
     searchAria: 'ortho.searchAria',
     emptyTitle: 'ortho.emptyTitle',
+    showDetails: true,
   },
 };
 

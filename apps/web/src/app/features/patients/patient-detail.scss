@@ -378,6 +378,11 @@
     margin-inline-start: auto;
   }
 
+  /* An implant row has no status chip to push the edit button to the end. */
+  li > span + .registry__edit {
+    margin-inline-start: auto;
+  }
+
   /* Compact: the row is one line of body text, not a 48px touch target. */
   &__edit {
     --mdc-icon-button-state-layer-size: 32px;

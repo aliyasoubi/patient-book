@@ -54,7 +54,8 @@ const MIN_PATIENT_QUERY = 2;
  * identical forms. Opened from a patient's page it creates a case already
  * linked to that patient; opened from a register row it edits that row —
  * number, name, phones, status, notes and, since imported rows are often
- * unlinked or linked to the wrong file, the patient link itself.
+ * unlinked or linked to the wrong file, the patient link itself. The implant
+ * book keeps only the number, name and link.
  */
 @Component({
   selector: 'pb-registry-case-dialog',
@@ -118,31 +119,35 @@ const MIN_PATIENT_QUERY = 2;
             </button>
           </div>
         }
-        <pb-select-field
-          [control]="form.controls.status"
-          [label]="'registryForm.status' | translate"
-          [options]="statusOptions"
-        />
+        @if (showDetails) {
+          <pb-select-field
+            [control]="form.controls.status"
+            [label]="'registryForm.status' | translate"
+            [options]="statusOptions"
+          />
+        }
       }
 
-      <pb-text-field
-        [control]="form.controls.mobile"
-        [label]="'registryForm.mobile' | translate"
-        type="tel"
-        [ltr]="true"
-        inputmode="tel"
-      />
-      <pb-text-field
-        [control]="form.controls.homePhone"
-        [label]="'registryForm.homePhone' | translate"
-        type="tel"
-        [ltr]="true"
-        inputmode="tel"
-      />
-      <pb-textarea-field
-        [control]="form.controls.notes"
-        [label]="'registryForm.notes' | translate"
-      />
+      @if (showDetails) {
+        <pb-text-field
+          [control]="form.controls.mobile"
+          [label]="'registryForm.mobile' | translate"
+          type="tel"
+          [ltr]="true"
+          inputmode="tel"
+        />
+        <pb-text-field
+          [control]="form.controls.homePhone"
+          [label]="'registryForm.homePhone' | translate"
+          type="tel"
+          [ltr]="true"
+          inputmode="tel"
+        />
+        <pb-textarea-field
+          [control]="form.controls.notes"
+          [label]="'registryForm.notes' | translate"
+        />
+      }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
@@ -233,6 +238,9 @@ export class RegistryCaseDialog {
 
   private readonly existing = this.data.mode === 'edit' ? this.data.existing : null;
 
+  /** Phones, status and notes; the implant book keeps none of them. */
+  protected readonly showDetails = this.data.kind !== 'implant';
+
   protected readonly form = this.fb.nonNullable.group({
     registryNo: [
       this.existing?.registryNo ?? '',
@@ -256,6 +264,16 @@ export class RegistryCaseDialog {
     ],
     notes: [this.existing?.notes ?? ''],
   });
+
+  constructor() {
+    // Hidden fields must not block a save with a value the user cannot see,
+    // such as an old malformed phone number prefilled from the patient.
+    if (!this.showDetails) {
+      for (const name of ['status', 'mobile', 'homePhone', 'notes'] as const) {
+        this.form.controls[name].disable();
+      }
+    }
+  }
 
   /** The link as it will be saved; starts as whatever the row already holds. */
   protected readonly linkedPatient = signal<LinkedPatient | null>(
@@ -325,12 +343,15 @@ export class RegistryCaseDialog {
     const raw = this.form.getRawValue();
     const blank = (v: string): string | null => (v.trim() ? v.trim() : null);
 
+    // Fields the form does not show are left out, so what is stored stays.
     const payload: RegistryCaseInput = {
       registryNo: toLatinDigits(raw.registryNo).trim(),
       recordedName: raw.recordedName.trim(),
-      mobile: identifierValue(raw.mobile),
-      homePhone: identifierValue(raw.homePhone),
-      notes: blank(raw.notes),
+      ...(this.showDetails && {
+        mobile: identifierValue(raw.mobile),
+        homePhone: identifierValue(raw.homePhone),
+        notes: blank(raw.notes),
+      }),
     };
 
     let request;
@@ -338,7 +359,7 @@ export class RegistryCaseDialog {
       payload.patientId = this.data.patient.id;
       request = this.registry.saveCase(this.data.kind, null, payload);
     } else {
-      payload.status = raw.status;
+      if (this.showDetails) payload.status = raw.status;
       // Only a changed link is sent: the API treats any `patientId` it
       // receives as a deliberate, manual decision about the match.
       const linkedId = this.linkedPatient()?.id ?? null;

@@ -34,12 +34,14 @@
         </div>
 
         <div class="registry__meta">
-          @if (c.mobile) {
-            <a class="registry__phone ltr-nums" [href]="'tel:' + c.mobile">{{ c.mobile }}</a>
+          @if (showDetails()) {
+            @if (c.mobile) {
+              <a class="registry__phone ltr-nums" [href]="'tel:' + c.mobile">{{ c.mobile }}</a>
+            }
+            <pb-status-chip [tone]="c.status === 'active' ? 'success' : 'neutral'">
+              {{ statusLabel(c.status) | translate }}
+            </pb-status-chip>
           }
-          <pb-status-chip [tone]="c.status === 'active' ? 'success' : 'neutral'">
-            {{ statusLabel(c.status) | translate }}
-          </pb-status-chip>
           <!-- One menu per row, same pattern as the patient and surgery
                lists; which items it holds follows the caller's permissions. -->
           @if (hasActions()) {

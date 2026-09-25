@@ -236,12 +236,6 @@
                     <span>{{
                       'patientDetail.implantRegistryNumber' | translate: { number: c.registryNo }
                     }}</span>
-                    <pb-status-chip
-                      class="registry__status"
-                      [tone]="c.status === 'active' ? 'success' : 'neutral'"
-                    >
-                      {{ caseStatusLabel(c.status) | translate }}
-                    </pb-status-chip>
                     @if (auth.can('editRegistry') && !p.isArchived) {
                       <button
                         mat-icon-button

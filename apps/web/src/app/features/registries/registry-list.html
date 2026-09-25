@@ -76,6 +76,7 @@
       [icon]="ui().icon"
       [emptyTitle]="ui().emptyTitle | translate"
       [emptyHint]="emptyHint()"
+      [showDetails]="ui().showDetails"
       [canEdit]="auth.can('editRegistry')"
       [canArchive]="auth.can('archiveRegistry')"
       [archived]="archivedOnly()"
