@@ -39,7 +39,7 @@ export class RegistryTable {
   readonly emptyHint = input('');
   readonly canEdit = input(false);
   readonly canArchive = input(false);
-  /** Show the phone and status; off for the implant book, which keeps neither. */
+  /** Show the phone and status; off for the implant and ortho books, which keep neither. */
   readonly showDetails = input(true);
   /** The rows are archived ones: offer restore instead of edit/archive. */
   readonly archived = input(false);

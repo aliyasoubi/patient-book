@@ -25,7 +25,6 @@ import {
   RegistryCaseDialogData,
 } from '../../shared/components/registry-case-dialog';
 import {
-  caseStatusLabel,
   educationLabel,
   fieldLabel,
   genderIcon,
@@ -100,7 +99,6 @@ export class PatientDetail {
   protected readonly genderLabel = genderLabel;
   protected readonly genderIcon = genderIcon;
   protected readonly educationLabel = educationLabel;
-  protected readonly caseStatusLabel = caseStatusLabel;
   protected readonly color = treatmentColor;
 
   protected readonly loading = signal(true);

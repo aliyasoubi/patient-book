@@ -54,8 +54,8 @@ const MIN_PATIENT_QUERY = 2;
  * identical forms. Opened from a patient's page it creates a case already
  * linked to that patient; opened from a register row it edits that row —
  * number, name, phones, status, notes and, since imported rows are often
- * unlinked or linked to the wrong file, the patient link itself. The implant
- * book keeps only the number, name and link.
+ * unlinked or linked to the wrong file, the patient link itself. Both books
+ * keep only the number, name and link.
  */
 @Component({
   selector: 'pb-registry-case-dialog',
@@ -238,8 +238,8 @@ export class RegistryCaseDialog {
 
   private readonly existing = this.data.mode === 'edit' ? this.data.existing : null;
 
-  /** Phones, status and notes; the implant book keeps none of them. */
-  protected readonly showDetails = this.data.kind !== 'implant';
+  /** Phones, status and notes; neither the implant nor the ortho book keeps them. */
+  protected readonly showDetails: boolean = false;
 
   protected readonly form = this.fb.nonNullable.group({
     registryNo: [

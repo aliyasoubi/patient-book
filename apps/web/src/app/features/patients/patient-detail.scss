@@ -374,11 +374,7 @@
     }
   }
 
-  &__status {
-    margin-inline-start: auto;
-  }
-
-  /* An implant row has no status chip to push the edit button to the end. */
+  /* No status chip on the row, so the edit button pushes itself to the end. */
   li > span + .registry__edit {
     margin-inline-start: auto;
   }

@@ -270,12 +270,6 @@
                     <span>{{
                       'patientDetail.orthoRegistryNumber' | translate: { number: c.registryNo }
                     }}</span>
-                    <pb-status-chip
-                      class="registry__status"
-                      [tone]="c.status === 'active' ? 'success' : 'neutral'"
-                    >
-                      {{ caseStatusLabel(c.status) | translate }}
-                    </pb-status-chip>
                     @if (auth.can('editRegistry') && !p.isArchived) {
                       <button
                         mat-icon-button
@@ -290,6 +284,7 @@
                   </li>
                 }
               </ul>
+              <p class="card__hint">{{ 'patientDetail.orthoNumberHint' | translate }}</p>
             } @else {
               <p class="card__empty">{{ 'patientDetail.noOrtho' | translate }}</p>
             }
