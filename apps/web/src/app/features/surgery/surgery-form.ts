@@ -202,11 +202,6 @@ export class SurgeryForm implements HasUnsavedChanges {
 
   constructor() {
     warnBeforeUnload(() => this.hasUnsavedChanges());
-    // Clinical notes are shown but not editable at the front desk; the API
-    // refuses a change from that role regardless.
-    if (!this.canEditClinicalNotes) {
-      this.form.controls.notes.disable();
-    }
     effect(() => {
       const id = this.id();
       untracked(() => (id ? this.loadSurgery(id) : this.prefillNew()));

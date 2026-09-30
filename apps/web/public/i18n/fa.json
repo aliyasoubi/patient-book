@@ -142,6 +142,7 @@
     "filterThisMonth": "ماه جاری",
     "filterNextMonth": "ماه بعد",
     "filterOverdue": "عقب‌افتاده",
+    "cancelled": "جراحی لغو شد — بدون پیگیری",
     "followUpDoneSwitch": "انجام شد",
     "followUpOn": "پیگیری: {{date}}",
     "followUpMissed": "پیگیری عقب‌افتاده از {{date}}",
@@ -625,6 +626,7 @@
   },
   "audit": {
     "systemUser": "سیستم",
+    "deletedUser": "کاربر حذف‌شده",
     "treatmentCount": "{{count}} درمان",
     "issueCount": "{{count}} هشدار"
   },

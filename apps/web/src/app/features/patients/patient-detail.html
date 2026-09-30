@@ -319,7 +319,9 @@
                         <div class="timeline__head">
                           <strong>{{ actionLabel(entry.action) }}</strong>
                           <span class="timeline__who">{{
-                            entry.username ?? ('audit.systemUser' | translate)
+                            entry.fullName ??
+                              entry.username ??
+                              ((entry.userId ? 'audit.deletedUser' : 'audit.systemUser') | translate)
                           }}</span>
                         </div>
                         @for (change of changeEntries(entry.changes); track change[0]) {

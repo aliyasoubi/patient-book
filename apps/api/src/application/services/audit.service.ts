@@ -13,6 +13,9 @@ export interface AuditEntry {
   ip?: string | null;
 }
 
+/** A history row as the patient screen shows it: who, by the name they go by. */
+export type AuditHistoryEntry = AuditLog & { fullName: string | null };
+
 @Injectable()
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
@@ -61,36 +64,37 @@ export class AuditService {
   }
 
   /**
-   * Recent history for one record, newest first. Most writes record only the
-   * user's id, so the name is looked up here; a row with neither is the
-   * system's own (an import, a migration).
+   * Recent history for one record, newest first, with the name staff know
+   * each author by. Most writes record only the user's id, so the names are
+   * looked up here; a row with no user is the system's own (an import, a
+   * migration). A user since removed keeps whatever username the row stored.
    */
   async forEntity(
     entity: string,
     entityId: string,
     limit = 50,
-  ): Promise<AuditLog[]> {
+  ): Promise<AuditHistoryEntry[]> {
     const rows = await this.logs.find({
       where: { entity, entityId },
       order: { createdAt: 'DESC' },
       take: limit,
     });
-    const ids = [
-      ...new Set(
-        rows.filter((r) => r.userId && !r.username).map((r) => r.userId!),
-      ),
-    ];
-    if (ids.length) {
-      const users = await this.logs.query<
-        Array<{ id: string; username: string }>
-      >(`SELECT id, username FROM users WHERE id = ANY($1::uuid[])`, [ids]);
-      const names = new Map(users.map((u) => [u.id, u.username]));
-      for (const row of rows) {
-        if (row.userId && !row.username) {
-          row.username = names.get(row.userId) ?? null;
-        }
-      }
-    }
-    return rows;
+    const ids = [...new Set(rows.flatMap((r) => (r.userId ? [r.userId] : [])))];
+    const users = ids.length
+      ? await this.logs.query<
+          Array<{ id: string; username: string; fullName: string | null }>
+        >(
+          `SELECT id, username, "fullName" FROM users WHERE id = ANY($1::uuid[])`,
+          [ids],
+        )
+      : [];
+    const byId = new Map(users.map((u) => [u.id, u]));
+    return rows.map((row) => {
+      const user = row.userId ? byId.get(row.userId) : undefined;
+      return Object.assign(row, {
+        username: row.username ?? user?.username ?? null,
+        fullName: user?.fullName?.trim() || null,
+      });
+    });
   }
 }

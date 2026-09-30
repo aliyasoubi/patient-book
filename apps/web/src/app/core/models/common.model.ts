@@ -145,6 +145,8 @@ export interface AuditEntry {
   id: string;
   userId: string | null;
   username: string | null;
+  /** The author's display name, when the account still has one. */
+  fullName: string | null;
   action: string;
   entity: string;
   entityId: string | null;

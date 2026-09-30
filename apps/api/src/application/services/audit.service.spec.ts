@@ -38,7 +38,7 @@ describe('AuditService', () => {
     expect(save).toHaveBeenCalledTimes(1);
   });
 
-  it('names the user behind history rows that recorded only an id', async () => {
+  it('names the author of each history row, by full name and username', async () => {
     const rows = [
       Object.assign(new AuditLog(), { userId: 'u-1', username: null }),
       Object.assign(new AuditLog(), { userId: 'u-2', username: 'kept' }),
@@ -46,7 +46,10 @@ describe('AuditService', () => {
     ];
     const query = jest
       .fn<(sql: string, params: unknown[]) => Promise<unknown[]>>()
-      .mockResolvedValue([{ id: 'u-1', username: 'reception' }]);
+      .mockResolvedValue([
+        { id: 'u-1', username: 'reception', fullName: 'مریم احمدی' },
+        { id: 'u-2', username: 'renamed', fullName: ' ' },
+      ]);
     const service = new AuditService({
       find: jest.fn(() => Promise.resolve(rows)),
       query,
@@ -54,7 +57,11 @@ describe('AuditService', () => {
 
     const history = await service.forEntity('patient', 'patient-1');
 
-    expect(query).toHaveBeenCalledWith(expect.any(String), [['u-1']]);
-    expect(history.map((r) => r.username)).toEqual(['reception', 'kept', null]);
+    expect(query).toHaveBeenCalledWith(expect.any(String), [['u-1', 'u-2']]);
+    expect(history.map((r) => [r.fullName, r.username])).toEqual([
+      ['مریم احمدی', 'reception'],
+      [null, 'kept'],
+      [null, null],
+    ]);
   });
 });

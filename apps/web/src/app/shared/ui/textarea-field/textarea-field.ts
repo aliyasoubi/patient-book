@@ -27,9 +27,13 @@ import { firstErrorMessage } from '../field-errors';
         matInput
         [formControl]="control()"
         [rows]="rows()"
-        [placeholder]="placeholder()"
+        [placeholder]="readonly() ? '' : placeholder()"
+        [readonly]="readonly()"
         [attr.maxlength]="maxlength()"
       ></textarea>
+      @if (readonly()) {
+        <mat-icon matIconSuffix aria-hidden="true">lock</mat-icon>
+      }
       @if (hint() && !errorText()) {
         <mat-hint>{{ hint() }}</mat-hint>
       }
@@ -56,6 +60,11 @@ export class PbTextareaField {
   readonly hint = input<string | null>(null);
   readonly rows = input(3);
   readonly maxlength = input<number | null>(null);
+  /**
+   * Shown at full contrast but not editable — for text a role may read and
+   * not change. Unlike a disabled control, the value stays legible.
+   */
+  readonly readonly = input(false);
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
 
   protected errorText(): string | null {

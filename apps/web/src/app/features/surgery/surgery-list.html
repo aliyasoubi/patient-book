@@ -127,7 +127,15 @@
                  the patient, and where it stands. The switch is the one thing
                  staff change from the list — a visit happened, or it did not
                  after all — so it sits right here, not behind a menu. -->
-            @if (item.followUpDate; as followUp) {
+            @if (item.status === 'cancelled') {
+              <!-- A cancelled surgery owes no follow-up; say so rather than
+                   show a date that no longer means anything. -->
+              <div class="queue__follow-up">
+                <pb-status-chip icon="cancel" tone="neutral">
+                  {{ 'surgery.cancelled' | translate }}
+                </pb-status-chip>
+              </div>
+            } @else if (item.followUpDate; as followUp) {
               <div class="queue__follow-up">
                 <pb-status-chip icon="event_repeat" [tone]="toneFor(item.followUpState)">
                   @switch (item.followUpState) {
