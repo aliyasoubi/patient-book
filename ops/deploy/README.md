@@ -154,8 +154,8 @@ Two roles, not one:
   backup to `pg_dump` everything. Nothing else connects with it.
 - **`DB_APP_USER`** — what the running API connects as. `migrate` provisions
   it after every migration (`ensure-app-role.ts`): `SELECT`/`INSERT`/`UPDATE`/
-  `DELETE` on every table, nothing else — no `CREATE`, no `DROP`, no `ALTER`,
-  not superuser. A compromise of the web application gets read/write access
+  `DELETE` on every table except `audit_logs`, which it can only read and
+  append to — nothing else, no `CREATE`, no `DROP`, no `ALTER`, not superuser. A compromise of the web application gets read/write access
   to patient rows, not the ability to touch the schema or any other database
   on the server.
 

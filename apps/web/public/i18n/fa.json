@@ -26,6 +26,7 @@
   },
   "common": {
     "back": "بازگشت",
+    "clinicalReadOnly": "یادداشت‌های بالینی را فقط دندانپزشک یا مدیر ویرایش می‌کند.",
     "cancel": "انصراف",
     "saving": "در حال ذخیره…",
     "edit": "ویرایش",
@@ -140,6 +141,8 @@
     "filterWeek": "این هفته",
     "filterThisMonth": "ماه جاری",
     "filterNextMonth": "ماه بعد",
+    "filterOverdue": "عقب‌افتاده",
+    "cancelled": "جراحی لغو شد — بدون پیگیری",
     "followUpDoneSwitch": "انجام شد",
     "followUpOn": "پیگیری: {{date}}",
     "followUpMissed": "پیگیری عقب‌افتاده از {{date}}",
@@ -623,6 +626,7 @@
   },
   "audit": {
     "systemUser": "سیستم",
+    "deletedUser": "کاربر حذف‌شده",
     "treatmentCount": "{{count}} درمان",
     "issueCount": "{{count}} هشدار"
   },

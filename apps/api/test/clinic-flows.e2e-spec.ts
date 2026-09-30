@@ -54,9 +54,11 @@ describeIfWritable('clinic flows (e2e)', () => {
   let db: DataSource;
   let adminToken: string;
   let viewerToken: string;
+  let receptionistToken: string;
 
   const adminUsername = `e2e-admin-${runId}`;
   const viewerUsername = `e2e-viewer-${runId}`;
+  const receptionistUsername = `e2e-reception-${runId}`;
   // Fixture credentials for this run only; never a real account's.
   const password = `E2e!${runId}Pass`;
   const userIds: string[] = [];
@@ -69,6 +71,8 @@ describeIfWritable('clinic flows (e2e)', () => {
     req.set('Authorization', `Bearer ${adminToken}`);
   const asViewer = (req: request.Test) =>
     req.set('Authorization', `Bearer ${viewerToken}`);
+  const asReceptionist = (req: request.Test) =>
+    req.set('Authorization', `Bearer ${receptionistToken}`);
 
   async function login(username: string): Promise<string> {
     const res = await http()
@@ -92,6 +96,7 @@ describeIfWritable('clinic flows (e2e)', () => {
     for (const [username, role] of [
       [adminUsername, UserRole.Admin],
       [viewerUsername, UserRole.Viewer],
+      [receptionistUsername, UserRole.Receptionist],
     ] as const) {
       const saved = await users.save(
         users.create({
@@ -108,6 +113,7 @@ describeIfWritable('clinic flows (e2e)', () => {
 
     adminToken = await login(adminUsername);
     viewerToken = await login(viewerUsername);
+    receptionistToken = await login(receptionistUsername);
   });
 
   afterAll(async () => {
@@ -282,6 +288,62 @@ describeIfWritable('clinic flows (e2e)', () => {
       );
     });
 
+    it('lets the front desk save a patient but not change clinical notes', async () => {
+      const created = await asAdmin(http().post('/api/patients'))
+        .send({
+          fileNo: nextNumber(),
+          firstName: 'زهرا',
+          lastName: 'کریمی',
+          medicalHistory: 'دیابت',
+        })
+        .expect(201);
+      const { id, version } = created.body as { id: string; version: number };
+      patientIds.push(id);
+
+      // The form sends every field back; untouched notes are not a change.
+      const saved = await asReceptionist(http().patch(`/api/patients/${id}`))
+        .send({
+          occupation: 'معلم',
+          medicalHistory: 'دیابت',
+          notes: '',
+          expectedVersion: version,
+        })
+        .expect(200);
+      const next = (saved.body as { version: number }).version;
+
+      for (const change of [{ medicalHistory: 'فشار خون' }, { notes: 'x' }]) {
+        const denied = await asReceptionist(http().patch(`/api/patients/${id}`))
+          .send({ ...change, expectedVersion: next })
+          .expect(403);
+        expect((denied.body as ErrorBody).code).toBe(ErrorCode.Forbidden);
+      }
+      await asReceptionist(http().post('/api/patients'))
+        .send({
+          fileNo: nextNumber(),
+          firstName: 'زهرا',
+          lastName: 'کریمی',
+          medicalHistory: 'دیابت',
+        })
+        .expect(403);
+
+      const surgery = await asReceptionist(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'زهرا کریمی' })
+        .expect(201);
+      const surgeryId = (surgery.body as { id: string }).id;
+      surgeryIds.push(surgeryId);
+      await asReceptionist(http().patch(`/api/surgery-queue/${surgeryId}`))
+        .send({ notes: 'درد پس از جراحی' })
+        .expect(403);
+
+      const stored = (
+        await asAdmin(http().get(`/api/patients/${id}`)).expect(200)
+      ).body as { occupation: string; medicalHistory: string };
+      expect(stored).toMatchObject({
+        occupation: 'معلم',
+        medicalHistory: 'دیابت',
+      });
+    });
+
     it('keeps a viewer read-only', async () => {
       const created = await asAdmin(http().post('/api/patients'))
         .send({ fileNo: nextNumber(), firstName: 'علی', lastName: 'حسینی' })
@@ -380,7 +442,11 @@ describeIfWritable('clinic flows (e2e)', () => {
 
   describe('dashboard', () => {
     type Totals = {
-      totals: { implantCases: number; followUpsThisWeek: number };
+      totals: {
+        implantCases: number;
+        followUpsThisWeek: number;
+        followUpsOverdue: number;
+      };
     };
     const totals = async (): Promise<Totals['totals']> =>
       (
@@ -425,6 +491,41 @@ describeIfWritable('clinic flows (e2e)', () => {
       const archived = await totals();
       expect(archived.implantCases).toBe(before.implantCases);
       expect(archived.followUpsThisWeek).toBe(before.followUpsThisWeek);
+    });
+
+    it('drops a cancelled surgery from the overdue count and list alike', async () => {
+      const overdueIds = async (): Promise<string[]> =>
+        (
+          (
+            await asAdmin(
+              http().get('/api/surgery-queue?followUp=overdue&limit=100'),
+            ).expect(200)
+          ).body as { items: Array<{ id: string }> }
+        ).items.map((i) => i.id);
+      const before = await totals();
+
+      // Due two months ago: its month has passed, so it is overdue.
+      const surgery = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'مینا کاظمی',
+          surgeryDate: formatJalali(addMonths(new Date(), -5), 'yyyy/MM/dd'),
+          followUpMonths: 3,
+        })
+        .expect(201);
+      const { id } = surgery.body as { id: string };
+      surgeryIds.push(id);
+
+      expect((await totals()).followUpsOverdue).toBe(
+        before.followUpsOverdue + 1,
+      );
+      expect(await overdueIds()).toContain(id);
+
+      await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ status: 'cancelled' })
+        .expect(200);
+
+      expect((await totals()).followUpsOverdue).toBe(before.followUpsOverdue);
+      expect(await overdueIds()).not.toContain(id);
     });
 
     it("lists the coming week's follow-ups by name, soonest first", async () => {

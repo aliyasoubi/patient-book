@@ -95,6 +95,8 @@
           [control]="form.controls.notes"
           [label]="'surgeryForm.notes' | translate"
           [rows]="3"
+          [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
+          [readonly]="!canEditClinicalNotes"
         />
       </div>
     </pb-surface>

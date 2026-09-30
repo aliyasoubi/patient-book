@@ -37,4 +37,31 @@ describe('AuditService', () => {
     );
     expect(save).toHaveBeenCalledTimes(1);
   });
+
+  it('names the author of each history row, by full name and username', async () => {
+    const rows = [
+      Object.assign(new AuditLog(), { userId: 'u-1', username: null }),
+      Object.assign(new AuditLog(), { userId: 'u-2', username: 'kept' }),
+      Object.assign(new AuditLog(), { userId: null, username: null }),
+    ];
+    const query = jest
+      .fn<(sql: string, params: unknown[]) => Promise<unknown[]>>()
+      .mockResolvedValue([
+        { id: 'u-1', username: 'reception', fullName: 'مریم احمدی' },
+        { id: 'u-2', username: 'renamed', fullName: ' ' },
+      ]);
+    const service = new AuditService({
+      find: jest.fn(() => Promise.resolve(rows)),
+      query,
+    } as unknown as Repository<AuditLog>);
+
+    const history = await service.forEntity('patient', 'patient-1');
+
+    expect(query).toHaveBeenCalledWith(expect.any(String), [['u-1', 'u-2']]);
+    expect(history.map((r) => [r.fullName, r.username])).toEqual([
+      ['مریم احمدی', 'reception'],
+      [null, 'kept'],
+      [null, null],
+    ]);
+  });
 });

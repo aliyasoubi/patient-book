@@ -1,11 +1,12 @@
 import { addDays, addMonths, endOfMonth, startOfMonth } from 'date-fns-jalali';
 
-import { JalaliDate, storedDate } from '../../domain';
+import { JalaliDate, storedDate, SurgeryStatus } from '../../domain';
 
 /**
  * Where a row's follow-up stands, judged against today on the Jalali
  * calendar: `due` this month, `overdue` before it, `pending` after it,
- * `done` once it has happened, `none` when no follow-up was set.
+ * `done` once it has happened, `none` when no follow-up was set or the
+ * surgery was cancelled.
  */
 export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'done';
 
@@ -21,6 +22,15 @@ export const FOLLOW_UP_FILTERS = [
   'overdue',
 ] as const;
 export type FollowUpFilter = (typeof FOLLOW_UP_FILTERS)[number];
+
+/**
+ * SQL for "this row has an open follow-up", over `surgery_queue` aliased as
+ * `alias`. A cancelled surgery implies no follow-up, whatever its date says.
+ * Shared so the list, the dashboard counts and its panel select alike.
+ */
+export function openFollowUpSql(alias: string): string {
+  return `${alias}."followUpDate" IS NOT NULL AND ${alias}."followUpDoneAt" IS NULL AND ${alias}.status <> '${SurgeryStatus.Cancelled}'`;
+}
 
 /** ISO `yyyy-MM-dd` bounds, inclusive, for a `date` column comparison. */
 export interface DateWindow {
@@ -60,10 +70,16 @@ export function followUpWindow(
 }
 
 export function followUpState(
-  item: { followUpDate: Date | null; followUpDoneAt: Date | null },
+  item: {
+    followUpDate: Date | null;
+    followUpDoneAt: Date | null;
+    status?: SurgeryStatus;
+  },
   now = new Date(),
 ): FollowUpState {
-  if (!item.followUpDate) return 'none';
+  if (!item.followUpDate || item.status === SurgeryStatus.Cancelled) {
+    return 'none';
+  }
   if (item.followUpDoneAt) return 'done';
   const due = iso(storedDate(item.followUpDate));
   const { from, to } = followUpWindow('thisMonth', now);

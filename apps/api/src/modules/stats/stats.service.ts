@@ -4,7 +4,11 @@ import { Repository } from 'typeorm';
 
 import { Patient } from '../patients/patient.entity';
 import { SurgeryQueueItem } from '../surgery/surgery-queue-item.entity';
-import { followUpState, followUpWindow } from '../surgery/follow-up';
+import {
+  followUpState,
+  followUpWindow,
+  openFollowUpSql,
+} from '../surgery/follow-up';
 import { JalaliDate } from '../../domain';
 
 /** Age buckets the dashboard groups patients into. */
@@ -95,12 +99,12 @@ export class StatsService {
           (SELECT count(*) FROM ortho_cases WHERE "deletedAt" IS NULL)                   AS "orthoCases",
           -- Windows come from followUpWindow(), on the Jalali calendar, so
           -- these agree with the list's own filters to the day.
-          (SELECT count(*) FROM surgery_queue
-            WHERE "deletedAt" IS NULL AND "followUpDoneAt" IS NULL
-              AND "followUpDate" BETWEEN $1 AND $2)                                      AS "followUpsThisWeek",
-          (SELECT count(*) FROM surgery_queue
-            WHERE "deletedAt" IS NULL AND "followUpDoneAt" IS NULL
-              AND "followUpDate" <= $3)                                                  AS "followUpsOverdue",
+          (SELECT count(*) FROM surgery_queue s
+            WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
+              AND s."followUpDate" BETWEEN $1 AND $2)                                    AS "followUpsThisWeek",
+          (SELECT count(*) FROM surgery_queue s
+            WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
+              AND s."followUpDate" <= $3)                                                AS "followUpsOverdue",
           (SELECT count(*) FROM patients
             WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview"
       `,
@@ -206,7 +210,7 @@ export class StatsService {
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.implantCase', 'ic')
       .leftJoinAndSelect('ic.patient', 'p')
-      .where('s."followUpDoneAt" IS NULL')
+      .where(openFollowUpSql('s'))
       .andWhere('s."followUpDate" BETWEEN :from AND :to', { from, to })
       .orderBy('s.followUpDate', 'ASC')
       .limit(limit)

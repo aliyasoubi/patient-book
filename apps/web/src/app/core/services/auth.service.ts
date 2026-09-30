@@ -10,6 +10,8 @@ import { environment } from '../../../environments/environment';
 const PERMISSIONS = {
   editPatients: ['admin', 'dentist', 'receptionist'],
   editSurgery: ['admin', 'dentist', 'receptionist'],
+  /** Medical history and patient/surgery notes: read-only at the front desk. */
+  editClinicalNotes: ['admin', 'dentist'],
   /** The implant and orthodontic registers: create and correct entries. */
   editRegistry: ['admin', 'dentist', 'receptionist'],
   archivePatients: ['admin', 'dentist'],

@@ -20,6 +20,7 @@ import { searchKey, normalizeForDisplay, loosePersianKey } from '../../domain';
 import { classifyReferral } from '../../domain';
 import { DatePrecisionEnum } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
+import { assertMayWriteClinicalNotes } from '../../application/policies/clinical-notes.policy';
 import { AppException } from '../../application/errors/app.exception';
 import { ErrorCode } from '../../domain';
 
@@ -189,7 +190,12 @@ export class PatientsService {
   async create(
     dto: CreatePatientDto,
     userId: string | null,
+    role?: string,
   ): Promise<PatientResponse> {
+    assertMayWriteClinicalNotes(role, [
+      [dto.medicalHistory, null],
+      [dto.notes, null],
+    ]);
     const id = await this.dataSource.transaction(async (manager) => {
       const clash = await manager.findOne(Patient, {
         where: { fileNo: dto.fileNo },
@@ -232,6 +238,7 @@ export class PatientsService {
     id: string,
     dto: UpdatePatientDto,
     userId: string | null,
+    role?: string,
   ): Promise<PatientResponse> {
     await this.dataSource.transaction(async (manager) => {
       // Row lock first, then the version check inside it. A concurrent update
@@ -253,6 +260,10 @@ export class PatientsService {
 
       const patient = await this.findPatientForAudit(manager, id, false, false);
       if (!patient) throw AppException.notFound(ErrorCode.PatientNotFound);
+      assertMayWriteClinicalNotes(role, [
+        [dto.medicalHistory, patient.medicalHistory],
+        [dto.notes, patient.notes],
+      ]);
 
       if (dto.fileNo && dto.fileNo !== patient.fileNo) {
         const clash = await manager.findOne(Patient, {

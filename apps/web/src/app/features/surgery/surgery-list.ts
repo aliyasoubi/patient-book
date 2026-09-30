@@ -40,11 +40,12 @@ import type {
 } from '../../core/models/common.model';
 
 /**
- * The questions staff ask of the list, in the order they ask them. Each is a
+ * The questions staff ask of the list, most urgent first. Each is a
  * window over the open follow-ups; the API decides what the window means in
  * dates, so the chips here never disagree with the dashboard.
  */
 const FOLLOW_UP_FILTERS: readonly { value: FollowUpFilter; label: string; icon: string }[] = [
+  { value: 'overdue', label: 'surgery.filterOverdue', icon: 'event_busy' },
   { value: 'pending', label: 'surgery.filterPending', icon: 'pending_actions' },
   { value: 'week', label: 'surgery.filterWeek', icon: 'date_range' },
   { value: 'thisMonth', label: 'surgery.filterThisMonth', icon: 'calendar_month' },

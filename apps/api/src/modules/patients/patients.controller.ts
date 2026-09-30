@@ -17,6 +17,7 @@ import { CreatePatientDto, UpdatePatientDto } from './dto/patient.dto';
 import { QueryPatientsDto } from './dto/query-patients.dto';
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
+import type { RequestUser } from '../auth/strategies/jwt.strategy';
 import { UserRole, ErrorCode } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
@@ -83,8 +84,8 @@ export class PatientsController {
   @Post()
   @Roles(UserRole.Admin, UserRole.Dentist, UserRole.Receptionist)
   @ApiOperation({ summary: 'Create a patient' })
-  create(@Body() dto: CreatePatientDto, @CurrentUser('id') userId: string) {
-    return this.patients.create(dto, userId);
+  create(@Body() dto: CreatePatientDto, @CurrentUser() user: RequestUser) {
+    return this.patients.create(dto, user.id, user.role);
   }
 
   @Patch(':id')
@@ -93,9 +94,9 @@ export class PatientsController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePatientDto,
-    @CurrentUser('id') userId: string,
+    @CurrentUser() user: RequestUser,
   ) {
-    return this.patients.update(id, dto, userId);
+    return this.patients.update(id, dto, user.id, user.role);
   }
 
   @Patch(':id/resolve-issue/:field')
