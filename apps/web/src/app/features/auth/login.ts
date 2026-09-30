@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -15,7 +14,6 @@ import { PbButton, PbLogo, PbTextField } from '../../shared/ui';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatCardModule,
     MatProgressBarModule,
     PbTextField,
     PbButton,
@@ -46,6 +44,17 @@ export class Login {
     { icon: 'event_available', label: 'auth.feature.scheduling' },
     { icon: 'straighten', label: 'auth.feature.treatments' },
   ];
+
+  /**
+   * Feeds the card's cursor-following glow. Written straight to the element's
+   * style so a pointer sweep never touches change detection.
+   */
+  protected trackSpotlight(event: PointerEvent): void {
+    const card = event.currentTarget as HTMLElement;
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty('--spot-x', `${event.clientX - rect.left}px`);
+    card.style.setProperty('--spot-y', `${event.clientY - rect.top}px`);
+  }
 
   protected submit(): void {
     if (this.form.invalid || this.loading()) {

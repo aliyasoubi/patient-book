@@ -1,17 +1,26 @@
 <div class="login">
+  <!-- Decorative backdrop: drifting aurora blobs over a faded dot grid. -->
+  <div class="login__backdrop" aria-hidden="true">
+    <span class="login__blob login__blob--a"></span>
+    <span class="login__blob login__blob--b"></span>
+    <span class="login__blob login__blob--c"></span>
+    <span class="login__grid"></span>
+  </div>
+
   <aside class="login__aside" aria-hidden="true">
-    <div class="login__aside-glow"></div>
     <div class="login__aside-content">
-      <div class="login__brand">
-        <pb-logo [size]="46" />
-        <h1>{{ 'app.title' | translate }}</h1>
+      <div class="login__orb">
+        <span class="login__orb-ring"></span>
+        <span class="login__orb-ring login__orb-ring--outer"></span>
+        <pb-logo [size]="52" />
       </div>
 
+      <h1 class="login__wordmark">{{ 'app.title' | translate }}</h1>
       <p class="login__tagline">{{ 'app.description' | translate }}</p>
 
       <ul class="login__features">
-        @for (feature of features; track feature.icon) {
-          <li>
+        @for (feature of features; track feature.icon; let i = $index) {
+          <li [style.--i]="i">
             <span class="login__feature-icon">
               <mat-icon aria-hidden="true">{{ feature.icon }}</mat-icon>
             </span>
@@ -22,67 +31,70 @@
     </div>
   </aside>
 
-  <div class="login__main">
+  <main class="login__main">
     <div class="login__panel">
-      <div class="login__brand login__brand--compact">
-        <pb-logo [size]="40" />
-        <h1>{{ 'app.title' | translate }}</h1>
+      <div class="login__brand-compact">
+        <div class="login__orb login__orb--compact">
+          <span class="login__orb-ring"></span>
+          <pb-logo [size]="34" />
+        </div>
+        <h1 class="login__wordmark">{{ 'app.title' | translate }}</h1>
       </div>
 
-      <mat-card class="login__card">
+      <div class="login__card" (pointermove)="trackSpotlight($event)">
+        <span class="login__spotlight" aria-hidden="true"></span>
+
         @if (loading()) {
           <mat-progress-bar mode="indeterminate" class="login__progress" />
         }
 
-        <mat-card-content>
-          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <h2 class="login__title">{{ 'auth.heading' | translate }}</h2>
-            <p class="login__subtitle">{{ 'auth.subheading' | translate }}</p>
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <h2 class="login__title">{{ 'auth.heading' | translate }}</h2>
+          <p class="login__subtitle">{{ 'auth.subheading' | translate }}</p>
 
-            @if (errorMessage(); as message) {
-              <div class="login__error" role="alert">
-                <mat-icon aria-hidden="true">error</mat-icon>
-                <span>{{ message }}</span>
-              </div>
-            }
+          @if (errorMessage(); as message) {
+            <div class="login__error" role="alert">
+              <mat-icon aria-hidden="true">error</mat-icon>
+              <span>{{ message }}</span>
+            </div>
+          }
 
-            <pb-text-field
-              [control]="form.controls.username"
-              [label]="'auth.username' | translate"
-              prefixIcon="person"
-              [ltr]="true"
-              nativeAutocomplete="username"
-            />
+          <pb-text-field
+            [control]="form.controls.username"
+            [label]="'auth.username' | translate"
+            prefixIcon="person"
+            [ltr]="true"
+            nativeAutocomplete="username"
+          />
 
-            <pb-text-field
-              [control]="form.controls.password"
-              [label]="'auth.password' | translate"
-              type="password"
-              prefixIcon="lock"
-              [ltr]="true"
-              nativeAutocomplete="current-password"
-            />
+          <pb-text-field
+            [control]="form.controls.password"
+            [label]="'auth.password' | translate"
+            type="password"
+            prefixIcon="lock"
+            [ltr]="true"
+            nativeAutocomplete="current-password"
+          />
 
-            <pb-button
-              variant="flat"
-              size="large"
-              type="submit"
-              icon="login"
-              class="login__submit"
-              [fullWidth]="true"
-              [loading]="loading()"
-              [loadingText]="'auth.signingIn' | translate"
-            >
-              {{ 'auth.signIn' | translate }}
-            </pb-button>
-          </form>
-        </mat-card-content>
-      </mat-card>
+          <pb-button
+            variant="flat"
+            size="large"
+            type="submit"
+            icon="login"
+            class="login__submit"
+            [fullWidth]="true"
+            [loading]="loading()"
+            [loadingText]="'auth.signingIn' | translate"
+          >
+            {{ 'auth.signIn' | translate }}
+          </pb-button>
+        </form>
+      </div>
 
       <p class="login__footer">
         <mat-icon aria-hidden="true">shield</mat-icon>
         <span>{{ 'auth.confidentialNotice' | translate }}</span>
       </p>
     </div>
-  </div>
+  </main>
 </div>
