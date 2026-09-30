@@ -53,11 +53,41 @@ export class BackfillSurgeryFollowUps1790700000000 implements MigrationInterface
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Only what this migration wrote: rows that still carry the note it read.
-    await queryRunner.query(
-      `UPDATE surgery_queue
-          SET "followUpMonths" = NULL, "followUpDate" = NULL, "followUpDoneAt" = NULL
-        WHERE "prosthesisDue" IS NOT NULL`,
-    );
+    // Only what this migration wrote and nobody has touched since: the
+    // months and date still derive from the note it read, and the row is
+    // either open or closed on its due date. A follow-up staff have moved,
+    // reopened or completed on another day keeps their edit.
+    const rows = (await queryRunner.query(
+      `SELECT id, "prosthesisDue", "surgeryDate", "followUpMonths",
+              "followUpDate"::text AS "followUpDate",
+              "followUpDoneAt"::text AS "followUpDoneAt"
+         FROM surgery_queue
+        WHERE "prosthesisDue" IS NOT NULL AND "followUpDate" IS NOT NULL
+          AND "surgeryDate" IS NOT NULL`,
+    )) as Array<{
+      id: string;
+      prosthesisDue: string;
+      surgeryDate: Date | string;
+      followUpMonths: number | null;
+      followUpDate: string;
+      followUpDoneAt: string | null;
+    }>;
+
+    for (const row of rows) {
+      const surgeryDate = new Date(row.surgeryDate);
+      const months = legacyFollowUpMonths(row.prosthesisDue, surgeryDate);
+      if (months === null || months !== row.followUpMonths) continue;
+      const due = JalaliDate.fromDate(
+        addMonths(surgeryDate, months),
+      )!.toIsoDate();
+      if (row.followUpDate !== due) continue;
+      if (row.followUpDoneAt !== null && row.followUpDoneAt !== due) continue;
+      await queryRunner.query(
+        `UPDATE surgery_queue
+            SET "followUpMonths" = NULL, "followUpDate" = NULL, "followUpDoneAt" = NULL
+          WHERE id = $1`,
+        [row.id],
+      );
+    }
   }
 }

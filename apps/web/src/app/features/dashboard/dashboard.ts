@@ -107,8 +107,8 @@ export class Dashboard {
         value: s.totals.followUpsOverdue,
         icon: 'event_busy',
         link: '/surgery',
-        // The open list, soonest first: the missed ones lead it.
-        queryParams: { followUp: 'pending' },
+        // Exactly the rows the tile counts.
+        queryParams: { followUp: 'overdue' },
         tone: 'warn',
       });
     }

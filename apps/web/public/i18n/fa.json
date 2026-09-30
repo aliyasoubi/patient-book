@@ -140,6 +140,7 @@
     "filterWeek": "این هفته",
     "filterThisMonth": "ماه جاری",
     "filterNextMonth": "ماه بعد",
+    "filterOverdue": "عقب‌افتاده",
     "followUpDoneSwitch": "انجام شد",
     "followUpOn": "پیگیری: {{date}}",
     "followUpMissed": "پیگیری عقب‌افتاده از {{date}}",

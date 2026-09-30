@@ -14,7 +14,7 @@ import { DatePrecisionEnum } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { ErrorCode } from '../../domain';
-import { followUpState, followUpWindow } from './follow-up';
+import { followUpState, followUpWindow, openFollowUpSql } from './follow-up';
 
 @Injectable()
 export class SurgeryService {
@@ -47,9 +47,7 @@ export class SurgeryService {
     }
     if (dto.followUp) {
       const { from, to } = followUpWindow(dto.followUp);
-      qb.andWhere('s."followUpDoneAt" IS NULL').andWhere(
-        's."followUpDate" IS NOT NULL',
-      );
+      qb.andWhere(openFollowUpSql('s'));
       if (from) qb.andWhere('s."followUpDate" >= :from', { from });
       if (to) qb.andWhere('s."followUpDate" <= :to', { to });
     }

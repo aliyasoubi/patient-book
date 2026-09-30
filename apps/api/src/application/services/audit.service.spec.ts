@@ -37,4 +37,24 @@ describe('AuditService', () => {
     );
     expect(save).toHaveBeenCalledTimes(1);
   });
+
+  it('names the user behind history rows that recorded only an id', async () => {
+    const rows = [
+      Object.assign(new AuditLog(), { userId: 'u-1', username: null }),
+      Object.assign(new AuditLog(), { userId: 'u-2', username: 'kept' }),
+      Object.assign(new AuditLog(), { userId: null, username: null }),
+    ];
+    const query = jest
+      .fn<(sql: string, params: unknown[]) => Promise<unknown[]>>()
+      .mockResolvedValue([{ id: 'u-1', username: 'reception' }]);
+    const service = new AuditService({
+      find: jest.fn(() => Promise.resolve(rows)),
+      query,
+    } as unknown as Repository<AuditLog>);
+
+    const history = await service.forEntity('patient', 'patient-1');
+
+    expect(query).toHaveBeenCalledWith(expect.any(String), [['u-1']]);
+    expect(history.map((r) => r.username)).toEqual(['reception', 'kept', null]);
+  });
 });

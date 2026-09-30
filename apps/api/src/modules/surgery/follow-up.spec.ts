@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { followUpState, followUpWindow } from './follow-up';
-import { JalaliDate } from '../../domain';
+import { JalaliDate, SurgeryStatus } from '../../domain';
 
 // "Now" is 27 Shahrivar 1405 (18 September 2026) for every case here.
 const now = new Date(2026, 8, 18);
@@ -58,6 +58,15 @@ describe('followUpState', () => {
   it('is none without a follow-up date', () => {
     expect(
       followUpState({ followUpDate: null, followUpDoneAt: null }, now),
+    ).toBe('none');
+  });
+
+  it('is none for a cancelled surgery, however late its date', () => {
+    expect(
+      followUpState(
+        { ...at('1405/05/01'), status: SurgeryStatus.Cancelled },
+        now,
+      ),
     ).toBe('none');
   });
 });

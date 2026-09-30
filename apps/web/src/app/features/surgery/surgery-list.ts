@@ -49,6 +49,7 @@ const FOLLOW_UP_FILTERS: readonly { value: FollowUpFilter; label: string; icon: 
   { value: 'week', label: 'surgery.filterWeek', icon: 'date_range' },
   { value: 'thisMonth', label: 'surgery.filterThisMonth', icon: 'calendar_month' },
   { value: 'nextMonth', label: 'surgery.filterNextMonth', icon: 'event_upcoming' },
+  { value: 'overdue', label: 'surgery.filterOverdue', icon: 'event_busy' },
 ];
 
 /** How a follow-up reads on the card: the state is the API's, the colour is ours. */

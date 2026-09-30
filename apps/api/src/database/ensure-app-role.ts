@@ -67,7 +67,13 @@ export async function ensureAppRole(dataSource: DataSource): Promise<void> {
     `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO ${role}`,
   );
 
+  // The audit trail is append-only: the API writes history but can never
+  // rewrite or erase it. Revoked after the blanket grant above, every run.
+  await dataSource.query(
+    `REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM ${role}`,
+  );
+
   console.log(
-    `✓  Runtime role ${user} is up to date (DML only, no schema privileges).`,
+    `✓  Runtime role ${user} is up to date (DML only, no schema privileges, audit append-only).`,
   );
 }

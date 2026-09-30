@@ -5,7 +5,7 @@ import { Patient } from '../../patients/patient.entity';
 import { ImplantCase } from '../../implants/implant-case.entity';
 import { OrthoCase } from '../../ortho/ortho-case.entity';
 import { TREATMENT_TYPES } from '../../../database/seeds/treatment-types.seed';
-import { Gender } from '../../../domain';
+import { classifyEducation, EducationLevel, Gender } from '../../../domain';
 import { SHEET } from '../../import/application/import-workbook.use-case';
 
 /** Persian labels the original workbook used for this column. */
@@ -14,6 +14,37 @@ const GENDER_LABEL: Record<Gender, string> = {
   [Gender.Male]: 'مرد',
   [Gender.Unknown]: '',
 };
+
+/**
+ * A spelling of each level that the importer's classifier reads back as that
+ * level, for patients whose education was entered or changed in the app.
+ */
+const EDUCATION_LABEL: Record<EducationLevel, string> = {
+  [EducationLevel.None]: 'ندارد',
+  [EducationLevel.Primary]: 'ابتدایی',
+  [EducationLevel.Diploma]: 'دیپلم',
+  [EducationLevel.Associate]: 'فوق دیپلم',
+  [EducationLevel.Bachelor]: 'لیسانس',
+  [EducationLevel.Master]: 'فوق لیسانس',
+  [EducationLevel.Doctorate]: 'دکترا',
+  [EducationLevel.Student]: 'دانشجو',
+  [EducationLevel.Other]: 'سایر',
+  [EducationLevel.Unknown]: '',
+};
+
+/**
+ * The education cell for a patient. Edits change `education` but not the
+ * imported text, so the text is written only while it still says the same
+ * thing — keeping the sheet's own spelling — and the level's label otherwise.
+ */
+export function educationCell(
+  p: Pick<Patient, 'education' | 'educationRaw'>,
+): string {
+  if (p.educationRaw && classifyEducation(p.educationRaw) === p.education) {
+    return p.educationRaw;
+  }
+  return EDUCATION_LABEL[p.education];
+}
 
 /**
  * Writes the practice's current data back into the same workbook shape the
@@ -77,7 +108,7 @@ export class ExcelJsWorkbookWriter {
         p.referralSource?.name ?? '',
         p.birthDateRaw ?? '',
         p.occupation ?? '',
-        p.educationRaw ?? '',
+        educationCell(p),
         p.fatherName ?? '',
         p.nationalId ?? '',
         p.medicalHistory ?? '',

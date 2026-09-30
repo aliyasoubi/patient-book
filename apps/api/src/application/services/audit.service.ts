@@ -60,16 +60,37 @@ export class AuditService {
     }
   }
 
-  /** Recent history for one record, newest first. */
+  /**
+   * Recent history for one record, newest first. Most writes record only the
+   * user's id, so the name is looked up here; a row with neither is the
+   * system's own (an import, a migration).
+   */
   async forEntity(
     entity: string,
     entityId: string,
     limit = 50,
   ): Promise<AuditLog[]> {
-    return this.logs.find({
+    const rows = await this.logs.find({
       where: { entity, entityId },
       order: { createdAt: 'DESC' },
       take: limit,
     });
+    const ids = [
+      ...new Set(
+        rows.filter((r) => r.userId && !r.username).map((r) => r.userId!),
+      ),
+    ];
+    if (ids.length) {
+      const users = await this.logs.query<
+        Array<{ id: string; username: string }>
+      >(`SELECT id, username FROM users WHERE id = ANY($1::uuid[])`, [ids]);
+      const names = new Map(users.map((u) => [u.id, u.username]));
+      for (const row of rows) {
+        if (row.userId && !row.username) {
+          row.username = names.get(row.userId) ?? null;
+        }
+      }
+    }
+    return rows;
   }
 }

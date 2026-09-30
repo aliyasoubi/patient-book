@@ -380,7 +380,11 @@ describeIfWritable('clinic flows (e2e)', () => {
 
   describe('dashboard', () => {
     type Totals = {
-      totals: { implantCases: number; followUpsThisWeek: number };
+      totals: {
+        implantCases: number;
+        followUpsThisWeek: number;
+        followUpsOverdue: number;
+      };
     };
     const totals = async (): Promise<Totals['totals']> =>
       (
@@ -425,6 +429,41 @@ describeIfWritable('clinic flows (e2e)', () => {
       const archived = await totals();
       expect(archived.implantCases).toBe(before.implantCases);
       expect(archived.followUpsThisWeek).toBe(before.followUpsThisWeek);
+    });
+
+    it('drops a cancelled surgery from the overdue count and list alike', async () => {
+      const overdueIds = async (): Promise<string[]> =>
+        (
+          (
+            await asAdmin(
+              http().get('/api/surgery-queue?followUp=overdue&limit=100'),
+            ).expect(200)
+          ).body as { items: Array<{ id: string }> }
+        ).items.map((i) => i.id);
+      const before = await totals();
+
+      // Due two months ago: its month has passed, so it is overdue.
+      const surgery = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'مینا کاظمی',
+          surgeryDate: formatJalali(addMonths(new Date(), -5), 'yyyy/MM/dd'),
+          followUpMonths: 3,
+        })
+        .expect(201);
+      const { id } = surgery.body as { id: string };
+      surgeryIds.push(id);
+
+      expect((await totals()).followUpsOverdue).toBe(
+        before.followUpsOverdue + 1,
+      );
+      expect(await overdueIds()).toContain(id);
+
+      await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ status: 'cancelled' })
+        .expect(200);
+
+      expect((await totals()).followUpsOverdue).toBe(before.followUpsOverdue);
+      expect(await overdueIds()).not.toContain(id);
     });
 
     it("lists the coming week's follow-ups by name, soonest first", async () => {
