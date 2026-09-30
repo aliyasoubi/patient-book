@@ -16,6 +16,7 @@ import {
   SurgeryStatus,
 } from '../../domain';
 import { ImplantCase } from '../implants/implant-case.entity';
+import { Patient } from '../patients/patient.entity';
 
 /**
  * لیست انتظار جراحی — the second-stage surgery queue.
@@ -40,6 +41,19 @@ export class SurgeryQueueItem {
   })
   @JoinColumn({ name: 'implantCaseId' })
   implantCase!: ImplantCase | null;
+
+  /**
+   * The patient, when staff named one on the row itself. Without it the row
+   * follows its implant register entry's link — see {@link surgeryPatient}.
+   * An extraction has no register entry, so this is its only link.
+   */
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  patientId!: string | null;
+
+  @ManyToOne(() => Patient, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'patientId' })
+  patient!: Patient | null;
 
   @Column({ type: 'enum', enum: SurgeryKind, default: SurgeryKind.Implant })
   kind!: SurgeryKind;
@@ -148,4 +162,12 @@ export class SurgeryQueueItem {
 
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
   deletedAt!: Date | null;
+}
+
+/**
+ * Who a surgery is for: its own link if staff made one, otherwise its
+ * implant register entry's. Needs `patient` and `implantCase.patient` loaded.
+ */
+export function surgeryPatient(item: SurgeryQueueItem): Patient | null {
+  return item.patient ?? item.implantCase?.patient ?? null;
 }

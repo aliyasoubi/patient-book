@@ -41,12 +41,15 @@ import {
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
+import { PbPatientLinkField } from '../../shared/components/patient-link-field';
+import type { LinkedPatient } from '../../shared/components/patient-link-field';
 
 @Component({
   selector: 'pb-surgery-form',
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    PbPatientLinkField,
     MatButtonToggleModule,
     MatIconModule,
     MatProgressBarModule,
@@ -157,6 +160,24 @@ export class SurgeryForm implements HasUnsavedChanges {
    */
   private readonly legacyProsthesisDue = signal<string | null>(null);
 
+  /** The row's own patient link, as it will be saved. */
+  protected readonly linkedPatient = signal<LinkedPatient | null>(null);
+  /** The link as loaded, so only a change is sent. */
+  private loadedPatientId: string | null = null;
+  /** Who the row falls back to without a link of its own: its register entry's patient. */
+  private readonly registerPatient = signal<LinkedPatient | null>(null);
+
+  protected readonly patientHint = computed(() => {
+    this.i18n.currentLang();
+    const fallback = this.registerPatient();
+    return !this.linkedPatient() && fallback
+      ? this.i18n.instant('surgeryForm.patientFromRegister', {
+          name: fallback.fullName,
+          fileNo: fallback.fileNo,
+        })
+      : null;
+  });
+
   /** What the chosen months resolve to, so the dentist sees the date, not just "3". */
   protected readonly followUpHint = computed(() => {
     this.i18n.currentLang();
@@ -239,7 +260,10 @@ export class SurgeryForm implements HasUnsavedChanges {
   }
 
   hasUnsavedChanges(): boolean {
-    return !this.saved && this.form.dirty;
+    return (
+      !this.saved &&
+      (this.form.dirty || (this.linkedPatient()?.id ?? null) !== this.loadedPatientId)
+    );
   }
 
   private loadSurgery(id: string): void {
@@ -269,6 +293,12 @@ export class SurgeryForm implements HasUnsavedChanges {
       notes: item.notes ?? '',
     });
     this.legacyProsthesisDue.set(item.prosthesisDue);
+    const patient = item.patient
+      ? { id: item.patient.id, fileNo: item.patient.fileNo, fullName: item.patient.fullName }
+      : null;
+    this.loadedPatientId = item.patientId;
+    this.linkedPatient.set(item.patientId ? patient : null);
+    this.registerPatient.set(item.patientId ? null : patient);
   }
 
   /**
@@ -326,6 +356,10 @@ export class SurgeryForm implements HasUnsavedChanges {
     };
     // Sent only when the row is created; the edit form does not offer it.
     if (!this.isEdit()) payload['kind'] = raw.kind;
+    // Only a changed link is sent, so an untouched row keeps following its
+    // register entry.
+    const patientId = this.linkedPatient()?.id ?? null;
+    if (patientId !== this.loadedPatientId) payload['patientId'] = patientId;
     // Whether the follow-up happened is the switch on the card, not a form
     // field: every row added here is waiting for its follow-up.
     // The date is only sent when this form owns it. A pristine empty picker on

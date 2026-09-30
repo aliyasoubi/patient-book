@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { addMonths } from 'date-fns-jalali';
 import { EntityManager, Repository } from 'typeorm';
 
-import { SurgeryQueueItem } from './surgery-queue-item.entity';
+import { SurgeryQueueItem, surgeryPatient } from './surgery-queue-item.entity';
+import { Patient } from '../patients/patient.entity';
 import { ImplantCase } from '../implants/implant-case.entity';
 import { QuerySurgeryDto, UpsertSurgeryDto } from './dto/surgery.dto';
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
@@ -35,6 +36,7 @@ export class SurgeryService {
   async findAll(dto: QuerySurgeryDto): Promise<PageResult<unknown>> {
     const qb = this.queue
       .createQueryBuilder('s')
+      .leftJoinAndSelect('s.patient', 'sp')
       .leftJoinAndSelect('s.implantCase', 'ic')
       .leftJoinAndSelect('ic.patient', 'p')
       .skip(dto.skip)
@@ -101,7 +103,7 @@ export class SurgeryService {
   async findOne(id: string): Promise<unknown> {
     const item = await this.queue.findOne({
       where: { id },
-      relations: { implantCase: { patient: true } },
+      relations: { patient: true, implantCase: { patient: true } },
     });
     if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
     return this.toResponse(item);
@@ -258,6 +260,18 @@ export class SurgeryService {
   ): Promise<ImplantCase | null> {
     let registered: ImplantCase | null = null;
     if (dto.kind !== undefined) item.kind = dto.kind;
+    if (dto.patientId !== undefined) {
+      // Only a patient still in the book; an archived file is not linked to.
+      if (
+        dto.patientId &&
+        !(await implants.manager.exists(Patient, {
+          where: { id: dto.patientId },
+        }))
+      ) {
+        throw AppException.notFound(ErrorCode.PatientNotFound);
+      }
+      item.patientId = dto.patientId ?? null;
+    }
     if (dto.recordedName !== undefined)
       item.recordedName = dto.recordedName ?? '';
     if (dto.toothPosition !== undefined) {
@@ -379,6 +393,17 @@ export class SurgeryService {
     return JalaliDate.fromStored(value, precision ?? 'day')?.format() ?? '';
   }
 
+  private patientSummary(p: Patient | null): Record<string, unknown> | null {
+    return p
+      ? {
+          id: p.id,
+          fileNo: p.fileNo,
+          fullName: `${p.firstName} ${p.lastName}`.trim(),
+          mobile: p.mobile,
+        }
+      : null;
+  }
+
   private toResponse(item: SurgeryQueueItem): Record<string, unknown> {
     return {
       id: item.id,
@@ -388,15 +413,9 @@ export class SurgeryService {
       recordedName: item.recordedName,
       hasNameMismatch: item.hasNameMismatch,
       registeredName: item.implantCase?.recordedName ?? null,
-      patient: item.implantCase?.patient
-        ? {
-            id: item.implantCase.patient.id,
-            fileNo: item.implantCase.patient.fileNo,
-            fullName:
-              `${item.implantCase.patient.firstName} ${item.implantCase.patient.lastName}`.trim(),
-            mobile: item.implantCase.patient.mobile,
-          }
-        : null,
+      // Explicit only; `patient` below is who the row resolves to.
+      patientId: item.patientId,
+      patient: this.patientSummary(surgeryPatient(item)),
       surgeryDate: item.surgeryDate
         ? {
             jalali: this.formatDate(

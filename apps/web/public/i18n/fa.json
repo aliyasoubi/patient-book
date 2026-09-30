@@ -171,6 +171,8 @@
     "kind": "نوع جراحی",
     "kindFixedHint": "نوع جراحی پس از ثبت تغییر نمی‌کند؛ اگر اشتباه ثبت شده، این ردیف را حذف و دوباره ثبت کنید.",
     "recordedName": "نام بیمار",
+    "patient": "پرونده بیمار",
+    "patientFromRegister": "بدون اتصال مستقیم؛ از پرونده ایمپلنت: {{name}} — پرونده {{fileNo}}",
     "implantRegistryNo": "شماره پرونده ایمپلنت",
     "implantRegistryNoPlaceholder": "به پرونده هم‌شماره متصل می‌شود",
     "implantRegistryNoNext": "شمارهٔ بعدی دفتر ایمپلنت",

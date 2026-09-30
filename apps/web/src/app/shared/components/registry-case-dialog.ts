@@ -1,35 +1,25 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Signal, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 
 import {
   RegistryCaseInput,
   RegistryKind,
   RegistryService,
 } from '../../core/services/registry.service';
-import { PatientsService } from '../../features/patients/data/patients.service';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import { CASE_STATUSES, caseStatusLabel } from '../labels';
 import { digitString, identifierValue, iranianMobile, toLatinDigits } from '../validators';
 import { PbButton, PbSelectField, PbTextareaField, PbTextField } from '../ui';
-import type { SelectOption, TextFieldOption } from '../ui';
+import type { SelectOption } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
-import type { PatientSuggestion } from '../../features/patients/data/patient.model';
-
-/** The patient a case is, or is about to be, linked to. */
-interface LinkedPatient {
-  id: string;
-  fileNo: string;
-  fullName: string;
-}
+import { PbPatientLinkField } from './patient-link-field';
+import type { LinkedPatient } from './patient-link-field';
 
 export type RegistryCaseDialogData =
   | {
@@ -43,8 +33,6 @@ export type RegistryCaseDialogData =
       kind: RegistryKind;
       existing: RegistryCase;
     };
-
-const MIN_PATIENT_QUERY = 2;
 
 /**
  * Creates or corrects an ortho or implant پرونده.
@@ -63,12 +51,12 @@ const MIN_PATIENT_QUERY = 2;
   imports: [
     ReactiveFormsModule,
     MatDialogModule,
-    MatIconModule,
     MatProgressBarModule,
     PbTextField,
     PbTextareaField,
     PbSelectField,
     PbButton,
+    PbPatientLinkField,
     TranslatePipe,
   ],
   template: `
@@ -91,34 +79,10 @@ const MIN_PATIENT_QUERY = 2;
       />
 
       @if (data.mode === 'edit') {
-        <!-- The link to the main book. Typing searches; picking links; the
-             chip's cross unlinks. Text left in the box without a pick changes
-             nothing, so a half-typed search cannot silently drop a link. -->
-        <pb-text-field
-          [control]="form.controls.patientSearch"
+        <pb-patient-link-field
           [label]="'registryForm.patientLink' | translate"
-          [hint]="linkHint()"
-          prefixIcon="person_search"
-          [options]="patientOptions()"
-          (optionSelected)="onPatientSelected($event)"
+          [(linked)]="linkedPatient"
         />
-        @if (linkedPatient(); as linked) {
-          <div class="form__linked">
-            <mat-icon aria-hidden="true">link</mat-icon>
-            <span
-              >{{ linked.fullName }} —
-              {{ 'registry.patientFile' | translate: { fileNo: linked.fileNo } }}</span
-            >
-            <button
-              type="button"
-              class="form__unlink"
-              (click)="unlink()"
-              [attr.aria-label]="'registryForm.unlink' | translate"
-            >
-              <mat-icon aria-hidden="true">close</mat-icon>
-            </button>
-          </div>
-        }
         @if (showDetails) {
           <pb-select-field
             [control]="form.controls.status"
@@ -174,37 +138,6 @@ const MIN_PATIENT_QUERY = 2;
       gap: 4px;
       min-width: min(420px, 80vw);
     }
-    .form__linked {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: -8px 0 12px;
-      padding: 6px 10px;
-      border-radius: var(--mat-sys-corner-medium);
-      background: var(--mat-sys-secondary-container);
-      color: var(--mat-sys-on-secondary-container);
-      font: var(--mat-sys-body-medium);
-
-      span {
-        flex: 1 1 auto;
-        min-width: 0;
-      }
-    }
-    .form__unlink {
-      display: inline-flex;
-      padding: 2px;
-      border: 0;
-      border-radius: 50%;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-      }
-    }
   `,
 })
 export class RegistryCaseDialog {
@@ -214,7 +147,6 @@ export class RegistryCaseDialog {
   protected readonly data = inject<RegistryCaseDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly registry = inject(RegistryService);
-  private readonly patients = inject(PatientsService);
   private readonly errors = inject(ApiErrorTranslator);
   private readonly i18n = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
@@ -250,7 +182,6 @@ export class RegistryCaseDialog {
       this.existing?.recordedName ?? (this.data.mode === 'create' ? this.data.patient.name : ''),
       [Validators.required, Validators.maxLength(160)],
     ],
-    patientSearch: [''],
     status: [this.existing?.status ?? ('active' as RegistryCase['status'])],
     mobile: [
       this.existing?.mobile ?? (this.data.mode === 'create' ? this.data.patient.mobile : null) ?? '',
@@ -285,53 +216,6 @@ export class RegistryCaseDialog {
         }
       : null,
   );
-
-  /** Type-ahead over the main book; `switchMap` drops a stale response. */
-  private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
-    this.form.controls.patientSearch.valueChanges.pipe(
-      debounceTime(250),
-      map((v) => v.trim()),
-      distinctUntilChanged(),
-      switchMap((q) => {
-        // Picking an option writes its value — the id — into the box before
-        // `optionSelected` swaps in the name. That echo is a pick, not a query.
-        const current = this.patientMatches();
-        if (current.some((p) => p.id === q)) return of(current);
-        if (q.length < MIN_PATIENT_QUERY) return of<PatientSuggestion[]>([]);
-        return this.patients.suggest(q).pipe(catchError(() => of<PatientSuggestion[]>([])));
-      }),
-    ),
-    { initialValue: [] as PatientSuggestion[] },
-  );
-
-  protected readonly patientOptions = computed<TextFieldOption[]>(() => {
-    this.i18n.currentLang();
-    return this.patientMatches().map((p) => ({
-      value: p.id,
-      label: p.fullName || this.i18n.instant('patient.unnamed'),
-      meta: this.i18n.instant('registry.patientFile', { fileNo: p.fileNo }),
-    }));
-  });
-
-  protected readonly linkHint = computed(() => {
-    this.i18n.currentLang();
-    return this.i18n.instant(
-      this.linkedPatient() ? 'registryForm.patientLinkHintLinked' : 'registryForm.patientLinkHint',
-    );
-  });
-
-  protected onPatientSelected(option: TextFieldOption): void {
-    const match = this.patientMatches().find((p) => p.id === option.value);
-    if (!match) return;
-    this.linkedPatient.set({ id: match.id, fileNo: match.fileNo, fullName: match.fullName });
-    // The box shows the choice rather than the id the option carries.
-    this.form.controls.patientSearch.setValue(match.fullName, { emitEvent: false });
-  }
-
-  protected unlink(): void {
-    this.linkedPatient.set(null);
-    this.form.controls.patientSearch.setValue('', { emitEvent: false });
-  }
 
   protected submit(): void {
     if (this.form.invalid || this.saving()) {

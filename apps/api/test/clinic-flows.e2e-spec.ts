@@ -825,6 +825,63 @@ describeIfWritable('clinic flows (e2e)', () => {
   // ── Surgery list identity check ──────────────────────────────────
 
   describe('surgery queue', () => {
+    it("names its patient directly, or follows the register entry's link", async () => {
+      const newPatient = async (firstName: string): Promise<string> => {
+        const res = await asAdmin(http().post('/api/patients'))
+          .send({ fileNo: nextNumber(), firstName, lastName: 'نوری' })
+          .expect(201);
+        const { id } = res.body as { id: string };
+        patientIds.push(id);
+        return id;
+      };
+      const patientOf = (body: unknown): string | null =>
+        (body as { patient: { id: string } | null }).patient?.id ?? null;
+      const viaRegister = await newPatient('امیر');
+      const direct = await newPatient('سمیرا');
+
+      // An extraction has no register entry: its own link is the only one.
+      const extraction = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          kind: 'extraction',
+          recordedName: 'سمیرا نوری',
+          patientId: direct,
+        })
+        .expect(201);
+      surgeryIds.push((extraction.body as { id: string }).id);
+      expect(patientOf(extraction.body)).toBe(direct);
+
+      // An implant row without a link of its own follows its register entry.
+      const registryNo = nextNumber();
+      const implant = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo, recordedName: 'امیر نوری', patientId: viaRegister })
+        .expect(201);
+      implantCaseIds.push((implant.body as { id: string }).id);
+      const surgery = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'امیر نوری', implantRegistryNo: registryNo })
+        .expect(201);
+      const { id } = surgery.body as { id: string };
+      surgeryIds.push(id);
+      expect(surgery.body).toMatchObject({ patientId: null });
+      expect(patientOf(surgery.body)).toBe(viaRegister);
+
+      // Its own link wins; clearing it falls back to the register's again.
+      const named = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ patientId: direct })
+        .expect(200);
+      expect(patientOf(named.body)).toBe(direct);
+      const cleared = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ patientId: null })
+        .expect(200);
+      expect(patientOf(cleared.body)).toBe(viaRegister);
+
+      // An archived file is not linked to.
+      await asAdmin(http().delete(`/api/patients/${direct}`)).expect(204);
+      const refused = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ patientId: direct })
+        .expect(404);
+      expect((refused.body as ErrorBody).code).toBe(ErrorCode.PatientNotFound);
+    });
+
     it('clears a date only when told to, and leaves it alone when the field is omitted', async () => {
       const created = await asAdmin(http().post('/api/surgery-queue'))
         .send({ recordedName: 'مریم کریمی', surgeryDate: '1404/06/11' })

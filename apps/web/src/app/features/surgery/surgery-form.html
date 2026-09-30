@@ -48,6 +48,13 @@
           (optionSelected)="onNameSelected($event)"
         />
 
+        <pb-patient-link-field
+          class="grid__full"
+          [label]="'surgeryForm.patient' | translate"
+          [hint]="patientHint()"
+          [(linked)]="linkedPatient"
+        />
+
         <pb-date-field
           [control]="form.controls.surgeryDate"
           [label]="'surgeryForm.surgeryDate' | translate"

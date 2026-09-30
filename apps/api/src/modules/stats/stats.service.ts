@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Patient } from '../patients/patient.entity';
-import { SurgeryQueueItem } from '../surgery/surgery-queue-item.entity';
+import {
+  SurgeryQueueItem,
+  surgeryPatient,
+} from '../surgery/surgery-queue-item.entity';
 import {
   followUpState,
   followUpWindow,
@@ -214,6 +217,7 @@ export class StatsService {
     const { from, to } = followUpWindow('week');
     const rows = await this.surgery
       .createQueryBuilder('s')
+      .leftJoinAndSelect('s.patient', 'sp')
       .leftJoinAndSelect('s.implantCase', 'ic')
       .leftJoinAndSelect('ic.patient', 'p')
       .where(openFollowUpSql('s'))
@@ -222,17 +226,20 @@ export class StatsService {
       .limit(limit)
       .getMany();
 
-    return rows.map((s) => ({
-      id: s.id,
-      recordedName: s.recordedName,
-      implantRegistryNo: s.implantRegistryNo,
-      patientId: s.implantCase?.patient?.id ?? null,
-      mobile: s.implantCase?.patient?.mobile ?? null,
-      followUpDate: s.followUpDate
-        ? (JalaliDate.fromStored(s.followUpDate)?.format() ?? null)
-        : null,
-      followUpState: followUpState(s),
-      hasNameMismatch: s.hasNameMismatch,
-    }));
+    return rows.map((s) => {
+      const patient = surgeryPatient(s);
+      return {
+        id: s.id,
+        recordedName: s.recordedName,
+        implantRegistryNo: s.implantRegistryNo,
+        patientId: patient?.id ?? null,
+        mobile: patient?.mobile ?? null,
+        followUpDate: s.followUpDate
+          ? (JalaliDate.fromStored(s.followUpDate)?.format() ?? null)
+          : null,
+        followUpState: followUpState(s),
+        hasNameMismatch: s.hasNameMismatch,
+      };
+    });
   }
 }

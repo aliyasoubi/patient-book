@@ -80,6 +80,9 @@ export interface SurgeryQueueItem {
   /** True when the register number has been reused for a different person. */
   hasNameMismatch: boolean;
   registeredName: string | null;
+  /** The row's own link; `null` when it follows its register entry's. */
+  patientId: string | null;
+  /** Who the row is for: its own link, else its register entry's. */
   patient: { id: string; fileNo: string; fullName: string; mobile: string | null } | null;
   surgeryDate: { jalali: string; iso: string; precision: string; raw?: string | null } | null;
   toothPosition: string;

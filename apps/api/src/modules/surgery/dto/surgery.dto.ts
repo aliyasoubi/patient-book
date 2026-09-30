@@ -89,6 +89,12 @@ export class UpsertSurgeryDto {
   @IsOptional()
   implantCaseId?: string | null;
 
+  /** The patient in the main book; `null` falls back to the register's link. */
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  patientId?: string | null;
+
   @ApiPropertyOptional({ description: 'Implant register number' })
   @Transform(optionalIdentifier)
   @Matches(REGISTER_NUMBER)
