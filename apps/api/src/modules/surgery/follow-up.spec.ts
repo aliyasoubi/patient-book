@@ -69,4 +69,14 @@ describe('followUpState', () => {
       ),
     ).toBe('none');
   });
+
+  it('is unconfirmed when its completion was assumed, not recorded', () => {
+    const closed = { ...at('1405/05/01'), followUpDoneAt: new Date() };
+    expect(followUpState({ ...closed, followUpDoneInferred: true }, now)).toBe(
+      'unconfirmed',
+    );
+    expect(followUpState({ ...closed, followUpDoneInferred: false }, now)).toBe(
+      'done',
+    );
+  });
 });

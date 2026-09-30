@@ -655,6 +655,54 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(await listFollowUps('week')).toContain(id);
     });
 
+    it('shows an assumed completion as unconfirmed until staff confirm it', async () => {
+      const unconfirmedTotal = async (): Promise<number> =>
+        (
+          (await asAdmin(http().get('/api/stats/dashboard')).expect(200))
+            .body as { totals: { followUpsUnconfirmed: number } }
+        ).totals.followUpsUnconfirmed;
+      const before = await unconfirmedTotal();
+
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'پروین صالحی',
+          surgeryDate: monthsAgo(5),
+          followUpMonths: 3,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+      // What the paper-diary backfill leaves behind: closed on its due date,
+      // on an assumption.
+      await db.query(
+        `UPDATE surgery_queue
+            SET "followUpDoneAt" = "followUpDate", "followUpDoneInferred" = true
+          WHERE id = $1`,
+        [id],
+      );
+
+      const read = (
+        await asAdmin(http().get(`/api/surgery-queue/${id}`)).expect(200)
+      ).body as { followUpState: string; followUpDoneAt: string };
+      expect(read.followUpState).toBe('unconfirmed');
+      expect(await listFollowUps('unconfirmed')).toContain(id);
+      expect(await listFollowUps('overdue')).not.toContain(id);
+      expect(await unconfirmedTotal()).toBe(before + 1);
+
+      // The front desk confirms it by re-stating the date.
+      const confirmed = await asReceptionist(
+        http().patch(`/api/surgery-queue/${id}`),
+      )
+        .send({ followUpDoneAt: read.followUpDoneAt })
+        .expect(200);
+      expect(confirmed.body).toMatchObject({
+        followUpState: 'done',
+        followUpDoneAt: read.followUpDoneAt,
+      });
+      expect(await listFollowUps('unconfirmed')).not.toContain(id);
+      expect(await unconfirmedTotal()).toBe(before);
+    });
+
     it('is overdue once its month has passed, and moves when the surgery date moves', async () => {
       const created = await asAdmin(http().post('/api/surgery-queue'))
         .send({

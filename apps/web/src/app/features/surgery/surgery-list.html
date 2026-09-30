@@ -142,6 +142,9 @@
                     @case ('done') {
                       {{ 'surgery.followUpDoneOn' | translate: { date: (item.followUpDoneAt | faNum) } }}
                     }
+                    @case ('unconfirmed') {
+                      {{ 'surgery.followUpUnconfirmed' | translate: { date: (item.followUpDoneAt | faNum) } }}
+                    }
                     @case ('overdue') {
                       {{ 'surgery.followUpMissed' | translate: { date: (followUp.jalali | faNum) } }}
                     }
@@ -153,12 +156,22 @@
                 @if (auth.can('editSurgery')) {
                   <mat-slide-toggle
                     class="queue__done"
-                    [checked]="item.followUpState === 'done'"
+                    [checked]="item.followUpState === 'done' || item.followUpState === 'unconfirmed'"
                     [disabled]="updating() === item.id"
                     (change)="setFollowUpDone(item, $event.checked)"
                   >
                     {{ 'surgery.followUpDoneSwitch' | translate }}
                   </mat-slide-toggle>
+                  @if (item.followUpState === 'unconfirmed') {
+                    <pb-button
+                      variant="text"
+                      icon="fact_check"
+                      [disabled]="updating() === item.id"
+                      (click)="confirmFollowUp(item)"
+                    >
+                      {{ 'surgery.confirmFollowUp' | translate }}
+                    </pb-button>
+                  }
                 }
               </div>
             } @else if (item.prosthesisDue) {

@@ -5,22 +5,31 @@ import { JalaliDate, storedDate, SurgeryStatus } from '../../domain';
 /**
  * Where a row's follow-up stands, judged against today on the Jalali
  * calendar: `due` this month, `overdue` before it, `pending` after it,
- * `done` once it has happened, `none` when no follow-up was set or the
- * surgery was cancelled.
+ * `done` once it has happened, `unconfirmed` when it was only assumed to
+ * have happened (see `followUpDoneInferred`), `none` when no follow-up was
+ * set or the surgery was cancelled.
  */
-export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'done';
+export type FollowUpState =
+  'none' | 'pending' | 'due' | 'overdue' | 'done' | 'unconfirmed';
 
 /**
- * The questions staff ask of the list, each a window over the *open*
- * follow-ups. `pending` is every open one whatever its date.
+ * Windows over the *open* follow-ups. `pending` is every open one whatever
+ * its date.
  */
-export const FOLLOW_UP_FILTERS = [
+export const FOLLOW_UP_WINDOWS = [
   'pending',
   'week',
   'thisMonth',
   'nextMonth',
   'overdue',
 ] as const;
+export type FollowUpWindow = (typeof FOLLOW_UP_WINDOWS)[number];
+
+/**
+ * The questions staff ask of the list: a window over the open follow-ups,
+ * or `unconfirmed` — the closed ones nobody has vouched for yet.
+ */
+export const FOLLOW_UP_FILTERS = [...FOLLOW_UP_WINDOWS, 'unconfirmed'] as const;
 export type FollowUpFilter = (typeof FOLLOW_UP_FILTERS)[number];
 
 /**
@@ -30,6 +39,11 @@ export type FollowUpFilter = (typeof FOLLOW_UP_FILTERS)[number];
  */
 export function openFollowUpSql(alias: string): string {
   return `${alias}."followUpDate" IS NOT NULL AND ${alias}."followUpDoneAt" IS NULL AND ${alias}.status <> '${SurgeryStatus.Cancelled}'`;
+}
+
+/** SQL for "closed on an assumption, awaiting a person's word" over `alias`. */
+export function unconfirmedFollowUpSql(alias: string): string {
+  return `${alias}."followUpDoneInferred" AND ${alias}.status <> '${SurgeryStatus.Cancelled}'`;
 }
 
 /** ISO `yyyy-MM-dd` bounds, inclusive, for a `date` column comparison. */
@@ -50,7 +64,7 @@ const iso = (d: Date): string => JalaliDate.fromDate(d)!.toIsoDate();
  * receptionist asks "who do I call this week", not "before Friday".
  */
 export function followUpWindow(
-  filter: FollowUpFilter,
+  filter: FollowUpWindow,
   now = new Date(),
 ): DateWindow {
   switch (filter) {
@@ -73,6 +87,7 @@ export function followUpState(
   item: {
     followUpDate: Date | null;
     followUpDoneAt: Date | null;
+    followUpDoneInferred?: boolean;
     status?: SurgeryStatus;
   },
   now = new Date(),
@@ -80,7 +95,9 @@ export function followUpState(
   if (!item.followUpDate || item.status === SurgeryStatus.Cancelled) {
     return 'none';
   }
-  if (item.followUpDoneAt) return 'done';
+  if (item.followUpDoneAt) {
+    return item.followUpDoneInferred ? 'unconfirmed' : 'done';
+  }
   const due = iso(storedDate(item.followUpDate));
   const { from, to } = followUpWindow('thisMonth', now);
   if (due < from!) return 'overdue';

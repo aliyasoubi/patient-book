@@ -98,10 +98,16 @@ export interface SurgeryQueueItem {
 }
 
 /** Judged by the API against the current Jalali month. */
-export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'done';
+export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'done' | 'unconfirmed';
 
 /** The list's follow-up windows; the API owns what each means in dates. */
-export type FollowUpFilter = 'pending' | 'week' | 'thisMonth' | 'nextMonth' | 'overdue';
+export type FollowUpFilter =
+  | 'pending'
+  | 'week'
+  | 'thisMonth'
+  | 'nextMonth'
+  | 'overdue'
+  | 'unconfirmed';
 
 /** A row for the dashboard's follow-up panel — already formatted, not the full queue record. */
 export interface FollowUpDue {
@@ -123,6 +129,7 @@ export interface DashboardStats {
     orthoCases: number;
     followUpsThisWeek: number;
     followUpsOverdue: number;
+    followUpsUnconfirmed: number;
     needsReview: number;
   };
   gender: { key: string; count: number }[];
