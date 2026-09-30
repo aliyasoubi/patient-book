@@ -10,6 +10,7 @@ import {
   extractImplantBrand,
   searchKey,
 } from '../../../../domain';
+import { legacyFollowUp } from '../../../surgery/legacy-prosthesis-due';
 
 export interface MappedSurgeryRow {
   implantRegistryNo: string | null;
@@ -22,6 +23,11 @@ export interface MappedSurgeryRow {
   abutmentType: AbutmentType;
   abutmentRaw: string | null;
   prosthesisDue: string | null;
+  /** Read from `prosthesisDue` when it names a month; see `legacyFollowUp`. */
+  followUpMonths: number | null;
+  followUpDate: Date | null;
+  followUpDoneAt: Date | null;
+  followUpDoneInferred: boolean;
   status: SurgeryStatus;
   searchText: string;
   /** Set when the surgery date could not be read. */
@@ -73,6 +79,10 @@ export class SurgeryRowMapper {
       abutmentType: classifyAbutment(abutmentRaw),
       abutmentRaw: abutmentRaw || null,
       prosthesisDue: cell(SURGERY_COLUMN.prosthesisDue) || null,
+      followUpMonths: null,
+      followUpDate: null,
+      followUpDoneAt: null,
+      followUpDoneInferred: false,
       status: SurgeryStatus.Scheduled,
       searchText: searchKey(
         [
@@ -97,6 +107,15 @@ export class SurgeryRowMapper {
       mapped.status = parsed.isBefore(now)
         ? SurgeryStatus.Completed
         : SurgeryStatus.Scheduled;
+      // The note stays as written; the follow-up it names is structured
+      // alongside, as the backfill does for rows already in the database.
+      // A note naming no month is left for the list's legacy hint.
+      if (mapped.prosthesisDue) {
+        Object.assign(
+          mapped,
+          legacyFollowUp(mapped.prosthesisDue, parsed.date, now),
+        );
+      }
     } else {
       mapped.dateProblem = {
         code: parsed.code,

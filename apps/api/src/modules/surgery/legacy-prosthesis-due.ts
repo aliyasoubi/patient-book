@@ -1,9 +1,11 @@
 /**
  * LEGACY — the imported sheets recorded a prosthesis follow-up as a bare
  * Jalali month name ("آذر ماه", "اواخر مهر"). Migration
- * `BackfillSurgeryFollowUps` turns those into the structured follow-up via
- * {@link legacyFollowUpMonths}; once it has run everywhere, this whole
- * wrapper can go. Delete, together:
+ * `BackfillSurgeryFollowUps` turned the rows already in the database into the
+ * structured follow-up via {@link legacyFollowUpMonths}, and the workbook
+ * importer does the same for rows it reads ({@link legacyFollowUp}). Once
+ * the workbook import is retired too, this whole wrapper can go. Delete,
+ * together:
  *
  *   - this file and its spec
  *   - `SurgeryQueueItem.prosthesisDue` (add a migration dropping the column)
@@ -13,9 +15,9 @@
  *
  * The migration itself stays: history has to replay.
  */
-import { getMonth } from 'date-fns-jalali';
+import { addMonths, getMonth } from 'date-fns-jalali';
 
-import { normalizePersian } from '../../domain';
+import { JalaliDate, normalizePersian } from '../../domain';
 
 /** Jalali month names, index 0 = Farvardin, in the folded spelling `normalizePersian` yields. */
 const MONTHS = [
@@ -54,4 +56,39 @@ export function legacyFollowUpMonths(
   if (month === -1) return null;
   const diff = (month - getMonth(surgeryDate) + 12) % 12;
   return diff === 0 ? 12 : diff;
+}
+
+/** The structured follow-up a legacy note stands for; see {@link legacyFollowUp}. */
+export interface LegacyFollowUp {
+  followUpMonths: number;
+  followUpDate: Date;
+  followUpDoneAt: Date | null;
+  followUpDoneInferred: boolean;
+}
+
+/**
+ * The structured follow-up a legacy note implies for a surgery on
+ * `surgeryDate` — what the backfill migration wrote, so an imported row
+ * ends up exactly as an upgraded one. A follow-up already due before `now`
+ * is closed on its due date, as the paper diary would have had it, but
+ * flagged as assumed so staff confirm or reopen it. `null` when the note
+ * names no month.
+ */
+export function legacyFollowUp(
+  note: string,
+  surgeryDate: Date,
+  now: Date = new Date(),
+): LegacyFollowUp | null {
+  const months = legacyFollowUpMonths(note, surgeryDate);
+  if (months === null) return null;
+  const due = addMonths(surgeryDate, months);
+  const past =
+    JalaliDate.fromDate(due)!.toIsoDate() <
+    JalaliDate.fromDate(now)!.toIsoDate();
+  return {
+    followUpMonths: months,
+    followUpDate: due,
+    followUpDoneAt: past ? due : null,
+    followUpDoneInferred: past,
+  };
 }

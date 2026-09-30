@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { legacyFollowUpMonths } from './legacy-prosthesis-due';
+import { legacyFollowUp, legacyFollowUpMonths } from './legacy-prosthesis-due';
 import { JalaliDate } from '../../domain';
 
 const on = (jalali: string): Date => JalaliDate.parse(jalali).date;
@@ -24,5 +24,31 @@ describe('legacyFollowUpMonths', () => {
 
   it('gives up on a note that names no month', () => {
     expect(legacyFollowUpMonths('بعداً', on('1405/06/01'))).toBeNull();
+  });
+});
+
+describe('legacyFollowUp', () => {
+  const iso = (d: Date | null): string | null =>
+    d ? JalaliDate.fromDate(d)!.toIsoDate() : null;
+  // "Now" is 9 Mehr 1405.
+  const now = on('1405/07/09');
+
+  it('takes a follow-up already past as done on its due date, but only assumed', () => {
+    const f = legacyFollowUp('تیر ماه', on('1405/01/15'), now)!;
+    expect(f.followUpMonths).toBe(3);
+    expect(iso(f.followUpDate)).toBe(iso(on('1405/04/15')));
+    expect(iso(f.followUpDoneAt)).toBe(iso(on('1405/04/15')));
+    expect(f.followUpDoneInferred).toBe(true);
+  });
+
+  it('leaves a follow-up still ahead open', () => {
+    const f = legacyFollowUp('آذر', on('1405/06/01'), now)!;
+    expect(iso(f.followUpDate)).toBe(iso(on('1405/09/01')));
+    expect(f.followUpDoneAt).toBeNull();
+    expect(f.followUpDoneInferred).toBe(false);
+  });
+
+  it('is null when the note names no month', () => {
+    expect(legacyFollowUp('بعد از جراحی', on('1405/06/01'), now)).toBeNull();
   });
 });
