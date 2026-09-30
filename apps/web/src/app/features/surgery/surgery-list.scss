@@ -46,102 +46,116 @@
   }
 }
 
+/*
+ * The waiting list as a work queue: one compact row per surgery, in the same
+ * four columns every time so the eye can run down any of them. The columns
+ * follow the list's own width, not the window's — the sidebar takes a share
+ * — and below the breakpoint each row stacks into a card.
+ */
+.surgery {
+  container-type: inline-size;
+}
+
+$queue-columns: minmax(170px, 220px) minmax(0, 1fr) minmax(0, 1.3fr) auto;
+
 .queue {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-large);
+  background: var(--mat-sys-surface);
+  overflow: hidden;
 
-  &__item {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
+  &__head {
+    display: grid;
+    grid-template-columns: $queue-columns;
     gap: 16px;
-    padding: 14px;
-    border: 1px solid var(--mat-sys-outline-variant);
-    border-radius: var(--mat-sys-corner-large);
-    background: var(--mat-sys-surface);
+    padding: 0 16px;
+    margin-bottom: -8px;
+    font: var(--mat-sys-label-large);
+    color: var(--mat-sys-on-surface-variant);
+  }
 
-    @media (max-width: 640px) {
-      flex-direction: column;
-      gap: 10px;
+  &__row {
+    display: grid;
+    grid-template-columns: $queue-columns;
+    align-items: center;
+    gap: 6px 16px;
+    min-height: 64px;
+    padding: 10px 16px;
+    transition: background-color 140ms ease;
+
+    & + & {
+      border-top: 1px solid var(--mat-sys-outline-variant);
     }
 
-    /** Reserve the corner only on rows that actually carry the menu trigger. */
-    &:has(.queue__menu) {
-      padding-inline-end: 56px;
+    &:hover {
+      background: color-mix(in srgb, var(--mat-sys-primary) 5%, transparent);
     }
 
     &--mismatch {
-      border-color: color-mix(in srgb, var(--mat-sys-error) 45%, transparent);
+      box-shadow: inset 3px 0 0 var(--mat-sys-error);
     }
   }
 
-  &__date {
+  &__when,
+  &__who,
+  &__what {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    flex: 0 0 auto;
-    min-width: 104px;
-    padding: 8px 10px;
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--mat-sys-surface-container-low);
-
-    @media (max-width: 640px) {
-      flex-direction: row;
-      align-self: flex-start;
-    }
-  }
-
-  &__date-value {
-    font-size: var(--mat-sys-body-medium-size);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
-    // 'onum', which is Latin in this font. See `.ltr-nums` in styles.scss.
-    font-feature-settings: 'ss01', 'tnum';
-    white-space: nowrap;
-
-    &--none {
-      font-weight: 400;
-      color: var(--mat-sys-on-surface-variant);
-    }
-  }
-
-  &__body {
-    flex: 1;
+    align-items: flex-start;
+    gap: 2px;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
   }
 
-  &__identity {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 10px;
+  &__name {
+    font: var(--mat-sys-title-small);
+  }
 
-    strong {
-      font: var(--mat-sys-title-medium);
+  &__sub,
+  &__muted {
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 6px;
+
+    a {
+      color: var(--mat-sys-primary);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
+  }
+
+  &__what > span:first-child {
+    font: var(--mat-sys-body-medium);
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
   }
 
   &__warning {
+    grid-column: 1 / -1;
     display: flex;
     align-items: flex-start;
     gap: 8px;
     margin: 0;
-    padding: 9px 12px;
+    padding: 8px 12px;
     border-radius: var(--mat-sys-corner-medium);
     background: var(--mat-sys-error-container);
     color: var(--mat-sys-on-error-container);
-    font-size: var(--mat-sys-body-small-size);
-    font-weight: var(--mat-sys-body-small-weight);
-    letter-spacing: var(--mat-sys-body-small-tracking);
+    font: var(--mat-sys-body-small);
     line-height: 1.75;
 
     .material-symbols-rounded {
@@ -150,46 +164,38 @@
       margin-top: 1px;
     }
   }
+}
 
-  /**
-   * Static case attributes read as supporting text, not chips — M3 reserves
-   * chips for interactive things, so pills here would compete with the two
-   * that are (the patient link and the status).
-   */
-  &__follow-up {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    margin-top: 8px;
-  }
-
-  /* The switch's label is the action; keep it the size of the chip beside it. */
-  &__done {
-    --mat-slide-toggle-label-text-size: var(--mat-sys-label-large-size);
-  }
-
-  &__details {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__detail {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-
-    .material-symbols-rounded {
-      font-size: 16px;
+@container (max-width: 760px) {
+  .queue {
+    &__head {
+      display: none;
     }
-  }
 
-  &__menu {
-    position: absolute;
-    inset-inline-end: 8px;
-    top: 8px;
+    &__row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'who actions'
+        'when when'
+        'what what';
+      align-items: start;
+      padding: 12px 14px;
+    }
+
+    &__who {
+      grid-area: who;
+    }
+
+    &__when {
+      grid-area: when;
+    }
+
+    &__what {
+      grid-area: what;
+    }
+
+    &__actions {
+      grid-area: actions;
+    }
   }
 }

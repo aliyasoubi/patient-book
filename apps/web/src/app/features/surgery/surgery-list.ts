@@ -9,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   catchError,
@@ -41,17 +40,22 @@ import type {
 
 /**
  * The questions staff ask of the list, most urgent first. Each is a
- * window over the open follow-ups — bar the last, the assumed-done ones
- * awaiting a confirmation; the API decides what each means in dates, so the
- * chips here never disagree with the dashboard.
+ * window over the open follow-ups — bar the assumed-done ones awaiting a
+ * confirmation; the API decides what each means in dates, so the chips here
+ * never disagree with the dashboard. `all` is the whole surgery list.
  */
-const FOLLOW_UP_FILTERS: readonly { value: FollowUpFilter; label: string; icon: string }[] = [
+const FOLLOW_UP_FILTERS: readonly {
+  value: FollowUpFilter | 'all';
+  label: string;
+  icon: string;
+}[] = [
   { value: 'overdue', label: 'surgery.filterOverdue', icon: 'event_busy' },
   { value: 'pending', label: 'surgery.filterPending', icon: 'pending_actions' },
   { value: 'week', label: 'surgery.filterWeek', icon: 'date_range' },
   { value: 'thisMonth', label: 'surgery.filterThisMonth', icon: 'calendar_month' },
   { value: 'nextMonth', label: 'surgery.filterNextMonth', icon: 'event_upcoming' },
   { value: 'unconfirmed', label: 'surgery.filterUnconfirmed', icon: 'fact_check' },
+  { value: 'all', label: 'surgery.filterAll', icon: 'list' },
 ];
 
 /** How a follow-up reads on the card: the state is the API's, the colour is ours. */
@@ -65,18 +69,21 @@ const FOLLOW_UP_TONE: Record<FollowUpState, StatusTone> = {
 };
 
 function isFollowUpFilter(value: unknown): value is FollowUpFilter {
-  return FOLLOW_UP_FILTERS.some((f) => f.value === value);
+  return value !== 'all' && FOLLOW_UP_FILTERS.some((f) => f.value === value);
 }
 
 /**
  * The filters the dashboard links into. Read once from the URL on arrival;
- * the rest of the toolbar is session-only.
+ * the rest of the toolbar is session-only. With neither, the page opens on
+ * the work — every open follow-up, soonest (so the overdue) first; a
+ * linked-in search looks through every row, done ones included.
  */
 function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter | '' } {
+  const q = params.get('q')?.trim() ?? '';
   const followUp = params.get('followUp');
   return {
-    q: params.get('q')?.trim() ?? '',
-    followUp: isFollowUpFilter(followUp) ? followUp : '',
+    q,
+    followUp: isFollowUpFilter(followUp) ? followUp : q ? '' : 'pending',
   };
 }
 
@@ -91,7 +98,6 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
     MatMenuModule,
     MatPaginatorModule,
     MatProgressBarModule,
-    MatSlideToggleModule,
     EmptyState,
     LoadError,
     PersianNumberPipe,
@@ -128,7 +134,7 @@ export class SurgeryList {
   protected readonly failed = signal(false);
   protected readonly items = signal<SurgeryQueueItem[]>([]);
   protected readonly total = signal(0);
-  /** The row whose follow-up switch is mid-flight, so it cannot be flipped twice. */
+  /** The row whose follow-up is mid-save, so its action cannot run twice. */
   protected readonly updating = signal<string | null>(null);
   protected readonly countLabel = computed(() => {
     const total = this.total();
@@ -224,35 +230,91 @@ export class SurgeryList {
     return isBrandOnly ? '' : item.toothPosition;
   }
 
+  /**
+   * The surgery as one phrase — kind, tooth, brand, cover — instead of a row
+   * of labelled chips each fighting for attention.
+   */
+  protected reasonLine(item: SurgeryQueueItem): string {
+    return [
+      this.i18n.instant(this.kindLabel(item.kind)),
+      this.toothPositionDisplay(item),
+      item.implantBrand,
+      item.kind === 'implant' && item.abutmentType !== 'unknown'
+        ? this.i18n.instant(this.abutmentLabel(item.abutmentType))
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  /** A follow-up still owed: the row's action is to complete it. */
+  protected isOpen(item: SurgeryQueueItem): boolean {
+    return ['pending', 'due', 'overdue'].includes(item.followUpState);
+  }
+
+  /** A follow-up already closed, by staff or by assumption: it can be reopened. */
+  protected isClosed(item: SurgeryQueueItem): boolean {
+    return item.followUpState === 'done' || item.followUpState === 'unconfirmed';
+  }
+
   protected hasActions(): boolean {
     return this.auth.can('editSurgery') || this.auth.can('archiveSurgery');
   }
+
+  /** The chip that shows as selected: no filter is the "all" chip. */
+  protected readonly chipValue = computed(() => this.followUp() || 'all');
 
   protected emptyHint(): string {
     return this.search.value || this.followUp() ? this.i18n.instant('filters.changeThem') : '';
   }
 
-  /** A chip-listbox in single mode hands back the chosen value, or `undefined` when cleared. */
+  /**
+   * A chip-listbox in single mode hands back the chosen value, or `undefined`
+   * when the selected chip is clicked again — which, like the "all" chip,
+   * clears the filter.
+   */
   protected setFollowUp(value: unknown): void {
     this.followUp.set(isFollowUpFilter(value) ? value : '');
     this.page.set(1);
   }
 
-  /** The patient came in for the follow-up — or, switched off, did not after all. */
-  protected setFollowUpDone(item: SurgeryQueueItem, done: boolean): void {
+  /**
+   * The patient came in for the follow-up: closed today. Undo sits in the
+   * confirmation, since the row may have just left the filtered list.
+   */
+  protected complete(item: SurgeryQueueItem): void {
     // Today on the Jalali calendar, in the `yyyy/MM/dd` form the API parses.
-    const followUpDoneAt = done ? formatJalali(new Date(), 'yyyy/MM/dd') : null;
+    const today = formatJalali(new Date(), 'yyyy/MM/dd');
+    this.saveFollowUp(item, today, 'surgery.followUpMarkedDone', () =>
+      this.saveFollowUp(item, null, 'surgery.followUpReopened'),
+    );
+  }
+
+  /** It did not happen after all: open again, whether staff or the backfill closed it. */
+  protected reopen(item: SurgeryQueueItem): void {
+    this.saveFollowUp(item, null, 'surgery.followUpReopened');
+  }
+
+  /** Writes a completion date (or `null`), then says so — with an undo when given one. */
+  private saveFollowUp(
+    item: SurgeryQueueItem,
+    followUpDoneAt: string | null,
+    message: string,
+    undo?: () => void,
+  ): void {
     this.updating.set(item.id);
     this.registry.saveSurgery(item.id, { followUpDoneAt }).subscribe({
       next: () => {
         this.updating.set(null);
-        this.snackBar.open(
-          this.i18n.instant(done ? 'surgery.followUpMarkedDone' : 'surgery.followUpReopened'),
-          this.i18n.instant('action.dismiss'),
+        const ref = this.snackBar.open(
+          this.i18n.instant(message),
+          this.i18n.instant(undo ? 'action.undo' : 'action.dismiss'),
+          { duration: 6000 },
         );
+        if (undo) ref.onAction().subscribe(undo);
         this.retry();
       },
-      // The switch snaps back with the reload; the interceptor has shown the error.
+      // The interceptor has shown the error; the reload shows what is stored.
       error: () => {
         this.updating.set(null);
         this.retry();
@@ -262,7 +324,7 @@ export class SurgeryList {
 
   /**
    * Vouch for a completion the paper-diary backfill only assumed: the same
-   * date, now on a person's word. Reopening is the switch, as for any other.
+   * date, now on a person's word. Reopening is in the row menu, as for any other.
    */
   protected confirmFollowUp(item: SurgeryQueueItem): void {
     this.updating.set(item.id);

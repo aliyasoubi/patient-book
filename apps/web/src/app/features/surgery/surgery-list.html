@@ -19,11 +19,11 @@
       [ariaLabel]="'surgery.searchAria' | translate"
     />
 
-    <!-- The questions staff ask of the list, one at a time: clicking the
-         selected chip clears it and shows everything again. -->
+    <!-- The questions staff ask of the list, one at a time; "all" is the
+         whole surgery list. -->
     <mat-chip-listbox
       class="surgery__filters"
-      [value]="followUp() || null"
+      [value]="chipValue()"
       (change)="setFollowUp($event.value)"
       [attr.aria-label]="'surgery.followUpFilter' | translate"
     >
@@ -57,158 +57,153 @@
       [hint]="emptyHint()"
     />
   } @else {
+    <!-- A work queue, not a set of record cards: each row answers "when is
+         the follow-up, who is it, what for, and what do I do" left to right
+         (right to left here), in about one line on a desktop. Below the
+         breakpoint the same row stacks into a card. -->
+    <div class="queue__head" aria-hidden="true">
+      <span>{{ 'surgery.colFollowUp' | translate }}</span>
+      <span>{{ 'surgery.colPatient' | translate }}</span>
+      <span>{{ 'surgery.colReason' | translate }}</span>
+      <span></span>
+    </div>
     <ul class="queue">
       @for (item of items(); track item.id) {
-        <li class="queue__item" [class.queue__item--mismatch]="item.hasNameMismatch">
-          <!-- What was done, and when. -->
-          <div class="queue__date">
-            @if (item.surgeryDate) {
-              <span class="queue__date-value">{{ item.surgeryDate.jalali | faNum }}</span>
-            } @else {
-              <span class="queue__date-value queue__date-value--none">{{
-                'surgery.noDate' | translate
-              }}</span>
-            }
-            <pb-status-chip [icon]="item.kind === 'implant' ? 'deployed_code' : 'dentistry'">
-              {{ kindLabel(item.kind) | translate }}
-            </pb-status-chip>
-          </div>
-
-          <div class="queue__body">
-            <div class="queue__identity">
-              <strong>{{ item.recordedName || ('patient.unnamed' | translate) }}</strong>
-              @if (item.patient) {
-                <pb-status-chip icon="link" [routerLink]="['/patients', item.patient.id]">
-                  {{ 'surgery.patientFile' | translate: { fileNo: item.patient.fileNo } }}
-                </pb-status-chip>
-              }
-            </div>
-
-            <!-- A reused register number is a patient-safety issue: the number
-                 on the list belongs to someone else in the implant book. -->
-            @if (item.hasNameMismatch) {
-              <p class="queue__warning" role="note">
-                <mat-icon aria-hidden="true">warning</mat-icon>
-                <span>{{
-                  'surgery.identityWarning'
-                    | translate: { number: item.implantRegistryNo, name: item.registeredName }
-                }}</span>
-              </p>
-            }
-
-            <div class="queue__details">
-              @if (item.implantRegistryNo) {
-                <span class="queue__detail">
-                  <mat-icon aria-hidden="true">deployed_code</mat-icon>
-                  {{ 'surgery.implantRegistry' | translate: { number: item.implantRegistryNo } }}
-                </span>
-              }
-              @if (toothPositionDisplay(item); as position) {
-                <span class="queue__detail">
-                  <mat-icon aria-hidden="true">dentistry</mat-icon>
-                  {{ position }}
-                </span>
-              }
-              @if (item.implantBrand) {
-                <span class="queue__detail">
-                  <mat-icon aria-hidden="true">label</mat-icon>
-                  {{ item.implantBrand }}
-                </span>
-              }
-              @if (item.kind === 'implant' && item.abutmentType !== 'unknown') {
-                <span class="queue__detail">
-                  <mat-icon aria-hidden="true">hardware</mat-icon>
-                  {{ abutmentLabel(item.abutmentType) | translate }}
-                </span>
-              }
-            </div>
-
-            <!-- The follow-up is the row's status: what the surgery still owes
-                 the patient, and where it stands. The switch is the one thing
-                 staff change from the list — a visit happened, or it did not
-                 after all — so it sits right here, not behind a menu. -->
+        <li class="queue__row" [class.queue__row--mismatch]="item.hasNameMismatch">
+          <!-- When: the follow-up is the row's status, so it leads. -->
+          <div class="queue__when">
             @if (item.status === 'cancelled') {
               <!-- A cancelled surgery owes no follow-up; say so rather than
                    show a date that no longer means anything. -->
-              <div class="queue__follow-up">
-                <pb-status-chip icon="cancel" tone="neutral">
-                  {{ 'surgery.cancelled' | translate }}
-                </pb-status-chip>
-              </div>
+              <pb-status-chip tone="neutral">{{ 'surgery.cancelled' | translate }}</pb-status-chip>
             } @else if (item.followUpDate; as followUp) {
-              <div class="queue__follow-up">
-                <pb-status-chip icon="event_repeat" [tone]="toneFor(item.followUpState)">
-                  @switch (item.followUpState) {
-                    @case ('done') {
-                      {{ 'surgery.followUpDoneOn' | translate: { date: (item.followUpDoneAt | faNum) } }}
-                    }
-                    @case ('unconfirmed') {
-                      {{ 'surgery.followUpUnconfirmed' | translate: { date: (item.followUpDoneAt | faNum) } }}
-                    }
-                    @case ('overdue') {
-                      {{ 'surgery.followUpMissed' | translate: { date: (followUp.jalali | faNum) } }}
-                    }
-                    @default {
-                      {{ 'surgery.followUpOn' | translate: { date: (followUp.jalali | faNum) } }}
-                    }
+              <pb-status-chip [tone]="toneFor(item.followUpState)">
+                @switch (item.followUpState) {
+                  @case ('done') {
+                    {{ 'surgery.followUpDoneOn' | translate: { date: (item.followUpDoneAt | faNum) } }}
                   }
-                </pb-status-chip>
-                @if (auth.can('editSurgery')) {
-                  <mat-slide-toggle
-                    class="queue__done"
-                    [checked]="item.followUpState === 'done' || item.followUpState === 'unconfirmed'"
-                    [disabled]="updating() === item.id"
-                    (change)="setFollowUpDone(item, $event.checked)"
-                  >
-                    {{ 'surgery.followUpDoneSwitch' | translate }}
-                  </mat-slide-toggle>
-                  @if (item.followUpState === 'unconfirmed') {
-                    <pb-button
-                      variant="text"
-                      icon="fact_check"
-                      [disabled]="updating() === item.id"
-                      (click)="confirmFollowUp(item)"
-                    >
-                      {{ 'surgery.confirmFollowUp' | translate }}
-                    </pb-button>
+                  @case ('unconfirmed') {
+                    {{ 'surgery.followUpUnconfirmed' | translate: { date: (item.followUpDoneAt | faNum) } }}
+                  }
+                  @case ('overdue') {
+                    {{ 'surgery.followUpMissed' | translate: { date: (followUp.jalali | faNum) } }}
+                  }
+                  @default {
+                    {{ 'surgery.followUpOn' | translate: { date: (followUp.jalali | faNum) } }}
                   }
                 }
-              </div>
+              </pb-status-chip>
             } @else if (item.prosthesisDue) {
               <!-- LEGACY: an imported note the backfill could not read. Delete
                    with apps/api/src/modules/surgery/legacy-prosthesis-due.ts. -->
-              <span class="queue__detail">
-                <mat-icon aria-hidden="true">schedule</mat-icon>
-                {{ 'surgery.prosthesis' | translate: { date: item.prosthesisDue } }}
+              <span class="queue__muted">{{
+                'surgery.prosthesis' | translate: { date: item.prosthesisDue }
+              }}</span>
+            } @else {
+              <span class="queue__muted">{{ 'surgery.noFollowUp' | translate }}</span>
+            }
+          </div>
+
+          <!-- Who, and how to reach them. -->
+          <div class="queue__who">
+            <strong class="queue__name">{{
+              item.recordedName || ('patient.unnamed' | translate)
+            }}</strong>
+            @if (item.patient; as patient) {
+              <span class="queue__sub">
+                <a [routerLink]="['/patients', patient.id]">{{
+                  'surgery.patientFile' | translate: { fileNo: patient.fileNo }
+                }}</a>
+                @if (patient.mobile) {
+                  <span aria-hidden="true">·</span>
+                  <a class="ltr-nums" [href]="'tel:' + patient.mobile">{{ patient.mobile }}</a>
+                }
               </span>
             }
           </div>
 
-          <!-- Edit and archive/restore only; the status lives on the card. -->
-          @if (hasActions()) {
-            <button
-              mat-icon-button
-              type="button"
-              class="queue__menu"
-              [matMenuTriggerFor]="rowMenu"
-              [attr.aria-label]="'surgery.rowActions' | translate"
-            >
-              <mat-icon aria-hidden="true">more_vert</mat-icon>
-            </button>
-            <mat-menu #rowMenu="matMenu">
-              @if (auth.can('editSurgery')) {
-                <a mat-menu-item [routerLink]="['/surgery', item.id, 'edit']">
-                  <mat-icon aria-hidden="true">edit</mat-icon>
-                  <span>{{ 'common.edit' | translate }}</span>
-                </a>
+          <!-- What for: the surgery the follow-up belongs to, as one phrase. -->
+          <div class="queue__what">
+            <span>{{ reasonLine(item) }}</span>
+            <span class="queue__sub">
+              @if (item.surgeryDate) {
+                {{ 'surgery.surgeryOn' | translate: { date: (item.surgeryDate.jalali | faNum) } }}
+              } @else {
+                {{ 'surgery.noDate' | translate }}
               }
-              @if (auth.can('archiveSurgery')) {
-                <button mat-menu-item type="button" (click)="delete(item)">
-                  <mat-icon aria-hidden="true">delete</mat-icon>
-                  <span>{{ 'common.delete' | translate }}</span>
-                </button>
+              @if (item.implantRegistryNo) {
+                <span aria-hidden="true">·</span>
+                {{ 'surgery.implantRegistry' | translate: { number: item.implantRegistryNo } }}
               }
-            </mat-menu>
+            </span>
+          </div>
+
+          <!-- What to do: the one likely action as a button, the rest in the
+               menu right beside it. -->
+          <div class="queue__actions">
+            @if (auth.can('editSurgery') && item.status !== 'cancelled') {
+              @if (isOpen(item)) {
+                <pb-button
+                  variant="stroked"
+                  icon="check"
+                  [disabled]="updating() === item.id"
+                  (click)="complete(item)"
+                >
+                  {{ 'surgery.complete' | translate }}
+                </pb-button>
+              } @else if (item.followUpState === 'unconfirmed') {
+                <pb-button
+                  variant="stroked"
+                  icon="fact_check"
+                  [disabled]="updating() === item.id"
+                  (click)="confirmFollowUp(item)"
+                >
+                  {{ 'surgery.confirmFollowUp' | translate }}
+                </pb-button>
+              }
+            }
+            @if (hasActions()) {
+              <button
+                mat-icon-button
+                type="button"
+                [matMenuTriggerFor]="rowMenu"
+                [attr.aria-label]="'surgery.rowActions' | translate"
+              >
+                <mat-icon aria-hidden="true">more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                @if (auth.can('editSurgery')) {
+                  <a mat-menu-item [routerLink]="['/surgery', item.id, 'edit']">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>{{ 'common.edit' | translate }}</span>
+                  </a>
+                  @if (isClosed(item)) {
+                    <button mat-menu-item type="button" (click)="reopen(item)">
+                      <mat-icon aria-hidden="true">undo</mat-icon>
+                      <span>{{ 'surgery.reopen' | translate }}</span>
+                    </button>
+                  }
+                }
+                @if (auth.can('archiveSurgery')) {
+                  <button mat-menu-item type="button" (click)="delete(item)">
+                    <mat-icon aria-hidden="true">delete</mat-icon>
+                    <span>{{ 'common.delete' | translate }}</span>
+                  </button>
+                }
+              </mat-menu>
+            }
+          </div>
+
+          <!-- A reused register number is a patient-safety issue: the number
+               on the list belongs to someone else in the implant book. -->
+          @if (item.hasNameMismatch) {
+            <p class="queue__warning" role="note">
+              <mat-icon aria-hidden="true">warning</mat-icon>
+              <span>{{
+                'surgery.identityWarning'
+                  | translate: { number: item.implantRegistryNo, name: item.registeredName }
+              }}</span>
+            </p>
           }
         </li>
       }

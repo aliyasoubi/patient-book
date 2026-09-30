@@ -50,7 +50,6 @@ folder
 format_paint
 group
 groups
-hardware
 healing
 home
 inbox
@@ -106,6 +105,7 @@ tag
 timeline
 tune
 unarchive
+undo
 upcoming
 update
 visibility
