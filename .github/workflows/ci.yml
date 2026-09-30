@@ -15,7 +15,7 @@ jobs:
         env:
           POSTGRES_USER: dental
           POSTGRES_PASSWORD: dental_dev_pw
-          POSTGRES_DB: patient_book
+          POSTGRES_DB: patient_book_e2e
         ports:
           - 5432:5432
         options: >-
@@ -29,7 +29,7 @@ jobs:
       DB_PORT: 5432
       DB_USER: dental
       DB_PASSWORD: dental_dev_pw
-      DB_NAME: patient_book
+      DB_NAME: patient_book_e2e
       JWT_SECRET: ci-only-secret-never-used-in-production
       JWT_REFRESH_SECRET: ci-only-refresh-secret-never-used-in-production
 
