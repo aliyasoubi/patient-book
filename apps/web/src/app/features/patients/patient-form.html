@@ -143,6 +143,7 @@
           [rows]="2"
           prefixIcon="medical_information"
           [placeholder]="'patientForm.medicalHistoryPlaceholder' | translate"
+          [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
         />
       </div>
     </pb-surface>
@@ -177,6 +178,7 @@
         [control]="form.controls.notes"
         [label]="'patientForm.internalNotes' | translate"
         [rows]="3"
+        [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
       />
     </pb-surface>
 

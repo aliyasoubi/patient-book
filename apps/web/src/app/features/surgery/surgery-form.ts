@@ -40,6 +40,7 @@ import {
   PbTextField,
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'pb-surgery-form',
@@ -64,6 +65,8 @@ import type { SelectOption, TextFieldOption } from '../../shared/ui';
 })
 export class SurgeryForm implements HasUnsavedChanges {
   private readonly fb = inject(FormBuilder);
+  private readonly auth = inject(AuthService);
+  protected readonly canEditClinicalNotes = this.auth.can('editClinicalNotes');
   private readonly registry = inject(RegistryService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
@@ -199,6 +202,11 @@ export class SurgeryForm implements HasUnsavedChanges {
 
   constructor() {
     warnBeforeUnload(() => this.hasUnsavedChanges());
+    // Clinical notes are shown but not editable at the front desk; the API
+    // refuses a change from that role regardless.
+    if (!this.canEditClinicalNotes) {
+      this.form.controls.notes.disable();
+    }
     effect(() => {
       const id = this.id();
       untracked(() => (id ? this.loadSurgery(id) : this.prefillNew()));

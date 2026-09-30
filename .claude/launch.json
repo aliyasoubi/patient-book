@@ -4,14 +4,30 @@
     {
       "name": "web",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "npm run start --workspace=web -- --port ${PORT:-4200}"],
+      "runtimeArgs": [
+        "-c",
+        "npm run start --workspace=web -- --port ${PORT:-4200}"
+      ],
       "port": 4200,
       "autoPort": true
     },
     {
       "name": "api",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start:dev", "--workspace=api"],
+      "runtimeArgs": [
+        "run",
+        "start:dev",
+        "--workspace=api"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "api-e2e",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "DB_NAME=patient_book_e2e npm run start:dev --workspace=api"
+      ],
       "port": 3000
     }
   ]

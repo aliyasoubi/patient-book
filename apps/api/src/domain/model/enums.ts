@@ -3,7 +3,10 @@ export enum UserRole {
   Admin = 'admin',
   /** Clinical staff: full patient read/write, no user management. */
   Dentist = 'dentist',
-  /** Front desk: patient read/write, no deletion, no clinical notes edit. */
+  /**
+   * Front desk: patient read/write, no deletion, and clinical notes (medical
+   * history, patient and surgery notes) read-only — see clinical-notes.policy.
+   */
   Receptionist = 'receptionist',
   /** Read-only, for accountants or temporary staff. */
   Viewer = 'viewer',

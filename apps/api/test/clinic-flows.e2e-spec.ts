@@ -54,9 +54,11 @@ describeIfWritable('clinic flows (e2e)', () => {
   let db: DataSource;
   let adminToken: string;
   let viewerToken: string;
+  let receptionistToken: string;
 
   const adminUsername = `e2e-admin-${runId}`;
   const viewerUsername = `e2e-viewer-${runId}`;
+  const receptionistUsername = `e2e-reception-${runId}`;
   // Fixture credentials for this run only; never a real account's.
   const password = `E2e!${runId}Pass`;
   const userIds: string[] = [];
@@ -69,6 +71,8 @@ describeIfWritable('clinic flows (e2e)', () => {
     req.set('Authorization', `Bearer ${adminToken}`);
   const asViewer = (req: request.Test) =>
     req.set('Authorization', `Bearer ${viewerToken}`);
+  const asReceptionist = (req: request.Test) =>
+    req.set('Authorization', `Bearer ${receptionistToken}`);
 
   async function login(username: string): Promise<string> {
     const res = await http()
@@ -92,6 +96,7 @@ describeIfWritable('clinic flows (e2e)', () => {
     for (const [username, role] of [
       [adminUsername, UserRole.Admin],
       [viewerUsername, UserRole.Viewer],
+      [receptionistUsername, UserRole.Receptionist],
     ] as const) {
       const saved = await users.save(
         users.create({
@@ -108,6 +113,7 @@ describeIfWritable('clinic flows (e2e)', () => {
 
     adminToken = await login(adminUsername);
     viewerToken = await login(viewerUsername);
+    receptionistToken = await login(receptionistUsername);
   });
 
   afterAll(async () => {
@@ -280,6 +286,62 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect((missing.body as ErrorBody).fieldErrors).toHaveProperty(
         'expectedVersion',
       );
+    });
+
+    it('lets the front desk save a patient but not change clinical notes', async () => {
+      const created = await asAdmin(http().post('/api/patients'))
+        .send({
+          fileNo: nextNumber(),
+          firstName: 'زهرا',
+          lastName: 'کریمی',
+          medicalHistory: 'دیابت',
+        })
+        .expect(201);
+      const { id, version } = created.body as { id: string; version: number };
+      patientIds.push(id);
+
+      // The form sends every field back; untouched notes are not a change.
+      const saved = await asReceptionist(http().patch(`/api/patients/${id}`))
+        .send({
+          occupation: 'معلم',
+          medicalHistory: 'دیابت',
+          notes: '',
+          expectedVersion: version,
+        })
+        .expect(200);
+      const next = (saved.body as { version: number }).version;
+
+      for (const change of [{ medicalHistory: 'فشار خون' }, { notes: 'x' }]) {
+        const denied = await asReceptionist(http().patch(`/api/patients/${id}`))
+          .send({ ...change, expectedVersion: next })
+          .expect(403);
+        expect((denied.body as ErrorBody).code).toBe(ErrorCode.Forbidden);
+      }
+      await asReceptionist(http().post('/api/patients'))
+        .send({
+          fileNo: nextNumber(),
+          firstName: 'زهرا',
+          lastName: 'کریمی',
+          medicalHistory: 'دیابت',
+        })
+        .expect(403);
+
+      const surgery = await asReceptionist(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'زهرا کریمی' })
+        .expect(201);
+      const surgeryId = (surgery.body as { id: string }).id;
+      surgeryIds.push(surgeryId);
+      await asReceptionist(http().patch(`/api/surgery-queue/${surgeryId}`))
+        .send({ notes: 'درد پس از جراحی' })
+        .expect(403);
+
+      const stored = (
+        await asAdmin(http().get(`/api/patients/${id}`)).expect(200)
+      ).body as { occupation: string; medicalHistory: string };
+      expect(stored).toMatchObject({
+        occupation: 'معلم',
+        medicalHistory: 'دیابت',
+      });
     });
 
     it('keeps a viewer read-only', async () => {

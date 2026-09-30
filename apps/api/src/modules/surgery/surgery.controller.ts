@@ -20,6 +20,7 @@ import {
 } from './dto/surgery.dto';
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
+import type { RequestUser } from '../auth/strategies/jwt.strategy';
 import { UserRole } from '../../domain';
 
 @ApiTags('surgery')
@@ -47,8 +48,8 @@ export class SurgeryController {
 
   @Post()
   @Roles(UserRole.Admin, UserRole.Dentist, UserRole.Receptionist)
-  create(@Body() dto: UpsertSurgeryDto, @CurrentUser('id') userId: string) {
-    return this.surgery.create(dto, userId);
+  create(@Body() dto: UpsertSurgeryDto, @CurrentUser() user: RequestUser) {
+    return this.surgery.create(dto, user.id, user.role);
   }
 
   @Patch(':id')
@@ -56,9 +57,9 @@ export class SurgeryController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSurgeryDto,
-    @CurrentUser('id') userId: string,
+    @CurrentUser() user: RequestUser,
   ) {
-    return this.surgery.update(id, dto, userId);
+    return this.surgery.update(id, dto, user.id, user.role);
   }
 
   @Delete(':id')

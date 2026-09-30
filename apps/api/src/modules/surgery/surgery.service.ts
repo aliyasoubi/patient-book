@@ -13,6 +13,7 @@ import { extractImplantBrand } from '../../domain';
 import { DatePrecisionEnum } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
+import { assertMayWriteClinicalNotes } from '../../application/policies/clinical-notes.policy';
 import { ErrorCode } from '../../domain';
 import { followUpState, followUpWindow, openFollowUpSql } from './follow-up';
 
@@ -106,7 +107,12 @@ export class SurgeryService {
     return { registryNo: String(BigInt(row[0]?.max ?? '0') + 1n) };
   }
 
-  async create(dto: UpsertSurgeryDto, userId: string | null): Promise<unknown> {
+  async create(
+    dto: UpsertSurgeryDto,
+    userId: string | null,
+    role?: string,
+  ): Promise<unknown> {
+    assertMayWriteClinicalNotes(role, [[dto.notes, null]]);
     const id = await this.queue.manager.transaction(async (manager) => {
       const queue = manager.getRepository(SurgeryQueueItem);
       const item = queue.create();
@@ -161,11 +167,13 @@ export class SurgeryService {
     id: string,
     dto: Partial<UpsertSurgeryDto>,
     userId: string | null,
+    role?: string,
   ): Promise<unknown> {
     await this.queue.manager.transaction(async (manager) => {
       const queue = manager.getRepository(SurgeryQueueItem);
       const item = await queue.findOne({ where: { id } });
       if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
+      assertMayWriteClinicalNotes(role, [[dto.notes, item.notes]]);
       const registered = await this.assign(
         item,
         dto,
