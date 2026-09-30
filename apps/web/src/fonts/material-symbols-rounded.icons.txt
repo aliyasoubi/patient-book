@@ -92,6 +92,7 @@ search
 settings
 share
 shield
+sort
 speed
 star_shine
 start
