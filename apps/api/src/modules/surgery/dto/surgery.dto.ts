@@ -52,7 +52,10 @@ export class QuerySurgeryDto extends PaginationDto {
   @IsOptional()
   mismatchedOnly?: boolean;
 
-  /** Open follow-ups within the named window (see `followUpWindow`), soonest first. */
+  /**
+   * Open follow-ups within the named window (see `followUpWindow`), soonest
+   * first — or `unconfirmed`, the assumed-done ones, newest first.
+   */
   @ApiPropertyOptional({ enum: FOLLOW_UP_FILTERS })
   @IsIn(FOLLOW_UP_FILTERS)
   @IsOptional()

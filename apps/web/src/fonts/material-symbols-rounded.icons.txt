@@ -43,6 +43,7 @@ event_busy
 event_repeat
 event_upcoming
 expand
+fact_check
 female
 filter_alt_off
 folder

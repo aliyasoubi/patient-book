@@ -112,6 +112,18 @@ export class Dashboard {
         tone: 'warn',
       });
     }
+    // Completions the paper-diary backfill assumed; staff confirm or reopen
+    // each, and the tile goes away once none are left.
+    if (s.totals.followUpsUnconfirmed > 0) {
+      tiles.push({
+        label: 'tile.followUpsUnconfirmed',
+        value: s.totals.followUpsUnconfirmed,
+        icon: 'fact_check',
+        link: '/surgery',
+        queryParams: { followUp: 'unconfirmed' },
+        tone: 'neutral',
+      });
+    }
     // Who to call this week: the operational number a receptionist opens
     // the dashboard for.
     tiles.push({

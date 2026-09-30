@@ -41,8 +41,9 @@ import type {
 
 /**
  * The questions staff ask of the list, most urgent first. Each is a
- * window over the open follow-ups; the API decides what the window means in
- * dates, so the chips here never disagree with the dashboard.
+ * window over the open follow-ups — bar the last, the assumed-done ones
+ * awaiting a confirmation; the API decides what each means in dates, so the
+ * chips here never disagree with the dashboard.
  */
 const FOLLOW_UP_FILTERS: readonly { value: FollowUpFilter; label: string; icon: string }[] = [
   { value: 'overdue', label: 'surgery.filterOverdue', icon: 'event_busy' },
@@ -50,6 +51,7 @@ const FOLLOW_UP_FILTERS: readonly { value: FollowUpFilter; label: string; icon: 
   { value: 'week', label: 'surgery.filterWeek', icon: 'date_range' },
   { value: 'thisMonth', label: 'surgery.filterThisMonth', icon: 'calendar_month' },
   { value: 'nextMonth', label: 'surgery.filterNextMonth', icon: 'event_upcoming' },
+  { value: 'unconfirmed', label: 'surgery.filterUnconfirmed', icon: 'fact_check' },
 ];
 
 /** How a follow-up reads on the card: the state is the API's, the colour is ours. */
@@ -59,6 +61,7 @@ const FOLLOW_UP_TONE: Record<FollowUpState, StatusTone> = {
   due: 'warning',
   overdue: 'error',
   done: 'success',
+  unconfirmed: 'warning',
 };
 
 function isFollowUpFilter(value: unknown): value is FollowUpFilter {
@@ -250,6 +253,28 @@ export class SurgeryList {
         this.retry();
       },
       // The switch snaps back with the reload; the interceptor has shown the error.
+      error: () => {
+        this.updating.set(null);
+        this.retry();
+      },
+    });
+  }
+
+  /**
+   * Vouch for a completion the paper-diary backfill only assumed: the same
+   * date, now on a person's word. Reopening is the switch, as for any other.
+   */
+  protected confirmFollowUp(item: SurgeryQueueItem): void {
+    this.updating.set(item.id);
+    this.registry.saveSurgery(item.id, { followUpDoneAt: item.followUpDoneAt }).subscribe({
+      next: () => {
+        this.updating.set(null);
+        this.snackBar.open(
+          this.i18n.instant('surgery.followUpConfirmed'),
+          this.i18n.instant('action.dismiss'),
+        );
+        this.retry();
+      },
       error: () => {
         this.updating.set(null);
         this.retry();

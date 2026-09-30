@@ -15,7 +15,12 @@ import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { assertMayWriteClinicalNotes } from '../../application/policies/clinical-notes.policy';
 import { ErrorCode } from '../../domain';
-import { followUpState, followUpWindow, openFollowUpSql } from './follow-up';
+import {
+  followUpState,
+  followUpWindow,
+  openFollowUpSql,
+  unconfirmedFollowUpSql,
+} from './follow-up';
 
 @Injectable()
 export class SurgeryService {
@@ -46,7 +51,9 @@ export class SurgeryService {
     if (dto.archivedOnly) {
       qb.withDeleted().andWhere('s."deletedAt" IS NOT NULL');
     }
-    if (dto.followUp) {
+    if (dto.followUp === 'unconfirmed') {
+      qb.andWhere(unconfirmedFollowUpSql('s'));
+    } else if (dto.followUp) {
       const { from, to } = followUpWindow(dto.followUp);
       qb.andWhere(openFollowUpSql('s'));
       if (from) qb.andWhere('s."followUpDate" >= :from', { from });
@@ -68,8 +75,13 @@ export class SurgeryService {
     // Property path, not raw SQL: combining take/skip with a join makes
     // TypeORM wrap the query, and it mangles a quoted identifier when it does.
     // A follow-up list is read soonest-first whichever way the queue is sorted.
+    // Unconfirmed ones read newest first: the recent are the ones still
+    // worth a phone call.
     if (dto.followUp) {
-      qb.orderBy('s.followUpDate', 'ASC');
+      qb.orderBy(
+        's.followUpDate',
+        dto.followUp === 'unconfirmed' ? 'DESC' : 'ASC',
+      );
     } else {
       qb.orderBy(
         's.surgeryDate',
@@ -261,10 +273,13 @@ export class SurgeryService {
     if (dto.abutmentType !== undefined) item.abutmentType = dto.abutmentType;
     if (dto.followUpMonths !== undefined)
       item.followUpMonths = dto.followUpMonths ?? null;
+    // A completion written by a person — confirmed, moved or reopened — is
+    // no longer an assumption.
     if (dto.followUpDoneAt !== undefined) {
       item.followUpDoneAt = dto.followUpDoneAt
         ? JalaliDate.parse(dto.followUpDoneAt).date
         : null;
+      item.followUpDoneInferred = false;
     }
     if (dto.status !== undefined) item.status = dto.status;
     if (dto.notes !== undefined) item.notes = dto.notes ?? null;

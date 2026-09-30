@@ -115,6 +115,14 @@ export class SurgeryQueueItem {
   followUpDoneAt!: Date | null;
 
   /**
+   * True when `followUpDoneAt` was assumed, not recorded — the paper-diary
+   * history the backfill closed on its due date. Cleared the moment staff
+   * write a completion themselves, confirming it or reopening it.
+   */
+  @Column({ type: 'boolean', default: false })
+  followUpDoneInferred!: boolean;
+
+  /**
    * Rows are written after the surgery, so a new one is `completed`; the
    * value is kept for the odd row that is genuinely still ahead, and for
    * the imported history.

@@ -8,6 +8,7 @@ import {
   followUpState,
   followUpWindow,
   openFollowUpSql,
+  unconfirmedFollowUpSql,
 } from '../surgery/follow-up';
 import { JalaliDate } from '../../domain';
 
@@ -25,6 +26,8 @@ export interface DashboardStats {
     followUpsThisWeek: number;
     /** Follow-ups whose month has passed without being marked done. */
     followUpsOverdue: number;
+    /** Closed on an assumption (the paper-diary backfill), awaiting staff. */
+    followUpsUnconfirmed: number;
     needsReview: number;
   };
   gender: Array<{ key: string; count: number }>;
@@ -105,6 +108,8 @@ export class StatsService {
           (SELECT count(*) FROM surgery_queue s
             WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
               AND s."followUpDate" <= $3)                                                AS "followUpsOverdue",
+          (SELECT count(*) FROM surgery_queue s
+            WHERE s."deletedAt" IS NULL AND ${unconfirmedFollowUpSql('s')})           AS "followUpsUnconfirmed",
           (SELECT count(*) FROM patients
             WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview"
       `,
@@ -172,6 +177,7 @@ export class StatsService {
         orthoCases: Number(t.orthoCases ?? 0),
         followUpsThisWeek: Number(t.followUpsThisWeek ?? 0),
         followUpsOverdue: Number(t.followUpsOverdue ?? 0),
+        followUpsUnconfirmed: Number(t.followUpsUnconfirmed ?? 0),
         needsReview: Number(t.needsReview ?? 0),
       },
       gender: gender.map((g) => ({ key: g.key, count: Number(g.count) })),
