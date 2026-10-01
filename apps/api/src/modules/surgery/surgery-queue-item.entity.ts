@@ -8,6 +8,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from 'typeorm';
 import {
   AbutmentType,
@@ -137,6 +138,14 @@ export class SurgeryQueueItem {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
+
+  /**
+   * Bumped on every save. The edit form sends back the version it loaded,
+   * and an edit made after someone else saved this row is refused rather
+   * than silently replacing their change.
+   */
+  @VersionColumn()
+  version!: number;
 
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
   deletedAt!: Date | null;

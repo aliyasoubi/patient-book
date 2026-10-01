@@ -329,10 +329,13 @@ describeIfWritable('clinic flows (e2e)', () => {
       const surgery = await asReceptionist(http().post('/api/surgery-queue'))
         .send({ recordedName: 'زهرا کریمی' })
         .expect(201);
-      const surgeryId = (surgery.body as { id: string }).id;
+      const { id: surgeryId, version: surgeryVersion } = surgery.body as {
+        id: string;
+        version: number;
+      };
       surgeryIds.push(surgeryId);
       await asReceptionist(http().patch(`/api/surgery-queue/${surgeryId}`))
-        .send({ notes: 'درد پس از جراحی' })
+        .send({ notes: 'درد پس از جراحی', expectedVersion: surgeryVersion })
         .expect(403);
 
       const stored = (
@@ -380,12 +383,16 @@ describeIfWritable('clinic flows (e2e)', () => {
       const created = await asAdmin(http().post('/api/implant-cases'))
         .send({ registryNo, recordedName: 'زهرا موسوی' })
         .expect(201);
-      const { id } = created.body as { id: string };
+      const { id, version } = created.body as { id: string; version: number };
       implantCaseIds.push(id);
 
       // Correct the name and status; the register number stays the key.
       const edited = await asAdmin(http().patch(`/api/implant-cases/${id}`))
-        .send({ recordedName: 'زهرا موسوی‌نژاد', status: 'completed' })
+        .send({
+          recordedName: 'زهرا موسوی‌نژاد',
+          status: 'completed',
+          expectedVersion: version,
+        })
         .expect(200);
       expect(edited.body).toMatchObject({
         registryNo,
@@ -512,7 +519,7 @@ describeIfWritable('clinic flows (e2e)', () => {
           followUpMonths: 3,
         })
         .expect(201);
-      const { id } = surgery.body as { id: string };
+      const { id, version } = surgery.body as { id: string; version: number };
       surgeryIds.push(id);
 
       expect((await totals()).followUpsOverdue).toBe(
@@ -521,7 +528,7 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(await overdueIds()).toContain(id);
 
       await asAdmin(http().patch(`/api/surgery-queue/${id}`))
-        .send({ status: 'cancelled' })
+        .send({ status: 'cancelled', expectedVersion: version })
         .expect(200);
 
       expect((await totals()).followUpsOverdue).toBe(before.followUpsOverdue);
@@ -663,7 +670,7 @@ describeIfWritable('clinic flows (e2e)', () => {
           followUpMonths: 2,
         })
         .expect(201);
-      const { id } = created.body as { id: string };
+      const { id, version } = created.body as { id: string; version: number };
       surgeryIds.push(id);
       expect((created.body as { followUpState: string }).followUpState).toBe(
         'overdue',
@@ -674,7 +681,7 @@ describeIfWritable('clinic flows (e2e)', () => {
       // The date is derived, so correcting the surgery date recomputes it —
       // two months from today lands in "next month" or later, not this month.
       const moved = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
-        .send({ surgeryDate: today })
+        .send({ surgeryDate: today, expectedVersion: version })
         .expect(200);
       expect((moved.body as { followUpState: string }).followUpState).toBe(
         'pending',
@@ -798,7 +805,7 @@ describeIfWritable('clinic flows (e2e)', () => {
       const created = await asAdmin(http().post('/api/surgery-queue'))
         .send({ recordedName: 'مریم کریمی', surgeryDate: '1404/06/11' })
         .expect(201);
-      const { id } = created.body as { id: string };
+      const { id, version } = created.body as { id: string; version: number };
       surgeryIds.push(id);
       expect(created.body).toMatchObject({
         surgeryDate: { jalali: '1404/06/11' },
@@ -806,7 +813,7 @@ describeIfWritable('clinic flows (e2e)', () => {
 
       // A PATCH without the field is "don't touch the date".
       const untouched = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
-        .send({ notes: 'یادداشت' })
+        .send({ notes: 'یادداشت', expectedVersion: version })
         .expect(200);
       expect(untouched.body).toMatchObject({
         surgeryDate: { jalali: '1404/06/11' },
@@ -815,7 +822,10 @@ describeIfWritable('clinic flows (e2e)', () => {
       // An explicit null is "clear it" — what the form sends when the picker
       // was emptied on purpose.
       const cleared = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
-        .send({ surgeryDate: null })
+        .send({
+          surgeryDate: null,
+          expectedVersion: (untouched.body as { version: number }).version,
+        })
         .expect(200);
       expect((cleared.body as { surgeryDate: unknown }).surgeryDate).toBeNull();
     });
@@ -846,6 +856,104 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(
         (matching.body as { hasNameMismatch: boolean }).hasNameMismatch,
       ).toBe(false);
+    });
+  });
+
+  // ── Stale edits on surgery rows and register cases ───────────────
+
+  describe('stale edits', () => {
+    const today = formatJalali(new Date(), 'yyyy/MM/dd');
+    const monthsAgo = (n: number): string =>
+      formatJalali(addMonths(new Date(), -n), 'yyyy/MM/dd');
+
+    it('refuses a surgery edit made from a stale copy, but not the follow-up switch', async () => {
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'نسرین صادقی',
+          surgeryDate: monthsAgo(4),
+          followUpMonths: 3,
+        })
+        .expect(201);
+      const { id, version } = created.body as { id: string; version: number };
+      surgeryIds.push(id);
+
+      // Two people open the edit form on the same row. The first saves.
+      const saved = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ toothPosition: '۶ بالا راست', expectedVersion: version })
+        .expect(200);
+      expect((saved.body as { version: number }).version).toBe(version + 1);
+
+      // The second still holds the old copy: refused, nothing overwritten.
+      const stale = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ toothPosition: '۷ پایین چپ', expectedVersion: version })
+        .expect(409);
+      expect((stale.body as ErrorBody).code).toBe(
+        ErrorCode.SurgeryItemModified,
+      );
+
+      // A form edit with no version at all is refused for the same reason.
+      await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ toothPosition: '۷ پایین چپ' })
+        .expect(409);
+
+      // The switch on the list says only that the visit happened: it goes
+      // through on a row someone has edited since the list was loaded.
+      const done = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ followUpDoneAt: today })
+        .expect(200);
+      expect(done.body).toMatchObject({
+        toothPosition: '۶ بالا راست',
+        followUpState: 'done',
+      });
+    });
+
+    it('refuses a register-case edit made from a stale copy, or with no version', async () => {
+      const created = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo: nextNumber(), recordedName: 'کامران جعفری' })
+        .expect(201);
+      const { id, version } = created.body as { id: string; version: number };
+      implantCaseIds.push(id);
+
+      await asAdmin(http().patch(`/api/implant-cases/${id}`))
+        .send({ recordedName: 'کامران جعفری‌نیا', expectedVersion: version })
+        .expect(200);
+
+      const stale = await asAdmin(http().patch(`/api/implant-cases/${id}`))
+        .send({ recordedName: 'کامران جعفرزاده', expectedVersion: version })
+        .expect(409);
+      expect((stale.body as ErrorBody).code).toBe(
+        ErrorCode.RegistryCaseModified,
+      );
+      // Without a version the DTO itself refuses it.
+      await asAdmin(http().patch(`/api/implant-cases/${id}`))
+        .send({ recordedName: 'کامران جعفرزاده' })
+        .expect(400);
+
+      const current = await asAdmin(
+        http().get(`/api/implant-cases/${id}`),
+      ).expect(200);
+      expect((current.body as { recordedName: string }).recordedName).toBe(
+        'کامران جعفری‌نیا',
+      );
+    });
+
+    it('lets only one of two simultaneous saves from the same copy through', async () => {
+      // Sent together, not one after the other: the row lock is what decides.
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'پریسا نادری' })
+        .expect(201);
+      const { id, version } = created.body as { id: string; version: number };
+      surgeryIds.push(id);
+
+      const results = await Promise.all(
+        ['یادداشت اول', 'یادداشت دوم'].map((notes) =>
+          asAdmin(http().patch(`/api/surgery-queue/${id}`)).send({
+            notes,
+            expectedVersion: version,
+          }),
+        ),
+      );
+      expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
     });
   });
 });

@@ -44,7 +44,11 @@ export enum ErrorCode {
   // -- Registries -------------------------------------------------------
   RegistryCaseNotFound = 'ERR_REGISTRY_CASE_NOT_FOUND',
   RegistryNumberTaken = 'ERR_REGISTRY_NUMBER_TAKEN',
+  /** As {@link ErrorCode.PatientModified}, for a register case. */
+  RegistryCaseModified = 'ERR_REGISTRY_CASE_MODIFIED',
   SurgeryItemNotFound = 'ERR_SURGERY_ITEM_NOT_FOUND',
+  /** As {@link ErrorCode.PatientModified}, for a surgery-list row. */
+  SurgeryItemModified = 'ERR_SURGERY_ITEM_MODIFIED',
 
   // -- Value objects ----------------------------------------------------
   NationalIdLength = 'ERR_NATIONAL_ID_LENGTH',

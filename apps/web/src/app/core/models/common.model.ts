@@ -67,6 +67,8 @@ export interface RegistryCase {
   homePhone: string | null;
   status: 'active' | 'completed' | 'on_hold';
   notes: string | null;
+  /** Optimistic-concurrency token; sent back as `expectedVersion` on update. */
+  version: number;
 }
 
 export type SurgeryKind = 'implant' | 'extraction';
@@ -95,6 +97,8 @@ export interface SurgeryQueueItem {
   followUpState: FollowUpState;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string | null;
+  /** Optimistic-concurrency token; sent back as `expectedVersion` on an edit. */
+  version: number;
 }
 
 /** Judged by the API against the current Jalali month. */

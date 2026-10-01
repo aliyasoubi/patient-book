@@ -148,12 +148,20 @@ export class UpsertSurgeryDto {
   notes?: string | null;
 }
 
-/**
- * Everything but `kind`: what was done is settled when the row is added. A row
- * recorded under the wrong kind is deleted and added again — converting one
- * in place would leave the other kind's fields behind. With unknown fields
- * forbidden, a client that still sends it is told so rather than ignored.
- */
-export class UpdateSurgeryDto extends PartialType(
-  OmitType(UpsertSurgeryDto, ['kind'] as const),
-) {}
+export class UpdateSurgeryDto extends PartialType(UpsertSurgeryDto) {
+  /**
+   * The row's `version` as the client loaded it; the update is refused with
+   * `ERR_SURGERY_ITEM_MODIFIED` if it has been saved since. Required for any
+   * edit but one: the list's follow-up switch, which sends `followUpDoneAt`
+   * alone — one deliberate fact about a visit, which overwrites nothing else
+   * and must not fail because someone corrected the tooth meanwhile.
+   */
+  @ApiPropertyOptional({
+    description:
+      'Version the client loaded; refused if stale. Required unless only followUpDoneAt is sent',
+  })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  expectedVersion?: number;
+}

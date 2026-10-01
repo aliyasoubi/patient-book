@@ -7,7 +7,8 @@ import type {
 } from 'typeorm';
 
 import { RegistryService, type RegistryCase } from './registry.service';
-import type { QueryRegistryDto } from './registry.dto';
+import type { QueryRegistryDto, UpdateRegistryCaseDto } from './registry.dto';
+import { ErrorCode } from '../../domain';
 import type {
   AuditEntry,
   AuditService,
@@ -23,6 +24,7 @@ class TestRegistryCase implements RegistryCase {
   homePhone = null;
   notes = null;
   searchText = '1001 مریم کریمی';
+  version = 4;
 }
 
 describe('RegistryService', () => {
@@ -128,4 +130,52 @@ describe('RegistryService sorting', () => {
       expect(calls.get('orderBy')).toHaveBeenCalledWith('registry_num', 'ASC');
     },
   );
+});
+
+describe('RegistryService.update concurrency', () => {
+  /** Row lock reports `storedVersion`; the full read after the gate finds nothing. */
+  const makeService = (storedVersion: number) => {
+    const qb = {
+      setLock: () => qb,
+      select: () => qb,
+      where: () => qb,
+      getOne: () => Promise.resolve({ id: 'case-1', version: storedVersion }),
+    };
+    const repository = {
+      createQueryBuilder: () => qb,
+      findOne: () => Promise.resolve(null),
+    };
+    const rootRepository = {
+      target: TestRegistryCase,
+      manager: {
+        transaction: (run: (m: unknown) => Promise<unknown>) =>
+          run({ getRepository: () => repository }),
+      },
+    } as unknown as Repository<TestRegistryCase>;
+    return new RegistryService(
+      rootRepository,
+      'implant_case',
+      {} as AuditService,
+    );
+  };
+  const edit = (expectedVersion?: number) =>
+    ({ recordedName: 'سارا', expectedVersion }) as UpdateRegistryCaseDto;
+
+  it('refuses an edit made from a stale copy of the case', async () => {
+    await expect(
+      makeService(4).update('case-1', edit(3), 'u'),
+    ).rejects.toMatchObject({ code: ErrorCode.RegistryCaseModified });
+  });
+
+  it('lets an edit through when the client holds the current version', async () => {
+    await expect(
+      makeService(4).update('case-1', edit(4), 'u'),
+    ).rejects.toMatchObject({ code: ErrorCode.RegistryCaseNotFound });
+  });
+
+  it('refuses an edit that carries no version at all', async () => {
+    await expect(
+      makeService(4).update('case-1', edit(undefined), 'u'),
+    ).rejects.toMatchObject({ code: ErrorCode.RegistryCaseModified });
+  });
 });

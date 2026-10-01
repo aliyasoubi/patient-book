@@ -42,6 +42,25 @@ import {
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
 
+/**
+ * Label keys of the fields that differ between two copies of a row — what a
+ * conflict message lists so the user knows what someone else changed.
+ */
+export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQueueItem): string[] {
+  const fields: [string, (s: SurgeryQueueItem) => unknown][] = [
+    ['surgeryForm.recordedName', (s) => s.recordedName],
+    ['surgeryForm.surgeryDate', (s) => s.surgeryDate?.jalali ?? null],
+    ['surgeryForm.toothPosition', (s) => s.toothPosition],
+    ['surgeryForm.implantRegistryNo', (s) => s.implantRegistryNo],
+    ['surgeryForm.implantBrand', (s) => s.implantBrand],
+    ['surgeryForm.abutmentType', (s) => s.abutmentType],
+    // Months and whether it happened are both "the follow-up" to the user.
+    ['surgeryForm.followUp', (s) => `${s.followUpMonths}|${s.followUpDoneAt}`],
+    ['surgeryForm.notes', (s) => s.notes],
+  ];
+  return fields.filter(([, read]) => read(before) !== read(after)).map(([key]) => key);
+}
+
 @Component({
   selector: 'pb-surgery-form',
   standalone: true,
@@ -156,6 +175,13 @@ export class SurgeryForm implements HasUnsavedChanges {
    * derived. Delete with apps/api/src/modules/surgery/legacy-prosthesis-due.ts.
    */
   private readonly legacyProsthesisDue = signal<string | null>(null);
+
+  /**
+   * The copy of the row an edit is saved against. Set on load; after a
+   * conflict it is the one someone else saved, so the retry is checked
+   * against what the user has now been told about.
+   */
+  private readonly loaded = signal<SurgeryQueueItem | null>(null);
 
   /** What the chosen months resolve to, so the dentist sees the date, not just "3". */
   protected readonly followUpHint = computed(() => {
@@ -274,6 +300,7 @@ export class SurgeryForm implements HasUnsavedChanges {
       notes: item.notes ?? '',
     });
     this.legacyProsthesisDue.set(item.prosthesisDue);
+    this.loaded.set(item);
   }
 
   /**
@@ -344,6 +371,18 @@ export class SurgeryForm implements HasUnsavedChanges {
       payload['surgeryDate'] = null;
     }
 
+    // An edit names the version it was made from; the API refuses a stale one.
+    // The loaded row is always here on an edit — `submit` refuses to run
+    // while a load is in flight — so a missing one must not become a create.
+    if (this.isEdit()) {
+      const loaded = this.loaded();
+      if (!loaded) {
+        this.saving.set(false);
+        return;
+      }
+      payload['expectedVersion'] = loaded.version;
+    }
+
     this.registry.saveSurgery(this.id() ?? null, payload).subscribe({
       next: () => {
         this.saving.set(false);
@@ -358,8 +397,36 @@ export class SurgeryForm implements HasUnsavedChanges {
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        this.applyServerErrors(error);
+        if (this.isConflict(error)) this.onConflict();
+        else this.applyServerErrors(error);
       },
+    });
+  }
+
+  private isConflict(error: unknown): boolean {
+    return (
+      error instanceof HttpErrorResponse &&
+      (error.error as ApiErrorBody | null)?.code === 'ERR_SURGERY_ITEM_MODIFIED'
+    );
+  }
+
+  /**
+   * Someone else saved this row while it was being edited here. The draft
+   * stays exactly as typed; the message names what changed underneath it,
+   * and the next save is made against the copy they saved.
+   */
+  private onConflict(): void {
+    const before = this.loaded();
+    if (!before) return;
+    this.registry.getSurgery(before.id).subscribe((after) => {
+      this.loaded.set(after);
+      const changed = changedSurgeryFields(before, after)
+        .map((key) => this.i18n.instant(key))
+        .join(this.i18n.instant('list.separator'));
+      const message = changed
+        ? this.i18n.instant('surgeryForm.conflict', { fields: changed })
+        : this.i18n.instant('surgeryForm.conflictNoFields');
+      this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
     });
   }
 

@@ -25,6 +25,31 @@ import type { RegistryCase } from '../../core/models/common.model';
 import type { PatientSuggestion } from '../../features/patients/data/patient.model';
 
 /** The patient a case is, or is about to be, linked to. */
+/**
+ * Label keys of the fields this dialog shows that differ between two copies
+ * of a case — what a conflict message lists so the user knows what changed.
+ */
+export function changedCaseFields(
+  before: RegistryCase,
+  after: RegistryCase,
+  showDetails: boolean,
+): string[] {
+  const fields: [string, (c: RegistryCase) => unknown][] = [
+    ['registryForm.registryNo', (c) => c.registryNo],
+    ['registryForm.recordedName', (c) => c.recordedName],
+    ['registryForm.patientLink', (c) => c.patientId],
+    ...(showDetails
+      ? ([
+          ['registryForm.status', (c) => c.status],
+          ['registryForm.mobile', (c) => c.mobile],
+          ['registryForm.homePhone', (c) => c.homePhone],
+          ['registryForm.notes', (c) => c.notes],
+        ] as [string, (c: RegistryCase) => unknown][])
+      : []),
+  ];
+  return fields.filter(([, read]) => read(before) !== read(after)).map(([key]) => key);
+}
+
 interface LinkedPatient {
   id: string;
   fileNo: string;
@@ -238,6 +263,13 @@ export class RegistryCaseDialog {
 
   private readonly existing = this.data.mode === 'edit' ? this.data.existing : null;
 
+  /**
+   * The copy of the case the next save is made against. Starts as the one the
+   * dialog opened on; after a conflict it is the one someone else saved, so
+   * the retry is checked against what the user has now been told about.
+   */
+  private readonly current = signal<RegistryCase | null>(this.existing);
+
   /** Phones, status and notes; neither the implant nor the ortho book keeps them. */
   protected readonly showDetails: boolean = false;
 
@@ -355,16 +387,23 @@ export class RegistryCaseDialog {
     };
 
     let request;
+    const current = this.current();
     if (this.data.mode === 'create') {
       payload.patientId = this.data.patient.id;
-      request = this.registry.saveCase(this.data.kind, null, payload);
-    } else {
+      request = this.registry.createCase(this.data.kind, payload);
+    } else if (current) {
       if (this.showDetails) payload.status = raw.status;
       // Only a changed link is sent: the API treats any `patientId` it
       // receives as a deliberate, manual decision about the match.
       const linkedId = this.linkedPatient()?.id ?? null;
-      if (linkedId !== this.data.existing.patientId) payload.patientId = linkedId;
-      request = this.registry.saveCase(this.data.kind, this.data.existing.id, payload);
+      if (linkedId !== current.patientId) payload.patientId = linkedId;
+      request = this.registry.updateCase(this.data.kind, current.id, {
+        ...payload,
+        expectedVersion: current.version,
+      });
+    } else {
+      this.saving.set(false);
+      return;
     }
 
     request.subscribe({
@@ -374,8 +413,37 @@ export class RegistryCaseDialog {
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        this.applyServerErrors(error);
+        if (this.isConflict(error)) this.onConflict();
+        else this.applyServerErrors(error);
       },
+    });
+  }
+
+  private isConflict(error: unknown): boolean {
+    return (
+      error instanceof HttpErrorResponse &&
+      (error.error as ApiErrorBody | null)?.code === 'ERR_REGISTRY_CASE_MODIFIED'
+    );
+  }
+
+  /**
+   * Someone else saved this case while the dialog was open. What was typed
+   * stays as typed; the message names what changed underneath it, and the
+   * next save is made against the copy they saved — by then the user knows
+   * what they would be overwriting.
+   */
+  private onConflict(): void {
+    const before = this.current();
+    if (!before) return;
+    this.registry.getCase(this.data.kind, before.id).subscribe((after) => {
+      this.current.set(after);
+      const changed = changedCaseFields(before, after, this.showDetails)
+        .map((key) => this.i18n.instant(key))
+        .join(this.i18n.instant('list.separator'));
+      const message = changed
+        ? this.i18n.instant('registryForm.conflict', { fields: changed })
+        : this.i18n.instant('registryForm.conflictNoFields');
+      this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
     });
   }
 

@@ -56,7 +56,8 @@ interface Failure {
  *   likelier than it is for a single form. That comparison happens outside
  *   any lock, so the `version` it was made against travels with the update
  *   as `expectedVersion`: an edit landing between the check and the write is
- *   caught by {@link PatientsService.update}'s row lock, not overwritten.
+ *   caught by the row lock in {@link PatientsService.update} or the registry
+ *   services' `update`, not overwritten.
  * - **One bad row never aborts the batch,** and each failure reports a real
  *   code, so an admin correcting hundreds of legacy records can see *why*.
  */
@@ -152,7 +153,7 @@ export class ApplyReconcileUseCase {
     return results;
   }
 
-  private async applyRegistry<T extends RegistryLike>(
+  private async applyRegistry<T extends RegistryLike & { version: number }>(
     entities: ApplyEntityDto[],
     userId: string | null,
     service: RegistryUpdatable,
@@ -184,6 +185,9 @@ export class ApplyReconcileUseCase {
       const built = await this.buildAndValidate(
         UpdateRegistryCaseDto,
         entity.fields,
+        {
+          expectedVersion: current.version,
+        },
       );
       if ('code' in built) {
         results.push({ id: entity.id, ok: false, ...built });

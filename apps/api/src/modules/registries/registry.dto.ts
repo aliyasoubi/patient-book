@@ -1,13 +1,15 @@
-import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
   MaxLength,
+  Min,
 } from 'class-validator';
 
 import { PaginationDto } from '../../presentation/http/dto/pagination.dto';
@@ -99,4 +101,15 @@ export class UpsertRegistryCaseDto {
   notes?: string | null;
 }
 
-export class UpdateRegistryCaseDto extends PartialType(UpsertRegistryCaseDto) {}
+export class UpdateRegistryCaseDto extends PartialType(UpsertRegistryCaseDto) {
+  /**
+   * The case's `version` as the client loaded it; the update is refused with
+   * `ERR_REGISTRY_CASE_MODIFIED` if it has been saved since. Required, as for
+   * patients: every edit here comes from a whole form, and a caller that
+   * could leave it out could overwrite an edit it never saw.
+   */
+  @ApiProperty({ description: 'Version the client loaded; refused if stale' })
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+}
