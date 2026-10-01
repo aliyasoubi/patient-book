@@ -89,6 +89,10 @@ export class ApiErrorTranslator {
           : this.t('error.registryCaseNotFound');
       case 'ERR_REGISTRY_NUMBER_TAKEN':
         return this.t('error.registryNumberTaken', params);
+      case 'ERR_REGISTRY_CASE_MODIFIED':
+        return this.t('error.registryCaseModified');
+      case 'ERR_SURGERY_ITEM_MODIFIED':
+        return this.t('error.surgeryItemModified');
       case 'ERR_SURGERY_ITEM_NOT_FOUND':
         return this.t('error.surgeryItemNotFound');
       case 'ERR_NOT_FOUND':

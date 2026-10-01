@@ -73,6 +73,8 @@ const DOMAIN_ERROR_STATUS: Partial<Record<ErrorCode, HttpStatus>> = {
   [ErrorCode.FileNumberTaken]: HttpStatus.CONFLICT,
   [ErrorCode.PatientModified]: HttpStatus.CONFLICT,
   [ErrorCode.RegistryNumberTaken]: HttpStatus.CONFLICT,
+  [ErrorCode.RegistryCaseModified]: HttpStatus.CONFLICT,
+  [ErrorCode.SurgeryItemModified]: HttpStatus.CONFLICT,
   [ErrorCode.UsernameTaken]: HttpStatus.CONFLICT,
   [ErrorCode.RateLimited]: HttpStatus.TOO_MANY_REQUESTS,
 };

@@ -43,6 +43,9 @@ export type RegistryCaseInput = Partial<
   >
 >;
 
+/** An edit also names the version it was made from; the API refuses a stale one. */
+export type RegistryCaseUpdate = RegistryCaseInput & { expectedVersion: number };
+
 /**
  * The implant and orthodontic registers. Both number themselves independently
  * of the main patient file, so `registryNo` is their own key and `patientId` is
@@ -70,10 +73,12 @@ export class RegistryService {
     return this.http.get<RegistryCase>(`${this.base(kind)}/${id}`);
   }
 
-  saveCase(kind: RegistryKind, id: string | null, body: RegistryCaseInput): Observable<RegistryCase> {
-    return id
-      ? this.http.patch<RegistryCase>(`${this.base(kind)}/${id}`, body)
-      : this.http.post<RegistryCase>(this.base(kind), body);
+  createCase(kind: RegistryKind, body: RegistryCaseInput): Observable<RegistryCase> {
+    return this.http.post<RegistryCase>(this.base(kind), body);
+  }
+
+  updateCase(kind: RegistryKind, id: string, body: RegistryCaseUpdate): Observable<RegistryCase> {
+    return this.http.patch<RegistryCase>(`${this.base(kind)}/${id}`, body);
   }
 
   /** A soft delete on the API — the row moves to "archived only" and can be restored. */

@@ -5,7 +5,11 @@ import { EntityManager, Repository } from 'typeorm';
 
 import { SurgeryQueueItem } from './surgery-queue-item.entity';
 import { ImplantCase } from '../implants/implant-case.entity';
-import { QuerySurgeryDto, UpsertSurgeryDto } from './dto/surgery.dto';
+import {
+  QuerySurgeryDto,
+  UpdateSurgeryDto,
+  UpsertSurgeryDto,
+} from './dto/surgery.dto';
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
 import { JalaliDate, storedDate } from '../../domain';
 import { loosePersianKey, searchKey } from '../../domain';
@@ -16,6 +20,18 @@ import { AppException } from '../../application/errors/app.exception';
 import { assertMayWriteClinicalNotes } from '../../application/policies/clinical-notes.policy';
 import { ErrorCode } from '../../domain';
 import { followUpState, followUpWindow, openFollowUpSql } from './follow-up';
+
+/**
+ * The list's follow-up switch: an edit that says whether the visit happened
+ * and nothing else. It is the one write exempt from the version check — it
+ * cannot overwrite another field, so a concurrent edit is no reason to fail.
+ */
+function isFollowUpToggle(dto: Partial<UpsertSurgeryDto>): boolean {
+  const sent = Object.keys(dto).filter(
+    (key) => dto[key as keyof UpsertSurgeryDto] !== undefined,
+  );
+  return sent.length === 1 && sent[0] === 'followUpDoneAt';
+}
 
 @Injectable()
 export class SurgeryService {
@@ -165,12 +181,24 @@ export class SurgeryService {
 
   async update(
     id: string,
-    dto: Partial<UpsertSurgeryDto>,
+    { expectedVersion, ...dto }: UpdateSurgeryDto,
     userId: string | null,
     role?: string,
   ): Promise<unknown> {
     await this.queue.manager.transaction(async (manager) => {
       const queue = manager.getRepository(SurgeryQueueItem);
+      // Row lock first, then the version check inside it, as for patients.
+      const locked = await queue
+        .createQueryBuilder('s')
+        .setLock('pessimistic_write')
+        .select(['s.id', 's.version'])
+        .where('s.id = :id', { id })
+        .getOne();
+      if (!locked) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
+      if (!isFollowUpToggle(dto) && locked.version !== expectedVersion) {
+        throw AppException.conflict(ErrorCode.SurgeryItemModified);
+      }
+
       const item = await queue.findOne({ where: { id } });
       if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
       assertMayWriteClinicalNotes(role, [[dto.notes, item.notes]]);
@@ -411,6 +439,8 @@ export class SurgeryService {
       followUpState: followUpState(item),
       status: item.status,
       notes: item.notes,
+      /** Optimistic-concurrency token; send back as `expectedVersion` on update. */
+      version: item.version,
     };
   }
 }

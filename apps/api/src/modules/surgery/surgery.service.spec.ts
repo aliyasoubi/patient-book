@@ -7,7 +7,12 @@ import { SurgeryQueueItem } from './surgery-queue-item.entity';
 import { ImplantCase } from '../implants/implant-case.entity';
 import type { UpsertSurgeryDto } from './dto/surgery.dto';
 import type { AuditService } from '../../application/services/audit.service';
-import { AbutmentType, JalaliDate, SurgeryStatus } from '../../domain';
+import {
+  AbutmentType,
+  ErrorCode,
+  JalaliDate,
+  SurgeryStatus,
+} from '../../domain';
 
 interface SurgeryWriteHelpers {
   assign(
@@ -140,5 +145,75 @@ describe('SurgeryService.assign — follow-up date', () => {
 
     await helpers.assign(item, { followUpDoneAt: null });
     expect(item.followUpDoneAt).toBeNull();
+  });
+});
+
+describe('SurgeryService.update concurrency', () => {
+  /**
+   * A transaction whose row lock reports `storedVersion`. The full read after
+   * the gate finds nothing, so getting past the gate shows up as "not found"
+   * without mocking the whole write path.
+   */
+  const makeService = (storedVersion: number) => {
+    const qb = {
+      setLock: () => qb,
+      select: () => qb,
+      where: () => qb,
+      getOne: () => Promise.resolve({ id: 'row-1', version: storedVersion }),
+    };
+    const repository = {
+      createQueryBuilder: () => qb,
+      findOne: () => Promise.resolve(null),
+    };
+    const manager = { getRepository: () => repository };
+    const queue = {
+      manager: {
+        transaction: (run: (m: unknown) => Promise<void>) => run(manager),
+      },
+    } as unknown as Repository<SurgeryQueueItem>;
+    return new SurgeryService(
+      queue,
+      {} as Repository<ImplantCase>,
+      {} as AuditService,
+    );
+  };
+  const refused = { code: ErrorCode.SurgeryItemModified };
+  const passedGate = { code: ErrorCode.SurgeryItemNotFound };
+
+  it('refuses an edit made from a stale copy of the row', async () => {
+    await expect(
+      makeService(4).update('row-1', { notes: 'x', expectedVersion: 3 }, 'u'),
+    ).rejects.toMatchObject(refused);
+  });
+
+  it('lets an edit through when the client holds the current version', async () => {
+    await expect(
+      makeService(4).update('row-1', { notes: 'x', expectedVersion: 4 }, 'u'),
+    ).rejects.toMatchObject(passedGate);
+  });
+
+  it('refuses an edit that carries no version at all', async () => {
+    await expect(
+      makeService(4).update('row-1', { notes: 'x' }, 'u'),
+    ).rejects.toMatchObject(refused);
+  });
+
+  it('lets the follow-up switch through without a version: it overwrites nothing else', async () => {
+    await expect(
+      makeService(4).update('row-1', { followUpDoneAt: '1405/07/09' }, 'u'),
+    ).rejects.toMatchObject(passedGate);
+    await expect(
+      makeService(4).update('row-1', { followUpDoneAt: null }, 'u'),
+    ).rejects.toMatchObject(passedGate);
+  });
+
+  it('does not stretch that exemption to a switch that carries other fields', async () => {
+    await expect(
+      makeService(4).update(
+        'row-1',
+        { followUpDoneAt: '1405/07/09', notes: 'x' },
+        'u',
+      ),
+    ).rejects.toMatchObject(refused);
   });
 });

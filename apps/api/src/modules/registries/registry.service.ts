@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { Repository, ObjectLiteral } from 'typeorm';
 
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
-import { QueryRegistryDto, UpsertRegistryCaseDto } from './registry.dto';
+import {
+  QueryRegistryDto,
+  UpdateRegistryCaseDto,
+  UpsertRegistryCaseDto,
+} from './registry.dto';
 import { searchKey } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
@@ -19,6 +23,7 @@ export interface RegistryCase extends ObjectLiteral {
   homePhone: string | null;
   notes: string | null;
   searchText: string;
+  version: number;
 }
 
 /**
@@ -137,11 +142,25 @@ export class RegistryService<T extends RegistryCase> {
 
   async update(
     id: string,
-    dto: Partial<UpsertRegistryCaseDto>,
+    { expectedVersion, ...dto }: UpdateRegistryCaseDto,
     userId: string | null,
   ): Promise<T> {
     return this.repo.manager.transaction(async (manager) => {
       const repository = manager.getRepository(this.repo.target);
+      // Row lock first, then the version check inside it, as for patients: a
+      // concurrent edit waits here, then reads the bumped version and is
+      // refused — the check and the write are atomic, not just adjacent.
+      const locked = await repository
+        .createQueryBuilder('c')
+        .setLock('pessimistic_write')
+        .select(['c.id', 'c.version'])
+        .where('c.id = :id', { id })
+        .getOne();
+      if (!locked) throw AppException.notFound(ErrorCode.RegistryCaseNotFound);
+      if (locked.version !== expectedVersion) {
+        throw AppException.conflict(ErrorCode.RegistryCaseModified);
+      }
+
       const existing = await this.findOneFrom(repository, id);
       if (dto.registryNo && dto.registryNo !== existing.registryNo) {
         const clash = await repository.findOne({

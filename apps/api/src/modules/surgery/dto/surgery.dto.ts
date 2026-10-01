@@ -148,4 +148,20 @@ export class UpsertSurgeryDto {
   notes?: string | null;
 }
 
-export class UpdateSurgeryDto extends PartialType(UpsertSurgeryDto) {}
+export class UpdateSurgeryDto extends PartialType(UpsertSurgeryDto) {
+  /**
+   * The row's `version` as the client loaded it; the update is refused with
+   * `ERR_SURGERY_ITEM_MODIFIED` if it has been saved since. Required for any
+   * edit but one: the list's follow-up switch, which sends `followUpDoneAt`
+   * alone — one deliberate fact about a visit, which overwrites nothing else
+   * and must not fail because someone corrected the tooth meanwhile.
+   */
+  @ApiPropertyOptional({
+    description:
+      'Version the client loaded; refused if stale. Required unless only followUpDoneAt is sent',
+  })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  expectedVersion?: number;
+}

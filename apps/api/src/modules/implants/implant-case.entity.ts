@@ -9,6 +9,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from 'typeorm';
 import { CaseStatus } from '../../domain';
 import { Patient } from '../patients/patient.entity';
@@ -80,6 +81,14 @@ export class ImplantCase {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
+
+  /**
+   * Bumped on every save. The edit form sends back the version it loaded,
+   * and an edit made after someone else saved this case is refused rather
+   * than silently replacing their change.
+   */
+  @VersionColumn()
+  version!: number;
 
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
   deletedAt!: Date | null;
