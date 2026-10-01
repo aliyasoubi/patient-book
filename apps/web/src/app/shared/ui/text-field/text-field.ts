@@ -10,8 +10,11 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstErrorMessage } from '../field-errors';
 
 export interface TextFieldOption {
+  /** What lands in the input when picked. Need not be unique — two patients can share a name. */
   value: string;
   label: string;
+  /** Identity when `value` alone is ambiguous, e.g. the record behind a name. */
+  id?: string;
   /** Shown in parentheses after the label — a count, a hint, etc. */
   meta?: string | number;
 }
@@ -74,7 +77,7 @@ export interface TextFieldOption {
           [matAutocomplete]="auto"
         />
         <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)">
-          @for (option of options() ?? []; track option.value) {
+          @for (option of options() ?? []; track option.id ?? option.value) {
             <mat-option [value]="option.value">
               {{ option.label }}
               @if (option.meta) {
@@ -170,8 +173,14 @@ export class PbTextField {
     return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
   }
 
+  /**
+   * Resolved by the picked row's position, not its `value`: two options can
+   * read the same — two patients called "Ali Rezaei" — and matching on the
+   * text would always hand back the first one, with its record.
+   */
   protected onOptionSelected(event: MatAutocompleteSelectedEvent): void {
-    const option = this.options()?.find((o) => o.value === event.option.value);
+    const index = event.source.options.toArray().indexOf(event.option);
+    const option = this.options()?.[index];
     if (option) this.optionSelected.emit(option);
   }
 }

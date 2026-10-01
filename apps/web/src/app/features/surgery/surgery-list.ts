@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -24,6 +25,7 @@ import {
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { format as formatJalali } from 'date-fns-jalali';
 
+import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryService, SurgeryQuery } from '../../core/services/registry.service';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
@@ -108,6 +110,7 @@ export class SurgeryList {
   private readonly i18n = inject(TranslateService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
   protected readonly abutmentLabel = abutmentLabel;
   protected readonly kindLabel = surgeryKindLabel;
@@ -117,6 +120,8 @@ export class SurgeryList {
   private readonly urlFilters = readUrlFilters(this.route.snapshot.queryParamMap);
   protected readonly search = new FormControl(this.urlFilters.q, { nonNullable: true });
   protected readonly followUp = signal<FollowUpFilter | ''>(this.urlFilters.followUp);
+  /** Deleted rows are only archived; this shows them so one can be brought back. */
+  protected readonly archivedOnly = signal(false);
   protected readonly page = signal(1);
   protected readonly limit = signal(25);
 
@@ -183,6 +188,7 @@ export class SurgeryList {
       const query: SurgeryQuery = {
         q: this.query() || undefined,
         followUp: this.followUp() || undefined,
+        archivedOnly: this.archivedOnly() || undefined,
         page: this.page(),
         limit: this.limit(),
         // Newest surgery first; a follow-up filter sorts by follow-up date instead.
@@ -221,12 +227,22 @@ export class SurgeryList {
     return isBrandOnly ? '' : item.toothPosition;
   }
 
+  /** An archived row offers only its way back; editing waits until it is restored. */
   protected hasActions(): boolean {
-    return this.auth.can('editSurgery') || this.auth.can('archiveSurgery');
+    return this.archivedOnly()
+      ? this.auth.can('archiveSurgery')
+      : this.auth.can('editSurgery') || this.auth.can('archiveSurgery');
   }
 
   protected emptyHint(): string {
-    return this.search.value || this.followUp() ? this.i18n.instant('filters.changeThem') : '';
+    return this.search.value || this.followUp() || this.archivedOnly()
+      ? this.i18n.instant('filters.changeThem')
+      : '';
+  }
+
+  protected toggleArchived(checked: boolean): void {
+    this.archivedOnly.set(checked);
+    this.page.set(1);
   }
 
   /** A chip-listbox in single mode hands back the chosen value, or `undefined` when cleared. */
@@ -262,7 +278,7 @@ export class SurgeryList {
     this.limit.set(event.pageSize);
   }
 
-  /** A soft delete: the row leaves the list; the record itself is kept. */
+  /** A soft delete — the row reappears under "archived only", where it can be restored. */
   protected delete(item: SurgeryQueueItem): void {
     const data: ConfirmData = {
       title: this.i18n.instant('surgeryForm.deleteTitle'),
@@ -277,13 +293,45 @@ export class SurgeryList {
       .afterClosed()
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this.registry.deleteSurgery(item.id).subscribe(() => {
-          this.snackBar.open(
-            this.i18n.instant('surgeryForm.deleted'),
-            this.i18n.instant('action.dismiss'),
-          );
-          this.retry();
+        this.registry.deleteSurgery(item.id).subscribe({
+          next: () => this.removed('surgeryForm.deleted'),
+          error: (error: unknown) => this.writeFailed(error),
         });
       });
+  }
+
+  protected restore(item: SurgeryQueueItem): void {
+    this.registry.restoreSurgery(item.id).subscribe({
+      next: () => this.removed('surgeryForm.restored'),
+      error: (error: unknown) => this.writeFailed(error),
+    });
+  }
+
+  /**
+   * The row has left this view. When it was the last one on a later page,
+   * step back a page rather than land on an empty one that looks like
+   * "nothing here".
+   */
+  private removed(message: string): void {
+    this.snackBar.open(this.i18n.instant(message), this.i18n.instant('action.dismiss'));
+    if (this.items().length === 1 && this.page() > 1) {
+      this.page.update((p) => p - 1);
+    } else {
+      this.retry();
+    }
+  }
+
+  /**
+   * The interceptor leaves 404 and 409 to the caller — a row someone else
+   * already deleted or restored — so say what happened and show the list as
+   * it now stands.
+   */
+  private writeFailed(error: unknown): void {
+    if (error instanceof HttpErrorResponse && [404, 409].includes(error.status)) {
+      this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
+        duration: 6000,
+      });
+    }
+    this.retry();
   }
 }

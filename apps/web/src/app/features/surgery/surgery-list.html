@@ -34,6 +34,24 @@
         </mat-chip-option>
       }
     </mat-chip-listbox>
+
+    <!-- Separate from the follow-up questions: it changes which rows are
+         listed at all, and combines with any of them. -->
+    @if (auth.can('archiveSurgery')) {
+      <mat-chip-listbox
+        multiple
+        class="surgery__filters"
+        [attr.aria-label]="'common.filters' | translate"
+      >
+        <mat-chip-option
+          [selected]="archivedOnly()"
+          (selectionChange)="toggleArchived($event.selected)"
+        >
+          <mat-icon matChipAvatar aria-hidden="true">inventory_2</mat-icon>
+          {{ 'surgery.archivedOnly' | translate }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    }
   </div>
 
   @if (loading()) {
@@ -150,7 +168,7 @@
                     }
                   }
                 </pb-status-chip>
-                @if (auth.can('editSurgery')) {
+                @if (auth.can('editSurgery') && !archivedOnly()) {
                   <mat-slide-toggle
                     class="queue__done"
                     [checked]="item.followUpState === 'done'"
@@ -183,17 +201,24 @@
               <mat-icon aria-hidden="true">more_vert</mat-icon>
             </button>
             <mat-menu #rowMenu="matMenu">
-              @if (auth.can('editSurgery')) {
-                <a mat-menu-item [routerLink]="['/surgery', item.id, 'edit']">
-                  <mat-icon aria-hidden="true">edit</mat-icon>
-                  <span>{{ 'common.edit' | translate }}</span>
-                </a>
-              }
-              @if (auth.can('archiveSurgery')) {
-                <button mat-menu-item type="button" (click)="delete(item)">
-                  <mat-icon aria-hidden="true">delete</mat-icon>
-                  <span>{{ 'common.delete' | translate }}</span>
+              @if (archivedOnly()) {
+                <button mat-menu-item type="button" (click)="restore(item)">
+                  <mat-icon aria-hidden="true">restore_from_trash</mat-icon>
+                  <span>{{ 'surgery.restore' | translate }}</span>
                 </button>
+              } @else {
+                @if (auth.can('editSurgery')) {
+                  <a mat-menu-item [routerLink]="['/surgery', item.id, 'edit']">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>{{ 'common.edit' | translate }}</span>
+                  </a>
+                }
+                @if (auth.can('archiveSurgery')) {
+                  <button mat-menu-item type="button" (click)="delete(item)">
+                    <mat-icon aria-hidden="true">delete</mat-icon>
+                    <span>{{ 'common.delete' | translate }}</span>
+                  </button>
+                }
               }
             </mat-menu>
           }
