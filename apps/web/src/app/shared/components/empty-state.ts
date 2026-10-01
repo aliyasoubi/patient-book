@@ -17,6 +17,8 @@ import { MatIconModule } from '@angular/material/icon';
     </div>
   `,
   styles: `
+    @use '../../../styles/type';
+
     .empty {
       display: flex;
       flex-direction: column;
@@ -39,12 +41,9 @@ import { MatIconModule } from '@angular/material/icon';
       color: var(--mat-sys-on-surface);
     }
     .empty__hint {
-      margin: 0;
-      font-size: var(--mat-sys-body-medium-size);
-      font-weight: var(--mat-sys-body-medium-weight);
-      letter-spacing: var(--mat-sys-body-medium-tracking);
+      @include type.supporting-text;
+
       max-width: 42ch;
-      line-height: 1.8;
     }
   `,
 })

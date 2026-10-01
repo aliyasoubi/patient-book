@@ -29,54 +29,52 @@
         <h1>{{ 'app.title' | translate }}</h1>
       </div>
 
-      <mat-card class="login__card">
+      <pb-surface class="pb-surface--elevated login__card">
         @if (loading()) {
           <mat-progress-bar mode="indeterminate" class="login__progress" />
         }
 
-        <mat-card-content>
-          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <h2 class="login__title">{{ 'auth.heading' | translate }}</h2>
-            <p class="login__subtitle">{{ 'auth.subheading' | translate }}</p>
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <h2 class="login__title">{{ 'auth.heading' | translate }}</h2>
+          <p class="login__subtitle">{{ 'auth.subheading' | translate }}</p>
 
-            @if (errorMessage(); as message) {
-              <pb-banner class="login__error" tone="error" icon="error" role="alert">
-                {{ message }}
-              </pb-banner>
-            }
+          @if (errorMessage(); as message) {
+            <pb-banner class="login__error" tone="error" icon="error" role="alert">
+              {{ message }}
+            </pb-banner>
+          }
 
-            <pb-text-field
-              [control]="form.controls.username"
-              [label]="'auth.username' | translate"
-              prefixIcon="person"
-              [ltr]="true"
-              nativeAutocomplete="username"
-            />
+          <pb-text-field
+            [control]="form.controls.username"
+            [label]="'auth.username' | translate"
+            prefixIcon="person"
+            [ltr]="true"
+            nativeAutocomplete="username"
+          />
 
-            <pb-text-field
-              [control]="form.controls.password"
-              [label]="'auth.password' | translate"
-              type="password"
-              prefixIcon="lock"
-              [ltr]="true"
-              nativeAutocomplete="current-password"
-            />
+          <pb-text-field
+            [control]="form.controls.password"
+            [label]="'auth.password' | translate"
+            type="password"
+            prefixIcon="lock"
+            [ltr]="true"
+            nativeAutocomplete="current-password"
+          />
 
-            <pb-button
-              variant="flat"
-              size="large"
-              type="submit"
-              icon="login"
-              class="login__submit"
-              [fullWidth]="true"
-              [loading]="loading()"
-              [loadingText]="'auth.signingIn' | translate"
-            >
-              {{ 'auth.signIn' | translate }}
-            </pb-button>
-          </form>
-        </mat-card-content>
-      </mat-card>
+          <pb-button
+            variant="flat"
+            size="large"
+            type="submit"
+            icon="login"
+            class="login__submit"
+            [fullWidth]="true"
+            [loading]="loading()"
+            [loadingText]="'auth.signingIn' | translate"
+          >
+            {{ 'auth.signIn' | translate }}
+          </pb-button>
+        </form>
+      </pb-surface>
 
       <p class="login__footer">
         <mat-icon aria-hidden="true">shield</mat-icon>

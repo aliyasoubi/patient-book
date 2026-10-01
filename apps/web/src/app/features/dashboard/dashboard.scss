@@ -1,4 +1,5 @@
 @use '../../../styles/surface';
+@use '../../../styles/type';
 
 .dash {
   // M3 canonical layout: a 12-column grid on expanded windows, 2 columns on
@@ -134,9 +135,7 @@
 // pb-surface owns the bordered-panel look and its title+hint header; the
 // grid placement lives on `.dash__panel--*` above.
 .panel__empty {
-  margin: 0;
-  font: var(--mat-sys-body-medium);
-  color: var(--mat-sys-on-surface-variant);
+  @include type.supporting-text;
 }
 
 /* ── Horizontal bars ───────────────────────────────────────────────── */

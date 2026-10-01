@@ -37,6 +37,8 @@ import { PbIconButton } from '../icon-button/icon-button';
     </div>
   `,
   styles: `
+    @use '../../../../styles/type';
+
     :host {
       display: flex;
       align-items: flex-start;
@@ -79,13 +81,10 @@ import { PbIconButton } from '../icon-button/icon-button';
     }
 
     .pb-page-header__subtitle {
-      margin: var(--pb-space-1) 0 0;
+      @include type.supporting-text;
+
+      margin-top: var(--pb-space-1);
       max-width: 68ch;
-      font-size: var(--mat-sys-body-medium-size);
-      font-weight: var(--mat-sys-body-medium-weight);
-      letter-spacing: var(--mat-sys-body-medium-tracking);
-      line-height: 1.8;
-      color: var(--mat-sys-on-surface-variant);
     }
 
     .pb-page-header__actions {

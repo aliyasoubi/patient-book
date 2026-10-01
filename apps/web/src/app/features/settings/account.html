@@ -25,9 +25,11 @@
     </div>
   </pb-surface>
 
-  <pb-surface icon="key" [title]="'account.changePassword' | translate">
-    <p class="panel__hint">{{ 'account.sessionsWarning' | translate }}</p>
-
+  <pb-surface
+    icon="key"
+    [title]="'account.changePassword' | translate"
+    [description]="'account.sessionsWarning' | translate"
+  >
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pw-form">
       <pb-text-field
         [control]="form.controls.currentPassword"

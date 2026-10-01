@@ -10,7 +10,9 @@ import { MatIconModule } from '@angular/material/icon';
  *
  * By default an M3 *outlined* card: the page's own `surface` tone with an
  * outline-variant border. `pb-surface--low` is the *tonal* alternative — a
- * container tone and no border. One signal or the other, never both.
+ * container tone and no border — and `pb-surface--elevated` lifts that tone
+ * with a shadow, for the one card a screen is built around. One signal each,
+ * never two. The looks themselves live in `styles/_surface.scss`.
  */
 @Component({
   selector: 'pb-surface',
@@ -28,12 +30,16 @@ import { MatIconModule } from '@angular/material/icon';
         }
       </header>
     }
+    @if (description()) {
+      <p class="pb-surface__description">{{ description() }}</p>
+    }
     <div class="pb-surface__body">
       <ng-content />
     </div>
   `,
   styles: `
     @use '../../../../styles/surface';
+    @use '../../../../styles/type';
 
     :host {
       @include surface.outlined;
@@ -55,6 +61,12 @@ import { MatIconModule } from '@angular/material/icon';
       @include surface.tonal;
 
       /* Keep the 1px border box so a tonal and an outlined card line up. */
+      border-color: transparent;
+    }
+
+    :host(.pb-surface--elevated) {
+      @include surface.elevated;
+
       border-color: transparent;
     }
 
@@ -88,6 +100,16 @@ import { MatIconModule } from '@angular/material/icon';
       color: var(--mat-sys-on-surface-variant);
     }
 
+    .pb-surface__description {
+      @include type.supporting-text;
+
+      margin-bottom: var(--pb-space-4);
+    }
+
+    :host(.pb-surface--flush) .pb-surface__description {
+      margin-inline: var(--pb-space-4);
+    }
+
     :host(.pb-surface--flush) .pb-surface__body {
       padding: var(--pb-space-4);
     }
@@ -96,5 +118,8 @@ import { MatIconModule } from '@angular/material/icon';
 export class PbSurface {
   readonly title = input<string | null>(null);
   readonly icon = input<string | null>(null);
+  /** A short note at the trailing end of the title row, e.g. "last 12 months". */
   readonly hint = input<string | null>(null);
+  /** A sentence or two under the title explaining what the panel is for. */
+  readonly description = input<string | null>(null);
 }

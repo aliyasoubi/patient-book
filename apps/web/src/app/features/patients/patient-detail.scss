@@ -1,4 +1,5 @@
 @use '../../../styles/surface';
+@use '../../../styles/type';
 
 .detail__tabs {
   --mat-tab-header-divider-color: var(--mat-sys-outline-variant);
@@ -134,21 +135,16 @@ pb-surface.hero-surface--archived {
 
 // pb-surface owns the bordered-panel look and its title header now; only the
 // content-level text styles below still belong to this page.
-.card__empty,
-.card__hint {
-  margin: 0;
-  font-size: var(--mat-sys-body-medium-size);
-  font-weight: var(--mat-sys-body-medium-weight);
-  letter-spacing: var(--mat-sys-body-medium-tracking);
-  line-height: 1.8;
-  color: var(--mat-sys-on-surface-variant);
+.card__empty {
+  @include type.supporting-text;
 }
 
 .card__hint {
+  @include type.supporting-text(small);
+
   margin-top: var(--pb-space-3);
   padding-top: var(--pb-space-3);
   border-top: 1px solid var(--mat-sys-outline-variant);
-  font-size: var(--mat-sys-body-small-size);
 }
 
 .card__note {

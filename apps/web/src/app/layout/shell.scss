@@ -133,15 +133,12 @@
     max-width: 560px;
   }
 
+  // The icon button assumes a 24px glyph and pads to it, so the 32px avatar
+  // overflowed its content box and sat off-centre inside the state layer.
+  // Size the slot to the avatar and give the hover ring an 8px band around it.
   &__avatar-btn {
-    flex: 0 0 auto;
-    // The icon button assumes a 24px glyph and pads to it, so the 32px avatar
-    // overflowed its content box and sat off-centre inside the state layer.
-    // Size the slot to the avatar and give the hover ring an 8px band around it.
     --mat-icon-button-icon-size: var(--pb-avatar-sm);
-    --mat-icon-button-state-layer-size: 48px;
-    display: inline-grid;
-    place-items: center;
+    --mat-icon-button-state-layer-size: var(--pb-control-height);
   }
 }
 

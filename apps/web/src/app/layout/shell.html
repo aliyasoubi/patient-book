@@ -61,15 +61,13 @@
 
       <span class="spacer"></span>
 
-      <button
-        mat-icon-button
-        type="button"
+      <pb-icon-button
         class="topbar__avatar-btn"
-        [matMenuTriggerFor]="userMenu"
-        [attr.aria-label]="'app.userAccount' | translate"
+        [menu]="userMenu"
+        [ariaLabel]="'app.userAccount' | translate"
       >
         <pb-avatar size="small" tone="primary" [name]="auth.user()?.fullName ?? ''" />
-      </button>
+      </pb-icon-button>
 
       <mat-menu #userMenu="matMenu" xPosition="before">
         <div class="user-menu__header">
