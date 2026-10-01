@@ -20,7 +20,7 @@ import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import { CASE_STATUSES, caseStatusLabel } from '../labels';
 import { digitString, identifierValue, iranianMobile, toLatinDigits } from '../validators';
 import { adoptUntouched, changedFields, type FieldReader } from '../form-sync';
-import { PbButton, PbSelectField, PbTextareaField, PbTextField } from '../ui';
+import { PbButton, PbIconButton, PbSelectField, PbTextareaField, PbTextField } from '../ui';
 import type { SelectOption, TextFieldOption } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
 import type { PatientSuggestion } from '../../features/patients/data/patient.model';
@@ -106,6 +106,7 @@ const MIN_PATIENT_QUERY = 2;
     PbTextareaField,
     PbSelectField,
     PbButton,
+    PbIconButton,
     TranslatePipe,
   ],
   template: `
@@ -146,14 +147,12 @@ const MIN_PATIENT_QUERY = 2;
               >{{ linked.fullName }} —
               {{ 'registry.patientFile' | translate: { fileNo: linked.fileNo } }}</span
             >
-            <button
-              type="button"
-              class="form__unlink"
+            <pb-icon-button
+              icon="close"
+              size="compact"
               (click)="unlink()"
-              [attr.aria-label]="'registryForm.unlink' | translate"
-            >
-              <mat-icon aria-hidden="true">close</mat-icon>
-            </button>
+              [ariaLabel]="'registryForm.unlink' | translate"
+            />
           </div>
         }
         @if (showDetails) {
@@ -221,33 +220,18 @@ const MIN_PATIENT_QUERY = 2;
       background: var(--mat-sys-secondary-container);
       color: var(--mat-sys-on-secondary-container);
       font: var(--mat-sys-body-medium);
+      --mat-icon-button-icon-color: var(--mat-sys-on-secondary-container);
 
       span {
         flex: 1 1 auto;
         min-width: 0;
       }
     }
-    .form__unlink {
-      display: inline-flex;
-      padding: 2px;
-      border: 0;
-      border-radius: 50%;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-      }
-    }
   `,
 })
 export class RegistryCaseDialog {
-  protected readonly ref = inject<MatDialogRef<RegistryCaseDialog, RegistryCase | undefined>>(
-    MatDialogRef,
-  );
+  protected readonly ref =
+    inject<MatDialogRef<RegistryCaseDialog, RegistryCase | undefined>>(MatDialogRef);
   protected readonly data = inject<RegistryCaseDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly registry = inject(RegistryService);
@@ -286,10 +270,7 @@ export class RegistryCaseDialog {
   protected readonly showDetails: boolean = false;
 
   protected readonly form = this.fb.nonNullable.group({
-    registryNo: [
-      this.existing?.registryNo ?? '',
-      [Validators.required, digitString(1, 18)],
-    ],
+    registryNo: [this.existing?.registryNo ?? '', [Validators.required, digitString(1, 18)]],
     recordedName: [
       this.existing?.recordedName ?? (this.data.mode === 'create' ? this.data.patient.name : ''),
       [Validators.required, Validators.maxLength(160)],
@@ -297,7 +278,9 @@ export class RegistryCaseDialog {
     patientSearch: [''],
     status: [this.existing?.status ?? ('active' as RegistryCase['status'])],
     mobile: [
-      this.existing?.mobile ?? (this.data.mode === 'create' ? this.data.patient.mobile : null) ?? '',
+      this.existing?.mobile ??
+        (this.data.mode === 'create' ? this.data.patient.mobile : null) ??
+        '',
       [iranianMobile],
     ],
     homePhone: [
@@ -472,7 +455,6 @@ export class RegistryCaseDialog {
         }),
     });
   }
-
 
   private applyServerErrors(error: unknown): void {
     if (!(error instanceof HttpErrorResponse)) return;

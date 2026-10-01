@@ -1,14 +1,11 @@
 @if (compact() && !expanded()) {
-  <button
-    mat-icon-button
-    type="button"
+  <pb-icon-button
     class="search__open"
+    icon="search"
     (click)="open()"
-    [attr.aria-label]="'globalSearch.aria' | translate"
-    [matTooltip]="'globalSearch.openTooltip' | translate"
-  >
-    <mat-icon aria-hidden="true">search</mat-icon>
-  </button>
+    [ariaLabel]="'globalSearch.aria' | translate"
+    [tooltip]="'globalSearch.openTooltip' | translate"
+  />
 } @else {
   <form class="search" (submit)="onSubmit($event)" (focusout)="onFocusOut()" role="search">
     <pb-search-field

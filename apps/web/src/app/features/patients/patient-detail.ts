@@ -1,8 +1,7 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
+import { Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -32,7 +31,15 @@ import {
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { LoadError } from '../../shared/components/load-error';
-import { PbAvatar, PbBanner, PbButton, PbPage, PbStatusChip, PbSurface } from '../../shared/ui';
+import {
+  PbAvatar,
+  PbBanner,
+  PbButton,
+  PbIconButton,
+  PbPage,
+  PbStatusChip,
+  PbSurface,
+} from '../../shared/ui';
 import type { DataIssue, Patient, RegistryRef } from './data/patient.model';
 import type { AuditEntry } from '../../core/models/common.model';
 
@@ -40,8 +47,6 @@ import type { AuditEntry } from '../../core/models/common.model';
   selector: 'pb-patient-detail',
   standalone: true,
   imports: [
-    RouterLink,
-    MatButtonModule,
     MatMenuModule,
     MatTabsModule,
     MatProgressBarModule,
@@ -52,6 +57,7 @@ import type { AuditEntry } from '../../core/models/common.model';
     PbButton,
     PbSurface,
     PbBanner,
+    PbIconButton,
     PbPage,
     PbAvatar,
     PbStatusChip,

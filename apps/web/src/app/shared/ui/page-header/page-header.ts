@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+
+import { PbIconButton } from '../icon-button/icon-button';
 
 /**
  * The title row at the top of every screen — a heading, an optional subtitle
@@ -11,18 +11,15 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'pb-page-header',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule],
+  imports: [PbIconButton],
   template: `
-    @if (backLabel()) {
-      <button
+    @if (backLabel(); as label) {
+      <pb-icon-button
         class="pb-page-header__back"
-        mat-icon-button
-        type="button"
+        icon="arrow_forward"
         (click)="back.emit()"
-        [attr.aria-label]="backLabel()"
-      >
-        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-      </button>
+        [ariaLabel]="label"
+      />
     }
     <div class="pb-page-header__text">
       <div class="pb-page-header__title-row">
@@ -49,9 +46,7 @@ import { MatIconModule } from '@angular/material/icon';
     }
 
     .pb-page-header__back {
-      flex: 0 0 auto;
       margin-top: -6px;
-      color: var(--mat-sys-on-surface-variant);
     }
 
     .pb-page-header__text {

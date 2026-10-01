@@ -1,9 +1,7 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -29,7 +27,15 @@ import {
 } from '../../shared/components/registry-case-dialog';
 import { RegistryTable } from '../../shared/components/registry-table';
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
-import { PbButton, PbPage, PbPageHeader, PbPaginator, PbSearchField } from '../../shared/ui';
+import {
+  PbButton,
+  PbFilterChips,
+  PbPage,
+  PbPageHeader,
+  PbPaginator,
+  PbSearchField,
+} from '../../shared/ui';
+import type { FilterChipOption } from '../../shared/ui';
 import type { RegistryCase } from '../../core/models/common.model';
 
 /** Everything that differs between the two registers' screens. */
@@ -71,14 +77,13 @@ const KINDS: Record<
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatChipsModule,
-    MatIconModule,
     MatProgressBarModule,
     RegistryTable,
     LoadError,
     PbSearchField,
     PbPageHeader,
     PbButton,
+    PbFilterChips,
     PbPage,
     PbPaginator,
     TranslatePipe,
@@ -103,6 +108,23 @@ export class RegistryList {
   protected readonly unlinkedOnly = signal(false);
   /** Deleted rows are only archived; this shows them so one can be brought back. */
   protected readonly archivedOnly = signal(false);
+  protected readonly filterOptions = computed<FilterChipOption[]>(() => [
+    { value: 'unlinked', label: 'registry.unlinkedOnly', icon: 'link_off', translate: true },
+    ...(this.auth.can('archiveRegistry')
+      ? [
+          {
+            value: 'archived',
+            label: 'registry.archivedOnly',
+            icon: 'inventory_2',
+            translate: true,
+          },
+        ]
+      : []),
+  ]);
+  protected readonly selectedFilters = computed(() => [
+    ...(this.unlinkedOnly() ? ['unlinked'] : []),
+    ...(this.archivedOnly() ? ['archived'] : []),
+  ]);
   /**
    * By register number — the one order this book has. Newest first by
    * default: the highest numbers are the cases being worked on now.
@@ -208,13 +230,10 @@ export class RegistryList {
     this.page.set(1);
   }
 
-  protected toggleUnlinked(checked: boolean): void {
-    this.unlinkedOnly.set(checked);
-    this.page.set(1);
-  }
-
-  protected toggleArchived(checked: boolean): void {
-    this.archivedOnly.set(checked);
+  /** Each chip is its own switch; the list comes back as whichever are on. */
+  protected setFilters(selected: string[]): void {
+    this.unlinkedOnly.set(selected.includes('unlinked'));
+    this.archivedOnly.set(selected.includes('archived'));
     this.page.set(1);
   }
 

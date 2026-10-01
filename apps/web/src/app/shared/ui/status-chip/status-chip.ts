@@ -7,7 +7,7 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
 
 /**
  * The app's one tag/chip primitive — status labels, record metadata, brand
- * tags, and, with `routerLink` set, a tappable link to another record. Every
+ * tags, and, with `link` set, a tappable link to another record. Every
  * hand-rolled pill used to size and colour itself separately; this is the
  * single place that decides what a "tag" looks like.
  *
@@ -22,8 +22,8 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
   standalone: true,
   imports: [MatIconModule, NgTemplateOutlet, RouterLink],
   template: `
-    @if (routerLink()) {
-      <a class="pb-status-chip__link" [routerLink]="routerLink()">
+    @if (link()) {
+      <a class="pb-status-chip__link" [routerLink]="link()">
         <ng-container [ngTemplateOutlet]="content" />
       </a>
     } @else {
@@ -143,7 +143,7 @@ export class PbStatusChip {
   readonly tone = input<StatusTone | null>(null);
   readonly icon = input<string | null>(null);
   /** Renders as a real `<a>` (middle-click, open-in-new-tab all work) instead of a static pill. */
-  readonly routerLink = input<string | readonly unknown[] | null>(null);
+  readonly link = input<string | readonly unknown[] | null>(null);
 
   /** A link chip is drawn as an outlined assist chip; `tone` only colours static labels. */
   protected readonly effectiveTone = computed(() => this.tone() ?? 'neutral');

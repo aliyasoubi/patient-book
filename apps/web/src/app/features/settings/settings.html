@@ -3,24 +3,12 @@
 
   <pb-surface icon="contrast" [title]="'settings.appearance' | translate">
     <p class="panel__hint">{{ 'settings.appearanceHint' | translate }}</p>
-    <mat-button-toggle-group
+    <pb-segmented-button
+      [options]="themeOptions"
       [value]="theme.mode()"
-      (valueChange)="setTheme($event)"
-      [attr.aria-label]="'settings.displayMode' | translate"
-    >
-      <mat-button-toggle value="system">
-        <mat-icon aria-hidden="true">brightness_auto</mat-icon>
-        {{ 'settings.automatic' | translate }}
-      </mat-button-toggle>
-      <mat-button-toggle value="light">
-        <mat-icon aria-hidden="true">light_mode</mat-icon>
-        {{ 'settings.light' | translate }}
-      </mat-button-toggle>
-      <mat-button-toggle value="dark">
-        <mat-icon aria-hidden="true">dark_mode</mat-icon>
-        {{ 'settings.dark' | translate }}
-      </mat-button-toggle>
-    </mat-button-toggle-group>
+      (valueChange)="setTheme($any($event))"
+      [ariaLabel]="'settings.displayMode' | translate"
+    />
   </pb-surface>
 
   <pb-surface icon="account_circle" [title]="'settings.account' | translate">
@@ -31,7 +19,7 @@
           {{ auth.user()?.username }} · {{ roleLabel(auth.role()) | translate }}
         </span>
       </div>
-      <pb-button variant="stroked" routerLink="/settings/account" icon="key">
+      <pb-button variant="stroked" link="/settings/account" icon="key">
         {{ 'settings.changePassword' | translate }}
       </pb-button>
     </div>

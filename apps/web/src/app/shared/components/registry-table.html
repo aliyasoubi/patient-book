@@ -19,7 +19,7 @@
           }}</strong>
 
           @if (c.patient) {
-            <pb-status-chip icon="link" [routerLink]="['/patients', c.patient.id]">
+            <pb-status-chip icon="link" [link]="['/patients', c.patient.id]">
               {{ 'registry.patientFile' | translate: { fileNo: c.patient.fileNo } }}
               @if (patientName(c) !== c.recordedName) {
                 <span class="registry__alias">({{ patientName(c) }})</span>
@@ -45,14 +45,11 @@
           <!-- One menu per row, same pattern as the patient and surgery
                lists; which items it holds follows the caller's permissions. -->
           @if (hasActions()) {
-            <button
-              mat-icon-button
-              type="button"
-              [matMenuTriggerFor]="rowMenu"
-              [attr.aria-label]="'registry.rowActions' | translate"
-            >
-              <mat-icon aria-hidden="true">more_vert</mat-icon>
-            </button>
+            <pb-icon-button
+              icon="more_vert"
+              [menu]="rowMenu"
+              [ariaLabel]="'registry.rowActions' | translate"
+            />
             <mat-menu #rowMenu="matMenu">
               @if (archived()) {
                 <button mat-menu-item type="button" (click)="restore.emit(c)">

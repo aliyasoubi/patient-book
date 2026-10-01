@@ -17,7 +17,7 @@ import { ThemeService } from '../core/services/theme.service';
 import { GlobalSearch } from './global-search';
 import { roleLabel } from '../shared/labels';
 import type { UserRole } from '../core/models/common.model';
-import { PbAvatar, PbLogo } from '../shared/ui';
+import { PbAvatar, PbIconButton, PbLogo } from '../shared/ui';
 
 export interface NavItem {
   path: string;
@@ -89,6 +89,7 @@ function navItems(): NavItem[] {
     PbLogo,
     MatIconModule,
     TranslatePipe,
+    PbIconButton,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',

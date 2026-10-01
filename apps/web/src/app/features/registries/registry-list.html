@@ -29,28 +29,14 @@
     </pb-button>
 
     <!-- Independent toggles on a list are M3 filter chips, not checkboxes. -->
-    <mat-chip-listbox
-      multiple
+    <pb-filter-chips
       class="registry-page__filter"
-      [attr.aria-label]="'common.filters' | translate"
-    >
-      <mat-chip-option
-        [selected]="unlinkedOnly()"
-        (selectionChange)="toggleUnlinked($event.selected)"
-      >
-        <mat-icon matChipAvatar aria-hidden="true">link_off</mat-icon>
-        {{ 'registry.unlinkedOnly' | translate }}
-      </mat-chip-option>
-      @if (auth.can('archiveRegistry')) {
-        <mat-chip-option
-          [selected]="archivedOnly()"
-          (selectionChange)="toggleArchived($event.selected)"
-        >
-          <mat-icon matChipAvatar aria-hidden="true">inventory_2</mat-icon>
-          {{ 'registry.archivedOnly' | translate }}
-        </mat-chip-option>
-      }
-    </mat-chip-listbox>
+      multiple
+      [options]="filterOptions()"
+      [selected]="selectedFilters()"
+      (selectedChange)="setFilters($event)"
+      [ariaLabel]="'common.filters' | translate"
+    />
   </div>
 
   @if (loading()) {

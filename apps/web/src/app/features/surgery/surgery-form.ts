@@ -3,8 +3,6 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
@@ -32,13 +30,14 @@ import {
   PbDateField,
   PbPage,
   PbPageHeader,
+  PbSegmentedButton,
   PbSelectField,
   PbStatusChip,
   PbSurface,
   PbTextField,
   PbTextareaField,
 } from '../../shared/ui';
-import type { SelectOption, TextFieldOption } from '../../shared/ui';
+import type { SegmentOption, SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
 
 const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
@@ -66,8 +65,7 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatButtonToggleModule,
-    MatIconModule,
+    PbSegmentedButton,
     MatProgressBarModule,
     PbTextField,
     PbTextareaField,
@@ -104,11 +102,16 @@ export class SurgeryForm implements HasUnsavedChanges {
     this.isEdit() ? 'surgeryForm.saveLabel' : 'surgeryForm.createLabel',
   );
 
-  protected readonly kinds = SURGERY_KINDS;
   protected readonly kindLabel = surgeryKindLabel;
   protected kindIcon(kind: SurgeryKind): string {
     return kind === 'implant' ? 'deployed_code' : 'dentistry';
   }
+  protected readonly kindOptions: SegmentOption[] = SURGERY_KINDS.map((kind) => ({
+    value: kind,
+    label: surgeryKindLabel(kind),
+    icon: this.kindIcon(kind),
+    translate: true,
+  }));
   protected readonly abutmentOptions: SelectOption[] = ABUTMENT_TYPES.map((a) => ({
     value: a,
     label: abutmentLabel(a),

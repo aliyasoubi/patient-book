@@ -3,8 +3,6 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -36,13 +34,15 @@ import { abutmentLabel, surgeryKindLabel } from '../../shared/labels';
 import {
   PbBanner,
   PbButton,
+  PbFilterChips,
+  PbIconButton,
   PbPage,
   PbPageHeader,
   PbPaginator,
   PbSearchField,
   PbStatusChip,
 } from '../../shared/ui';
-import type { StatusTone } from '../../shared/ui';
+import type { FilterChipOption, StatusTone } from '../../shared/ui';
 import type {
   FollowUpFilter,
   FollowUpState,
@@ -54,12 +54,12 @@ import type {
  * window over the open follow-ups; the API decides what the window means in
  * dates, so the chips here never disagree with the dashboard.
  */
-const FOLLOW_UP_FILTERS: readonly { value: FollowUpFilter; label: string; icon: string }[] = [
-  { value: 'overdue', label: 'surgery.filterOverdue', icon: 'event_busy' },
-  { value: 'pending', label: 'surgery.filterPending', icon: 'pending_actions' },
-  { value: 'week', label: 'surgery.filterWeek', icon: 'date_range' },
-  { value: 'thisMonth', label: 'surgery.filterThisMonth', icon: 'calendar_month' },
-  { value: 'nextMonth', label: 'surgery.filterNextMonth', icon: 'event_upcoming' },
+const FOLLOW_UP_FILTERS: readonly (FilterChipOption & { value: FollowUpFilter })[] = [
+  { value: 'overdue', label: 'surgery.filterOverdue', icon: 'event_busy', translate: true },
+  { value: 'pending', label: 'surgery.filterPending', icon: 'pending_actions', translate: true },
+  { value: 'week', label: 'surgery.filterWeek', icon: 'date_range', translate: true },
+  { value: 'thisMonth', label: 'surgery.filterThisMonth', icon: 'calendar_month', translate: true },
+  { value: 'nextMonth', label: 'surgery.filterNextMonth', icon: 'event_upcoming', translate: true },
 ];
 
 /** How a follow-up reads on the card: the state is the API's, the colour is ours. */
@@ -93,8 +93,6 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    MatButtonModule,
-    MatChipsModule,
     MatMenuModule,
     MatProgressBarModule,
     MatSlideToggleModule,
@@ -107,6 +105,8 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
     PbBanner,
     PbPaginator,
     PbButton,
+    PbFilterChips,
+    PbIconButton,
     PbStatusChip,
     MatIconModule,
     TranslatePipe,
@@ -125,6 +125,9 @@ export class SurgeryList {
   protected readonly abutmentLabel = abutmentLabel;
   protected readonly kindLabel = surgeryKindLabel;
   protected readonly followUpFilters = FOLLOW_UP_FILTERS;
+  protected readonly archiveFilter: FilterChipOption[] = [
+    { value: 'archived', label: 'surgery.archivedOnly', icon: 'inventory_2', translate: true },
+  ];
 
   // Seeded from the URL so a dashboard tile lands on the list it promised.
   private readonly urlFilters = readUrlFilters(this.route.snapshot.queryParamMap);
@@ -132,6 +135,10 @@ export class SurgeryList {
   protected readonly followUp = signal<FollowUpFilter | ''>(this.urlFilters.followUp);
   /** Deleted rows are only archived; this shows them so one can be brought back. */
   protected readonly archivedOnly = signal(false);
+  protected readonly followUpSelected = computed(() => {
+    const value = this.followUp();
+    return value ? [value] : [];
+  });
   protected readonly page = signal(1);
   protected readonly limit = signal(25);
 
@@ -255,7 +262,7 @@ export class SurgeryList {
     this.page.set(1);
   }
 
-  /** A chip-listbox in single mode hands back the chosen value, or `undefined` when cleared. */
+  /** The one follow-up question asked of the list, or `undefined` once the chip is cleared. */
   protected setFollowUp(value: unknown): void {
     this.followUp.set(isFollowUpFilter(value) ? value : '');
     this.page.set(1);
