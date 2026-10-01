@@ -64,6 +64,7 @@ link
 link_off
 list
 lock
+lock_reset
 login
 logout
 male
