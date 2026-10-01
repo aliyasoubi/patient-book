@@ -32,18 +32,6 @@
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-page-gap);
-  padding: var(--pb-page-block-start) var(--pb-page-inline) var(--pb-page-block-end);
-  max-width: var(--pb-page-wide);
-  margin-inline: auto;
-
-  @media (max-width: 700px) {
-    padding: 14px var(--pb-page-inline-compact) var(--pb-space-5);
-    gap: 12px;
-  }
-
   > * {
     flex: 0 0 auto;
   }
@@ -101,11 +89,6 @@
     --mat-chip-label-text-color: var(--mat-sys-on-secondary-container);
     --mat-chip-with-icon-icon-color: var(--mat-sys-on-secondary-container);
     --mat-chip-with-trailing-icon-trailing-icon-color: var(--mat-sys-on-secondary-container);
-  }
-
-  &__paginator {
-    background: transparent;
-    border-top: 1px solid var(--mat-sys-outline-variant);
   }
 }
 
@@ -388,28 +371,6 @@
 
     .material-symbols-rounded {
       font-size: 16px;
-    }
-  }
-
-  // Same meaning as the detail page's banner — caution before treating, not a
-  // broken record — so the same warning tone, not error red.
-  &__medical {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    padding: 7px 10px;
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--pb-warning-container);
-    color: var(--pb-on-warning-container);
-    font-size: var(--mat-sys-body-small-size);
-    font-weight: var(--mat-sys-body-small-weight);
-    letter-spacing: var(--mat-sys-body-small-tracking);
-    line-height: 1.6;
-
-    .material-symbols-rounded {
-      font-size: 16px;
-      flex: 0 0 auto;
-      margin-top: 1px;
     }
   }
 

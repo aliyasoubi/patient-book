@@ -12,10 +12,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 
 import { RegistryService } from '../../core/services/registry.service';
-import {
-  HasUnsavedChanges,
-  warnBeforeUnload,
-} from '../../core/guards/unsaved-changes.guard';
+import { HasUnsavedChanges, warnBeforeUnload } from '../../core/guards/unsaved-changes.guard';
 import {
   ABUTMENT_TYPES,
   FOLLOW_UP_MONTHS,
@@ -33,12 +30,13 @@ import type { RegistryCase, SurgeryKind, SurgeryQueueItem } from '../../core/mod
 import {
   PbButton,
   PbDateField,
+  PbPage,
   PbPageHeader,
   PbSelectField,
   PbStatusChip,
   PbSurface,
-  PbTextareaField,
   PbTextField,
+  PbTextareaField,
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
@@ -80,6 +78,7 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
     PbStatusChip,
     PbPageHeader,
     TranslatePipe,
+    PbPage,
   ],
   templateUrl: './surgery-form.html',
   styleUrl: './surgery-form.scss',

@@ -1,9 +1,14 @@
-<div class="list">
+<pb-page class="list" width="wide">
   <!-- ── Header ────────────────────────────────────────────────── -->
   <pb-page-header [title]="'patients.title' | translate" [count]="countLabel()">
     @if (auth.can('editPatients')) {
       <!-- Icon-only on the narrowest screens; the label crowds the title. -->
-      <pb-button routerLink="/patients/new" icon="person_add" class="list__new" [collapseBelow]="560">
+      <pb-button
+        routerLink="/patients/new"
+        icon="person_add"
+        class="list__new"
+        [collapseBelow]="560"
+      >
         {{ 'patients.new' | translate }}
       </pb-button>
     }
@@ -224,10 +229,9 @@
               </div>
 
               @if (patient.medicalHistory) {
-                <div class="card__medical">
-                  <mat-icon aria-hidden="true">medical_information</mat-icon>
-                  <span>{{ patient.medicalHistory }}</span>
-                </div>
+                <pb-banner tone="warning" size="compact" icon="medical_information">
+                  {{ patient.medicalHistory }}
+                </pb-banner>
               }
 
               <pb-treatment-chips [treatments]="patient.treatments" [max]="3" />
@@ -393,14 +397,11 @@
   </div>
 
   @if (total() > 0) {
-    <mat-paginator
-      class="list__paginator"
+    <pb-paginator
       [length]="total()"
-      [pageIndex]="page() - 1"
+      [page]="page()"
       [pageSize]="limit()"
-      [pageSizeOptions]="[10, 25, 50, 100]"
-      (page)="onPage($event)"
-      [attr.aria-label]="'common.pagination' | translate"
+      (pageChange)="onPage($event)"
     />
   }
-</div>
+</pb-page>

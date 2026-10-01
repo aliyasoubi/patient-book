@@ -1,4 +1,4 @@
-<div class="registry-page">
+<pb-page class="registry-page">
   <pb-page-header
     [title]="ui().title | translate"
     [subtitle]="'registry.independentNumberNotice' | translate"
@@ -62,7 +62,9 @@
        register holds nothing. -->
   @if (failed()) {
     <pb-load-error
-      [message]="(cases().length > 0 ? 'registry.loadFailedStale' : 'registry.loadFailed') | translate"
+      [message]="
+        (cases().length > 0 ? 'registry.loadFailedStale' : 'registry.loadFailed') | translate
+      "
       (retry)="retry()"
     />
   }
@@ -86,13 +88,11 @@
   }
 
   @if (total() > 0) {
-    <mat-paginator
+    <pb-paginator
       [length]="total()"
-      [pageIndex]="page() - 1"
+      [page]="page()"
       [pageSize]="limit()"
-      [pageSizeOptions]="[10, 25, 50, 100]"
-      (page)="onPage($event)"
-      [attr.aria-label]="'common.pagination' | translate"
+      (pageChange)="onPage($event)"
     />
   }
-</div>
+</pb-page>

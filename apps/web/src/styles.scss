@@ -77,6 +77,8 @@ html {
   --pb-page-inline-compact: 12px;
   --pb-page-block-start: 20px;
   --pb-page-block-end: 32px;
+  --pb-page-block-start-compact: 16px;
+  --pb-page-block-end-compact: 24px;
   --pb-page-gap: 16px;
   // Material's M3 color/type/shape scales ship as tokens here; motion does
   // not, so these are hand-picked to match M3 Expressive's spatial-spring

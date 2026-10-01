@@ -1,16 +1,4 @@
 .dash {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-page-gap);
-  padding: var(--pb-page-block-start) var(--pb-page-inline) var(--pb-page-block-end);
-  max-width: var(--pb-page-wide);
-  margin-inline: auto;
-
-  @media (max-width: 700px) {
-    padding: var(--pb-space-4) var(--pb-page-inline-compact) var(--pb-space-5);
-    gap: var(--pb-space-4);
-  }
-
   // M3 canonical layout: a 12-column grid on expanded windows, 2 columns on
   // medium, 1 on compact. Every panel names its span so the rows pack with no
   // holes (auto-fit plus a `span 2` panel used to leave an empty cell whenever
@@ -56,27 +44,6 @@
     &__panel--treatments {
       grid-column: span 12;
     }
-  }
-
-  &__error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--pb-space-3);
-    text-align: center;
-  }
-
-  &__error-icon {
-    font-size: var(--pb-icon-lg, 32px);
-    width: auto;
-    height: auto;
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__error-text {
-    margin: 0;
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
   }
 
   &__view-list {
@@ -170,14 +137,6 @@
   margin: 0;
   font: var(--mat-sys-body-medium);
   color: var(--mat-sys-on-surface-variant);
-}
-
-/* A panel whose own request failed: its message plus a retry, nothing else. */
-.panel__failed {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--pb-space-3);
 }
 
 /* ── Horizontal bars ───────────────────────────────────────────────── */

@@ -8,7 +8,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { PbButton, PbLogo, PbTextField } from '../../shared/ui';
+import { PbBanner, PbButton, PbLogo, PbTextField } from '../../shared/ui';
 
 @Component({
   selector: 'pb-login',
@@ -22,6 +22,7 @@ import { PbButton, PbLogo, PbTextField } from '../../shared/ui';
     PbLogo,
     MatIconModule,
     TranslatePipe,
+    PbBanner,
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',

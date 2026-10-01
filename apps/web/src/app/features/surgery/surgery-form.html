@@ -1,4 +1,4 @@
-<div class="form-page">
+<pb-page width="form">
   <pb-page-header
     [title]="title() | translate"
     [backLabel]="'common.back' | translate"
@@ -65,7 +65,12 @@
             [label]="'surgeryForm.implantRegistryNo' | translate"
             [ltr]="true"
             inputmode="numeric"
-            [hint]="(isEdit() ? 'surgeryForm.implantRegistryNoPlaceholder' : 'surgeryForm.implantRegistryNoNext') | translate"
+            [hint]="
+              (isEdit()
+                ? 'surgeryForm.implantRegistryNoPlaceholder'
+                : 'surgeryForm.implantRegistryNoNext'
+              ) | translate
+            "
           />
 
           <pb-select-field
@@ -116,4 +121,4 @@
       </pb-button>
     </div>
   </form>
-</div>
+</pb-page>

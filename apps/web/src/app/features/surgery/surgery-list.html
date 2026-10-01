@@ -1,4 +1,4 @@
-<div class="surgery">
+<pb-page class="surgery">
   <pb-page-header
     [title]="'surgery.title' | translate"
     [subtitle]="'surgery.subtitle' | translate"
@@ -64,7 +64,9 @@
        could not be loaded" are different facts. -->
   @if (failed()) {
     <pb-load-error
-      [message]="(items().length > 0 ? 'surgery.loadFailedStale' : 'surgery.loadFailed') | translate"
+      [message]="
+        (items().length > 0 ? 'surgery.loadFailedStale' : 'surgery.loadFailed') | translate
+      "
       (retry)="retry()"
     />
   }
@@ -106,13 +108,12 @@
             <!-- A reused register number is a patient-safety issue: the number
                  on the list belongs to someone else in the implant book. -->
             @if (item.hasNameMismatch) {
-              <p class="queue__warning" role="note">
-                <mat-icon aria-hidden="true">warning</mat-icon>
-                <span>{{
+              <pb-banner tone="error" size="compact" icon="warning" role="note">
+                {{
                   'surgery.identityWarning'
                     | translate: { number: item.implantRegistryNo, name: item.registeredName }
-                }}</span>
-              </p>
+                }}
+              </pb-banner>
             }
 
             <div class="queue__details">
@@ -159,10 +160,15 @@
                 <pb-status-chip icon="event_repeat" [tone]="toneFor(item.followUpState)">
                   @switch (item.followUpState) {
                     @case ('done') {
-                      {{ 'surgery.followUpDoneOn' | translate: { date: (item.followUpDoneAt | faNum) } }}
+                      {{
+                        'surgery.followUpDoneOn'
+                          | translate: { date: (item.followUpDoneAt | faNum) }
+                      }}
                     }
                     @case ('overdue') {
-                      {{ 'surgery.followUpMissed' | translate: { date: (followUp.jalali | faNum) } }}
+                      {{
+                        'surgery.followUpMissed' | translate: { date: (followUp.jalali | faNum) }
+                      }}
                     }
                     @default {
                       {{ 'surgery.followUpOn' | translate: { date: (followUp.jalali | faNum) } }}
@@ -229,13 +235,11 @@
   }
 
   @if (total() > 0) {
-    <mat-paginator
+    <pb-paginator
       [length]="total()"
-      [pageIndex]="page() - 1"
+      [page]="page()"
       [pageSize]="limit()"
-      [pageSizeOptions]="[10, 25, 50, 100]"
-      (page)="onPage($event)"
-      [attr.aria-label]="'common.pagination' | translate"
+      (pageChange)="onPage($event)"
     />
   }
-</div>
+</pb-page>

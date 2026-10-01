@@ -3,7 +3,7 @@
 }
 
 @if (patient(); as p) {
-  <div class="detail">
+  <pb-page>
     <!-- ── Hero ──────────────────────────────────────────────────── -->
     <header class="hero" [class.hero--archived]="p.isArchived">
       <a
@@ -88,49 +88,52 @@
     </header>
 
     <!-- ── Alerts ────────────────────────────────────────────────── -->
+    <!-- Medical history is the thing a dentist must not miss before treating —
+         caution, not a broken record — so it gets the warning tone, not error. -->
     @if (p.medicalHistory) {
-      <aside class="alert alert--medical" role="note">
-        <mat-icon aria-hidden="true">medical_information</mat-icon>
-        <div>
-          <strong>{{ 'patientDetail.medicalHistory' | translate }}</strong>
-          <p>{{ p.medicalHistory }}</p>
-        </div>
-      </aside>
+      <pb-banner
+        tone="warning"
+        icon="medical_information"
+        role="note"
+        [title]="'patientDetail.medicalHistory' | translate"
+      >
+        {{ p.medicalHistory }}
+      </pb-banner>
     }
 
+    <!-- Import flags are record hygiene, not a clinical alert: neutral tone;
+         the flag icon and resolve buttons carry the "to do" cue. -->
     @if (p.dataIssues.length > 0) {
-      <aside class="alert alert--issues" role="note">
-        <mat-icon aria-hidden="true">error</mat-icon>
-        <div class="alert__body">
-          <strong>{{
-            'patients.issueCount' | translate: { count: (p.dataIssues.length | faNum) }
-          }}</strong>
-          <p class="alert__note">{{ 'patientDetail.importIssuesHint' | translate }}</p>
-          <ul class="issues">
-            @for (issue of p.dataIssues; track issue.field) {
-              <li class="issues__item">
-                <div class="issues__text">
-                  <span>{{ issueMessage(issue) }}</span>
-                  <!-- Some messages already quote the offending value; only
+      <pb-banner
+        icon="error"
+        role="note"
+        [title]="'patients.issueCount' | translate: { count: (p.dataIssues.length | faNum) }"
+      >
+        <p class="issues__note">{{ 'patientDetail.importIssuesHint' | translate }}</p>
+        <ul class="issues">
+          @for (issue of p.dataIssues; track issue.field) {
+            <li class="issues__item">
+              <div class="issues__text">
+                <span>{{ issueMessage(issue) }}</span>
+                <!-- Some messages already quote the offending value; only
                        show the chip when it adds something. -->
-                  @if (issue.rawValue && !issueMessage(issue).includes(issue.rawValue)) {
-                    <code class="issues__raw">{{ issue.rawValue }}</code>
-                  }
-                </div>
-                @if (auth.can('editPatients')) {
-                  <pb-button
-                    variant="text"
-                    (click)="resolveIssue(issue.field)"
-                    [tooltip]="'patientDetail.markReviewedTooltip' | translate"
-                  >
-                    {{ 'patientDetail.reviewed' | translate }}
-                  </pb-button>
+                @if (issue.rawValue && !issueMessage(issue).includes(issue.rawValue)) {
+                  <code class="issues__raw">{{ issue.rawValue }}</code>
                 }
-              </li>
-            }
-          </ul>
-        </div>
-      </aside>
+              </div>
+              @if (auth.can('editPatients')) {
+                <pb-button
+                  variant="text"
+                  (click)="resolveIssue(issue.field)"
+                  [tooltip]="'patientDetail.markReviewedTooltip' | translate"
+                >
+                  {{ 'patientDetail.reviewed' | translate }}
+                </pb-button>
+              }
+            </li>
+          }
+        </ul>
+      </pb-banner>
     }
 
     <!-- ── Tabs ──────────────────────────────────────────────────── -->
@@ -325,7 +328,8 @@
                           <span class="timeline__who">{{
                             entry.fullName ??
                               entry.username ??
-                              ((entry.userId ? 'audit.deletedUser' : 'audit.systemUser') | translate)
+                              ((entry.userId ? 'audit.deletedUser' : 'audit.systemUser')
+                                | translate)
                           }}</span>
                         </div>
                         @for (change of changeEntries(entry.changes); track change[0]) {
@@ -356,5 +360,5 @@
         </mat-tab>
       }
     </mat-tab-group>
-  </div>
+  </pb-page>
 }

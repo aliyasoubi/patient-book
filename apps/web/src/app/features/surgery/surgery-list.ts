@@ -8,7 +8,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -33,7 +33,15 @@ import { EmptyState } from '../../shared/components/empty-state';
 import { LoadError } from '../../shared/components/load-error';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { abutmentLabel, surgeryKindLabel } from '../../shared/labels';
-import { PbButton, PbPageHeader, PbSearchField, PbStatusChip } from '../../shared/ui';
+import {
+  PbBanner,
+  PbButton,
+  PbPage,
+  PbPageHeader,
+  PbPaginator,
+  PbSearchField,
+  PbStatusChip,
+} from '../../shared/ui';
 import type { StatusTone } from '../../shared/ui';
 import type {
   FollowUpFilter,
@@ -88,7 +96,6 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
     MatButtonModule,
     MatChipsModule,
     MatMenuModule,
-    MatPaginatorModule,
     MatProgressBarModule,
     MatSlideToggleModule,
     EmptyState,
@@ -96,6 +103,9 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
     PersianNumberPipe,
     PbSearchField,
     PbPageHeader,
+    PbPage,
+    PbBanner,
+    PbPaginator,
     PbButton,
     PbStatusChip,
     MatIconModule,

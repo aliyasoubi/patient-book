@@ -40,11 +40,12 @@ import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import {
   PbButton,
   PbDateField,
+  PbPage,
   PbPageHeader,
   PbSelectField,
   PbSurface,
-  PbTextareaField,
   PbTextField,
+  PbTextareaField,
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { adoptUntouched } from '../../shared/form-sync';
@@ -70,6 +71,7 @@ import { AuthService } from '../../core/services/auth.service';
     PbPageHeader,
     MatIconModule,
     TranslatePipe,
+    PbPage,
   ],
   templateUrl: './patient-form.html',
   styleUrl: './patient-form.scss',

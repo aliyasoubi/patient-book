@@ -32,7 +32,7 @@ import {
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { LoadError } from '../../shared/components/load-error';
-import { PbAvatar, PbButton, PbStatusChip, PbSurface } from '../../shared/ui';
+import { PbAvatar, PbBanner, PbButton, PbPage, PbStatusChip, PbSurface } from '../../shared/ui';
 import type { DataIssue, Patient, RegistryRef } from './data/patient.model';
 import type { AuditEntry } from '../../core/models/common.model';
 
@@ -51,6 +51,8 @@ import type { AuditEntry } from '../../core/models/common.model';
     LoadError,
     PbButton,
     PbSurface,
+    PbBanner,
+    PbPage,
     PbAvatar,
     PbStatusChip,
     MatIconModule,
@@ -314,7 +316,11 @@ export class PatientDetail {
     });
   }
 
-  private openCaseDialog(data: RegistryCaseDialogData, patientId: string, done: () => string): void {
+  private openCaseDialog(
+    data: RegistryCaseDialogData,
+    patientId: string,
+    done: () => string,
+  ): void {
     this.dialog
       .open(RegistryCaseDialog, { data, width: '480px', maxWidth: '92vw' })
       .afterClosed()

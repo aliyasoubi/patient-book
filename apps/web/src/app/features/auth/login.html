@@ -40,10 +40,9 @@
             <p class="login__subtitle">{{ 'auth.subheading' | translate }}</p>
 
             @if (errorMessage(); as message) {
-              <div class="login__error" role="alert">
-                <mat-icon aria-hidden="true">error</mat-icon>
-                <span>{{ message }}</span>
-              </div>
+              <pb-banner class="login__error" tone="error" icon="error" role="alert">
+                {{ message }}
+              </pb-banner>
             }
 
             <pb-text-field

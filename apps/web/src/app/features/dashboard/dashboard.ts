@@ -15,7 +15,8 @@ import {
   referralKindLabel,
   treatmentColor,
 } from '../../shared/labels';
-import { PbButton, PbDatetimeCard, PbPageHeader, PbSurface } from '../../shared/ui';
+import { LoadError } from '../../shared/components/load-error';
+import { PbButton, PbDatetimeCard, PbPage, PbPageHeader, PbSurface } from '../../shared/ui';
 import type { DashboardStats, FollowUpDue } from '../../core/models/common.model';
 
 interface StatTile {
@@ -38,6 +39,8 @@ interface StatTile {
     PbButton,
     PbSurface,
     PbPageHeader,
+    PbPage,
+    LoadError,
     PbDatetimeCard,
     MatIconModule,
     TranslatePipe,

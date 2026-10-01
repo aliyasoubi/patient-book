@@ -8,7 +8,15 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
 import { roleLabel } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { PbAvatar, PbButton, PbPageHeader, PbSurface, PbTextField } from '../../shared/ui';
+import {
+  PbAvatar,
+  PbBanner,
+  PbButton,
+  PbPage,
+  PbPageHeader,
+  PbSurface,
+  PbTextField,
+} from '../../shared/ui';
 
 /**
  * The two new-password fields must agree. Rather than surface this as a
@@ -40,6 +48,8 @@ function passwordsMatch(group: AbstractControl): null {
     PbAvatar,
     PbPageHeader,
     TranslatePipe,
+    PbPage,
+    PbBanner,
   ],
   templateUrl: './account.html',
   styleUrl: './account.scss',
