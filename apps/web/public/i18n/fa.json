@@ -142,7 +142,9 @@
     "filterThisMonth": "ماه جاری",
     "filterNextMonth": "ماه بعد",
     "filterOverdue": "عقب‌افتاده",
-    "cancelled": "جراحی لغو شد — بدون پیگیری",
+    "archivedOnly": "فقط حذف‌شده‌ها",
+    "restore": "بازگردانی به لیست",
+    "cancelled":"جراحی لغو شد — بدون پیگیری",
     "followUpDoneSwitch": "انجام شد",
     "followUpOn": "پیگیری: {{date}}",
     "followUpMissed": "پیگیری عقب‌افتاده از {{date}}",
@@ -188,9 +190,10 @@
     "created": "به لیست انتظار افزوده شد.",
     "saved": "تغییرات ذخیره شد.",
     "deleteTitle": "حذف از لیست انتظار",
-    "deleteMessage": "ردیف «{{name}}» از لیست انتظار حذف می‌شود.",
+    "deleteMessage": "ردیف «{{name}}» از لیست انتظار حذف می‌شود. از بخش «فقط حذف‌شده‌ها» قابل بازگردانی است.",
     "deleteConfirm": "حذف کن",
-    "deleted": "از لیست انتظار حذف شد."
+    "deleted": "از لیست انتظار حذف شد.",
+    "restored": "ردیف به لیست انتظار بازگردانده شد."
   },
   "patients": {
     "title": "بیماران",
