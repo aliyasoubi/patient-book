@@ -13,7 +13,8 @@ import { JalaliDate } from '../../domain';
  * done on its due date: the practice handled those on paper before the app
  * tracked them, and a page of red "missed" rows from last year would only
  * teach staff to ignore the tile. The switch on the card reopens any that
- * were not in fact done. The note itself is left in place until the legacy
+ * were not in fact done. Those due in the 90 days before the fix were
+ * reopened wholesale by ReopenRecentBackfilledFollowUps1790900000000. The note itself is left in place until the legacy
  * wrapper is deleted (see legacy-prosthesis-due.ts).
  */
 export class BackfillSurgeryFollowUps1790700000000 implements MigrationInterface {
@@ -56,14 +57,24 @@ export class BackfillSurgeryFollowUps1790700000000 implements MigrationInterface
     // Only what this migration wrote and nobody has touched since: the
     // months and date still derive from the note it read, and the row is
     // either open or closed on its due date. A follow-up staff have moved,
-    // reopened or completed on another day keeps their edit.
+    // reopened or completed on another day keeps their edit. An open row
+    // alone cannot tell "never closed" from "closed, then reopened by staff",
+    // so a staff audit line on its completion rules it out too; lines with no
+    // user are other migrations, which revert before this one does.
     const rows = (await queryRunner.query(
-      `SELECT id, "prosthesisDue", "surgeryDate", "followUpMonths",
-              "followUpDate"::text AS "followUpDate",
-              "followUpDoneAt"::text AS "followUpDoneAt"
-         FROM surgery_queue
-        WHERE "prosthesisDue" IS NOT NULL AND "followUpDate" IS NOT NULL
-          AND "surgeryDate" IS NOT NULL`,
+      `SELECT s.id, s."prosthesisDue", s."surgeryDate", s."followUpMonths",
+              s."followUpDate"::text AS "followUpDate",
+              s."followUpDoneAt"::text AS "followUpDoneAt"
+         FROM surgery_queue s
+        WHERE s."prosthesisDue" IS NOT NULL AND s."followUpDate" IS NOT NULL
+          AND s."surgeryDate" IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM audit_logs a
+             WHERE a.entity = 'surgery_queue'
+               AND a."entityId" = s.id::text
+               AND a."userId" IS NOT NULL
+               AND a.changes ? 'followUpDoneAt'
+          )`,
     )) as Array<{
       id: string;
       prosthesisDue: string;
