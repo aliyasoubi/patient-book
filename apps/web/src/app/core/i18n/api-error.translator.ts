@@ -95,6 +95,18 @@ export class ApiErrorTranslator {
         return this.t('error.surgeryItemModified');
       case 'ERR_SURGERY_ITEM_NOT_FOUND':
         return this.t('error.surgeryItemNotFound');
+      case 'ERR_LAB_NOT_FOUND':
+        return this.t('error.labNotFound');
+      case 'ERR_LAB_NAME_TAKEN':
+        return this.t('error.labNameTaken', params);
+      case 'ERR_LAB_CASE_NOT_FOUND':
+        return this.t('error.labCaseNotFound');
+      case 'ERR_LAB_CASE_MODIFIED':
+        return this.t('error.labCaseModified');
+      case 'ERR_LAB_CASE_MOVED':
+        return this.t('error.labCaseMoved');
+      case 'ERR_LAB_CASE_NOTHING_TO_UNDO':
+        return this.t('error.labCaseNothingToUndo');
       case 'ERR_NOT_FOUND':
         return this.t('error.notFound');
 
@@ -131,7 +143,6 @@ export class ApiErrorTranslator {
         return this.t('error.unknownTreatment', params);
       case 'ERR_SORT_FIELD_UNSUPPORTED':
         return this.t('error.sortUnsupported');
-
 
       default:
         return this.unexpected();

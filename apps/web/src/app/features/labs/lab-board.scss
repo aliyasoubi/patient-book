@@ -1,0 +1,83 @@
+@use '../../../styles/type';
+
+.labs {
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-3) var(--pb-space-4);
+    flex-wrap: wrap;
+  }
+
+  &__search {
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+
+  &__lab {
+    flex: 0 1 220px;
+    min-width: 160px;
+  }
+
+  &__columns-picker {
+    display: block;
+  }
+}
+
+/** Three columns side by side; one at a time below the width drag needs. */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--pb-space-4);
+  align-items: start;
+
+  @media (max-width: 1199.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.column {
+  &--hidden {
+    display: none;
+  }
+
+  /** Tall enough to drop into while empty. */
+  &__cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-space-3);
+    min-height: 96px;
+  }
+
+  &__empty {
+    @include type.supporting-text;
+
+    margin: 0;
+    padding: var(--pb-space-5) var(--pb-space-3);
+    text-align: center;
+  }
+}
+
+/* While dragging: the card follows the pointer, a dashed slot marks where it would land. */
+.cdk-drag-preview {
+  box-shadow: var(--mat-sys-level3);
+  border-radius: var(--mat-sys-corner-medium);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.cdk-drop-list-receiving {
+  outline: 2px dashed color-mix(in srgb, var(--mat-sys-primary) 50%, transparent);
+  outline-offset: 4px;
+  border-radius: var(--mat-sys-corner-medium);
+}
+
+.archive {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--pb-space-3);
+}

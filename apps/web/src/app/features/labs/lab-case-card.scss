@@ -1,0 +1,84 @@
+@use '../../../styles/surface';
+
+:host {
+  display: block;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+  padding: var(--pb-space-3) var(--pb-space-4);
+  @include surface.outlined(medium);
+
+  &--overdue {
+    border-color: color-mix(in srgb, var(--mat-sys-error) 45%, transparent);
+  }
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--pb-space-2);
+  }
+
+  &__identity {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pb-space-2);
+  }
+
+  &__name {
+    font: var(--mat-sys-title-small);
+  }
+
+  &__menu {
+    margin: calc(-1 * var(--pb-space-2));
+    margin-inline-start: 0;
+  }
+
+  /** What the case is: supporting text, not chips — chips are for where it stands. */
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-space-1);
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__detail {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pb-space-1);
+
+    .material-symbols-rounded {
+      font-size: var(--pb-icon-xs);
+    }
+  }
+
+  &__status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pb-space-2);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pb-space-2);
+
+    &:empty {
+      display: none;
+    }
+  }
+}
+
+/* A narrow column must not push a long chip past the card's edge. */
+.card__status > pb-status-chip {
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.4;
+  padding-block: var(--pb-space-1);
+}

@@ -1,0 +1,189 @@
+<pb-page width="form">
+  <pb-page-header
+    [title]="(isEdit() ? 'labForm.editTitle' : 'labForm.createTitle') | translate"
+    [backLabel]="'common.back' | translate"
+    (back)="cancel()"
+  />
+
+  @if (saving() || loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
+    <pb-surface icon="dentistry" [title]="'labForm.caseSection' | translate">
+      <pb-field-grid>
+        <!-- Typing searches the patient book; picking a name links the case to
+             that file. A name typed without picking is kept as written. -->
+        <div class="pb-field-grid__full">
+          <pb-text-field
+            [control]="form.controls.recordedName"
+            [label]="'labForm.patient' | translate"
+            [hint]="(linkedPatient() ? 'labForm.patientLinked' : 'labForm.patientHint') | translate"
+            prefixIcon="person_search"
+            [maxlength]="160"
+            [options]="patientOptions()"
+            (optionSelected)="onPatientSelected($event)"
+          />
+          @if (linkedPatient(); as linked) {
+            <div class="form__linked">
+              <mat-icon aria-hidden="true">link</mat-icon>
+              <span>{{ 'labs.patientFile' | translate: { fileNo: linked.fileNo } }}</span>
+              <pb-icon-button
+                icon="close"
+                size="compact"
+                (click)="unlink()"
+                [ariaLabel]="'labForm.unlink' | translate"
+              />
+            </div>
+          }
+        </div>
+
+        <pb-select-field
+          [control]="form.controls.labId"
+          [options]="labOptions()"
+          [label]="'labs.lab' | translate"
+        />
+
+        <div class="pb-field-grid__full form__work">
+          <span class="form__label" id="work-types-label">{{
+            'labForm.workTypes' | translate
+          }}</span>
+          <pb-filter-chips
+            multiple
+            [options]="workTypeOptions"
+            [selected]="form.controls.workTypes.value"
+            (selectedChange)="setWorkTypes($event)"
+            [ariaLabel]="'labForm.workTypes' | translate"
+          />
+          @if (form.controls.workTypes.touched && form.controls.workTypes.invalid) {
+            <span class="form__error" role="alert">{{
+              'labForm.workTypesRequired' | translate
+            }}</span>
+          }
+        </div>
+
+        <pb-text-field
+          [control]="form.controls.toothCount"
+          [label]="'labForm.toothCount' | translate"
+          inputmode="numeric"
+          [ltr]="true"
+        />
+        <pb-text-field
+          [control]="form.controls.teeth"
+          [label]="'labForm.teeth' | translate"
+          [hint]="'labForm.teethHint' | translate"
+          [maxlength]="200"
+        />
+
+        <!-- The parts the clinic lends the lab for an implant crown, and owes back. -->
+        @if (isImplantCrown()) {
+          <pb-select-field
+            [control]="form.controls.implantBrand"
+            [options]="brandOptions()"
+            [anyLabel]="'surgeryForm.brandUnspecified' | translate"
+            [label]="'surgeryForm.implantBrand' | translate"
+          />
+          <div class="form__pair">
+            <pb-text-field
+              [control]="form.controls.impressionCount"
+              [label]="'labForm.impressionCount' | translate"
+              inputmode="numeric"
+              [ltr]="true"
+            />
+            <pb-text-field
+              [control]="form.controls.analogCount"
+              [label]="'labForm.analogCount' | translate"
+              inputmode="numeric"
+              [ltr]="true"
+            />
+          </div>
+        }
+      </pb-field-grid>
+    </pb-surface>
+
+    <pb-surface
+      icon="local_shipping"
+      [title]="
+        isEdit()
+          ? ('labForm.latestTrip' | translate: { n: (loaded()?.trips?.length ?? 1 | faNum) })
+          : ('labForm.firstTrip' | translate)
+      "
+      [description]="isEdit() ? ('labForm.latestTripHint' | translate) : null"
+    >
+      <pb-field-grid>
+        <pb-select-field
+          [control]="form.controls.tripKind"
+          [options]="tripKindOptions"
+          [label]="'labForm.tripKind' | translate"
+        />
+        <pb-date-field [control]="form.controls.sentAt" [label]="'labForm.sentAt' | translate" />
+        <pb-select-field
+          [control]="form.controls.waitDays"
+          [options]="waitOptions()"
+          [label]="'labForm.waitDays' | translate"
+          [hint]="expectedHint()"
+        />
+        <pb-text-field
+          [control]="form.controls.tripNote"
+          [label]="'labForm.tripNote' | translate"
+          [hint]="'labForm.tripNoteHint' | translate"
+          [maxlength]="300"
+        />
+        <pb-textarea-field
+          class="pb-field-grid__full"
+          [control]="form.controls.notes"
+          [label]="'labForm.notes' | translate"
+          [rows]="3"
+        />
+      </pb-field-grid>
+    </pb-surface>
+
+    <!-- Every trip so far, oldest first: what it went for, and how long it took. -->
+    @if (loaded(); as c) {
+      @if (c.trips.length > 1 || c.trips[0]?.receivedAt) {
+        <pb-surface icon="history" [title]="'labForm.history' | translate">
+          <ol class="trips">
+            @for (t of c.trips; track t.id) {
+              <li>
+                <strong>{{ tripKindLabel(t.kind) | translate }}</strong>
+                <span class="trips__meta">
+                  {{ 'labForm.tripSent' | translate: { date: (t.sentAt | faNum) } }}
+                  ·
+                  @if (t.receivedAt) {
+                    {{ 'labForm.tripReceived' | translate: { date: (t.receivedAt | faNum) } }}
+                  } @else {
+                    {{ 'labForm.tripExpected' | translate: { date: (t.expectedAt | faNum) } }}
+                  }
+                  @if (t.note) {
+                    · {{ t.note }}
+                  }
+                </span>
+              </li>
+            }
+          </ol>
+          @if (c.deliveredAt) {
+            <p class="trips__delivered">
+              <mat-icon aria-hidden="true">task_alt</mat-icon>
+              {{ 'labs.deliveredOn' | translate: { date: (c.deliveredAt | faNum) } }}
+            </p>
+          }
+        </pb-surface>
+      }
+    }
+
+    <pb-form-actions>
+      <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
+        {{ 'common.cancel' | translate }}
+      </pb-button>
+      <pb-button
+        variant="flat"
+        type="submit"
+        [icon]="isEdit() ? 'save' : 'send'"
+        [loading]="saving()"
+        [loadingText]="'common.saving' | translate"
+      >
+        {{ (isEdit() ? 'labForm.save' : 'labForm.create') | translate }}
+      </pb-button>
+    </pb-form-actions>
+  </form>
+</pb-page>

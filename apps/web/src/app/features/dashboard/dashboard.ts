@@ -115,6 +115,17 @@ export class Dashboard {
         tone: 'warn',
       });
     }
+    if (s.totals.labsOverdue > 0) {
+      tiles.push({
+        label: 'tile.labsOverdue',
+        value: s.totals.labsOverdue,
+        icon: 'schedule',
+        link: '/labs',
+        // The board, narrowed to exactly the cases the tile counts.
+        queryParams: { overdue: 'true' },
+        tone: 'warn',
+      });
+    }
     // Who to call this week: the operational number a receptionist opens
     // the dashboard for.
     tiles.push({

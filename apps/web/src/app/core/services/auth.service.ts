@@ -17,6 +17,8 @@ const PERMISSIONS = {
   archivePatients: ['admin', 'dentist'],
   archiveSurgery: ['admin', 'dentist'],
   archiveRegistry: ['admin', 'dentist'],
+  /** The lab board and the lab catalogue, archive included: any staff role, nothing finer. */
+  editLabs: ['admin', 'dentist', 'receptionist'],
   manageUsers: ['admin'],
   viewHistory: ['admin', 'dentist'],
 } as const satisfies Record<string, readonly UserRole[]>;

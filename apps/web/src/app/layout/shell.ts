@@ -50,6 +50,13 @@ function navItems(): NavItem[] {
       icon: 'event_available',
       primary: true,
     },
+    // Behind "more" on a phone: the bottom bar already holds four.
+    {
+      path: '/labs',
+      label: 'nav.labs',
+      icon: 'science',
+      primary: false,
+    },
     {
       path: '/implants',
       label: 'nav.implants',

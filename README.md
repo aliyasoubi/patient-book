@@ -162,6 +162,30 @@ the book does not know yet opens that register entry, so the book and the list
 never drift apart (three imported rows quote what are plainly patient file
 numbers — exactly the mix-up this prevents).
 
+### Lab work is a case with trips, not a status
+
+A crown or a set of laminates goes to the lab and back several times — the
+impression, a resin or frame try-in, now and then a correction or a remake.
+The practice's sheet folded *why* it went and *where it is* into one status
+column; here they are apart. A `lab_cases` row is the work, and each
+`lab_case_trips` row is one trip with its reason (`ارسال قالب`, `ارسال رزین`,
+`ارسال فریم`, `اصلاح`, `تکرار`, …), the day it left, the lab's turnaround and
+the day it came back.
+
+Where the work is now — at the lab, back at the clinic, delivered — is never
+stored: it follows from whether a trip is out and whether `deliveredAt` is
+set, and a partial unique index allows a case only one trip out at a time.
+Those three places are the lab board's columns, and also whose move it is:
+the lab's, the front desk's (book the patient), nobody's. A case moves only
+through four audited commands — receive, send, deliver, undo — each of which
+refuses a case that someone else has already moved. One pure module
+(`apps/api/src/modules/labs/lab-stage.ts`) decides when a trip is overdue, for
+the board and the dashboard alike.
+
+Implant crowns travel with impression copings and analogs that belong to the
+clinic. A case keeps owing them — on the board, even after delivery — until
+someone marks them returned.
+
 ### Dates are free-form Jalali, and often imprecise
 
 Handwritten birth dates arrive as a bare year, a year and month, a full date, or
@@ -296,6 +320,9 @@ Persian sentence frozen into the database at import time.
 | `implant_cases`      | Implant register — **its own numbering**.                  |
 | `ortho_cases`        | Ortho register — **its own numbering**.                    |
 | `surgery_queue`      | Second-stage surgery list, linked to the implant register. |
+| `labs`               | The labs work is sent to; managed in Settings.             |
+| `lab_cases`          | One piece of lab work for one patient, until it is fitted. |
+| `lab_case_trips`     | Each trip of a case to the lab and back.                   |
 | `users`              | Staff accounts.                                            |
 | `audit_logs`         | Append-only record of who changed what.                    |
 

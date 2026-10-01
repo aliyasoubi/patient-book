@@ -298,6 +298,53 @@
         </div>
       </mat-tab>
 
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <span>{{ 'patientDetail.labTab' | translate }}</span>
+          @if (labCases().length) {
+            <span class="tab__badge">{{ labCases().length | faNum }}</span>
+          }
+        </ng-template>
+        <div class="tab">
+          <pb-surface [title]="'patientDetail.labWork' | translate">
+            @if (labCases().length) {
+              <ul class="registry">
+                @for (c of labCases(); track c.id) {
+                  <li>
+                    <mat-icon aria-hidden="true">science</mat-icon>
+                    <span class="registry__lab">
+                      @if (auth.can('editLabs')) {
+                        <a [routerLink]="['/labs', c.id, 'edit']">{{ labWorkTypes(c) }}</a>
+                      } @else {
+                        {{ labWorkTypes(c) }}
+                      }
+                      @if (c.lab) {
+                        <small>{{ c.lab.name }} · {{ c.trips[0]?.sentAt | faNum }}</small>
+                      }
+                    </span>
+                    <pb-status-chip [tone]="labStageTone(c)">
+                      {{ labStageLabel(c.stage) | translate }}
+                    </pb-status-chip>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="card__empty">{{ 'patientDetail.noLabWork' | translate }}</p>
+            }
+            @if (auth.can('editLabs') && !p.isArchived) {
+              <pb-button
+                variant="text"
+                icon="send"
+                link="/labs/new"
+                [queryParams]="{ patientId: p.id }"
+              >
+                {{ 'patientDetail.sendToLab' | translate }}
+              </pb-button>
+            }
+          </pb-surface>
+        </div>
+      </mat-tab>
+
       @if (auth.can('viewHistory')) {
         <mat-tab [label]="'patientDetail.historyTab' | translate">
           <div class="tab">

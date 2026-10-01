@@ -50,6 +50,20 @@ export enum ErrorCode {
   /** As {@link ErrorCode.PatientModified}, for a surgery-list row. */
   SurgeryItemModified = 'ERR_SURGERY_ITEM_MODIFIED',
 
+  // -- Lab work ---------------------------------------------------------
+  LabNotFound = 'ERR_LAB_NOT_FOUND',
+  LabNameTaken = 'ERR_LAB_NAME_TAKEN',
+  LabCaseNotFound = 'ERR_LAB_CASE_NOT_FOUND',
+  /** As {@link ErrorCode.PatientModified}, for a lab case. */
+  LabCaseModified = 'ERR_LAB_CASE_MODIFIED',
+  /**
+   * The case is no longer where this move starts from — someone else has
+   * received, sent or delivered it meanwhile. `params.stage` is where it is.
+   */
+  LabCaseMoved = 'ERR_LAB_CASE_MOVED',
+  /** Undo on a case that has only its first trip: archive it instead. */
+  LabCaseNothingToUndo = 'ERR_LAB_CASE_NOTHING_TO_UNDO',
+
   // -- Value objects ----------------------------------------------------
   NationalIdLength = 'ERR_NATIONAL_ID_LENGTH',
   NationalIdChecksum = 'ERR_NATIONAL_ID_CHECKSUM',

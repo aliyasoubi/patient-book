@@ -11,8 +11,16 @@ export interface JalaliValue {
 export type Gender = 'male' | 'female' | 'unknown';
 
 export type EducationLevel =
-  | 'none' | 'primary' | 'diploma' | 'associate' | 'bachelor'
-  | 'master' | 'doctorate' | 'student' | 'other' | 'unknown';
+  | 'none'
+  | 'primary'
+  | 'diploma'
+  | 'associate'
+  | 'bachelor'
+  | 'master'
+  | 'doctorate'
+  | 'student'
+  | 'other'
+  | 'unknown';
 
 export interface PatientTreatment {
   id: string;
@@ -119,6 +127,73 @@ export interface FollowUpDue {
   hasNameMismatch: boolean;
 }
 
+/** Where a lab case's work is now — the lab board's three columns. */
+export type LabStage = 'at_lab' | 'at_clinic' | 'delivered';
+export type LabWorkType = 'crown' | 'implant_crown' | 'laminate' | 'post' | 'night_guard' | 'sx';
+export type LabTripKind =
+  'impression' | 'scan' | 'wax_alginate' | 'resin' | 'frame' | 'correction' | 'remake';
+/** A trip out, judged by the API against the day the lab said it would be back. */
+export type LabTimeliness = 'on_time' | 'due_today' | 'overdue';
+
+export interface Lab {
+  id: string;
+  name: string;
+  /** Inactive labs stay on their old cases but are not offered for new ones. */
+  isActive: boolean;
+}
+
+/** One trip to the lab and back. Dates are Jalali `yyyy/MM/dd`. */
+export interface LabTrip {
+  id: string;
+  /** 1 for the first trip, counting up. */
+  sequence: number;
+  kind: LabTripKind;
+  sentAt: string;
+  waitDays: number;
+  expectedAt: string;
+  /** Null while the trip is out at the lab. */
+  receivedAt: string | null;
+  note: string | null;
+}
+
+export interface LabCase {
+  id: string;
+  patientId: string | null;
+  patient: { id: string; fileNo: string; fullName: string; mobile: string | null } | null;
+  recordedName: string;
+  lab: Lab | null;
+  workTypes: LabWorkType[];
+  toothCount: number | null;
+  teeth: string;
+  implantBrand: string | null;
+  impressionCount: number | null;
+  analogCount: number | null;
+  partsReturnedAt: string | null;
+  /** Impression copings or analogs went with the case and have not come back. */
+  partsOutstanding: boolean;
+  deliveredAt: string | null;
+  stage: LabStage;
+  /** When the case entered its current column. */
+  since: string | null;
+  daysInStage: number | null;
+  /** Only while at the lab. */
+  timeliness: LabTimeliness | null;
+  daysLate: number;
+  /** Oldest first. */
+  trips: LabTrip[];
+  notes: string | null;
+  isArchived: boolean;
+  /** Bumped by every edit and every move; sent back on an edit and on undo. */
+  version: number;
+}
+
+/** Every open case by column, most urgent first, and the recent deliveries. */
+export interface LabBoard {
+  atLab: LabCase[];
+  atClinic: LabCase[];
+  delivered: LabCase[];
+}
+
 export interface DashboardStats {
   totals: {
     patients: number;
@@ -127,6 +202,7 @@ export interface DashboardStats {
     orthoCases: number;
     followUpsThisWeek: number;
     followUpsOverdue: number;
+    labsOverdue: number;
     needsReview: number;
   };
   gender: { key: string; count: number }[];
@@ -143,7 +219,6 @@ export interface DashboardStats {
   recentlyActive: number;
   inactiveOverYear: number;
 }
-
 
 export interface AuditEntry {
   id: string;

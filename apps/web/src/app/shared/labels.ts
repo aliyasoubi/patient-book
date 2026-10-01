@@ -1,4 +1,11 @@
-import type { EducationLevel, Gender, UserRole } from '../core/models/common.model';
+import type {
+  EducationLevel,
+  Gender,
+  LabStage,
+  LabTripKind,
+  LabWorkType,
+  UserRole,
+} from '../core/models/common.model';
 
 /**
  * Translation keys for the enum values the API speaks.
@@ -290,4 +297,74 @@ export const TREATMENT_COLORS: Record<string, { bg: string; fg: string }> = {
 
 export function treatmentColor(key: string): { bg: string; fg: string } {
   return TREATMENT_COLORS[key] ?? TREATMENT_COLORS['primary'];
+}
+
+const LAB_STAGE_LABELS: Record<LabStage, string> = {
+  at_lab: 'labs.atLab',
+  at_clinic: 'labs.atClinic',
+  delivered: 'labs.delivered',
+};
+
+/** Where a lab case's work is, by the name of its board column. */
+export function labStageLabel(stage: LabStage): string {
+  return LAB_STAGE_LABELS[stage];
+}
+
+/** What a lab case makes, in the order the form offers them. */
+export const LAB_WORK_TYPES: readonly LabWorkType[] = [
+  'crown',
+  'implant_crown',
+  'laminate',
+  'post',
+  'night_guard',
+  'sx',
+];
+
+/** Literal keys, not a template, so the i18n check sees every one and a new type cannot miss its label. */
+const LAB_WORK_TYPE_LABELS: Record<LabWorkType, string> = {
+  crown: 'labWorkType.crown',
+  implant_crown: 'labWorkType.implant_crown',
+  laminate: 'labWorkType.laminate',
+  post: 'labWorkType.post',
+  night_guard: 'labWorkType.night_guard',
+  sx: 'labWorkType.sx',
+};
+
+export function labWorkTypeLabel(type: LabWorkType): string {
+  return LAB_WORK_TYPE_LABELS[type];
+}
+
+/** Why a case goes to the lab, roughly in the order a case meets them. */
+export const LAB_TRIP_KINDS: readonly LabTripKind[] = [
+  'impression',
+  'scan',
+  'wax_alginate',
+  'resin',
+  'frame',
+  'correction',
+  'remake',
+];
+
+const LAB_TRIP_KIND_LABELS: Record<LabTripKind, string> = {
+  impression: 'labTripKind.impression',
+  scan: 'labTripKind.scan',
+  wax_alginate: 'labTripKind.wax_alginate',
+  resin: 'labTripKind.resin',
+  frame: 'labTripKind.frame',
+  correction: 'labTripKind.correction',
+  remake: 'labTripKind.remake',
+};
+
+export function labTripKindLabel(kind: LabTripKind): string {
+  return LAB_TRIP_KIND_LABELS[kind];
+}
+
+/**
+ * A lab's turnaround as the book wrote it — «یک هفته»، «سه هفته» — in days.
+ * Laminates take three weeks at most labs, everything else about one.
+ */
+export const LAB_WAIT_DAYS = [3, 7, 10, 14, 21, 28] as const;
+
+export function defaultLabWaitDays(workTypes: readonly LabWorkType[]): number {
+  return workTypes.includes('laminate') ? 21 : 7;
 }

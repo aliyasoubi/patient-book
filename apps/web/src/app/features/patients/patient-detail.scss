@@ -277,6 +277,23 @@ pb-surface.hero-surface--archived {
     }
   }
 
+  .registry__lab {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+
+    a {
+      color: inherit;
+    }
+
+    small {
+      font: var(--mat-sys-body-small);
+      color: var(--mat-sys-on-surface-variant);
+      font-feature-settings: var(--pb-font-numeric);
+    }
+  }
+
   /* No status chip on the row, so the edit button pushes itself to the end;
      the negative margin keeps the compact button inside the row's padding. */
   li > span + .registry__edit {
