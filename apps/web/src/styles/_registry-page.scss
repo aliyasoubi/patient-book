@@ -28,10 +28,6 @@
       flex: 0 0 auto;
     }
 
-    &__sort {
-      gap: 6px;
-    }
-
     mat-paginator {
       border-top: 1px solid var(--mat-sys-outline-variant);
       background: transparent;
