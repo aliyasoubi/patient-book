@@ -1,7 +1,9 @@
+import { FormControl, FormGroup } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 
 import type { SurgeryQueueItem } from '../../core/models/common.model';
-import { changedSurgeryFields } from './surgery-form';
+import { adoptUntouched } from '../../shared/form-sync';
+import { changedSurgeryFields, pickRegistryNo } from './surgery-form';
 
 const row = (over: Partial<SurgeryQueueItem> = {}): SurgeryQueueItem => ({
   id: 'row-1',
@@ -44,5 +46,36 @@ describe('changedSurgeryFields', () => {
 
   it('names nothing when only the version moved', () => {
     expect(changedSurgeryFields(row(), row({ version: 2 }))).toEqual([]);
+  });
+});
+
+describe('pickRegistryNo', () => {
+  const form = () =>
+    new FormGroup({
+      recordedName: new FormControl('مریم کریمی', { nonNullable: true }),
+      implantRegistryNo: new FormControl('42', { nonNullable: true }),
+    });
+
+  it('keeps a picked number through conflict recovery, beside the name it came with', () => {
+    const f = form();
+    f.controls.recordedName.setValue('سارا احمدی');
+    f.controls.recordedName.markAsDirty();
+    pickRegistryNo(f.controls.implantRegistryNo, {
+      value: 'سارا احمدی',
+      label: 'سارا احمدی',
+      meta: '77',
+    });
+
+    // Someone else saved the row meanwhile; untouched fields take their copy.
+    adoptUntouched(f, { recordedName: 'مریم کریمی', implantRegistryNo: '42' });
+
+    expect(f.getRawValue()).toEqual({ recordedName: 'سارا احمدی', implantRegistryNo: '77' });
+  });
+
+  it('leaves the number alone when the picked entry has none', () => {
+    const f = form();
+    pickRegistryNo(f.controls.implantRegistryNo, { value: 'x', label: 'x' });
+    expect(f.controls.implantRegistryNo.value).toBe('42');
+    expect(f.controls.implantRegistryNo.pristine).toBe(true);
   });
 });

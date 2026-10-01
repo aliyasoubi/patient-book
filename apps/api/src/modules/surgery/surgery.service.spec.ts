@@ -214,3 +214,107 @@ describe('SurgeryService.update concurrency', () => {
     ).rejects.toMatchObject(refused);
   });
 });
+
+describe('SurgeryService.assign — implant register link', () => {
+  const service = new SurgeryService(
+    {} as Repository<SurgeryQueueItem>,
+    {} as Repository<ImplantCase>,
+    {} as AuditService,
+  );
+  const helpers = service as unknown as SurgeryWriteHelpers;
+
+  /** An in-memory register: enough of a repository for `assign`. */
+  function register(...cases: Array<Partial<ImplantCase>>) {
+    const rows = cases.map(
+      (c) => ({ recordedName: 'مریم کریمی', ...c }) as ImplantCase,
+    );
+    let created = 0;
+    const repo = {
+      findOne: ({ where }: { where: Partial<ImplantCase> }) =>
+        Promise.resolve(
+          rows.find((r) =>
+            where.id !== undefined
+              ? r.id === where.id
+              : r.registryNo === where.registryNo,
+          ) ?? null,
+        ),
+      create: (c: Partial<ImplantCase>) => c as ImplantCase,
+      save: (c: ImplantCase) => {
+        created += 1;
+        const saved = { ...c, id: `new-${created}` } as ImplantCase;
+        rows.push(saved);
+        return Promise.resolve(saved);
+      },
+    };
+    return {
+      repo: repo as unknown as Repository<ImplantCase>,
+      created: () => created,
+    };
+  }
+
+  /** A surgery linked to case `case-42`, which carries number 42 when linked. */
+  const linked = (): SurgeryQueueItem =>
+    Object.assign(row(), { implantCaseId: 'case-42', implantRegistryNo: '42' });
+
+  it('keeps the link when the case was renumbered and the old number comes back unchanged', async () => {
+    // The register renamed 42 to 43; the surgery's copy still reads 42, and
+    // an edit of the notes alone sends that copy back.
+    const book = register({ id: 'case-42', registryNo: '43' });
+    const item = linked();
+
+    await helpers.assign(
+      item,
+      { implantRegistryNo: '42', notes: 'کنترل' },
+      book.repo,
+    );
+
+    expect(item.implantCaseId).toBe('case-42');
+    expect(item.implantRegistryNo).toBe('43');
+    expect(book.created()).toBe(0);
+  });
+
+  it('keeps the link and refreshes the number when the number is not sent at all', async () => {
+    const book = register({ id: 'case-42', registryNo: '43' });
+    const item = linked();
+
+    await helpers.assign(item, { notes: 'کنترل' }, book.repo);
+
+    expect(item.implantCaseId).toBe('case-42');
+    expect(item.implantRegistryNo).toBe('43');
+  });
+
+  it('an explicit null unlinks the surgery instead of refilling the old number', async () => {
+    const book = register({ id: 'case-42', registryNo: '42' });
+    const item = linked();
+
+    await helpers.assign(item, { implantRegistryNo: null }, book.repo);
+
+    expect(item.implantCaseId).toBeNull();
+    expect(item.implantRegistryNo).toBeNull();
+  });
+
+  it('a different number relinks to that case', async () => {
+    const book = register(
+      { id: 'case-42', registryNo: '42' },
+      { id: 'case-50', registryNo: '50' },
+    );
+    const item = linked();
+
+    await helpers.assign(item, { implantRegistryNo: '50' }, book.repo);
+
+    expect(item.implantCaseId).toBe('case-50');
+    expect(item.implantRegistryNo).toBe('50');
+    expect(book.created()).toBe(0);
+  });
+
+  it('a number the register does not know yet still opens a new entry for it', async () => {
+    const book = register({ id: 'case-42', registryNo: '42' });
+    const item = linked();
+
+    await helpers.assign(item, { implantRegistryNo: '77' }, book.repo);
+
+    expect(book.created()).toBe(1);
+    expect(item.implantCaseId).toBe('new-1');
+    expect(item.implantRegistryNo).toBe('77');
+  });
+});
