@@ -60,7 +60,7 @@ import { TranslateService } from '@ngx-translate/core';
     .chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: var(--pb-space-1);
       align-items: center;
     }
     /* Sized like pb-status-chip (M3's 32dp, label-large) so the two chip
@@ -68,9 +68,9 @@ import { TranslateService } from '@ngx-translate/core';
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--pb-space-2);
       min-height: 32px;
-      padding-inline: 12px;
+      padding-inline: var(--pb-space-3);
       border-radius: var(--mat-sys-corner-small);
       background: var(--chip-bg, var(--mat-sys-secondary-container));
       color: var(--chip-fg, var(--mat-sys-on-secondary-container));
@@ -80,17 +80,12 @@ import { TranslateService } from '@ngx-translate/core';
       cursor: default;
     }
     .chip__icon {
-      font-size: 18px;
-      width: 16px;
-      height: 16px;
+      font-size: var(--pb-icon-sm);
     }
     .chip--more {
       background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
       color: var(--mat-sys-on-surface-variant);
-      font-variant-numeric: tabular-nums;
-      // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
-      // 'onum', which is Latin in this font. See .ltr-nums in styles.scss.
-      font-feature-settings: 'ss01', 'tnum';
+      font-feature-settings: var(--pb-font-numeric);
     }
   `,
 })

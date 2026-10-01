@@ -64,7 +64,7 @@ export type AvatarTone = 'primary' | 'neutral' | 'male' | 'female' | 'unknown';
         font-weight: 700;
 
         mat-icon {
-          font-size: 28px;
+          font-size: var(--pb-icon-lg);
         }
       }
 

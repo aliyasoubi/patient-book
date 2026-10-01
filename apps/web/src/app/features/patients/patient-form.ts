@@ -40,6 +40,8 @@ import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import {
   PbButton,
   PbDateField,
+  PbFieldGrid,
+  PbFormActions,
   PbPage,
   PbPageHeader,
   PbSelectField,
@@ -72,6 +74,8 @@ import { AuthService } from '../../core/services/auth.service';
     MatIconModule,
     TranslatePipe,
     PbPage,
+    PbFieldGrid,
+    PbFormActions,
   ],
   templateUrl: './patient-form.html',
   styleUrl: './patient-form.scss',

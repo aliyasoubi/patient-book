@@ -97,7 +97,7 @@
     background: color-mix(in srgb, var(--mat-sys-on-primary) 16%, transparent);
 
     mat-icon {
-      font-size: 22px;
+      font-size: var(--pb-icon-md);
     }
   }
 
@@ -174,13 +174,13 @@
   }
 
   &__title {
-    margin: 0 0 4px;
+    margin: 0 0 var(--pb-space-1);
     font-size: var(--mat-sys-title-large-size);
     font-weight: 700;
   }
 
   &__subtitle {
-    margin: 0 0 20px;
+    margin: 0 0 var(--pb-space-4);
     font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
   }
@@ -190,15 +190,15 @@
   }
 
   &__submit {
-    margin-top: 8px;
+    margin-top: var(--pb-space-2);
   }
 
   &__footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    margin-top: 20px;
+    gap: var(--pb-space-2);
+    margin-top: var(--pb-space-4);
     text-align: center;
     font-size: var(--mat-sys-body-small-size);
     font-weight: var(--mat-sys-body-small-weight);
@@ -207,7 +207,7 @@
     color: var(--mat-sys-on-surface-variant);
 
     .material-symbols-rounded {
-      font-size: 16px;
+      font-size: var(--pb-icon-xs);
       flex: 0 0 auto;
     }
   }
@@ -215,5 +215,5 @@
 
 pb-text-field {
   display: block;
-  margin-bottom: 20px;
+  margin-bottom: var(--pb-space-4);
 }

@@ -46,7 +46,7 @@ import { PbIconButton } from '../icon-button/icon-button';
     }
 
     .pb-page-header__back {
-      margin-top: -6px;
+      margin-top: calc(-1 * var(--pb-space-2));
     }
 
     .pb-page-header__text {

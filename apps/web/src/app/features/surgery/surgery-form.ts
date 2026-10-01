@@ -28,6 +28,8 @@ import type { RegistryCase, SurgeryKind, SurgeryQueueItem } from '../../core/mod
 import {
   PbButton,
   PbDateField,
+  PbFieldGrid,
+  PbFormActions,
   PbPage,
   PbPageHeader,
   PbSegmentedButton,
@@ -77,6 +79,8 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
     PbPageHeader,
     TranslatePipe,
     PbPage,
+    PbFieldGrid,
+    PbFormActions,
   ],
   templateUrl: './surgery-form.html',
   styleUrl: './surgery-form.scss',

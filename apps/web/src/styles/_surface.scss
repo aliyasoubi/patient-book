@@ -1,0 +1,23 @@
+/**
+ * The app's two card looks, for elements that cannot be a `<pb-surface>`
+ * themselves — a list row that is an `<li>`, a tile that is an `<a>`, a toggle
+ * that is a `<button>`. `pb-surface` draws itself from these same mixins, so
+ * a row and a panel never drift apart.
+ *
+ * One signal, never both: an outlined card is the page's own `surface` tone
+ * with an outline-variant border; a tonal card is a container tone with no
+ * border. Neither is ever darker than the ground it sits on.
+ */
+
+/** M3 outlined card. `$corner` is an M3 shape step: large for cards, medium for rows inside one. */
+@mixin outlined($corner: large) {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-#{$corner});
+  background: var(--mat-sys-surface);
+}
+
+/** M3 filled (tonal) card. */
+@mixin tonal($corner: large) {
+  border-radius: var(--mat-sys-corner-#{$corner});
+  background: var(--mat-sys-surface-container-low);
+}

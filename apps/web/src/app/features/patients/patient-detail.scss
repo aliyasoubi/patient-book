@@ -1,3 +1,5 @@
+@use '../../../styles/surface';
+
 .detail__tabs {
   --mat-tab-header-divider-color: var(--mat-sys-outline-variant);
 }
@@ -25,7 +27,7 @@ pb-surface.hero-surface--archived {
     min-width: 0;
 
     h1 {
-      margin: 0 0 6px;
+      margin: 0 0 var(--pb-space-2);
       font: var(--mat-sys-title-large);
       font-weight: 700;
 
@@ -38,7 +40,7 @@ pb-surface.hero-surface--archived {
   &__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--pb-space-2);
 
     pb-status-chip small {
       opacity: 0.75;
@@ -48,7 +50,7 @@ pb-surface.hero-surface--archived {
   &__actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--pb-space-2);
     flex: 0 0 auto;
 
     @media (max-width: 700px) {
@@ -65,7 +67,7 @@ pb-surface.hero-surface--archived {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--pb-space-2);
 
   &__note {
     margin: 0;
@@ -75,8 +77,8 @@ pb-surface.hero-surface--archived {
   &__item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
+    gap: var(--pb-space-3);
+    padding: var(--pb-space-2) var(--pb-space-3);
     border-radius: var(--mat-sys-corner-medium);
     background: color-mix(in srgb, var(--mat-sys-surface) 55%, transparent);
     font: var(--mat-sys-body-medium);
@@ -87,23 +89,20 @@ pb-surface.hero-surface--archived {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: var(--pb-space-2);
     min-width: 0;
   }
 
   &__raw {
-    padding: 2px 7px;
+    padding: 2px var(--pb-space-2);
     border-radius: var(--mat-sys-corner-extra-small);
     background: color-mix(in srgb, var(--mat-sys-on-surface) 10%, transparent);
-    // Vazirmatn rather than a monospace: the mono stacks have no Persian
-    // digit glyphs, so numbers here would fall back to Latin. `tnum` keeps the
-    // even column rhythm a code chip wants.
-    font-family: Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
-    font-variant-numeric: tabular-nums;
-    font-size: var(--mat-sys-body-small-size);
-    font-weight: var(--mat-sys-body-small-weight);
-    line-height: var(--mat-sys-body-small-line-height);
+    // The app's own face rather than the UA's monospace for <code>: the mono
+    // stacks have no Persian digit glyphs, so numbers here would fall back to
+    // Latin. Tabular digits keep the even rhythm a code chip wants.
+    font: var(--mat-sys-body-small);
     letter-spacing: var(--mat-sys-body-small-tracking);
+    font-feature-settings: var(--pb-font-numeric);
     direction: ltr;
     unicode-bidi: isolate;
   }
@@ -113,8 +112,8 @@ pb-surface.hero-surface--archived {
 .tab {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 16px;
+  gap: var(--pb-space-3);
+  padding-top: var(--pb-space-4);
 }
 
 /* An M3 large badge: a pill, secondary-container, label-small. */
@@ -123,8 +122,8 @@ pb-surface.hero-surface--archived {
   place-items: center;
   min-width: 20px;
   height: 20px;
-  margin-inline-start: 6px;
-  padding-inline: 6px;
+  margin-inline-start: var(--pb-space-2);
+  padding-inline: var(--pb-space-2);
   border-radius: var(--mat-sys-corner-full);
   background: var(--mat-sys-secondary-container);
   color: var(--mat-sys-on-secondary-container);
@@ -146,8 +145,8 @@ pb-surface.hero-surface--archived {
 }
 
 .card__hint {
-  margin-top: 10px;
-  padding-top: 10px;
+  margin-top: var(--pb-space-3);
+  padding-top: var(--pb-space-3);
   border-top: 1px solid var(--mat-sys-outline-variant);
   font-size: var(--mat-sys-body-small-size);
 }
@@ -165,13 +164,13 @@ pb-surface.hero-surface--archived {
   margin: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2px 24px;
+  gap: 2px var(--pb-space-5);
 
   &__row {
     display: flex;
     align-items: baseline;
-    gap: 12px;
-    padding: 9px 0;
+    gap: var(--pb-space-3);
+    padding: var(--pb-space-2) 0;
     border-bottom: 1px solid var(--mat-sys-outline-variant);
 
     &:last-child {
@@ -182,14 +181,14 @@ pb-surface.hero-surface--archived {
   dt {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: var(--pb-space-2);
     flex: 0 0 auto;
     min-width: 118px;
     font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
 
     .material-symbols-rounded {
-      font-size: 17px;
+      font-size: var(--pb-icon-xs);
     }
   }
 
@@ -211,16 +210,14 @@ pb-surface.hero-surface--archived {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 10px;
+  gap: var(--pb-space-3);
 
   &__item {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 14px;
-    border-radius: var(--mat-sys-corner-large);
-    border: 1px solid var(--mat-sys-outline-variant);
-    background: var(--mat-sys-surface);
+    gap: var(--pb-space-3);
+    padding: var(--pb-space-4);
+    @include surface.outlined;
   }
 
   &__icon {
@@ -232,7 +229,7 @@ pb-surface.hero-surface--archived {
     border-radius: var(--mat-sys-corner-medium);
     background: var(--tx-bg);
     color: var(--tx-fg);
-    font-size: 20px;
+    font-size: var(--pb-icon-sm);
   }
 
   &__body {
@@ -252,7 +249,7 @@ pb-surface.hero-surface--archived {
   }
 
   &__note {
-    margin: 5px 0 0;
+    margin: var(--pb-space-1) 0 0;
     font-size: var(--mat-sys-body-small-size);
     font-weight: var(--mat-sys-body-small-weight);
     letter-spacing: var(--mat-sys-body-small-tracking);
@@ -268,19 +265,18 @@ pb-surface.hero-surface--archived {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--pb-space-2);
 
   li {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 10px 12px;
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--mat-sys-surface-container-low);
+    gap: var(--pb-space-2);
+    padding: var(--pb-space-3) var(--pb-space-3);
+    @include surface.tonal(medium);
     font: var(--mat-sys-body-medium);
 
     .material-symbols-rounded {
-      font-size: 18px;
+      font-size: var(--pb-icon-sm);
       color: var(--mat-sys-primary);
     }
   }
@@ -304,14 +300,14 @@ pb-surface.hero-surface--archived {
   &__item {
     position: relative;
     display: flex;
-    gap: 14px;
-    padding-bottom: 18px;
+    gap: var(--pb-space-4);
+    padding-bottom: var(--pb-space-4);
 
     &:not(:last-child)::before {
       content: '';
       position: absolute;
-      inset-inline-start: 5px;
-      top: 16px;
+      inset-inline-start: var(--pb-space-1);
+      top: var(--pb-space-4);
       bottom: 0;
       width: 2px;
       background: var(--mat-sys-outline-variant);
@@ -324,7 +320,7 @@ pb-surface.hero-surface--archived {
     width: 12px;
     height: 12px;
     flex: 0 0 auto;
-    margin-top: 5px;
+    margin-top: var(--pb-space-1);
     border-radius: var(--mat-sys-corner-full);
     background: var(--mat-sys-primary);
 
@@ -344,7 +340,7 @@ pb-surface.hero-surface--archived {
   &__head {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: var(--pb-space-2);
     font: var(--mat-sys-body-medium);
   }
 
@@ -357,12 +353,12 @@ pb-surface.hero-surface--archived {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
-    margin-top: 5px;
+    gap: var(--pb-space-2);
+    margin-top: var(--pb-space-1);
     font: var(--mat-sys-body-small);
 
     .material-symbols-rounded {
-      font-size: 14px;
+      font-size: var(--pb-icon-xs);
       color: var(--mat-sys-on-surface-variant);
     }
   }

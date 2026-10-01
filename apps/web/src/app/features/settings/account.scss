@@ -28,15 +28,9 @@
 .pw-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--pb-space-1);
 
   pb-text-field {
     display: block;
-  }
-
-  &__actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: var(--pb-space-3);
   }
 }

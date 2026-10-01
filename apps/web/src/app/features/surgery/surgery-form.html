@@ -11,13 +11,13 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
     <pb-surface icon="event" [title]="'surgeryForm.section' | translate">
-      <div class="grid">
+      <pb-field-grid>
         <!-- What was done decides the rest of the form: an implant has a
              register number, a brand and a cover; an extraction has a tooth.
              Chosen once, when the row is added; an edit shows it and no more —
              a row under the wrong kind is deleted and added again. -->
         @if (isEdit()) {
-          <div class="grid__full form__kind-fixed">
+          <div class="pb-field-grid__full form__kind-fixed">
             <pb-status-chip [icon]="kindIcon(form.controls.kind.value)">
               {{ kindLabel(form.controls.kind.value) | translate }}
             </pb-status-chip>
@@ -25,7 +25,7 @@
           </div>
         } @else {
           <pb-segmented-button
-            class="grid__full form__kind"
+            class="pb-field-grid__full form__kind"
             [options]="kindOptions"
             [value]="form.controls.kind.value"
             (valueChange)="onKindChange($any($event))"
@@ -34,7 +34,7 @@
         }
 
         <pb-text-field
-          class="grid__full"
+          class="pb-field-grid__full"
           [control]="form.controls.recordedName"
           [label]="'surgeryForm.recordedName' | translate"
           prefixIcon="badge"
@@ -90,17 +90,17 @@
         />
 
         <pb-textarea-field
-          class="grid__full"
+          class="pb-field-grid__full"
           [control]="form.controls.notes"
           [label]="'surgeryForm.notes' | translate"
           [rows]="3"
           [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
           [readonly]="!canEditClinicalNotes"
         />
-      </div>
+      </pb-field-grid>
     </pb-surface>
 
-    <div class="actions">
+    <pb-form-actions>
       <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
         {{ 'common.cancel' | translate }}
       </pb-button>
@@ -113,6 +113,6 @@
       >
         {{ submitLabel() | translate }}
       </pb-button>
-    </div>
+    </pb-form-actions>
   </form>
 </pb-page>

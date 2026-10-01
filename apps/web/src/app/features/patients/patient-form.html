@@ -12,7 +12,7 @@
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
     <!-- ── Identity ──────────────────────────────────────────────── -->
     <pb-surface icon="badge" [title]="'patientForm.identity' | translate">
-      <div class="grid">
+      <pb-field-grid>
         <pb-text-field
           [control]="form.controls.fileNo"
           [label]="'patientForm.fileNumber' | translate"
@@ -60,12 +60,12 @@
           [placeholder]="'patientForm.birthDatePlaceholder' | translate"
           [hint]="'patientForm.jalaliDate' | translate"
         />
-      </div>
+      </pb-field-grid>
     </pb-surface>
 
     <!-- ── Contact ───────────────────────────────────────────────── -->
     <pb-surface icon="contact_phone" [title]="'patientForm.contact' | translate">
-      <div class="grid">
+      <pb-field-grid>
         <pb-text-field
           [control]="form.controls.mobile"
           [label]="'patientForm.mobile' | translate"
@@ -86,24 +86,24 @@
         />
 
         <pb-textarea-field
-          class="grid__full"
+          class="pb-field-grid__full"
           [control]="form.controls.homeAddress"
           [label]="'patientForm.homeAddress' | translate"
           [rows]="2"
         />
 
         <pb-textarea-field
-          class="grid__full"
+          class="pb-field-grid__full"
           [control]="form.controls.workAddress"
           [label]="'patientForm.workAddress' | translate"
           [rows]="2"
         />
-      </div>
+      </pb-field-grid>
     </pb-surface>
 
     <!-- ── Background ────────────────────────────────────────────── -->
     <pb-surface icon="badge" [title]="'patientForm.additional' | translate">
-      <div class="grid">
+      <pb-field-grid>
         <pb-text-field
           [control]="form.controls.occupation"
           [label]="'patientForm.occupation' | translate"
@@ -137,7 +137,7 @@
         />
 
         <pb-textarea-field
-          class="grid__full"
+          class="pb-field-grid__full"
           [control]="form.controls.medicalHistory"
           [label]="'patientForm.medicalHistory' | translate"
           [rows]="2"
@@ -146,7 +146,7 @@
           [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
           [readonly]="!canEditClinicalNotes"
         />
-      </div>
+      </pb-field-grid>
     </pb-surface>
 
     <!-- ── Treatments ────────────────────────────────────────────── -->
@@ -175,7 +175,6 @@
     <!-- ── Notes ─────────────────────────────────────────────────── -->
     <pb-surface icon="edit_note" [title]="'patientForm.notesSection' | translate">
       <pb-textarea-field
-        class="grid__full"
         [control]="form.controls.notes"
         [label]="'patientForm.internalNotes' | translate"
         [rows]="3"
@@ -185,7 +184,7 @@
     </pb-surface>
 
     <!-- ── Actions ───────────────────────────────────────────────── -->
-    <div class="actions">
+    <pb-form-actions>
       <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
         {{ 'common.cancel' | translate }}
       </pb-button>
@@ -199,6 +198,6 @@
       >
         {{ submitLabel() | translate }}
       </pb-button>
-    </div>
+    </pb-form-actions>
   </form>
 </pb-page>

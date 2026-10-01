@@ -66,9 +66,13 @@ html {
   --pb-avatar-sm: 32px;
   --pb-avatar-md: 40px;
   --pb-avatar-lg: 56px;
+  // Icon sizes. `xs` sits beside body-small text, `sm` beside body-medium or
+  // inside a chip, `md` is Material's default, `lg`/`xl` are marks.
+  --pb-icon-xs: 16px;
   --pb-icon-sm: 18px;
   --pb-icon-md: 24px;
   --pb-icon-lg: 32px;
+  --pb-icon-xl: 48px;
   --pb-page-content: 1200px;
   --pb-page-wide: 1500px;
   --pb-page-form: 960px;
@@ -87,6 +91,8 @@ html {
   // so dialogs/snackbars get the gentler M3 "emphasized decelerate" curve.
   --pb-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --pb-ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+  // M3 "standard": colour and size changes that stay inside their own box.
+  --pb-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   // Persian numerals are what staff read on paper charts; keep the app
   // consistent with the ledgers it replaces. The digits themselves come from
   // the Farsi-Digits build of Vazirmatn (`fonts/vazirmatn.css`), so every
@@ -94,6 +100,11 @@ html {
   // whatever is typed into an input — renders as ۰-۹ while the underlying
   // text stays ASCII.
   font-variant-numeric: normal;
+  // Tabular Persian digits for ASCII text: 'ss01' maps 0-9 onto the ۰-۹
+  // glyphs, then 'tnum' makes them one width. Use this wherever numbers line
+  // up in a column or tick (counts, dates, clocks) — see `.ltr-nums` below for
+  // why, and never add 'onum', which is Latin in this font.
+  --pb-font-numeric: 'ss01', 'tnum';
   -webkit-tap-highlight-color: transparent;
 
   /*
@@ -227,7 +238,7 @@ mat-icon.material-symbols-rounded {
   direction: ltr;
   unicode-bidi: isolate;
   display: inline-block;
-  font-feature-settings: 'ss01', 'tnum';
+  font-feature-settings: var(--pb-font-numeric);
 }
 
 /* ── Scrollbars ────────────────────────────────────────────────────── */

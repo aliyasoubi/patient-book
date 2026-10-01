@@ -1,3 +1,5 @@
+@use '../../../styles/surface';
+
 :host {
   display: block;
 }
@@ -42,7 +44,7 @@
 
   &__toolbar {
     display: flex;
-    gap: 10px;
+    gap: var(--pb-space-3);
     align-items: center;
   }
 
@@ -92,19 +94,19 @@
   &__row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
+    gap: var(--pb-space-3);
   }
 
   &__group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--pb-space-2);
 
     &--checks {
       flex-direction: row;
       flex-wrap: wrap;
       align-items: center;
-      gap: 18px;
+      gap: var(--pb-space-4);
     }
   }
 
@@ -131,9 +133,7 @@
   // z-index and would otherwise paint over the progress bar laid above.
   position: relative;
   z-index: 0;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-large);
-  background: var(--mat-sys-surface);
+  @include surface.outlined;
 }
 
 .table {
@@ -169,9 +169,9 @@
   &__identity {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--pb-space-3);
     min-width: 0;
-    padding-block: 4px;
+    padding-block: var(--pb-space-1);
     color: inherit;
     text-decoration: none;
     cursor: pointer;
@@ -206,10 +206,7 @@
 
   &__file {
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
-    // 'onum', which is Latin in this font. See `.ltr-nums` in styles.scss.
-    font-feature-settings: 'ss01', 'tnum';
+    font-feature-settings: var(--pb-font-numeric);
     color: inherit;
     text-decoration: none;
     cursor: pointer;
@@ -235,10 +232,7 @@
 
   &__date {
     white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
-    // 'onum', which is Latin in this font. See `.ltr-nums` in styles.scss.
-    font-feature-settings: 'ss01', 'tnum';
+    font-feature-settings: var(--pb-font-numeric);
   }
 
   &__muted {
@@ -251,12 +245,12 @@
     color: var(--mat-sys-error);
 
     .material-symbols-rounded {
-      font-size: 18px;
+      font-size: var(--pb-icon-sm);
     }
   }
 
   &__archived .material-symbols-rounded {
-    font-size: 18px;
+    font-size: var(--pb-icon-sm);
     color: var(--mat-sys-on-surface-variant);
   }
 }
@@ -265,7 +259,7 @@
 .cards {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--pb-space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -273,9 +267,7 @@
 
 .card {
   position: relative;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-large);
-  background: var(--mat-sys-surface);
+  @include surface.outlined;
   transition: border-color 140ms ease;
 
   &:active {
@@ -289,8 +281,8 @@
   &__link {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px;
+    gap: var(--pb-space-3);
+    padding: var(--pb-space-4);
     text-decoration: none;
     color: inherit;
   }
@@ -300,13 +292,13 @@
    * without a mobile number would otherwise carry a 60px hole.
    */
   &:has(.card__call) .card__link {
-    padding-inline-end: 62px;
+    padding-inline-end: calc(var(--pb-control-height) + var(--pb-space-3));
   }
 
   &__head {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--pb-space-3);
     min-width: 0;
   }
 
@@ -335,14 +327,14 @@
     color: var(--mat-sys-error);
 
     .material-symbols-rounded {
-      font-size: 20px;
+      font-size: var(--pb-icon-sm);
     }
   }
 
   &__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: var(--pb-space-4);
     font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
   }
@@ -350,10 +342,10 @@
   &__meta-item {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: var(--pb-space-1);
 
     .material-symbols-rounded {
-      font-size: 16px;
+      font-size: var(--pb-icon-xs);
     }
   }
 

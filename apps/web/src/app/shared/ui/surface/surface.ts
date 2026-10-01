@@ -33,12 +33,13 @@ import { MatIconModule } from '@angular/material/icon';
     </div>
   `,
   styles: `
+    @use '../../../../styles/surface';
+
     :host {
+      @include surface.outlined;
+
       display: block;
       padding: var(--pb-space-4);
-      border: 1px solid var(--mat-sys-outline-variant);
-      border-radius: var(--mat-sys-corner-large);
-      background: var(--mat-sys-surface);
 
       @media (max-width: 700px) {
         padding: var(--pb-space-3);
@@ -51,8 +52,10 @@ import { MatIconModule } from '@angular/material/icon';
     }
 
     :host(.pb-surface--low) {
+      @include surface.tonal;
+
+      /* Keep the 1px border box so a tonal and an outlined card line up. */
       border-color: transparent;
-      background: var(--mat-sys-surface-container-low);
     }
 
     .pb-surface__header {
