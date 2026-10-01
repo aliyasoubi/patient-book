@@ -7,7 +7,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { PbBanner, PbButton, PbLogo, PbSurface, PbTextField } from '../../shared/ui';
+import { PbBanner, PbButton, PbLogo, PbTextField } from '../../shared/ui';
 
 @Component({
   selector: 'pb-login',
@@ -21,7 +21,6 @@ import { PbBanner, PbButton, PbLogo, PbSurface, PbTextField } from '../../shared
     MatIconModule,
     TranslatePipe,
     PbBanner,
-    PbSurface,
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
@@ -35,6 +34,8 @@ export class Login {
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  /** Caps Lock is the usual reason a correct password is rejected — say so before submit. */
+  protected readonly capsLock = signal(false);
   protected readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.maxLength(64)]],
     password: ['', [Validators.required, Validators.maxLength(128)]],
@@ -46,6 +47,13 @@ export class Login {
     { icon: 'event_available', label: 'auth.feature.scheduling' },
     { icon: 'straighten', label: 'auth.feature.treatments' },
   ];
+
+  protected trackCapsLock(event: Event): void {
+    // Browser autofill fires bare `Event`s named keydown/keyup, with no modifier state.
+    if (event instanceof KeyboardEvent) {
+      this.capsLock.set(event.getModifierState('CapsLock'));
+    }
+  }
 
   protected submit(): void {
     if (this.form.invalid || this.loading()) {

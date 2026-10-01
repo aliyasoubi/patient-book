@@ -1,9 +1,11 @@
 @use '../../../styles/type';
 
+$desktop: 900px;
+
 @keyframes login-rise {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -11,121 +13,155 @@
   }
 }
 
+@keyframes login-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, -8%, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-4%, 6%, 0) scale(0.94);
+  }
+}
+
+@keyframes login-float {
+  from {
+    transform: rotate(14deg) translateY(0);
+  }
+  to {
+    transform: rotate(10deg) translateY(18px);
+  }
+}
+
+/*
+ * The hero is built from the M3 *fixed* roles, which hold the same tone in
+ * light and dark mode — the brand panel is a deep navy in both, so the
+ * glass and the glow on it never have to be tuned twice.
+ */
 .login {
+  --login-ink: var(--mat-sys-primary-fixed);
+  --login-glass: color-mix(in srgb, white 7%, transparent);
+  --login-glass-edge: color-mix(in srgb, white 14%, transparent);
+
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
   min-height: 100dvh;
   background: var(--mat-sys-surface-container-lowest);
 
-  @media (min-width: 900px) {
-    grid-template-columns: 1.05fr 1fr;
+  @media (min-width: $desktop) {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-rows: 1fr;
   }
 
-  /* ── Branding panel — hidden on mobile, where the compact header
-     inside .login__main takes over. ────────────────────────────── */
-  &__aside {
-    display: none;
+  /* ── Brand hero — a compact header on mobile, an inset panel on desktop ── */
+  &__hero {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
-    padding: var(--pb-space-6);
-    background: var(--mat-sys-primary);
-    color: var(--mat-sys-on-primary);
+    padding: var(--pb-space-5) var(--pb-space-5) calc(var(--pb-space-6) + 28px);
+    color: var(--login-ink);
+    background: linear-gradient(
+      150deg,
+      var(--mat-sys-on-primary-fixed) 0%,
+      var(--mat-sys-on-primary-fixed-variant) 58%,
+      color-mix(in oklab, var(--mat-sys-on-tertiary-fixed-variant) 80%, black) 100%
+    );
 
-    @media (min-width: 900px) {
-      display: flex;
-      align-items: center;
+    @media (min-width: $desktop) {
+      margin: var(--pb-space-3);
+      margin-inline-end: 0;
+      padding: var(--pb-space-6) calc(var(--pb-space-6) + var(--pb-space-4));
+      border-radius: var(--mat-sys-corner-extra-large);
+      box-shadow: 0 30px 60px -30px
+        color-mix(in srgb, var(--mat-sys-on-primary-fixed) 70%, transparent);
     }
   }
 
-  &__aside-glow {
+  &__aurora {
     position: absolute;
     inset: 0;
-    background:
-      radial-gradient(
-        circle 480px at 15% 15%,
-        color-mix(in srgb, var(--mat-sys-tertiary) 55%, transparent),
-        transparent
-      ),
-      radial-gradient(
-        circle 520px at 90% 85%,
-        color-mix(in srgb, var(--mat-sys-on-primary) 18%, transparent),
-        transparent
-      ),
-      linear-gradient(
-        155deg,
-        var(--mat-sys-primary),
-        color-mix(in srgb, var(--mat-sys-primary) 70%, black)
-      );
+    z-index: -1;
   }
 
-  &__aside-content {
+  &__blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.32;
+    animation: login-drift 22s ease-in-out infinite alternate;
+
+    &--one {
+      inline-size: 55%;
+      aspect-ratio: 1;
+      inset-block-start: -15%;
+      inset-inline-start: -10%;
+      background: var(--mat-sys-primary-fixed-dim);
+    }
+
+    &--two {
+      inline-size: 45%;
+      aspect-ratio: 1;
+      inset-block-end: -10%;
+      inset-inline-end: -8%;
+      background: var(--mat-sys-tertiary-fixed-dim);
+      opacity: 0.26;
+      animation-duration: 26s;
+      animation-delay: -8s;
+    }
+
+    &--three {
+      inline-size: 35%;
+      aspect-ratio: 1;
+      inset-block-start: 40%;
+      inset-inline-start: 35%;
+      background: var(--mat-sys-primary-fixed);
+      opacity: 0.12;
+      animation-duration: 30s;
+      animation-delay: -14s;
+    }
+  }
+
+  &__dots {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(
+      color-mix(in srgb, white 22%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse 70% 60% at 30% 35%, black, transparent 75%);
+  }
+
+  /* The mark again, oversized and faint — a texture, not a second logo. */
+  &__watermark {
+    position: absolute;
+    z-index: -1;
+    inset-block-start: -12%;
+    inset-inline-end: -16%;
+    color: color-mix(in srgb, white 6%, transparent);
+    pointer-events: none;
+    scale: 0.4;
+    transform-origin: top center;
+    animation: login-float 9s ease-in-out infinite alternate;
+
+    @media (min-width: $desktop) {
+      scale: 1;
+    }
+  }
+
+  &__hero-content {
     position: relative;
-    max-width: 440px;
-    margin-inline: auto;
-    animation: login-rise 600ms var(--pb-ease-emphasized) both;
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-space-5);
+    block-size: 100%;
+    max-inline-size: 520px;
+    animation: login-rise 700ms var(--pb-ease-emphasized) both;
   }
 
-  &__tagline {
-    margin: var(--pb-space-4) 0 var(--pb-space-6);
-    font: var(--mat-sys-body-large);
-    color: color-mix(in srgb, var(--mat-sys-on-primary) 88%, transparent);
-    line-height: 1.8;
-  }
-
-  &__features {
-    display: grid;
-    gap: var(--pb-space-3);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-
-    li {
-      display: flex;
-      align-items: center;
-      gap: var(--pb-space-3);
-      font: var(--mat-sys-title-small);
-      font-weight: 500;
-    }
-  }
-
-  &__feature-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    inline-size: 40px;
-    block-size: 40px;
-    border-radius: var(--mat-sys-corner-medium);
-    background: color-mix(in srgb, var(--mat-sys-on-primary) 16%, transparent);
-
-    mat-icon {
-      font-size: var(--pb-icon-md);
-    }
-  }
-
-  /* ── Form panel ────────────────────────────────────────────────── */
-  &__main {
-    display: grid;
-    place-items: center;
-    padding: var(--pb-space-5) var(--pb-space-4)
-      calc(var(--pb-space-5) + env(safe-area-inset-bottom));
-
-    @media (min-width: 900px) {
-      padding: var(--pb-space-6);
-    }
-  }
-
-  &__panel {
-    width: 100%;
-    max-width: 400px;
-    animation: login-rise 600ms 80ms var(--pb-ease-emphasized) both;
-  }
-
-  /*
-   * The wordmark inherits its colour from whichever panel it sits on —
-   * `on-primary` inside the branding aside, `on-surface` in the compact
-   * header — so neither copy hardcodes a colour that belongs to the other.
-   */
   &__brand {
     display: flex;
     align-items: center;
@@ -133,57 +169,192 @@
 
     h1 {
       margin: 0;
-      font: var(--mat-sys-headline-small);
+      font: var(--mat-sys-title-large);
       font-weight: 700;
       letter-spacing: -0.2px;
+      color: white;
+    }
+  }
+
+  &__mark {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border: 1px solid var(--login-glass-edge);
+    border-radius: var(--mat-sys-corner-medium);
+    background: var(--login-glass);
+    backdrop-filter: blur(12px);
+
+    pb-logo {
+      color: white;
+    }
+  }
+
+  &__pitch {
+    @media (min-width: $desktop) {
+      margin-block-start: auto;
+    }
+  }
+
+  &__tagline {
+    margin: 0;
+    font: var(--mat-sys-headline-small);
+    font-weight: 800;
+    line-height: 1.6;
+    background: linear-gradient(
+      90deg,
+      white,
+      var(--mat-sys-primary-fixed-dim) 55%,
+      var(--mat-sys-tertiary-fixed)
+    );
+    background-clip: text;
+    color: transparent;
+    text-wrap: balance;
+
+    @media (min-width: $desktop) {
+      font-size: clamp(2rem, 2.6vw, 2.75rem);
+      line-height: 1.5;
+    }
+  }
+
+  &__features {
+    display: none;
+    gap: var(--pb-space-3);
+    margin: var(--pb-space-6) 0 0;
+    padding: 0;
+    list-style: none;
+
+    @media (min-width: $desktop) {
+      display: grid;
     }
 
-    &--compact {
-      justify-content: center;
-      margin-bottom: var(--pb-space-5);
-      color: var(--mat-sys-on-surface);
+    li {
+      display: flex;
+      align-items: center;
+      gap: var(--pb-space-3);
+      padding: var(--pb-space-3) var(--pb-space-4);
+      border: 1px solid var(--login-glass-edge);
+      border-radius: var(--mat-sys-corner-large);
+      background: var(--login-glass);
+      backdrop-filter: blur(14px) saturate(140%);
+      font: var(--mat-sys-title-small);
+      font-weight: 500;
+      animation: login-rise 600ms calc(250ms + var(--i, 0) * 90ms) var(--pb-ease-emphasized) both;
+      transition:
+        transform 250ms var(--pb-ease-standard),
+        background-color 250ms var(--pb-ease-standard);
 
-      @media (min-width: 900px) {
-        display: none;
+      &:hover {
+        transform: translateX(-4px);
+        background: color-mix(in srgb, white 11%, transparent);
       }
     }
   }
 
-  &__aside &__brand h1 {
-    font: var(--mat-sys-headline-medium);
-    font-weight: 700;
-    letter-spacing: -0.4px;
+  &__feature-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    inline-size: 40px;
+    block-size: 40px;
+    border-radius: var(--mat-sys-corner-medium);
+    background: linear-gradient(
+      135deg,
+      var(--mat-sys-primary-fixed-dim),
+      var(--mat-sys-tertiary-fixed-dim)
+    );
+    color: var(--mat-sys-on-primary-fixed);
+
+    mat-icon {
+      font-size: var(--pb-icon-md);
+    }
   }
 
-  /* The mark defaults to the primary colour; on the branding panel it has to
-     read against that same primary, so hand it the panel's own ink. */
-  &__aside pb-logo {
-    color: var(--mat-sys-on-primary);
-  }
-
-  // pb-surface draws the card; the page only lets the progress bar lie
-  // along its top edge, clipped to its corners.
-  &__card {
+  /* ── Form — a sheet that overlaps the hero on mobile ─────────────── */
+  &__main {
     position: relative;
-    overflow: hidden;
+    display: grid;
+    place-items: start center;
+    margin-block-start: -28px;
+    padding: var(--pb-space-6) var(--pb-space-4)
+      calc(var(--pb-space-5) + env(safe-area-inset-bottom));
+    border-radius: var(--mat-sys-corner-extra-large) var(--mat-sys-corner-extra-large) 0 0;
+    background:
+      radial-gradient(
+        ellipse 60% 40% at 50% 0%,
+        color-mix(in srgb, var(--mat-sys-primary) 9%, transparent),
+        transparent
+      ),
+      var(--mat-sys-surface-container-lowest);
+
+    @media (min-width: $desktop) {
+      place-items: center;
+      margin: 0;
+      padding: var(--pb-space-6);
+      border-radius: 0;
+      background:
+        radial-gradient(
+          circle 420px at 50% 30%,
+          color-mix(in srgb, var(--mat-sys-primary) 8%, transparent),
+          transparent
+        ),
+        var(--mat-sys-surface-container-lowest);
+    }
+  }
+
+  &__panel {
+    inline-size: 100%;
+    max-inline-size: 380px;
+    animation: login-rise 700ms 120ms var(--pb-ease-emphasized) both;
   }
 
   &__progress {
-    position: absolute;
+    position: fixed;
+    z-index: 10;
+    inset-block-start: 0;
     inset-inline: 0;
-    top: 0;
+  }
+
+  // On mobile the hero right above already says "this is the door in".
+  &__badge {
+    display: none;
+    place-items: center;
+    inline-size: 52px;
+    block-size: 52px;
+    margin-block-end: var(--pb-space-4);
+    border-radius: var(--mat-sys-corner-large);
+    background: linear-gradient(
+      135deg,
+      var(--mat-sys-primary-container),
+      var(--mat-sys-tertiary-container)
+    );
+    color: var(--mat-sys-on-primary-container);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 35%, transparent),
+      0 8px 20px -8px color-mix(in srgb, var(--mat-sys-primary) 45%, transparent);
+
+    @media (min-width: $desktop) {
+      display: inline-grid;
+    }
+
+    mat-icon {
+      font-size: var(--pb-icon-md);
+    }
   }
 
   &__title {
     margin: 0 0 var(--pb-space-1);
-    font-size: var(--mat-sys-title-large-size);
-    font-weight: 700;
+    font: var(--mat-sys-headline-small);
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--mat-sys-on-surface);
   }
 
   &__subtitle {
     @include type.supporting-text;
 
-    margin-bottom: var(--pb-space-4);
+    margin-block-end: var(--pb-space-5);
   }
 
   &__error {
@@ -199,19 +370,24 @@
 
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: var(--pb-space-2);
-    margin-top: var(--pb-space-4);
-    text-align: center;
+    margin-top: var(--pb-space-5);
+    padding: var(--pb-space-2) var(--pb-space-3);
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: var(--mat-sys-corner-medium);
+    background: var(--mat-sys-surface-container-low);
 
-    .material-symbols-rounded {
+    mat-icon {
       font-size: var(--pb-icon-xs);
+      inline-size: var(--pb-icon-xs);
+      block-size: var(--pb-icon-xs);
       flex: 0 0 auto;
+      color: var(--mat-sys-primary);
     }
   }
 }
 
 pb-text-field {
   display: block;
-  margin-bottom: var(--pb-space-4);
+  margin-bottom: var(--pb-space-3);
 }

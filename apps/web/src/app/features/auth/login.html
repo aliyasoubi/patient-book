@@ -1,80 +1,94 @@
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" class="login__progress" />
+}
+
 <div class="login">
-  <aside class="login__aside" aria-hidden="true">
-    <div class="login__aside-glow"></div>
-    <div class="login__aside-content">
+  <section class="login__hero">
+    <div class="login__aurora" aria-hidden="true">
+      <span class="login__blob login__blob--one"></span>
+      <span class="login__blob login__blob--two"></span>
+      <span class="login__blob login__blob--three"></span>
+    </div>
+    <div class="login__dots" aria-hidden="true"></div>
+    <pb-logo class="login__watermark" [size]="520" />
+
+    <div class="login__hero-content">
       <div class="login__brand">
-        <pb-logo [size]="46" />
+        <span class="login__mark">
+          <pb-logo [size]="28" />
+        </span>
         <h1>{{ 'app.title' | translate }}</h1>
       </div>
 
-      <p class="login__tagline">{{ 'app.description' | translate }}</p>
+      <div class="login__pitch">
+        <p class="login__tagline">{{ 'app.description' | translate }}</p>
 
-      <ul class="login__features">
-        @for (feature of features; track feature.icon) {
-          <li>
-            <span class="login__feature-icon">
-              <mat-icon aria-hidden="true">{{ feature.icon }}</mat-icon>
-            </span>
-            <span>{{ feature.label | translate }}</span>
-          </li>
-        }
-      </ul>
+        <ul class="login__features">
+          @for (feature of features; track feature.icon) {
+            <li [style.--i]="$index">
+              <span class="login__feature-icon">
+                <mat-icon aria-hidden="true">{{ feature.icon }}</mat-icon>
+              </span>
+              <span>{{ feature.label | translate }}</span>
+            </li>
+          }
+        </ul>
+      </div>
     </div>
-  </aside>
+  </section>
 
   <div class="login__main">
     <div class="login__panel">
-      <div class="login__brand login__brand--compact">
-        <pb-logo [size]="40" />
-        <h1>{{ 'app.title' | translate }}</h1>
-      </div>
+      <span class="login__badge" aria-hidden="true">
+        <mat-icon>lock</mat-icon>
+      </span>
+      <h2 class="login__title">{{ 'auth.heading' | translate }}</h2>
+      <p class="login__subtitle">{{ 'auth.subheading' | translate }}</p>
 
-      <pb-surface class="pb-surface--elevated login__card">
-        @if (loading()) {
-          <mat-progress-bar mode="indeterminate" class="login__progress" />
+      <form
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        (keydown)="trackCapsLock($event)"
+        (keyup)="trackCapsLock($event)"
+        novalidate
+      >
+        @if (errorMessage(); as message) {
+          <pb-banner class="login__error" tone="error" icon="error" role="alert">
+            {{ message }}
+          </pb-banner>
         }
 
-        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-          <h2 class="login__title">{{ 'auth.heading' | translate }}</h2>
-          <p class="login__subtitle">{{ 'auth.subheading' | translate }}</p>
+        <pb-text-field
+          [control]="form.controls.username"
+          [label]="'auth.username' | translate"
+          prefixIcon="person"
+          [ltr]="true"
+          nativeAutocomplete="username"
+        />
 
-          @if (errorMessage(); as message) {
-            <pb-banner class="login__error" tone="error" icon="error" role="alert">
-              {{ message }}
-            </pb-banner>
-          }
+        <pb-text-field
+          [control]="form.controls.password"
+          [label]="'auth.password' | translate"
+          type="password"
+          prefixIcon="lock"
+          [ltr]="true"
+          [hint]="capsLock() ? ('auth.capsLock' | translate) : null"
+          nativeAutocomplete="current-password"
+        />
 
-          <pb-text-field
-            [control]="form.controls.username"
-            [label]="'auth.username' | translate"
-            prefixIcon="person"
-            [ltr]="true"
-            nativeAutocomplete="username"
-          />
-
-          <pb-text-field
-            [control]="form.controls.password"
-            [label]="'auth.password' | translate"
-            type="password"
-            prefixIcon="lock"
-            [ltr]="true"
-            nativeAutocomplete="current-password"
-          />
-
-          <pb-button
-            variant="flat"
-            size="large"
-            type="submit"
-            icon="login"
-            class="login__submit"
-            [fullWidth]="true"
-            [loading]="loading()"
-            [loadingText]="'auth.signingIn' | translate"
-          >
-            {{ 'auth.signIn' | translate }}
-          </pb-button>
-        </form>
-      </pb-surface>
+        <pb-button
+          variant="flat"
+          size="large"
+          type="submit"
+          icon="login"
+          class="login__submit"
+          [fullWidth]="true"
+          [loading]="loading()"
+          [loadingText]="'auth.signingIn' | translate"
+        >
+          {{ 'auth.signIn' | translate }}
+        </pb-button>
+      </form>
 
       <p class="login__footer">
         <mat-icon aria-hidden="true">shield</mat-icon>
