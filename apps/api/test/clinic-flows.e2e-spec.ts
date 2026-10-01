@@ -707,6 +707,22 @@ describeIfWritable('clinic flows (e2e)', () => {
       });
     });
 
+    it('keeps the kind it was added with: an edit cannot turn an extraction into an implant', async () => {
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ kind: 'extraction', recordedName: 'لیلا حسینی' })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+
+      await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ kind: 'implant' })
+        .expect(400);
+      const after = await asAdmin(
+        http().get(`/api/surgery-queue/${id}`),
+      ).expect(200);
+      expect((after.body as { kind: string }).kind).toBe('extraction');
+    });
+
     async function listFollowUps(followUp: string): Promise<string[]> {
       const res = await asAdmin(
         http().get('/api/surgery-queue').query({ followUp, limit: 100 }),
@@ -740,7 +756,8 @@ describeIfWritable('clinic flows (e2e)', () => {
         http().get('/api/surgery-queue/next-registry-no'),
       ).expect(200);
       const { registryNo } = next.body as { registryNo: string };
-      expect(Number(registryNo)).toBe(Number(highest) + 1);
+      // Seventeen digits: past what a JS number holds exactly, so compare as BigInt.
+      expect(BigInt(registryNo)).toBe(BigInt(highest) + 1n);
 
       const surgery = await asAdmin(http().post('/api/surgery-queue'))
         .send({ recordedName: 'کاظم نوری', implantRegistryNo: registryNo })
@@ -767,8 +784,8 @@ describeIfWritable('clinic flows (e2e)', () => {
       const after = await asAdmin(
         http().get('/api/surgery-queue/next-registry-no'),
       ).expect(200);
-      expect(Number((after.body as { registryNo: string }).registryNo)).toBe(
-        Number(registryNo) + 1,
+      expect(BigInt((after.body as { registryNo: string }).registryNo)).toBe(
+        BigInt(registryNo) + 1n,
       );
     });
 

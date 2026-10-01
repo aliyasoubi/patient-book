@@ -1,4 +1,4 @@
-import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,

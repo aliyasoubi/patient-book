@@ -223,7 +223,12 @@ export class SurgeryForm implements HasUnsavedChanges {
     { initialValue: [] as RegistryCase[] },
   );
   protected readonly nameOptions = computed<TextFieldOption[]>(() =>
-    this.implantMatches().map((c) => ({ value: c.recordedName, label: c.recordedName, meta: c.registryNo })),
+    this.implantMatches().map((c) => ({
+      id: c.id,
+      value: c.recordedName,
+      label: c.recordedName,
+      meta: c.registryNo,
+    })),
   );
 
   constructor() {
