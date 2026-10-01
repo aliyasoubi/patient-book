@@ -1,0 +1,15 @@
+/**
+ * Supporting text: the quiet paragraph that explains, beside or under
+ * something louder — a page subtitle, the line under a panel title, "nothing
+ * recorded yet". Persian reads better with looser lines than M3's Latin
+ * defaults, hence the line height on top of the type token.
+ *
+ * `$scale` is an M3 body step: medium for a paragraph, small for a footnote.
+ */
+@mixin supporting-text($scale: medium) {
+  margin: 0;
+  font: var(--mat-sys-body-#{$scale});
+  letter-spacing: var(--mat-sys-body-#{$scale}-tracking);
+  line-height: 1.8;
+  color: var(--mat-sys-on-surface-variant);
+}

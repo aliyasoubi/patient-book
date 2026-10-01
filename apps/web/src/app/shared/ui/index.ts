@@ -34,3 +34,6 @@ export { PbFilterChips } from './filter-chips/filter-chips';
 export type { FilterChipOption } from './filter-chips/filter-chips';
 export { PbSegmentedButton } from './segmented-button/segmented-button';
 export type { SegmentOption } from './segmented-button/segmented-button';
+export { PbFieldGrid } from './field-grid/field-grid';
+export { PbFormActions } from './form-actions/form-actions';
+export { PbSwitch } from './switch/switch';

@@ -1,8 +1,11 @@
 <pb-page width="form">
   <pb-page-header [title]="'settings.title' | translate" />
 
-  <pb-surface icon="contrast" [title]="'settings.appearance' | translate">
-    <p class="panel__hint">{{ 'settings.appearanceHint' | translate }}</p>
+  <pb-surface
+    icon="contrast"
+    [title]="'settings.appearance' | translate"
+    [description]="'settings.appearanceHint' | translate"
+  >
     <pb-segmented-button
       [options]="themeOptions"
       [value]="theme.mode()"
@@ -25,8 +28,11 @@
     </div>
   </pb-surface>
 
-  <pb-surface icon="dentistry" [title]="'settings.treatments' | translate">
-    <p class="panel__hint">{{ 'settings.treatmentsHint' | translate }}</p>
+  <pb-surface
+    icon="dentistry"
+    [title]="'settings.treatments' | translate"
+    [description]="'settings.treatmentsHint' | translate"
+  >
     <ul class="catalogue">
       @for (t of treatments(); track t.id) {
         <li class="catalogue__item">

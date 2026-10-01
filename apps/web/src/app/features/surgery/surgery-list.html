@@ -165,14 +165,14 @@
                   }
                 </pb-status-chip>
                 @if (auth.can('editSurgery') && !archivedOnly()) {
-                  <mat-slide-toggle
+                  <pb-switch
                     class="queue__done"
                     [checked]="item.followUpState === 'done'"
                     [disabled]="updating() === item.id"
-                    (change)="setFollowUpDone(item, $event.checked)"
+                    (checkedChange)="setFollowUpDone(item, $event)"
                   >
                     {{ 'surgery.followUpDoneSwitch' | translate }}
-                  </mat-slide-toggle>
+                  </pb-switch>
                 }
               </div>
             } @else if (item.prosthesisDue) {

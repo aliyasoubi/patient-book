@@ -1,34 +1,24 @@
+@use '../../../styles/surface';
+
 .form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 4px 14px;
-
-  &__full {
-    grid-column: 1 / -1;
-  }
+  gap: var(--pb-space-4);
 }
 
 /* ── Treatment toggles ─────────────────────────────────────────────── */
 .treatments {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 8px;
+  gap: var(--pb-space-2);
 }
 
 .treatment {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 11px 13px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-large);
-  background: var(--mat-sys-surface);
+  gap: var(--pb-space-2);
+  padding: var(--pb-space-3) var(--pb-space-3);
+  @include surface.outlined;
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-label-large);
   letter-spacing: var(--mat-sys-label-large-tracking);
@@ -57,7 +47,7 @@
   }
 
   &__icon {
-    font-size: 20px;
+    font-size: var(--pb-icon-sm);
     flex: 0 0 auto;
     color: var(--mat-sys-on-surface-variant);
   }
@@ -71,24 +61,7 @@
   }
 
   &__check {
-    font-size: 17px;
+    font-size: var(--pb-icon-xs);
     color: var(--tx-fg);
   }
-}
-
-/* ── Actions ───────────────────────────────────────────────────────── */
-.actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  // A sticky flex item needs an explicit width — left to shrink-to-fit, some
-  // engines size it to zero once its children stop being plain <button>
-  // elements (as when they are wrapped by pb-button), pinning the row
-  // off-screen to the start edge instead of spanning the form.
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 0;
-  background: linear-gradient(to top, var(--mat-sys-surface) 60%, transparent);
 }

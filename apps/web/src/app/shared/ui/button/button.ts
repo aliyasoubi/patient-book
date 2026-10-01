@@ -202,7 +202,7 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
     }
     .pb-btn__spinner {
       display: inline-flex;
-      margin-inline-end: 8px;
+      margin-inline-end: var(--pb-space-2);
       --mat-progress-spinner-active-indicator-color: currentColor;
     }
 
@@ -273,7 +273,7 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
       min-width: 18px;
       height: 18px;
       margin-inline-start: var(--pb-space-2);
-      padding-inline: 5px;
+      padding-inline: var(--pb-space-1);
       border-radius: var(--mat-sys-corner-small);
       background: var(--mat-sys-primary);
       color: var(--mat-sys-on-primary);

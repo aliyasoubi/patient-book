@@ -17,22 +17,22 @@ import { MatIconModule } from '@angular/material/icon';
     </div>
   `,
   styles: `
+    @use '../../../styles/type';
+
     .empty {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 56px 24px;
+      gap: var(--pb-space-2);
+      padding: 56px var(--pb-space-5);
       text-align: center;
       color: var(--mat-sys-on-surface-variant);
     }
     .empty__icon {
-      font-size: 52px;
-      width: 52px;
-      height: 52px;
+      font-size: var(--pb-icon-xl);
       opacity: 0.45;
-      margin-bottom: 6px;
+      margin-bottom: var(--pb-space-2);
     }
     .empty__title {
       margin: 0;
@@ -41,12 +41,9 @@ import { MatIconModule } from '@angular/material/icon';
       color: var(--mat-sys-on-surface);
     }
     .empty__hint {
-      margin: 0;
-      font-size: var(--mat-sys-body-medium-size);
-      font-weight: var(--mat-sys-body-medium-weight);
-      letter-spacing: var(--mat-sys-body-medium-tracking);
+      @include type.supporting-text;
+
       max-width: 42ch;
-      line-height: 1.8;
     }
   `,
 })

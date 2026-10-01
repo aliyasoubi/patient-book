@@ -1,21 +1,19 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import { PbBanner, PbButton, PbLogo, PbTextField } from '../../shared/ui';
+import { PbBanner, PbButton, PbLogo, PbSurface, PbTextField } from '../../shared/ui';
 
 @Component({
   selector: 'pb-login',
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatCardModule,
     MatProgressBarModule,
     PbTextField,
     PbButton,
@@ -23,6 +21,7 @@ import { PbBanner, PbButton, PbLogo, PbTextField } from '../../shared/ui';
     MatIconModule,
     TranslatePipe,
     PbBanner,
+    PbSurface,
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss',

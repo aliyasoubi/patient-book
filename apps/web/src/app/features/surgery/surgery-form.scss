@@ -1,29 +1,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 4px 14px;
-
-  &__full {
-    grid-column: 1 / -1;
-  }
-}
-
-.actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 0;
-  background: linear-gradient(to top, var(--mat-sys-surface) 60%, transparent);
+  gap: var(--pb-space-4);
 }
 
 /* The kind selector leads the form; the segmented button is M3's control for
@@ -32,8 +10,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: var(--pb-space-3);
+  margin-bottom: var(--pb-space-1);
 }
 
 .form__kind-hint {

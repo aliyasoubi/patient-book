@@ -1,3 +1,6 @@
+@use '../../../styles/surface';
+@use '../../../styles/type';
+
 .dash {
   // M3 canonical layout: a 12-column grid on expanded windows, 2 columns on
   // medium, 1 on compact. Every panel names its span so the rows pack with no
@@ -61,7 +64,7 @@
     }
 
     .material-symbols-rounded {
-      font-size: 15px;
+      font-size: var(--pb-icon-xs);
     }
   }
 }
@@ -82,9 +85,7 @@
   flex-direction: column;
   gap: var(--pb-space-1);
   padding: var(--pb-space-4);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-large);
-  background: var(--mat-sys-surface);
+  @include surface.outlined;
   text-decoration: none;
   color: inherit;
   transition:
@@ -134,9 +135,7 @@
 // pb-surface owns the bordered-panel look and its title+hint header; the
 // grid placement lives on `.dash__panel--*` above.
 .panel__empty {
-  margin: 0;
-  font: var(--mat-sys-body-medium);
-  color: var(--mat-sys-on-surface-variant);
+  @include type.supporting-text;
 }
 
 /* ── Horizontal bars ───────────────────────────────────────────────── */
@@ -181,7 +180,7 @@
     display: block;
     height: 100%;
     border-radius: var(--mat-sys-corner-full);
-    transition: width 500ms cubic-bezier(0.2, 0, 0, 1);
+    transition: width 500ms var(--pb-ease-standard);
 
     &--primary {
       background: var(--mat-sys-primary);
@@ -191,10 +190,7 @@
   &__value {
     font: var(--mat-sys-body-medium);
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
-    // 'onum', which is Latin in this font. See `.ltr-nums` in styles.scss.
-    font-feature-settings: 'ss01', 'tnum';
+    font-feature-settings: var(--pb-font-numeric);
     min-width: 3ch;
     text-align: end;
   }
@@ -275,7 +271,7 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--pb-space-2);
 
     small {
       font: var(--mat-sys-body-small);
@@ -328,10 +324,7 @@
 
   &__count {
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
-    // 'onum', which is Latin in this font. See `.ltr-nums` in styles.scss.
-    font-feature-settings: 'ss01', 'tnum';
+    font-feature-settings: var(--pb-font-numeric);
   }
 }
 
@@ -394,10 +387,7 @@
     flex: 0 0 auto;
     font: var(--mat-sys-body-small);
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
-    // 'onum', which is Latin in this font. See `.ltr-nums` in styles.scss.
-    font-feature-settings: 'ss01', 'tnum';
+    font-feature-settings: var(--pb-font-numeric);
     color: var(--mat-sys-on-surface-variant);
   }
 }
@@ -413,8 +403,7 @@
     flex-direction: column;
     gap: var(--pb-space-1);
     padding: var(--pb-space-4);
-    border-radius: var(--mat-sys-corner-large);
-    background: var(--mat-sys-surface-container-low);
+    @include surface.tonal;
     text-decoration: none;
     color: inherit;
 
@@ -448,7 +437,7 @@
     font-weight: 600;
 
     .material-symbols-rounded {
-      font-size: 15px;
+      font-size: var(--pb-icon-xs);
     }
   }
 }

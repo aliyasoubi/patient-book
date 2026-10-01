@@ -1,8 +1,10 @@
+@use '../../../styles/surface';
+
 .surgery {
   &__toolbar {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: var(--pb-space-4);
     flex-wrap: wrap;
   }
 
@@ -18,26 +20,24 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--pb-space-3);
 
   &__item {
     position: relative;
     display: flex;
     align-items: flex-start;
-    gap: 16px;
-    padding: 14px;
-    border: 1px solid var(--mat-sys-outline-variant);
-    border-radius: var(--mat-sys-corner-large);
-    background: var(--mat-sys-surface);
+    gap: var(--pb-space-4);
+    padding: var(--pb-space-4);
+    @include surface.outlined;
 
     @media (max-width: 640px) {
       flex-direction: column;
-      gap: 10px;
+      gap: var(--pb-space-3);
     }
 
     /** Reserve the corner only on rows that actually carry the menu trigger. */
     &:has(.queue__menu) {
-      padding-inline-end: 56px;
+      padding-inline-end: calc(var(--pb-control-height) + var(--pb-space-2));
     }
 
     &--mismatch {
@@ -49,12 +49,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    gap: var(--pb-space-1);
     flex: 0 0 auto;
     min-width: 104px;
-    padding: 8px 10px;
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--mat-sys-surface-container-low);
+    padding: var(--pb-space-2) var(--pb-space-3);
+    @include surface.tonal(medium);
 
     @media (max-width: 640px) {
       flex-direction: row;
@@ -65,10 +64,7 @@
   &__date-value {
     font-size: var(--mat-sys-body-medium-size);
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    // Tabular Persian digits for ASCII text — 'ss01' then 'tnum'; never
-    // 'onum', which is Latin in this font. See `.ltr-nums` in styles.scss.
-    font-feature-settings: 'ss01', 'tnum';
+    font-feature-settings: var(--pb-font-numeric);
     white-space: nowrap;
 
     &--none {
@@ -82,14 +78,14 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: var(--pb-space-2);
   }
 
   &__identity {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--pb-space-3);
 
     strong {
       font: var(--mat-sys-title-medium);
@@ -105,8 +101,8 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px 16px;
-    margin-top: 8px;
+    gap: var(--pb-space-2) var(--pb-space-4);
+    margin-top: var(--pb-space-2);
   }
 
   /* The switch's label is the action; keep it the size of the chip beside it. */
@@ -117,7 +113,7 @@
   &__details {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 16px;
+    gap: var(--pb-space-2) var(--pb-space-4);
     font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
   }
@@ -125,16 +121,16 @@
   &__detail {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: var(--pb-space-1);
 
     .material-symbols-rounded {
-      font-size: 16px;
+      font-size: var(--pb-icon-xs);
     }
   }
 
   &__menu {
     position: absolute;
-    inset-inline-end: 8px;
-    top: 8px;
+    inset-inline-end: var(--pb-space-2);
+    top: var(--pb-space-2);
   }
 }

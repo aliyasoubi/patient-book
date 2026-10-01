@@ -1,6 +1,9 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
-import { MatAutocompleteModule, type MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import {
+  MatAutocompleteModule,
+  type MatAutocompleteSelectedEvent,
+} from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -137,7 +140,7 @@ export interface TextFieldOption {
       text-align: left;
     }
     .pb-text-field__option-meta {
-      margin-inline-start: 6px;
+      margin-inline-start: var(--pb-space-2);
       color: var(--mat-sys-on-surface-variant);
     }
   `,

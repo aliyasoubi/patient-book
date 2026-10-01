@@ -55,9 +55,9 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
        * keeps the chip content-sized inside either kind of parent.
        */
       width: fit-content;
-      gap: 8px;
+      gap: var(--pb-space-2);
       min-height: 32px;
-      padding-inline: 12px;
+      padding-inline: var(--pb-space-3);
       border: 1px solid transparent;
       border-radius: var(--mat-sys-corner-small);
       background: var(--_bg);
@@ -69,9 +69,7 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
     }
 
     .pb-status-chip__icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
+      font-size: var(--pb-icon-sm);
     }
 
     /*
@@ -89,8 +87,8 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
       display: inline-flex;
       align-items: center;
       align-self: stretch;
-      gap: 8px;
-      padding-inline: 12px;
+      gap: var(--pb-space-2);
+      padding-inline: var(--pb-space-3);
       color: inherit;
       text-decoration: none;
     }

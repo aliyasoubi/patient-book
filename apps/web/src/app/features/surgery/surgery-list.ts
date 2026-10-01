@@ -8,7 +8,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   catchError,
@@ -41,6 +40,7 @@ import {
   PbPaginator,
   PbSearchField,
   PbStatusChip,
+  PbSwitch,
 } from '../../shared/ui';
 import type { FilterChipOption, StatusTone } from '../../shared/ui';
 import type {
@@ -95,7 +95,6 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
     RouterLink,
     MatMenuModule,
     MatProgressBarModule,
-    MatSlideToggleModule,
     EmptyState,
     LoadError,
     PersianNumberPipe,
@@ -110,6 +109,7 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
     PbStatusChip,
     MatIconModule,
     TranslatePipe,
+    PbSwitch,
   ],
   templateUrl: './surgery-list.html',
   styleUrl: './surgery-list.scss',

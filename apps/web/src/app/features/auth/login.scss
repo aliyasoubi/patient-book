@@ -1,3 +1,5 @@
+@use '../../../styles/type';
+
 @keyframes login-rise {
   from {
     opacity: 0;
@@ -97,7 +99,7 @@
     background: color-mix(in srgb, var(--mat-sys-on-primary) 16%, transparent);
 
     mat-icon {
-      font-size: 22px;
+      font-size: var(--pb-icon-md);
     }
   }
 
@@ -159,12 +161,11 @@
     color: var(--mat-sys-on-primary);
   }
 
+  // pb-surface draws the card; the page only lets the progress bar lie
+  // along its top edge, clipped to its corners.
   &__card {
     position: relative;
     overflow: hidden;
-    border-radius: var(--mat-sys-corner-extra-large);
-    background: var(--mat-sys-surface);
-    box-shadow: var(--mat-sys-level3);
   }
 
   &__progress {
@@ -174,15 +175,15 @@
   }
 
   &__title {
-    margin: 0 0 4px;
+    margin: 0 0 var(--pb-space-1);
     font-size: var(--mat-sys-title-large-size);
     font-weight: 700;
   }
 
   &__subtitle {
-    margin: 0 0 20px;
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
+    @include type.supporting-text;
+
+    margin-bottom: var(--pb-space-4);
   }
 
   &__error {
@@ -190,24 +191,21 @@
   }
 
   &__submit {
-    margin-top: 8px;
+    margin-top: var(--pb-space-2);
   }
 
   &__footer {
+    @include type.supporting-text(small);
+
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    margin-top: 20px;
+    gap: var(--pb-space-2);
+    margin-top: var(--pb-space-4);
     text-align: center;
-    font-size: var(--mat-sys-body-small-size);
-    font-weight: var(--mat-sys-body-small-weight);
-    letter-spacing: var(--mat-sys-body-small-tracking);
-    line-height: 1.8;
-    color: var(--mat-sys-on-surface-variant);
 
     .material-symbols-rounded {
-      font-size: 16px;
+      font-size: var(--pb-icon-xs);
       flex: 0 0 auto;
     }
   }
@@ -215,5 +213,5 @@
 
 pb-text-field {
   display: block;
-  margin-bottom: 20px;
+  margin-bottom: var(--pb-space-4);
 }

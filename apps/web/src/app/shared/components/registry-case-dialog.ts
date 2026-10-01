@@ -207,15 +207,15 @@ const MIN_PATIENT_QUERY = 2;
     .form {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: var(--pb-space-1);
       min-width: min(420px, 80vw);
     }
     .form__linked {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin: -8px 0 12px;
-      padding: 6px 10px;
+      gap: var(--pb-space-2);
+      margin: calc(-1 * var(--pb-space-2)) 0 var(--pb-space-3);
+      padding: var(--pb-space-2) var(--pb-space-3);
       border-radius: var(--mat-sys-corner-medium);
       background: var(--mat-sys-secondary-container);
       color: var(--mat-sys-on-secondary-container);

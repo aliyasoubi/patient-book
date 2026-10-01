@@ -24,6 +24,10 @@ type RouterLinkValue = string | readonly unknown[] | UrlTree;
  *   `menu` makes it the trigger for a `<mat-menu>` the caller keeps in its
  *   own template.
  *
+ * Without an `icon`, the projected content takes its place: the top bar's
+ * account button is the user's avatar. Size the slot to it through the
+ * `--mat-icon-button-icon-size` token on the host.
+ *
  * The menu trigger is its own branch rather than a `[matMenuTriggerFor]`
  * bound to null: the trigger directive is matched by the attribute's
  * presence and would still stamp `aria-expanded="false"` on a plain button.
@@ -81,13 +85,24 @@ type RouterLinkValue = string | readonly unknown[] | UrlTree;
     }
 
     <ng-template #glyph>
-      <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+      @if (icon(); as name) {
+        <mat-icon aria-hidden="true">{{ name }}</mat-icon>
+      } @else {
+        <ng-content />
+      }
     </ng-template>
   `,
   styles: `
     :host {
       display: inline-flex;
       flex: 0 0 auto;
+    }
+
+    /* Centre whatever fills the slot. Material's icon button is a block box,
+       so an inline avatar sat on the text baseline, 5px below centre. */
+    .mat-mdc-icon-button {
+      display: inline-grid;
+      place-items: center;
     }
 
     :host([data-variant='tonal']) {
@@ -114,7 +129,8 @@ type RouterLinkValue = string | readonly unknown[] | UrlTree;
   `,
 })
 export class PbIconButton {
-  readonly icon = input.required<string>();
+  /** The glyph. Leave it out to project something else in its place — an avatar. */
+  readonly icon = input<string | null>(null);
   readonly ariaLabel = input.required<string>();
   readonly tooltip = input('');
   readonly variant = input<IconButtonVariant>('standard');
