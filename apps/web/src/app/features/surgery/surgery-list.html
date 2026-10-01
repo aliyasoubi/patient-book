@@ -168,7 +168,7 @@
                   <pb-switch
                     class="queue__done"
                     [checked]="item.followUpState === 'done'"
-                    [disabled]="updating() === item.id"
+                    [disabled]="updating() !== null"
                     (checkedChange)="setFollowUpDone(item, $event)"
                   >
                     {{ 'surgery.followUpDoneSwitch' | translate }}
@@ -176,8 +176,8 @@
                 }
               </div>
             } @else if (item.prosthesisDue) {
-              <!-- LEGACY: an imported note the backfill could not read. Delete
-                   with apps/api/src/modules/surgery/legacy-prosthesis-due.ts. -->
+              <!-- LEGACY: an imported note the backfill could not read. Remove with
+                   the runtime fallbacks listed in apps/api/src/modules/surgery/legacy-prosthesis-due.ts. -->
               <span class="queue__detail">
                 <mat-icon aria-hidden="true">schedule</mat-icon>
                 {{ 'surgery.prosthesis' | translate: { date: item.prosthesisDue } }}

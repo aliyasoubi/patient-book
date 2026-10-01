@@ -23,6 +23,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { format as formatJalali } from 'date-fns-jalali';
 
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
+import { isHandledByCaller } from '../../core/interceptors/error.interceptor';
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryService, SurgeryQuery } from '../../core/services/registry.service';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
@@ -270,6 +271,9 @@ export class SurgeryList {
 
   /** The patient came in for the follow-up — or, switched off, did not after all. */
   protected setFollowUpDone(item: SurgeryQueueItem, done: boolean): void {
+    // One at a time: every switch is disabled while one is in flight, so a
+    // second response can never unlock a row whose own save is still out.
+    if (this.updating()) return;
     // Today on the Jalali calendar, in the `yyyy/MM/dd` form the API parses.
     const followUpDoneAt = done ? formatJalali(new Date(), 'yyyy/MM/dd') : null;
     this.updating.set(item.id);
@@ -282,9 +286,17 @@ export class SurgeryList {
         );
         this.retry();
       },
-      // The switch snaps back with the reload; the interceptor has shown the error.
-      error: () => {
+      // The switch snaps back with the reload. A server or network failure
+      // has already been shown by the interceptor; the statuses it leaves to
+      // callers (a row deleted meanwhile, a rejected value) have no field to
+      // sit under here, so they are shown here.
+      error: (error: unknown) => {
         this.updating.set(null);
+        if (isHandledByCaller(error)) {
+          this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
+            duration: 6000,
+          });
+        }
         this.retry();
       },
     });
