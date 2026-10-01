@@ -14,8 +14,10 @@ import { JalaliDate } from '../../domain';
  * tracked them, and a page of red "missed" rows from last year would only
  * teach staff to ignore the tile. The switch on the card reopens any that
  * were not in fact done. Those due in the 90 days before the fix were
- * reopened wholesale by ReopenRecentBackfilledFollowUps1790900000000. The note itself is left in place until the legacy
- * wrapper is deleted (see legacy-prosthesis-due.ts).
+ * reopened wholesale by ReopenRecentBackfilledFollowUps1790900000000.
+ *
+ * The note itself is left in place until the runtime fallbacks are removed;
+ * see legacy-prosthesis-due.ts, whose parser this migration depends on.
  */
 export class BackfillSurgeryFollowUps1790700000000 implements MigrationInterface {
   name = 'BackfillSurgeryFollowUps1790700000000';

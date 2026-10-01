@@ -2,16 +2,18 @@
  * LEGACY — the imported sheets recorded a prosthesis follow-up as a bare
  * Jalali month name ("آذر ماه", "اواخر مهر"). Migration
  * `BackfillSurgeryFollowUps` turns those into the structured follow-up via
- * {@link legacyFollowUpMonths}; once it has run everywhere, this whole
- * wrapper can go. Delete, together:
+ * {@link legacyFollowUpMonths}. Once it has run everywhere, the runtime
+ * fallbacks can go, together:
  *
- *   - this file and its spec
  *   - `SurgeryQueueItem.prosthesisDue` (add a migration dropping the column)
  *   - `prosthesisDue` in the surgery response and in the web `SurgeryQueueItem`
  *   - the `LEGACY` branch in `surgery-list.html` and the `surgery.prosthesis` key
  *   - the `LEGACY` hint in `surgery-form.ts` and the `surgeryForm.followUpLegacy` key
  *
- * The migration itself stays: history has to replay.
+ * This file does NOT go with them: the migration imports
+ * `legacyFollowUpMonths`, and history has to replay on a fresh database. To
+ * delete the file, first move that function (and its spec) into the
+ * migration, so the migration no longer depends on application code.
  */
 import { getMonth } from 'date-fns-jalali';
 
