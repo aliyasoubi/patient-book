@@ -62,3 +62,20 @@ export function changedPatientFields(before: Patient, after: Patient): string[] 
   const b = view(after);
   return Object.keys(a).filter((key) => a[key] !== b[key]);
 }
+
+/**
+ * The treatments to show after a save conflict: what was just saved, with this
+ * user's own additions and removals (selected against what they loaded)
+ * applied on top. Sending their whole selection instead would quietly drop a
+ * treatment someone else added, or restore one they removed.
+ */
+export function mergeTreatments(
+  loaded: ReadonlySet<string>,
+  selected: ReadonlySet<string>,
+  saved: ReadonlySet<string>,
+): Set<string> {
+  const merged = new Set(saved);
+  for (const code of selected) if (!loaded.has(code)) merged.add(code);
+  for (const code of loaded) if (!selected.has(code)) merged.delete(code);
+  return merged;
+}

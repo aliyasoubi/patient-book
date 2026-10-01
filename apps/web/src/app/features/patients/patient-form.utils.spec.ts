@@ -4,6 +4,7 @@ import type { Patient, PatientInput } from './data/patient.model';
 import {
   applyPatientDateChanges,
   changedPatientFields,
+  mergeTreatments,
   type PatientDateControlState,
 } from './patient-form.utils';
 
@@ -98,5 +99,31 @@ describe('changedPatientFields', () => {
       'medicalHistory',
       'treatments',
     ]);
+  });
+});
+
+describe('mergeTreatments', () => {
+  const set = (...codes: string[]) => new Set(codes);
+
+  it("keeps a colleague's addition and this user's own", () => {
+    // Loaded {implant}; user added ortho; colleague saved {implant, crown}.
+    expect(
+      mergeTreatments(set('implant'), set('implant', 'ortho'), set('implant', 'crown')),
+    ).toEqual(set('implant', 'crown', 'ortho'));
+  });
+
+  it("keeps a colleague's removal, and this user's removal too", () => {
+    // Loaded {implant, crown, ortho}; user removed ortho; colleague removed crown.
+    expect(
+      mergeTreatments(
+        set('implant', 'crown', 'ortho'),
+        set('implant', 'crown'),
+        set('implant', 'ortho'),
+      ),
+    ).toEqual(set('implant'));
+  });
+
+  it('takes the saved set as is when the user changed nothing', () => {
+    expect(mergeTreatments(set('implant'), set('implant'), set('crown'))).toEqual(set('crown'));
   });
 });
