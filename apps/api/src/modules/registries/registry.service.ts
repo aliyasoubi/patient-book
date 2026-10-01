@@ -147,21 +147,20 @@ export class RegistryService<T extends RegistryCase> {
   ): Promise<T> {
     return this.repo.manager.transaction(async (manager) => {
       const repository = manager.getRepository(this.repo.target);
-      // Row lock first, then the version check inside it, as for patients: a
-      // concurrent edit waits here, then reads the bumped version and is
-      // refused — the check and the write are atomic, not just adjacent.
-      const locked = await repository
-        .createQueryBuilder('c')
-        .setLock('pessimistic_write')
-        .select(['c.id', 'c.version'])
-        .where('c.id = :id', { id })
-        .getOne();
-      if (!locked) throw AppException.notFound(ErrorCode.RegistryCaseNotFound);
-      if (locked.version !== expectedVersion) {
+      // Lock and read in one: a concurrent edit waits here, then reads the
+      // bumped version and is refused — check and write are atomic, not
+      // just adjacent. Read without the `patient` relation: TypeORM would
+      // persist a loaded relation over a changed `patientId`, so a relink
+      // would be audited and marked manual yet never stored.
+      const existing = (await repository.findOne({
+        where: { id } as never,
+        lock: { mode: 'pessimistic_write' },
+      })) as T | null;
+      if (!existing) throw AppException.notFound(ErrorCode.RegistryCaseNotFound);
+      if (existing.version !== expectedVersion) {
         throw AppException.conflict(ErrorCode.RegistryCaseModified);
       }
 
-      const existing = await this.findOneFrom(repository, id);
       if (dto.registryNo && dto.registryNo !== existing.registryNo) {
         const clash = await repository.findOne({
           where: { registryNo: dto.registryNo } as never,
@@ -179,7 +178,7 @@ export class RegistryService<T extends RegistryCase> {
       }
       existing.searchText = this.buildSearch(existing);
 
-      const saved = (await repository.save(existing as never)) as unknown as T;
+      await repository.save(existing as never);
       await this.audit.recordRequired(
         {
           userId,
@@ -190,7 +189,8 @@ export class RegistryService<T extends RegistryCase> {
         },
         manager,
       );
-      return saved;
+      // Re-read for the response, so it carries the patient now linked.
+      return this.findOneFrom(repository, id);
     });
   }
 

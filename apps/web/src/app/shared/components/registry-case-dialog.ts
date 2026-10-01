@@ -19,6 +19,7 @@ import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import { CASE_STATUSES, caseStatusLabel } from '../labels';
 import { digitString, identifierValue, iranianMobile, toLatinDigits } from '../validators';
+import { adoptUntouched, changedFields, type FieldReader } from '../form-sync';
 import { PbButton, PbSelectField, PbTextareaField, PbTextField } from '../ui';
 import type { SelectOption, TextFieldOption } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
@@ -34,20 +35,31 @@ export function changedCaseFields(
   after: RegistryCase,
   showDetails: boolean,
 ): string[] {
-  const fields: [string, (c: RegistryCase) => unknown][] = [
+  const fields: FieldReader<RegistryCase>[] = [
     ['registryForm.registryNo', (c) => c.registryNo],
     ['registryForm.recordedName', (c) => c.recordedName],
     ['registryForm.patientLink', (c) => c.patientId],
-    ...(showDetails
-      ? ([
-          ['registryForm.status', (c) => c.status],
-          ['registryForm.mobile', (c) => c.mobile],
-          ['registryForm.homePhone', (c) => c.homePhone],
-          ['registryForm.notes', (c) => c.notes],
-        ] as [string, (c: RegistryCase) => unknown][])
-      : []),
   ];
-  return fields.filter(([, read]) => read(before) !== read(after)).map(([key]) => key);
+  if (showDetails) {
+    fields.push(
+      ['registryForm.status', (c) => c.status],
+      ['registryForm.mobile', (c) => c.mobile],
+      ['registryForm.homePhone', (c) => c.homePhone],
+      ['registryForm.notes', (c) => c.notes],
+    );
+  }
+  return changedFields(before, after, fields);
+}
+
+/** The link as the dialog shows it, from a case's loaded patient. */
+function linkOf(c: RegistryCase | null): LinkedPatient | null {
+  return c?.patient
+    ? {
+        id: c.patient.id,
+        fileNo: c.patient.fileNo,
+        fullName: `${c.patient.firstName} ${c.patient.lastName}`.trim(),
+      }
+    : null;
 }
 
 interface LinkedPatient {
@@ -308,15 +320,10 @@ export class RegistryCaseDialog {
   }
 
   /** The link as it will be saved; starts as whatever the row already holds. */
-  protected readonly linkedPatient = signal<LinkedPatient | null>(
-    this.existing?.patient
-      ? {
-          id: this.existing.patient.id,
-          fileNo: this.existing.patient.fileNo,
-          fullName: `${this.existing.patient.firstName} ${this.existing.patient.lastName}`.trim(),
-        }
-      : null,
-  );
+  protected readonly linkedPatient = signal<LinkedPatient | null>(linkOf(this.existing));
+
+  /** Whether the user has picked or cleared the link here; if not, a conflict may replace it. */
+  private linkEdited = false;
 
   /** Type-ahead over the main book; `switchMap` drops a stale response. */
   private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
@@ -356,12 +363,14 @@ export class RegistryCaseDialog {
     const match = this.patientMatches().find((p) => p.id === option.value);
     if (!match) return;
     this.linkedPatient.set({ id: match.id, fileNo: match.fileNo, fullName: match.fullName });
+    this.linkEdited = true;
     // The box shows the choice rather than the id the option carries.
     this.form.controls.patientSearch.setValue(match.fullName, { emitEvent: false });
   }
 
   protected unlink(): void {
     this.linkedPatient.set(null);
+    this.linkEdited = true;
     this.form.controls.patientSearch.setValue('', { emitEvent: false });
   }
 
@@ -427,25 +436,43 @@ export class RegistryCaseDialog {
   }
 
   /**
-   * Someone else saved this case while the dialog was open. What was typed
-   * stays as typed; the message names what changed underneath it, and the
-   * next save is made against the copy they saved — by then the user knows
-   * what they would be overwriting.
+   * Someone else saved this case while the dialog was open. What the user
+   * changed stays as typed; every field they left alone — the link included —
+   * now shows what was saved, so the retry cannot quietly undo the other edit.
+   * The message names what changed, and the next save is made against the
+   * saved copy.
    */
   private onConflict(): void {
     const before = this.current();
     if (!before) return;
-    this.registry.getCase(this.data.kind, before.id).subscribe((after) => {
-      this.current.set(after);
-      const changed = changedCaseFields(before, after, this.showDetails)
-        .map((key) => this.i18n.instant(key))
-        .join(this.i18n.instant('list.separator'));
-      const message = changed
-        ? this.i18n.instant('registryForm.conflict', { fields: changed })
-        : this.i18n.instant('registryForm.conflictNoFields');
-      this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
+    this.registry.getCase(this.data.kind, before.id).subscribe({
+      next: (after) => {
+        this.current.set(after);
+        adoptUntouched(this.form, {
+          registryNo: after.registryNo,
+          recordedName: after.recordedName,
+          status: after.status,
+          mobile: after.mobile ?? '',
+          homePhone: after.homePhone ?? '',
+          notes: after.notes ?? '',
+        });
+        if (!this.linkEdited) this.linkedPatient.set(linkOf(after));
+        const changed = changedCaseFields(before, after, this.showDetails)
+          .map((key) => this.i18n.instant(key))
+          .join(this.i18n.instant('list.separator'));
+        const message = changed
+          ? this.i18n.instant('registryForm.conflict', { fields: changed })
+          : this.i18n.instant('registryForm.conflictNoFields');
+        this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
+      },
+      // Most likely deleted meanwhile — a 404 the interceptor leaves to us.
+      error: (error: unknown) =>
+        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
+          duration: 15000,
+        }),
     });
   }
+
 
   private applyServerErrors(error: unknown): void {
     if (!(error instanceof HttpErrorResponse)) return;

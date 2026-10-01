@@ -2,8 +2,13 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 import { JalaliDate } from '../../domain';
 
-/** How far back a backfilled completion is still worth putting in front of staff. */
-const REOPEN_WINDOW_DAYS = 90;
+/**
+ * The earliest due date reopened: 90 days before 2026-10-01, when the 16 rows
+ * this reopens were counted and the choice was made. Fixed rather than counted
+ * back from whenever this runs, so a later deploy reopens what was agreed —
+ * not a smaller window that leaves the oldest of them closed.
+ */
+const REOPEN_FROM = '2026-07-03';
 
 /** Marks this migration's audit lines, so `down()` reverses exactly those rows. */
 const REASON = 'ReopenRecentBackfilledFollowUps1790900000000';
@@ -21,7 +26,8 @@ const REASON = 'ReopenRecentBackfilledFollowUps1790900000000';
  *
  * A row is only reopened when everything about it says the backfill wrote it
  * and nobody has touched it since: an imported prosthesis note, closed on
- * exactly its due date, and no staff audit line on its completion. Each one
+ * exactly its due date, and no staff audit line on its completion (lines
+ * with no user are migrations, this one included). Each one
  * reopened gets an audit line of its own.
  */
 export class ReopenRecentBackfilledFollowUps1790900000000 implements MigrationInterface {
@@ -38,14 +44,15 @@ export class ReopenRecentBackfilledFollowUps1790900000000 implements MigrationIn
           AND s."followUpDoneAt" IS NOT NULL
           AND s."followUpDoneAt" = s."followUpDate"
           AND s."followUpDate" < $1::date
-          AND s."followUpDate" >= $1::date - $2::int
+          AND s."followUpDate" >= $2::date
           AND NOT EXISTS (
             SELECT 1 FROM audit_logs a
              WHERE a.entity = 'surgery_queue'
                AND a."entityId" = s.id::text
+               AND a."userId" IS NOT NULL
                AND a.changes ? 'followUpDoneAt'
           )`,
-      [today, REOPEN_WINDOW_DAYS],
+      [today, REOPEN_FROM],
     )) as Array<{ id: string; followUpDoneAt: string }>;
 
     for (const row of rows) {
@@ -67,7 +74,7 @@ export class ReopenRecentBackfilledFollowUps1790900000000 implements MigrationIn
       );
     }
     console.log(
-      `✓  Reopened ${rows.length} backfilled follow-ups due in the last ${REOPEN_WINDOW_DAYS} days`,
+      `✓  Reopened ${rows.length} backfilled follow-ups due since ${REOPEN_FROM}`,
     );
   }
 

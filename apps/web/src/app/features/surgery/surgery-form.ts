@@ -26,6 +26,7 @@ import {
 } from '../../shared/labels';
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
 import { digitString, identifierValue } from '../../shared/validators';
+import { adoptUntouched, changedFields, type FieldReader } from '../../shared/form-sync';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import type { RegistryCase, SurgeryKind, SurgeryQueueItem } from '../../core/models/common.model';
@@ -42,23 +43,24 @@ import {
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
 
+const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
+  ['surgeryForm.recordedName', (s) => s.recordedName],
+  ['surgeryForm.surgeryDate', (s) => s.surgeryDate?.jalali ?? null],
+  ['surgeryForm.toothPosition', (s) => s.toothPosition],
+  ['surgeryForm.implantRegistryNo', (s) => s.implantRegistryNo],
+  ['surgeryForm.implantBrand', (s) => s.implantBrand],
+  ['surgeryForm.abutmentType', (s) => s.abutmentType],
+  // Months and whether it happened are both "the follow-up" to the user.
+  ['surgeryForm.followUp', (s) => `${s.followUpMonths}|${s.followUpDoneAt}`],
+  ['surgeryForm.notes', (s) => s.notes],
+];
+
 /**
  * Label keys of the fields that differ between two copies of a row — what a
  * conflict message lists so the user knows what someone else changed.
  */
 export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQueueItem): string[] {
-  const fields: [string, (s: SurgeryQueueItem) => unknown][] = [
-    ['surgeryForm.recordedName', (s) => s.recordedName],
-    ['surgeryForm.surgeryDate', (s) => s.surgeryDate?.jalali ?? null],
-    ['surgeryForm.toothPosition', (s) => s.toothPosition],
-    ['surgeryForm.implantRegistryNo', (s) => s.implantRegistryNo],
-    ['surgeryForm.implantBrand', (s) => s.implantBrand],
-    ['surgeryForm.abutmentType', (s) => s.abutmentType],
-    // Months and whether it happened are both "the follow-up" to the user.
-    ['surgeryForm.followUp', (s) => `${s.followUpMonths}|${s.followUpDoneAt}`],
-    ['surgeryForm.notes', (s) => s.notes],
-  ];
-  return fields.filter(([, read]) => read(before) !== read(after)).map(([key]) => key);
+  return changedFields(before, after, SURGERY_FIELDS);
 }
 
 @Component({
@@ -288,7 +290,14 @@ export class SurgeryForm implements HasUnsavedChanges {
   }
 
   private applyItem(item: SurgeryQueueItem): void {
-    this.form.patchValue({
+    this.form.patchValue(this.formValues(item));
+    this.legacyProsthesisDue.set(item.prosthesisDue);
+    this.loaded.set(item);
+  }
+
+  /** The row as the form's controls hold it. */
+  private formValues(item: SurgeryQueueItem) {
+    return {
       kind: item.kind,
       recordedName: item.recordedName,
       implantRegistryNo: item.implantRegistryNo ?? '',
@@ -298,9 +307,7 @@ export class SurgeryForm implements HasUnsavedChanges {
       abutmentType: item.abutmentType,
       followUpMonths: item.followUpMonths ? String(item.followUpMonths) : '',
       notes: item.notes ?? '',
-    });
-    this.legacyProsthesisDue.set(item.prosthesisDue);
-    this.loaded.set(item);
+    };
   }
 
   /**
@@ -411,22 +418,32 @@ export class SurgeryForm implements HasUnsavedChanges {
   }
 
   /**
-   * Someone else saved this row while it was being edited here. The draft
-   * stays exactly as typed; the message names what changed underneath it,
-   * and the next save is made against the copy they saved.
+   * Someone else saved this row while it was being edited here. What the
+   * user changed stays as typed; every field they left alone now shows what
+   * was saved, so the retry cannot quietly undo the other edit. The message
+   * names what changed, and the next save is made against the saved copy.
    */
   private onConflict(): void {
     const before = this.loaded();
     if (!before) return;
-    this.registry.getSurgery(before.id).subscribe((after) => {
-      this.loaded.set(after);
-      const changed = changedSurgeryFields(before, after)
-        .map((key) => this.i18n.instant(key))
-        .join(this.i18n.instant('list.separator'));
-      const message = changed
-        ? this.i18n.instant('surgeryForm.conflict', { fields: changed })
-        : this.i18n.instant('surgeryForm.conflictNoFields');
-      this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
+    this.registry.getSurgery(before.id).subscribe({
+      next: (after) => {
+        this.loaded.set(after);
+        this.legacyProsthesisDue.set(after.prosthesisDue);
+        adoptUntouched(this.form, this.formValues(after));
+        const changed = changedSurgeryFields(before, after)
+          .map((key) => this.i18n.instant(key))
+          .join(this.i18n.instant('list.separator'));
+        const message = changed
+          ? this.i18n.instant('surgeryForm.conflict', { fields: changed })
+          : this.i18n.instant('surgeryForm.conflictNoFields');
+        this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
+      },
+      // Most likely deleted meanwhile — a 404 the interceptor leaves to us.
+      error: (error: unknown) =>
+        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
+          duration: 15000,
+        }),
     });
   }
 

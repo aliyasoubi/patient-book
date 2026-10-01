@@ -187,20 +187,16 @@ export class SurgeryService {
   ): Promise<unknown> {
     await this.queue.manager.transaction(async (manager) => {
       const queue = manager.getRepository(SurgeryQueueItem);
-      // Row lock first, then the version check inside it, as for patients.
-      const locked = await queue
-        .createQueryBuilder('s')
-        .setLock('pessimistic_write')
-        .select(['s.id', 's.version'])
-        .where('s.id = :id', { id })
-        .getOne();
-      if (!locked) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
-      if (!isFollowUpToggle(dto) && locked.version !== expectedVersion) {
+      // Lock and read in one, then the version check: a concurrent edit
+      // waits here, reads the bumped version and is refused.
+      const item = await queue.findOne({
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
+      if (!isFollowUpToggle(dto) && item.version !== expectedVersion) {
         throw AppException.conflict(ErrorCode.SurgeryItemModified);
       }
-
-      const item = await queue.findOne({ where: { id } });
-      if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
       assertMayWriteClinicalNotes(role, [[dto.notes, item.notes]]);
       const registered = await this.assign(
         item,

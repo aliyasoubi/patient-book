@@ -378,6 +378,53 @@ describeIfWritable('clinic flows (e2e)', () => {
   // ── Registers ────────────────────────────────────────────────────
 
   describe('implant register', () => {
+    it('links, relinks and unlinks a case to a patient through an edit', async () => {
+      const patient = async (firstName: string): Promise<string> => {
+        const res = await asAdmin(http().post('/api/patients'))
+          .send({ fileNo: nextNumber(), firstName, lastName: 'رحیمی' })
+          .expect(201);
+        const id = (res.body as { id: string }).id;
+        patientIds.push(id);
+        return id;
+      };
+      const first = await patient('سحر');
+      const second = await patient('سمیرا');
+
+      const created = await asAdmin(http().post('/api/implant-cases'))
+        .send({
+          registryNo: nextNumber(),
+          recordedName: 'سحر رحیمی',
+          patientId: first,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      implantCaseIds.push(id);
+
+      // Each edit is made from the case as it now stands, as the dialog does.
+      const edit = async (patientId: string | null): Promise<void> => {
+        const current = await asAdmin(
+          http().get(`/api/implant-cases/${id}`),
+        ).expect(200);
+        await asAdmin(http().patch(`/api/implant-cases/${id}`))
+          .send({
+            patientId,
+            expectedVersion: (current.body as { version: number }).version,
+          })
+          .expect(200);
+        const after = await asAdmin(
+          http().get(`/api/implant-cases/${id}`),
+        ).expect(200);
+        expect(after.body).toMatchObject({
+          patientId,
+          matchMethod: patientId ? 'manual' : 'unmatched',
+        });
+      };
+
+      await edit(second);
+      await edit(null);
+      await edit(first);
+    });
+
     it('edits, archives and restores a case through the same audited path', async () => {
       const registryNo = nextNumber();
       const created = await asAdmin(http().post('/api/implant-cases'))

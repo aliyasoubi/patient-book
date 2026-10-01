@@ -133,17 +133,14 @@ describe('RegistryService sorting', () => {
 });
 
 describe('RegistryService.update concurrency', () => {
-  /** Row lock reports `storedVersion`; the full read after the gate finds nothing. */
+  /** The locked read finds the case at `storedVersion`; saving is past the gate. */
   const makeService = (storedVersion: number) => {
-    const qb = {
-      setLock: () => qb,
-      select: () => qb,
-      where: () => qb,
-      getOne: () => Promise.resolve({ id: 'case-1', version: storedVersion }),
-    };
     const repository = {
-      createQueryBuilder: () => qb,
-      findOne: () => Promise.resolve(null),
+      findOne: () =>
+        Promise.resolve(
+          Object.assign(new TestRegistryCase(), { version: storedVersion }),
+        ),
+      save: () => Promise.reject(new Error('past the gate')),
     };
     const rootRepository = {
       target: TestRegistryCase,
@@ -168,9 +165,9 @@ describe('RegistryService.update concurrency', () => {
   });
 
   it('lets an edit through when the client holds the current version', async () => {
-    await expect(
-      makeService(4).update('case-1', edit(4), 'u'),
-    ).rejects.toMatchObject({ code: ErrorCode.RegistryCaseNotFound });
+    await expect(makeService(4).update('case-1', edit(4), 'u')).rejects.toThrow(
+      'past the gate',
+    );
   });
 
   it('refuses an edit that carries no version at all', async () => {

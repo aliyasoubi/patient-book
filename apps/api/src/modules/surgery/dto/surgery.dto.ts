@@ -148,7 +148,15 @@ export class UpsertSurgeryDto {
   notes?: string | null;
 }
 
-export class UpdateSurgeryDto extends PartialType(UpsertSurgeryDto) {
+/**
+ * Everything but `kind`: what was done is settled when the row is added. A row
+ * recorded under the wrong kind is deleted and added again — converting one
+ * in place would leave the other kind's fields behind. With unknown fields
+ * forbidden, a client that still sends it is told so rather than ignored.
+ */
+export class UpdateSurgeryDto extends PartialType(
+  OmitType(UpsertSurgeryDto, ['kind'] as const),
+) {
   /**
    * The row's `version` as the client loaded it; the update is refused with
    * `ERR_SURGERY_ITEM_MODIFIED` if it has been saved since. Required for any

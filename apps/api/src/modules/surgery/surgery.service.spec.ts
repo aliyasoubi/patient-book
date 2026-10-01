@@ -150,20 +150,17 @@ describe('SurgeryService.assign — follow-up date', () => {
 
 describe('SurgeryService.update concurrency', () => {
   /**
-   * A transaction whose row lock reports `storedVersion`. The full read after
-   * the gate finds nothing, so getting past the gate shows up as "not found"
-   * without mocking the whole write path.
+   * A transaction whose locked read finds the row at `storedVersion`. Saving
+   * is the first thing past the gate, so reaching it shows up as a sentinel
+   * rejection without mocking the whole write path.
    */
   const makeService = (storedVersion: number) => {
-    const qb = {
-      setLock: () => qb,
-      select: () => qb,
-      where: () => qb,
-      getOne: () => Promise.resolve({ id: 'row-1', version: storedVersion }),
-    };
     const repository = {
-      createQueryBuilder: () => qb,
-      findOne: () => Promise.resolve(null),
+      findOne: () =>
+        Promise.resolve(
+          Object.assign(row(), { id: 'row-1', version: storedVersion }),
+        ),
+      save: () => Promise.reject(new Error('past the gate')),
     };
     const manager = { getRepository: () => repository };
     const queue = {
@@ -178,7 +175,7 @@ describe('SurgeryService.update concurrency', () => {
     );
   };
   const refused = { code: ErrorCode.SurgeryItemModified };
-  const passedGate = { code: ErrorCode.SurgeryItemNotFound };
+  const passedGate = { message: 'past the gate' };
 
   it('refuses an edit made from a stale copy of the row', async () => {
     await expect(
