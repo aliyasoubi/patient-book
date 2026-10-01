@@ -1,7 +1,7 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -15,6 +15,7 @@ import { PatientsService } from './data/patients.service';
 import { PatientListContext } from './patient-list-context';
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryKind, RegistryService } from '../../core/services/registry.service';
+import { LabService } from '../../core/services/lab.service';
 import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
@@ -27,6 +28,8 @@ import {
   fieldLabel,
   genderIcon,
   genderLabel,
+  labStageLabel,
+  labWorkTypeLabel,
   treatmentColor,
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
@@ -41,12 +44,14 @@ import {
   PbSurface,
 } from '../../shared/ui';
 import type { DataIssue, Patient, RegistryRef } from './data/patient.model';
-import type { AuditEntry } from '../../core/models/common.model';
+import type { AuditEntry, LabCase } from '../../core/models/common.model';
+import type { StatusTone } from '../../shared/ui';
 
 @Component({
   selector: 'pb-patient-detail',
   standalone: true,
   imports: [
+    RouterLink,
     MatMenuModule,
     MatTabsModule,
     MatProgressBarModule,
@@ -70,6 +75,7 @@ import type { AuditEntry } from '../../core/models/common.model';
 export class PatientDetail {
   private readonly service = inject(PatientsService);
   private readonly registry = inject(RegistryService);
+  private readonly labService = inject(LabService);
   private readonly listContext = inject(PatientListContext);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -116,6 +122,21 @@ export class PatientDetail {
    */
   protected readonly historyState = signal<'idle' | 'loading' | 'loaded' | 'failed'>('idle');
 
+  /** The patient's lab work, newest first. */
+  protected readonly labCases = signal<LabCase[]>([]);
+  protected readonly labStageLabel = labStageLabel;
+
+  protected labWorkTypes(c: LabCase): string {
+    return c.workTypes
+      .map((type) => this.i18n.instant(labWorkTypeLabel(type)))
+      .join(this.i18n.instant('list.separator'));
+  }
+
+  protected labStageTone(c: LabCase): StatusTone {
+    if (c.stage === 'delivered') return c.partsOutstanding ? 'error' : 'success';
+    return c.timeliness === 'overdue' ? 'error' : 'primary';
+  }
+
   /** Grouped for the "details" tab, skipping anything the record does not hold. */
   protected readonly detailRows = computed(() => {
     this.i18n.currentLang();
@@ -154,6 +175,9 @@ export class PatientDetail {
    * must not land under the next one's heading.
    */
   private readonly history$ = new Subject<string>();
+
+  /** Same shape again for the lab work, loaded with the record. */
+  private readonly labCases$ = new Subject<string>();
 
   constructor() {
     this.load$
@@ -194,6 +218,20 @@ export class PatientDetail {
         this.historyState.set(failed ? 'failed' : 'loaded');
       });
 
+    this.labCases$
+      .pipe(
+        switchMap((id) =>
+          this.labService.list({ patientId: id, limit: 50 }).pipe(
+            map((result) => ({ id, cases: result.items })),
+            catchError(() => of({ id, cases: [] as LabCase[] })),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ id, cases }) => {
+        if (id === this.id()) this.labCases.set(cases);
+      });
+
     // Route inputs are bound after construction, so the id can only be read
     // inside an effect. This also re-fetches when navigating straight from one
     // patient to another, where the component instance is reused.
@@ -211,7 +249,9 @@ export class PatientDetail {
     if (this.patient()?.id !== id) this.patient.set(null);
     this.history.set([]);
     this.historyState.set('idle');
+    this.labCases.set([]);
     this.load$.next(id);
+    this.labCases$.next(id);
   }
 
   /**

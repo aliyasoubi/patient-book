@@ -9,6 +9,7 @@ import {
   followUpWindow,
   openFollowUpSql,
 } from '../surgery/follow-up';
+import { overdueSql, todayIso } from '../labs/lab-stage';
 import { JalaliDate } from '../../domain';
 
 /** Age buckets the dashboard groups patients into. */
@@ -25,6 +26,8 @@ export interface DashboardStats {
     followUpsThisWeek: number;
     /** Follow-ups whose month has passed without being marked done. */
     followUpsOverdue: number;
+    /** Lab work past the day the lab said it would be back — whose lab to call. */
+    labsOverdue: number;
     needsReview: number;
   };
   gender: Array<{ key: string; count: number }>;
@@ -105,10 +108,12 @@ export class StatsService {
           (SELECT count(*) FROM surgery_queue s
             WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
               AND s."followUpDate" <= $3)                                                AS "followUpsOverdue",
+          (SELECT count(*) FROM lab_cases c
+            WHERE c."deletedAt" IS NULL AND ${overdueSql('c', '$4')})                   AS "labsOverdue",
           (SELECT count(*) FROM patients
             WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview"
       `,
-        [week.from, week.to, overdue.to],
+        [week.from, week.to, overdue.to, todayIso()],
       ),
       q<{ key: string; count: string }>(`
         SELECT gender AS key, count(*)::text AS count FROM patients
@@ -172,6 +177,7 @@ export class StatsService {
         orthoCases: Number(t.orthoCases ?? 0),
         followUpsThisWeek: Number(t.followUpsThisWeek ?? 0),
         followUpsOverdue: Number(t.followUpsOverdue ?? 0),
+        labsOverdue: Number(t.labsOverdue ?? 0),
         needsReview: Number(t.needsReview ?? 0),
       },
       gender: gender.map((g) => ({ key: g.key, count: Number(g.count) })),

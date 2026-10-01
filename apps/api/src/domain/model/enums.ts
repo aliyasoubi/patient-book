@@ -84,3 +84,40 @@ export enum CaseStatus {
   Completed = 'completed',
   OnHold = 'on_hold',
 }
+
+/**
+ * What a lab case makes. A case can be more than one at once — the book has
+ * «لمینیت و روکش ایمپلنت» on a single row — so a case holds a set of these.
+ */
+export enum LabWorkType {
+  /** روکش دندان — the book's «روکش زیرکونیا» rows are this. */
+  Crown = 'crown',
+  /** روکش ایمپلنت — the one that sends impression copings and analogs along. */
+  ImplantCrown = 'implant_crown',
+  Laminate = 'laminate',
+  Post = 'post',
+  NightGuard = 'night_guard',
+  Sx = 'sx',
+}
+
+/**
+ * Why a case went to the lab this time. A crown or a laminate makes several
+ * trips — the impression, a resin or frame try-in, now and then a correction
+ * or a remake — and each is one of these.
+ */
+export enum LabTripKind {
+  /** ارسال قالب */
+  Impression = 'impression',
+  /** ارسال اسکن — a digital impression. */
+  Scan = 'scan',
+  /** ارسال موم و آلژینات */
+  WaxAlginate = 'wax_alginate',
+  /** ارسال رزین — a resin try-in, usually for laminates. */
+  Resin = 'resin',
+  /** ارسال فریم — a framework try-in, usually for crowns. */
+  Frame = 'frame',
+  /** اصلاح */
+  Correction = 'correction',
+  /** تکرار */
+  Remake = 'remake',
+}

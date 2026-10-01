@@ -1,17 +1,31 @@
 import { Component, inject, signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslatePipe } from '@ngx-translate/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
+import { LabService } from '../../core/services/lab.service';
 import { PatientsService } from '../patients/data/patients.service';
 import { roleLabel } from '../../shared/labels';
-import { PbButton, PbPage, PbPageHeader, PbSegmentedButton, PbSurface } from '../../shared/ui';
+import {
+  PbButton,
+  PbIconButton,
+  PbPage,
+  PbPageHeader,
+  PbSegmentedButton,
+  PbSurface,
+  PbSwitch,
+} from '../../shared/ui';
 import type { SegmentOption } from '../../shared/ui';
+import type { Lab } from '../../core/models/common.model';
 import type { TreatmentType } from '../patients/data/patient.model';
+import { LabNameDialog } from './lab-name-dialog';
 
 /**
- * Appearance, account and the treatment catalogue. Backups and the Excel
+ * Appearance, account, the labs the practice works with, and the treatment
+ * catalogue. Backups and the Excel
  * export/reconcile tools are deliberately not here: they are operated from
  * the server's terminal (see the README), not from the clinic's screens.
  */
@@ -21,6 +35,8 @@ import type { TreatmentType } from '../patients/data/patient.model';
   imports: [
     PbSegmentedButton,
     PbButton,
+    PbIconButton,
+    PbSwitch,
     PbSurface,
     PbPageHeader,
     MatIconModule,
@@ -34,6 +50,10 @@ export class Settings {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
   private readonly patients = inject(PatientsService);
+  private readonly labService = inject(LabService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly i18n = inject(TranslateService);
 
   protected readonly roleLabel = roleLabel;
 
@@ -44,9 +64,56 @@ export class Settings {
   ];
 
   protected readonly treatments = signal<TreatmentType[]>([]);
+  protected readonly labs = signal<Lab[]>([]);
+  /** The lab whose switch is mid-flight. */
+  protected readonly labBusy = signal<string | null>(null);
 
   constructor() {
     this.patients.treatmentTypes().subscribe((t) => this.treatments.set(t));
+    this.loadLabs();
+  }
+
+  private loadLabs(): void {
+    this.labService
+      .labs()
+      .subscribe({ next: (labs) => this.labs.set(labs), error: () => undefined });
+  }
+
+  protected addLab(): void {
+    this.openLabDialog(null);
+  }
+
+  protected renameLab(lab: Lab): void {
+    this.openLabDialog(lab);
+  }
+
+  private openLabDialog(lab: Lab | null): void {
+    this.dialog
+      .open(LabNameDialog, { data: lab, width: '400px', maxWidth: '92vw' })
+      .afterClosed()
+      .subscribe((saved) => {
+        if (!saved) return;
+        this.snackBar.open(
+          this.i18n.instant('settings.labSaved'),
+          this.i18n.instant('action.dismiss'),
+        );
+        this.loadLabs();
+      });
+  }
+
+  /** Off: no longer offered for new cases. Its old cases keep naming it. */
+  protected setLabActive(lab: Lab, isActive: boolean): void {
+    this.labBusy.set(lab.id);
+    this.labService.updateLab(lab.id, { isActive }).subscribe({
+      next: () => {
+        this.labBusy.set(null);
+        this.loadLabs();
+      },
+      error: () => {
+        this.labBusy.set(null);
+        this.loadLabs();
+      },
+    });
   }
 
   protected setTheme(mode: ThemeMode): void {

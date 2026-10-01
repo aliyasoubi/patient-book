@@ -1,0 +1,77 @@
+@use '../../../styles/type';
+
+.form {
+  &__linked {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    margin-block: var(--pb-space-1) var(--pb-space-3);
+    padding: var(--pb-space-1) var(--pb-space-3);
+    border-radius: var(--mat-sys-corner-medium);
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+    font: var(--mat-sys-body-medium);
+    font-feature-settings: var(--pb-font-numeric);
+    --mat-icon-button-icon-color: var(--mat-sys-on-secondary-container);
+
+    span {
+      flex: 1 1 auto;
+    }
+  }
+
+  &__work {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-space-2);
+    margin-bottom: var(--pb-space-3);
+  }
+
+  &__label {
+    @include type.supporting-text(small);
+  }
+
+  &__error {
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-error);
+  }
+
+  &__pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--pb-space-3);
+  }
+}
+
+/* The trips in order, numbered by the list itself in Persian digits. */
+.trips {
+  margin: 0;
+  padding-inline-start: var(--pb-space-5);
+  list-style: persian;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-3);
+
+  li::marker {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__meta {
+    @include type.supporting-text(small);
+
+    display: block;
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
+  &__delivered {
+    @include type.supporting-text;
+
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    margin-top: var(--pb-space-4);
+
+    .material-symbols-rounded {
+      color: var(--pb-on-success-container);
+    }
+  }
+}

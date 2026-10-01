@@ -14,6 +14,7 @@ import { TreatmentsModule } from './modules/treatments/treatments.module';
 import { ImplantsModule } from './modules/implants/implants.module';
 import { OrthoModule } from './modules/ortho/ortho.module';
 import { SurgeryModule } from './modules/surgery/surgery.module';
+import { LabsModule } from './modules/labs/labs.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
@@ -38,6 +39,7 @@ import { HealthController } from './presentation/http/health.controller';
     ImplantsModule,
     OrthoModule,
     SurgeryModule,
+    LabsModule,
     StatsModule,
   ],
   controllers: [HealthController],

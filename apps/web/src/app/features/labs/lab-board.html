@@ -1,0 +1,148 @@
+<pb-page class="labs" width="wide">
+  <pb-page-header [title]="'labs.title' | translate" [subtitle]="'labs.subtitle' | translate">
+    @if (canEdit) {
+      <!-- Icon-only on the narrowest screens; the label crowds the title. -->
+      <pb-button link="/labs/new" icon="add" [collapseBelow]="560">
+        {{ 'labs.new' | translate }}
+      </pb-button>
+    }
+  </pb-page-header>
+
+  <div class="labs__toolbar">
+    <pb-search-field
+      class="labs__search"
+      [control]="search"
+      [placeholder]="'labs.searchPlaceholder' | translate"
+      [ariaLabel]="'labs.searchAria' | translate"
+    />
+    @if (!archivedOnly()) {
+      <pb-select-field
+        class="labs__lab"
+        [value]="labId()"
+        (valueChange)="setLab($event)"
+        [options]="labOptions()"
+        [anyLabel]="'labs.allLabs' | translate"
+        [label]="'labs.lab' | translate"
+      />
+      <pb-filter-chips
+        [options]="overdueFilter"
+        [selected]="overdueOnly() ? ['overdue'] : []"
+        (selectedChange)="setOverdue($event.length > 0)"
+        [ariaLabel]="'labs.filterOverdue' | translate"
+      />
+    }
+    <!-- Separate from the board's question: it changes which cases are shown at all. -->
+    @if (canEdit) {
+      <pb-filter-chips
+        multiple
+        [options]="archiveFilter"
+        [selected]="archivedOnly() ? ['archived'] : []"
+        (selectedChange)="setArchived($event.length > 0)"
+        [ariaLabel]="'common.filters' | translate"
+      />
+    }
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <!-- A failed fetch keeps the cards on screen under this banner; "nothing at
+       the lab" and "the board could not be loaded" are different facts. -->
+  @if (failed()) {
+    <pb-load-error [message]="'labs.loadFailed' | translate" (retry)="reload()" />
+  }
+
+  @if (archivedOnly()) {
+    @if (!loading() && !failed() && archived().length === 0) {
+      <pb-empty-state icon="inventory_2" [title]="'labs.archiveEmpty' | translate" />
+    } @else {
+      <ul class="archive">
+        @for (c of archived(); track c.id) {
+          <li>
+            <pb-lab-case-card
+              [labCase]="c"
+              [canEdit]="canEdit"
+              [archived]="true"
+              (restore)="restore(c)"
+            />
+          </li>
+        }
+      </ul>
+      @if (archivedTotal() > 0) {
+        <pb-paginator
+          [length]="archivedTotal()"
+          [page]="page()"
+          [pageSize]="limit()"
+          (pageChange)="onPage($event)"
+        />
+      }
+    }
+  } @else if (!loading() && !failed() && isEmpty() && !search.value && !labId() && !overdueOnly()) {
+    <pb-empty-state
+      icon="science"
+      [title]="'labs.emptyTitle' | translate"
+      [hint]="'labs.emptyHint' | translate"
+    />
+  } @else {
+    <!-- One column at a time on a narrow screen; this picks which. -->
+    @if (!wide()) {
+      <pb-segmented-button
+        class="labs__columns-picker"
+        [options]="columnOptions"
+        [value]="shownColumn()"
+        (valueChange)="shownColumn.set($any($event))"
+        [ariaLabel]="'labs.columns' | translate"
+      />
+    }
+
+    <div class="board" cdkDropListGroup>
+      @for (column of columns(); track column.stage) {
+        <pb-surface
+          class="pb-surface--low column"
+          [class.column--hidden]="!wide() && shownColumn() !== column.stage"
+          [title]="column.title | translate"
+          [icon]="column.icon"
+          [hint]="column.hint | translate"
+        >
+          <div
+            class="column__cards"
+            cdkDropList
+            [id]="column.stage"
+            [cdkDropListData]="column.cases"
+            [cdkDropListEnterPredicate]="canEnter"
+            [cdkDropListSortingDisabled]="true"
+            (cdkDropListDropped)="onDrop($event)"
+          >
+            @for (c of column.cases; track c.id) {
+              <pb-lab-case-card
+                cdkDrag
+                [cdkDragData]="c"
+                [cdkDragDisabled]="!canEdit || !wide() || c.stage === 'delivered'"
+                [labCase]="c"
+                [canEdit]="canEdit"
+                [busy]="busy() === c.id"
+                (receive)="receive(c)"
+                (sendAgain)="sendAgain(c)"
+                (deliver)="deliver(c)"
+                (partsReturned)="partsReturned(c)"
+                (undo)="undo(c)"
+                (archive)="archive(c)"
+              />
+            } @empty {
+              <!-- Under the overdue filter the other columns are not empty, only not asked about. -->
+              <p class="column__empty">
+                {{
+                  (overdueOnly() && column.stage !== 'at_lab'
+                    ? 'labs.overdueOnlyHint'
+                    : column.empty
+                  ) | translate
+                }}
+              </p>
+            }
+          </div>
+        </pb-surface>
+      }
+    </div>
+  }
+</pb-page>

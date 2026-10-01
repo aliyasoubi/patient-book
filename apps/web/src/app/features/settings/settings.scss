@@ -49,3 +49,36 @@
     text-overflow: ellipsis;
   }
 }
+
+.labs {
+  margin: 0 0 var(--pb-space-2);
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-3);
+    padding: var(--pb-space-1) var(--pb-space-2) var(--pb-space-1) var(--pb-space-3);
+    min-height: var(--pb-control-height);
+    @include surface.tonal(medium);
+    font: var(--mat-sys-body-medium);
+
+    &--inactive .labs__name {
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__inactive {
+    font: var(--mat-sys-label-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

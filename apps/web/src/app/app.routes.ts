@@ -100,6 +100,25 @@ export const routes: Routes = [
         title: translatedTitle('route.surgeryEdit'),
       },
       {
+        path: 'labs',
+        loadComponent: () => import('./features/labs/lab-board').then((m) => m.LabBoard),
+        title: translatedTitle('route.labs'),
+      },
+      {
+        path: 'labs/new',
+        canActivate: [permissionGuard('editLabs')],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./features/labs/lab-case-form').then((m) => m.LabCaseForm),
+        title: translatedTitle('route.labNew'),
+      },
+      {
+        path: 'labs/:id/edit',
+        canActivate: [permissionGuard('editLabs')],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./features/labs/lab-case-form').then((m) => m.LabCaseForm),
+        title: translatedTitle('route.labEdit'),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
         title: translatedTitle('route.settings'),

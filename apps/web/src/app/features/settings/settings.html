@@ -28,6 +28,44 @@
     </div>
   </pb-surface>
 
+  <!-- The labs the case form offers. A lab no longer used is switched off,
+       not deleted: its old cases still name it. -->
+  <pb-surface
+    icon="science"
+    [title]="'settings.labs' | translate"
+    [description]="'settings.labsHint' | translate"
+  >
+    <ul class="labs">
+      @for (lab of labs(); track lab.id) {
+        <li class="labs__item" [class.labs__item--inactive]="!lab.isActive">
+          <span class="labs__name">{{ lab.name }}</span>
+          @if (auth.can('editLabs')) {
+            <pb-switch
+              [checked]="lab.isActive"
+              [disabled]="labBusy() === lab.id"
+              (checkedChange)="setLabActive(lab, $event)"
+            >
+              {{ 'settings.labActive' | translate }}
+            </pb-switch>
+            <pb-icon-button
+              icon="edit"
+              size="compact"
+              (click)="renameLab(lab)"
+              [ariaLabel]="'settings.renameLab' | translate"
+            />
+          } @else if (!lab.isActive) {
+            <span class="labs__inactive">{{ 'settings.labInactive' | translate }}</span>
+          }
+        </li>
+      }
+    </ul>
+    @if (auth.can('editLabs')) {
+      <pb-button variant="text" icon="add" (click)="addLab()">
+        {{ 'settings.addLab' | translate }}
+      </pb-button>
+    }
+  </pb-surface>
+
   <pb-surface
     icon="dentistry"
     [title]="'settings.treatments' | translate"
