@@ -11,10 +11,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { PatientsService } from './data/patients.service';
-import {
-  HasUnsavedChanges,
-  warnBeforeUnload,
-} from '../../core/guards/unsaved-changes.guard';
+import { HasUnsavedChanges, warnBeforeUnload } from '../../core/guards/unsaved-changes.guard';
 import {
   EDUCATION_LEVELS,
   GENDERS,
@@ -30,7 +27,13 @@ import {
   iranianNationalId,
   toLatinDigits,
 } from '../../shared/validators';
-import type { NameSuggestion, Patient, PatientInput, ReferralSource, TreatmentType } from './data/patient.model';
+import type {
+  NameSuggestion,
+  Patient,
+  PatientInput,
+  ReferralSource,
+  TreatmentType,
+} from './data/patient.model';
 import type { EducationLevel, Gender } from '../../core/models/common.model';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
@@ -44,7 +47,12 @@ import {
   PbTextField,
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
-import { applyPatientDateChanges, changedPatientFields } from './patient-form.utils';
+import { adoptUntouched } from '../../shared/form-sync';
+import {
+  applyPatientDateChanges,
+  changedPatientFields,
+  mergeTreatments,
+} from './patient-form.utils';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -215,9 +223,7 @@ export class PatientForm implements HasUnsavedChanges {
       });
     this.service.treatmentTypes().subscribe((types) => this.treatmentTypes.set(types));
     this.service.referralSources().subscribe((sources) => this.referralSources.set(sources));
-    this.service
-      .nameSuggestions('firstName')
-      .subscribe((s) => this.firstNameSuggestions.set(s));
+    this.service.nameSuggestions('firstName').subscribe((s) => this.firstNameSuggestions.set(s));
     this.service.nameSuggestions('lastName').subscribe((s) => this.lastNameSuggestions.set(s));
 
     effect(() => {
@@ -246,7 +252,15 @@ export class PatientForm implements HasUnsavedChanges {
 
   private applyPatient(p: Patient): void {
     this.original.set(p);
-    this.form.patchValue({
+    this.form.patchValue(this.formValues(p));
+    const treatments = new Set(p.treatments.map((t) => t.code));
+    this.selectedTreatments.set(treatments);
+    this.loadedTreatments.set(new Set(treatments));
+  }
+
+  /** The record as the form's controls hold it. */
+  private formValues(p: Patient) {
+    return {
       fileNo: p.fileNo,
       firstName: p.firstName,
       lastName: p.lastName,
@@ -265,10 +279,7 @@ export class PatientForm implements HasUnsavedChanges {
       firstVisitAt: this.toDate(p.firstVisitAt?.jalali),
       lastVisitAt: this.toDate(p.lastVisitAt?.jalali),
       notes: p.notes ?? '',
-    });
-    const treatments = new Set(p.treatments.map((t) => t.code));
-    this.selectedTreatments.set(treatments);
-    this.loadedTreatments.set(new Set(treatments));
+    };
   }
 
   /**
@@ -407,27 +418,41 @@ export class PatientForm implements HasUnsavedChanges {
   }
 
   /**
-   * Someone else saved this record while it was being edited here. The draft
-   * stays exactly as typed — nothing is reset or overwritten — and the message
-   * names the fields that changed underneath it. Adopting the new version
-   * means the next save goes through; by then the user has been told what
-   * they would be overwriting.
+   * Someone else saved this record while it was being edited here. What the
+   * user changed stays as typed; every field they left alone now shows what
+   * was saved, and treatments merge their own additions and removals onto the
+   * saved set — so the retry cannot quietly undo the other edit. The message
+   * names what changed, and the next save is made against the saved copy.
    */
   private onConflict(): void {
     const id = this.id();
     if (!id) return;
-    this.service.get(id).subscribe((current) => {
-      const before = this.original();
-      const changed = before ? changedPatientFields(before, current) : [];
-      this.original.set(current);
+    this.service.get(id).subscribe({
+      next: (current) => {
+        const before = this.original();
+        const changed = before ? changedPatientFields(before, current) : [];
+        this.original.set(current);
 
-      const fields = changed
-        .map((key) => this.i18n.instant(fieldLabel(key)))
-        .join(this.i18n.instant('list.separator'));
-      const message = changed.length
-        ? this.i18n.instant('patientForm.conflict', { fields })
-        : this.i18n.instant('patientForm.conflictNoFields');
-      this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
+        adoptUntouched(this.form, this.formValues(current));
+        const saved = new Set(current.treatments.map((t) => t.code));
+        this.selectedTreatments.set(
+          mergeTreatments(this.loadedTreatments(), this.selectedTreatments(), saved),
+        );
+        this.loadedTreatments.set(saved);
+
+        const fields = changed
+          .map((key) => this.i18n.instant(fieldLabel(key)))
+          .join(this.i18n.instant('list.separator'));
+        const message = changed.length
+          ? this.i18n.instant('patientForm.conflict', { fields })
+          : this.i18n.instant('patientForm.conflictNoFields');
+        this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
+      },
+      // Most likely archived or deleted meanwhile — a 404 the interceptor leaves to us.
+      error: (error: unknown) =>
+        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
+          duration: 15000,
+        }),
     });
   }
 
