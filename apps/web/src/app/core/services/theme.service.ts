@@ -28,15 +28,6 @@ export class ThemeService {
     this._mode.set(mode);
   }
 
-  cycle(): void {
-    const next: Record<ThemeMode, ThemeMode> = {
-      system: 'light',
-      light: 'dark',
-      dark: 'system',
-    };
-    this._mode.update((m) => next[m]);
-  }
-
   private read(): ThemeMode {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';

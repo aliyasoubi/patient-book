@@ -46,8 +46,6 @@ const KINDS: Record<
     title: string;
     searchAria: string;
     emptyTitle: string;
-    /** Whether rows show phone and status; neither book keeps them now. */
-    showDetails: boolean;
   }
 > = {
   implant: {
@@ -55,14 +53,12 @@ const KINDS: Record<
     title: 'implant.title',
     searchAria: 'implant.searchAria',
     emptyTitle: 'implant.emptyTitle',
-    showDetails: false,
   },
   ortho: {
     icon: 'straighten',
     title: 'ortho.title',
     searchAria: 'ortho.searchAria',
     emptyTitle: 'ortho.emptyTitle',
-    showDetails: false,
   },
 };
 

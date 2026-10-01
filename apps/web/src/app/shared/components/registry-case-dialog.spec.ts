@@ -21,15 +21,19 @@ const kase = (over: Partial<RegistryCase> = {}): RegistryCase => ({
 describe('changedCaseFields', () => {
   it('names the visible fields someone else changed', () => {
     const after = kase({ recordedName: 'مریم کریمی‌نژاد', patientId: 'p-1', version: 2 });
-    expect(changedCaseFields(kase(), after, false)).toEqual([
+    expect(changedCaseFields(kase(), after)).toEqual([
       'registryForm.recordedName',
       'registryForm.patientLink',
     ]);
   });
 
   it('leaves out fields the dialog does not show', () => {
-    const after = kase({ notes: 'یادداشت', version: 2 });
-    expect(changedCaseFields(kase(), after, false)).toEqual([]);
-    expect(changedCaseFields(kase(), after, true)).toEqual(['registryForm.notes']);
+    const after = kase({
+      notes: 'یادداشت',
+      mobile: '09120000000',
+      status: 'completed',
+      version: 2,
+    });
+    expect(changedCaseFields(kase(), after)).toEqual([]);
   });
 });

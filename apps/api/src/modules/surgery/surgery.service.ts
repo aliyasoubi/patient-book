@@ -269,6 +269,9 @@ export class SurgeryService {
     implants: Repository<ImplantCase> = this.implants,
   ): Promise<ImplantCase | null> {
     let registered: ImplantCase | null = null;
+    // The number this row carried before the edit: the register may have
+    // renumbered its case since, so this copy can be stale (see below).
+    const previousRegistryNo = item.implantRegistryNo;
     if (dto.kind !== undefined) item.kind = dto.kind;
     if (dto.recordedName !== undefined)
       item.recordedName = dto.recordedName ?? '';
@@ -318,15 +321,33 @@ export class SurgeryService {
         ? addMonths(storedDate(item.surgeryDate), item.followUpMonths)
         : null;
 
-    // Resolve the implant case: an explicit id wins, otherwise look the
-    // register number up.
+    // Resolve the implant case: an explicit id wins; an explicit null number
+    // unlinks; a number the user actually changed is looked up; anything else
+    // keeps the link the row already has.
+    //
+    // "Changed" is measured against the number this row last carried, not
+    // the case's current one. The register can renumber a case (42 → 43)
+    // without touching the surgery's copy, and an edit that only fixes the
+    // notes sends that copy (42) straight back — looking 42 up would miss,
+    // open a fresh unlinked entry under 42 and move the surgery onto it,
+    // dropping its patient.
     let implantCase: ImplantCase | null = null;
+    const numberChanged =
+      dto.implantRegistryNo !== undefined &&
+      dto.implantRegistryNo !== previousRegistryNo;
     if (dto.implantCaseId !== undefined) {
       item.implantCaseId = dto.implantCaseId ?? null;
       implantCase = dto.implantCaseId
         ? await implants.findOne({ where: { id: dto.implantCaseId } })
         : null;
-    } else if (dto.implantRegistryNo) {
+    } else if (dto.implantRegistryNo === null) {
+      // Cleared on purpose: unlink. Without this the branch below reloaded
+      // the old case and wrote its number straight back.
+      item.implantCaseId = null;
+    } else if (
+      dto.implantRegistryNo &&
+      (numberChanged || !item.implantCaseId)
+    ) {
       implantCase = await implants.findOne({
         where: { registryNo: dto.implantRegistryNo },
       });
@@ -358,12 +379,14 @@ export class SurgeryService {
       });
     }
 
+    // A linked row shows its case's number: the case is the source of truth,
+    // and this also heals a copy left stale by a renumbering.
+    if (implantCase) item.implantRegistryNo = implantCase.registryNo;
+
     if (implantCase && item.recordedName) {
       const a = loosePersianKey(implantCase.recordedName);
       const b = loosePersianKey(item.recordedName);
       item.hasNameMismatch = Boolean(a && b && a !== b);
-      if (!item.implantRegistryNo)
-        item.implantRegistryNo = implantCase.registryNo;
     } else {
       item.hasNameMismatch = false;
     }
@@ -393,7 +416,9 @@ export class SurgeryService {
       id: item.id,
       kind: item.kind,
       implantCaseId: item.implantCaseId,
-      implantRegistryNo: item.implantRegistryNo,
+      // The linked case's number when there is one — it can have been
+      // renumbered since this row last saved its copy.
+      implantRegistryNo: item.implantCase?.registryNo ?? item.implantRegistryNo,
       recordedName: item.recordedName,
       hasNameMismatch: item.hasNameMismatch,
       registeredName: item.implantCase?.recordedName ?? null,
