@@ -43,10 +43,5 @@
 
 .form__kind {
   justify-self: start;
-  margin-bottom: 4px;
-
-  .material-symbols-rounded {
-    font-size: 18px;
-    margin-inline-end: 6px;
-  }
+  margin-bottom: var(--pb-space-1);
 }

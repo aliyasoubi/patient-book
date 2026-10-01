@@ -41,21 +41,17 @@
           </a>
         }
       </nav>
-
     </div>
   </mat-sidenav>
 
   <mat-sidenav-content class="shell__content">
     <mat-toolbar class="topbar">
       @if (!isDesktop() && !isHandset()) {
-        <button
-          mat-icon-button
-          type="button"
+        <pb-icon-button
+          icon="menu"
           (click)="toggleDrawer()"
-          [attr.aria-label]="'app.openMenu' | translate"
-        >
-          <mat-icon aria-hidden="true">menu</mat-icon>
-        </button>
+          [ariaLabel]="'app.openMenu' | translate"
+        />
       }
       @if (isHandset()) {
         <pb-logo class="topbar__logo" [size]="28" />

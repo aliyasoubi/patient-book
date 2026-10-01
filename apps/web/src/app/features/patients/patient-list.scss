@@ -80,27 +80,14 @@
     z-index: 1;
     border-radius: var(--mat-sys-corner-extra-small);
   }
-
-  &__linked-chip {
-    // A filter the panel cannot show or clear; colour it like the active
-    // filter button so it reads as part of the same state.
-    --mat-chip-elevated-container-color: var(--mat-sys-secondary-container);
-    --mat-chip-outline-color: transparent;
-    --mat-chip-label-text-color: var(--mat-sys-on-secondary-container);
-    --mat-chip-with-icon-icon-color: var(--mat-sys-on-secondary-container);
-    --mat-chip-with-trailing-icon-trailing-icon-color: var(--mat-sys-on-secondary-container);
-  }
 }
 
 /* ── Filter panel ──────────────────────────────────────────────────── */
+// The tonal box is pb-surface's; this lays out what sits in it.
 .filters {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-  border-radius: var(--mat-sys-corner-large);
-  // Tonal surface: the container tone alone marks it off from the page.
-  background: var(--mat-sys-surface-container-low);
+  gap: var(--pb-space-4);
 
   &__row {
     display: grid;
@@ -131,10 +118,6 @@
       font-weight: 400;
       opacity: 0.8;
     }
-  }
-
-  &__chips .chip-icon {
-    font-size: 18px;
   }
 
   &__clear {
@@ -376,20 +359,8 @@
 
   &__call {
     position: absolute;
-    inset-inline-end: 12px;
+    inset-inline-end: var(--pb-space-3);
     top: 50%;
     transform: translateY(-50%);
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-primary-container);
-    color: var(--mat-sys-on-primary-container);
-    text-decoration: none;
-
-    .material-symbols-rounded {
-      font-size: 21px;
-    }
   }
 }

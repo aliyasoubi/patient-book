@@ -5,87 +5,85 @@
 @if (patient(); as p) {
   <pb-page>
     <!-- ── Hero ──────────────────────────────────────────────────── -->
-    <header class="hero" [class.hero--archived]="p.isArchived">
-      <a
-        class="hero__back"
-        [routerLink]="backLink()"
-        [attr.aria-label]="'patientDetail.backAria' | translate"
-      >
-        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-      </a>
+    <!-- Tonal surface: the container tone alone marks it off from the page. -->
+    <pb-surface class="pb-surface--low hero-surface" [class.hero-surface--archived]="p.isArchived">
+      <header class="hero">
+        <pb-icon-button
+          icon="arrow_forward"
+          [link]="backLink()"
+          [ariaLabel]="'patientDetail.backAria' | translate"
+        />
 
-      <pb-avatar size="large" [tone]="p.gender" [name]="p.fullName" />
+        <pb-avatar size="large" [tone]="p.gender" [name]="p.fullName" />
 
-      <div class="hero__identity">
-        <h1>{{ p.fullName || ('patient.unnamed' | translate) }}</h1>
-        <div class="hero__meta">
-          <pb-status-chip icon="folder">
-            {{ 'patientDetail.file' | translate: { fileNo: p.fileNo } }}
-          </pb-status-chip>
-          <pb-status-chip [icon]="genderIcon(p.gender)">
-            {{ genderLabel(p.gender) | translate }}
-          </pb-status-chip>
-          @if (p.age !== null) {
-            <pb-status-chip icon="cake">
-              {{ 'patientDetail.age' | translate: { age: (p.age | faNum) } }}
-              <small>({{ p.birthDate | jalali: 'long' }})</small>
+        <div class="hero__identity">
+          <h1>{{ p.fullName || ('patient.unnamed' | translate) }}</h1>
+          <div class="hero__meta">
+            <pb-status-chip icon="folder">
+              {{ 'patientDetail.file' | translate: { fileNo: p.fileNo } }}
             </pb-status-chip>
-          }
-          @if (p.isArchived) {
-            <pb-status-chip icon="inventory_2" tone="warning">
-              {{ 'patientDetail.archived' | translate }}
+            <pb-status-chip [icon]="genderIcon(p.gender)">
+              {{ genderLabel(p.gender) | translate }}
             </pb-status-chip>
-          }
-        </div>
-      </div>
-
-      <div class="hero__actions">
-        @if (p.mobile) {
-          <pb-button [href]="'tel:' + p.mobile" icon="call" [collapseBelow]="460">
-            {{ 'common.call' | translate }}
-          </pb-button>
-        }
-        @if (auth.can('editPatients') && !p.isArchived) {
-          <pb-button
-            variant="stroked"
-            [routerLink]="['/patients', p.id, 'edit']"
-            icon="edit"
-            [collapseBelow]="460"
-          >
-            {{ 'common.edit' | translate }}
-          </pb-button>
-        }
-        <button
-          mat-icon-button
-          type="button"
-          [matMenuTriggerFor]="menu"
-          [attr.aria-label]="'patientDetail.moreActions' | translate"
-        >
-          <mat-icon aria-hidden="true">more_vert</mat-icon>
-        </button>
-        <mat-menu #menu="matMenu" xPosition="before">
-          @if (p.homePhone) {
-            <a mat-menu-item [href]="'tel:' + p.homePhone">
-              <mat-icon aria-hidden="true">call</mat-icon>
-              <span>{{ 'patientDetail.homeCall' | translate }}</span>
-            </a>
-          }
-          @if (auth.can('archivePatients')) {
-            @if (p.isArchived) {
-              <button mat-menu-item type="button" (click)="restore()">
-                <mat-icon aria-hidden="true">unarchive</mat-icon>
-                <span>{{ 'patientDetail.restore' | translate }}</span>
-              </button>
-            } @else {
-              <button mat-menu-item type="button" (click)="archive()">
-                <mat-icon aria-hidden="true">inventory_2</mat-icon>
-                <span>{{ 'patientDetail.archive' | translate }}</span>
-              </button>
+            @if (p.age !== null) {
+              <pb-status-chip icon="cake">
+                {{ 'patientDetail.age' | translate: { age: (p.age | faNum) } }}
+                <small>({{ p.birthDate | jalali: 'long' }})</small>
+              </pb-status-chip>
             }
+            @if (p.isArchived) {
+              <pb-status-chip icon="inventory_2" tone="warning">
+                {{ 'patientDetail.archived' | translate }}
+              </pb-status-chip>
+            }
+          </div>
+        </div>
+
+        <div class="hero__actions">
+          @if (p.mobile) {
+            <pb-button [href]="'tel:' + p.mobile" icon="call" [collapseBelow]="460">
+              {{ 'common.call' | translate }}
+            </pb-button>
           }
-        </mat-menu>
-      </div>
-    </header>
+          @if (auth.can('editPatients') && !p.isArchived) {
+            <pb-button
+              variant="stroked"
+              [link]="['/patients', p.id, 'edit']"
+              icon="edit"
+              [collapseBelow]="460"
+            >
+              {{ 'common.edit' | translate }}
+            </pb-button>
+          }
+          <pb-icon-button
+            icon="more_vert"
+            [menu]="menu"
+            [ariaLabel]="'patientDetail.moreActions' | translate"
+          />
+          <mat-menu #menu="matMenu" xPosition="before">
+            @if (p.homePhone) {
+              <a mat-menu-item [href]="'tel:' + p.homePhone">
+                <mat-icon aria-hidden="true">call</mat-icon>
+                <span>{{ 'patientDetail.homeCall' | translate }}</span>
+              </a>
+            }
+            @if (auth.can('archivePatients')) {
+              @if (p.isArchived) {
+                <button mat-menu-item type="button" (click)="restore()">
+                  <mat-icon aria-hidden="true">unarchive</mat-icon>
+                  <span>{{ 'patientDetail.restore' | translate }}</span>
+                </button>
+              } @else {
+                <button mat-menu-item type="button" (click)="archive()">
+                  <mat-icon aria-hidden="true">inventory_2</mat-icon>
+                  <span>{{ 'patientDetail.archive' | translate }}</span>
+                </button>
+              }
+            }
+          </mat-menu>
+        </div>
+      </header>
+    </pb-surface>
 
     <!-- ── Alerts ────────────────────────────────────────────────── -->
     <!-- Medical history is the thing a dentist must not miss before treating —
@@ -244,15 +242,13 @@
                       'patientDetail.implantRegistryNumber' | translate: { number: c.registryNo }
                     }}</span>
                     @if (auth.can('editRegistry') && !p.isArchived) {
-                      <button
-                        mat-icon-button
-                        type="button"
+                      <pb-icon-button
                         class="registry__edit"
+                        icon="edit"
+                        size="compact"
                         (click)="editCase('implant', c)"
-                        [attr.aria-label]="'registry.editRecord' | translate"
-                      >
-                        <mat-icon aria-hidden="true">edit</mat-icon>
-                      </button>
+                        [ariaLabel]="'registry.editRecord' | translate"
+                      />
                     }
                   </li>
                 }
@@ -278,15 +274,13 @@
                       'patientDetail.orthoRegistryNumber' | translate: { number: c.registryNo }
                     }}</span>
                     @if (auth.can('editRegistry') && !p.isArchived) {
-                      <button
-                        mat-icon-button
-                        type="button"
+                      <pb-icon-button
                         class="registry__edit"
+                        icon="edit"
+                        size="compact"
                         (click)="editCase('ortho', c)"
-                        [attr.aria-label]="'registry.editRecord' | translate"
-                      >
-                        <mat-icon aria-hidden="true">edit</mat-icon>
-                      </button>
+                        [ariaLabel]="'registry.editRecord' | translate"
+                      />
                     }
                   </li>
                 }

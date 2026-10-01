@@ -14,8 +14,6 @@ import {
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import type { PageEvent } from '@angular/material/paginator';
@@ -58,13 +56,16 @@ import {
   PbBanner,
   PbButton,
   PbCheckboxField,
+  PbFilterChips,
+  PbIconButton,
   PbPage,
   PbPageHeader,
   PbPaginator,
   PbSearchField,
   PbSelectField,
+  PbSurface,
 } from '../../shared/ui';
-import type { SelectOption } from '../../shared/ui';
+import type { FilterChipOption, SelectOption } from '../../shared/ui';
 import type { Patient, ReferralSource, TreatmentType } from './data/patient.model';
 import type { EducationLevel, Gender } from '../../core/models/common.model';
 
@@ -216,8 +217,6 @@ function sameFilters(a: Filters, b: Filters): boolean {
     RouterLink,
     MatTableModule,
     MatSortModule,
-    MatChipsModule,
-    MatButtonModule,
     MatMenuModule,
     MatProgressBarModule,
     MatTooltipModule,
@@ -235,6 +234,9 @@ function sameFilters(a: Filters, b: Filters): boolean {
     PbPage,
     PbBanner,
     PbPaginator,
+    PbFilterChips,
+    PbIconButton,
+    PbSurface,
     MatIconModule,
     TranslatePipe,
   ],
@@ -313,6 +315,9 @@ export class PatientList {
     return this.i18n.instant('count.records', { count });
   });
   protected readonly treatmentTypes = signal<TreatmentType[]>([]);
+  protected readonly treatmentFilterOptions = computed<FilterChipOption[]>(() =>
+    this.treatmentTypes().map((t) => ({ value: t.code, label: t.nameFa, icon: t.icon })),
+  );
 
   /**
    * Debounced so typing does not fire a request per keystroke. A new search
@@ -354,6 +359,24 @@ export class PatientList {
     ),
     { initialValue: null as ReferralSource | null },
   );
+
+  /**
+   * Only a dashboard link can set the referral filter, and nothing in the
+   * panel would otherwise show why the register is suddenly short — so it
+   * stands on its own as a selected chip; deselecting it clears the filter.
+   */
+  protected readonly referralFilterOption = computed<FilterChipOption[]>(() => {
+    this.i18n.currentLang();
+    const source = this.referralSource();
+    return [
+      {
+        value: 'referral',
+        label: this.i18n.instant('patients.referralFilter', { name: source?.name ?? '…' }),
+        icon: source ? referralKindIcon(source.kind) : 'share',
+      },
+    ];
+  });
+  protected readonly referralSelected: readonly string[] = ['referral'];
 
   protected readonly columns = computed(() => [
     'fileNo',
@@ -580,16 +603,6 @@ export class PatientList {
     this.updateFilter('inactiveMonths', value ? Number(value) : null);
   }
 
-  protected toggleTreatment(code: string): void {
-    this.filters.update((f) => ({
-      ...f,
-      treatments: f.treatments.includes(code)
-        ? f.treatments.filter((c) => c !== code)
-        : [...f.treatments, code],
-    }));
-    this.page.set(1);
-  }
-
   protected clearFilters(): void {
     this.filters.set({ ...EMPTY_FILTERS });
     this.page.set(1);
@@ -618,7 +631,6 @@ export class PatientList {
    */
   protected readonly genderLabel = genderLabel;
   protected readonly genderIcon = genderIcon;
-  protected readonly referralKindIcon = referralKindIcon;
 
   /**
    * Bound to the table so a refetch that returns the same patients updates

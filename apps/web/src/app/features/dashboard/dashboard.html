@@ -4,7 +4,7 @@
   <pb-page-header [title]="greeting()" [subtitle]="'dashboard.subtitle' | translate">
     <pb-datetime-card />
     @if (auth.can('editPatients')) {
-      <pb-button routerLink="/patients/new" icon="person_add">{{
+      <pb-button link="/patients/new" icon="person_add">{{
         'dashboard.newPatient' | translate
       }}</pb-button>
     }

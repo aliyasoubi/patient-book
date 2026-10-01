@@ -6,7 +6,7 @@
   >
     @if (auth.can('editSurgery')) {
       <!-- Icon-only on the narrowest screens; the label crowds the title. -->
-      <pb-button routerLink="/surgery/new" icon="add" [collapseBelow]="560">
+      <pb-button link="/surgery/new" icon="add" [collapseBelow]="560">
         {{ 'surgery.new' | translate }}
       </pb-button>
     }
@@ -22,36 +22,25 @@
 
     <!-- The questions staff ask of the list, one at a time: clicking the
          selected chip clears it and shows everything again. -->
-    <mat-chip-listbox
+    <pb-filter-chips
       class="surgery__filters"
-      [value]="followUp() || null"
-      (change)="setFollowUp($event.value)"
-      [attr.aria-label]="'surgery.followUpFilter' | translate"
-    >
-      @for (filter of followUpFilters; track filter.value) {
-        <mat-chip-option [value]="filter.value">
-          <mat-icon matChipAvatar aria-hidden="true">{{ filter.icon }}</mat-icon>
-          {{ filter.label | translate }}
-        </mat-chip-option>
-      }
-    </mat-chip-listbox>
+      [options]="followUpFilters"
+      [selected]="followUpSelected()"
+      (selectedChange)="setFollowUp($event[0])"
+      [ariaLabel]="'surgery.followUpFilter' | translate"
+    />
 
     <!-- Separate from the follow-up questions: it changes which rows are
          listed at all, and combines with any of them. -->
     @if (auth.can('archiveSurgery')) {
-      <mat-chip-listbox
-        multiple
+      <pb-filter-chips
         class="surgery__filters"
-        [attr.aria-label]="'common.filters' | translate"
-      >
-        <mat-chip-option
-          [selected]="archivedOnly()"
-          (selectionChange)="toggleArchived($event.selected)"
-        >
-          <mat-icon matChipAvatar aria-hidden="true">inventory_2</mat-icon>
-          {{ 'surgery.archivedOnly' | translate }}
-        </mat-chip-option>
-      </mat-chip-listbox>
+        multiple
+        [options]="archiveFilter"
+        [selected]="archivedOnly() ? ['archived'] : []"
+        (selectedChange)="toggleArchived($event.length > 0)"
+        [ariaLabel]="'common.filters' | translate"
+      />
     }
   </div>
 
@@ -99,7 +88,7 @@
             <div class="queue__identity">
               <strong>{{ item.recordedName || ('patient.unnamed' | translate) }}</strong>
               @if (item.patient) {
-                <pb-status-chip icon="link" [routerLink]="['/patients', item.patient.id]">
+                <pb-status-chip icon="link" [link]="['/patients', item.patient.id]">
                   {{ 'surgery.patientFile' | translate: { fileNo: item.patient.fileNo } }}
                 </pb-status-chip>
               }
@@ -198,15 +187,12 @@
 
           <!-- Edit and archive/restore only; the status lives on the card. -->
           @if (hasActions()) {
-            <button
-              mat-icon-button
-              type="button"
+            <pb-icon-button
               class="queue__menu"
-              [matMenuTriggerFor]="rowMenu"
-              [attr.aria-label]="'surgery.rowActions' | translate"
-            >
-              <mat-icon aria-hidden="true">more_vert</mat-icon>
-            </button>
+              icon="more_vert"
+              [menu]="rowMenu"
+              [ariaLabel]="'surgery.rowActions' | translate"
+            />
             <mat-menu #rowMenu="matMenu">
               @if (archivedOnly()) {
                 <button mat-menu-item type="button" (click)="restore(item)">

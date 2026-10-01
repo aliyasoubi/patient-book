@@ -3,39 +3,21 @@
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────── */
+// pb-surface (tonal) draws the box; an archived record dims and steps one
+// container tone down. `pb-surface.` so this outranks the component's own
+// tonal background.
+pb-surface.hero-surface--archived {
+  background: var(--mat-sys-surface-container);
+  opacity: 0.85;
+}
+
 .hero {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px;
-  border-radius: var(--mat-sys-corner-large);
-  // Tonal surface: the container tone alone marks it off from the page.
-  background: var(--mat-sys-surface-container-low);
+  gap: var(--pb-space-3);
 
   @media (max-width: 700px) {
     flex-wrap: wrap;
-    padding: 14px;
-    gap: 12px;
-  }
-
-  &--archived {
-    background: var(--mat-sys-surface-container);
-    opacity: 0.85;
-  }
-
-  &__back {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    flex: 0 0 auto;
-    border-radius: var(--mat-sys-corner-full);
-    color: var(--mat-sys-on-surface-variant);
-    text-decoration: none;
-
-    &:hover {
-      background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
-    }
   }
 
   &__identity {
@@ -303,20 +285,11 @@
     }
   }
 
-  /* No status chip on the row, so the edit button pushes itself to the end. */
+  /* No status chip on the row, so the edit button pushes itself to the end;
+     the negative margin keeps the compact button inside the row's padding. */
   li > span + .registry__edit {
+    margin-block: calc(-1 * var(--pb-space-1));
     margin-inline-start: auto;
-  }
-
-  /* Compact: the row is one line of body text, not a 48px touch target. */
-  &__edit {
-    --mat-icon-button-state-layer-size: 32px;
-    padding: 4px;
-    margin: -4px;
-
-    .material-symbols-rounded {
-      font-size: 18px;
-    }
   }
 }
 

@@ -3,12 +3,7 @@
   <pb-page-header [title]="'patients.title' | translate" [count]="countLabel()">
     @if (auth.can('editPatients')) {
       <!-- Icon-only on the narrowest screens; the label crowds the title. -->
-      <pb-button
-        routerLink="/patients/new"
-        icon="person_add"
-        class="list__new"
-        [collapseBelow]="560"
-      >
+      <pb-button link="/patients/new" icon="person_add" class="list__new" [collapseBelow]="560">
         {{ 'patients.new' | translate }}
       </pb-button>
     }
@@ -41,116 +36,97 @@
   <!-- Only a dashboard link can set this; nothing in the panel would otherwise
        show why the register is suddenly short, so it gets its own chip. -->
   @if (filters().referralSourceId) {
-    <mat-chip-set class="list__linked" [attr.aria-label]="'common.filters' | translate">
-      <mat-chip class="list__linked-chip" (removed)="updateFilter('referralSourceId', null)">
-        <mat-icon matChipAvatar aria-hidden="true">
-          {{ referralSource() ? referralKindIcon(referralSource()!.kind) : 'share' }}
-        </mat-icon>
-        {{ 'patients.referralFilter' | translate: { name: referralSource()?.name ?? '…' } }}
-        <button
-          matChipRemove
-          type="button"
-          [attr.aria-label]="'patients.clearReferralFilter' | translate"
-        >
-          <mat-icon aria-hidden="true">cancel</mat-icon>
-        </button>
-      </mat-chip>
-    </mat-chip-set>
+    <pb-filter-chips
+      multiple
+      [options]="referralFilterOption()"
+      [selected]="referralSelected"
+      (selectedChange)="updateFilter('referralSourceId', null)"
+      [ariaLabel]="'common.filters' | translate"
+    />
   }
 
   <!-- ── Filter panel ──────────────────────────────────────────── -->
   @if (filtersOpen()) {
-    <section class="filters" [attr.aria-label]="'common.filters' | translate">
-      <div class="filters__row">
-        <pb-select-field
-          class="filters__field"
-          [label]="'patients.genderFilter' | translate"
-          [options]="genderFilterOptions"
-          [anyLabel]="'filter.all' | translate"
-          [value]="filters().gender"
-          (valueChange)="updateFilter('gender', $any($event))"
-        />
+    <pb-surface class="pb-surface--low">
+      <section class="filters" [attr.aria-label]="'common.filters' | translate">
+        <div class="filters__row">
+          <pb-select-field
+            class="filters__field"
+            [label]="'patients.genderFilter' | translate"
+            [options]="genderFilterOptions"
+            [anyLabel]="'filter.all' | translate"
+            [value]="filters().gender"
+            (valueChange)="updateFilter('gender', $any($event))"
+          />
 
-        <pb-select-field
-          class="filters__field"
-          [label]="'patients.educationFilter' | translate"
-          [options]="educationFilterOptions"
-          [anyLabel]="'filter.all' | translate"
-          [value]="filters().education"
-          (valueChange)="updateFilter('education', $any($event))"
-        />
+          <pb-select-field
+            class="filters__field"
+            [label]="'patients.educationFilter' | translate"
+            [options]="educationFilterOptions"
+            [anyLabel]="'filter.all' | translate"
+            [value]="filters().education"
+            (valueChange)="updateFilter('education', $any($event))"
+          />
 
-        <pb-select-field
-          class="filters__field"
-          [label]="'patients.inactiveSince' | translate"
-          [options]="inactiveMonthsOptions"
-          [anyLabel]="'filter.noPreference' | translate"
-          [value]="inactiveMonthsValue()"
-          (valueChange)="updateInactiveMonths($event)"
-        />
-      </div>
+          <pb-select-field
+            class="filters__field"
+            [label]="'patients.inactiveSince' | translate"
+            [options]="inactiveMonthsOptions"
+            [anyLabel]="'filter.noPreference' | translate"
+            [value]="inactiveMonthsValue()"
+            (valueChange)="updateInactiveMonths($event)"
+          />
+        </div>
 
-      <div class="filters__group">
-        <span class="filters__label">
-          {{ 'patients.treatmentsFilter' | translate }}
-          <small>({{ 'patients.treatmentsFilterHint' | translate }})</small>
-        </span>
-        <mat-chip-listbox
-          multiple
-          class="filters__chips"
-          [attr.aria-label]="'patients.treatmentFilterAria' | translate"
-        >
-          @for (type of treatmentTypes(); track type.id) {
-            <!-- `matChipAvatar` puts the icon in the chip's leading slot, so
-                 selecting swaps it for M3's checkmark instead of stacking
-                 two glyphs at the front. -->
-            <mat-chip-option
-              [selected]="filters().treatments.includes(type.code)"
-              (selectionChange)="toggleTreatment(type.code)"
-            >
-              <mat-icon matChipAvatar class="chip-icon" aria-hidden="true">{{
-                type.icon
-              }}</mat-icon>
-              {{ type.nameFa }}
-            </mat-chip-option>
-          }
-        </mat-chip-listbox>
-      </div>
+        <div class="filters__group">
+          <span class="filters__label">
+            {{ 'patients.treatmentsFilter' | translate }}
+            <small>({{ 'patients.treatmentsFilterHint' | translate }})</small>
+          </span>
+          <pb-filter-chips
+            multiple
+            [options]="treatmentFilterOptions()"
+            [selected]="filters().treatments"
+            (selectedChange)="updateFilter('treatments', $event)"
+            [ariaLabel]="'patients.treatmentFilterAria' | translate"
+          />
+        </div>
 
-      <div class="filters__group filters__group--checks">
-        <pb-checkbox-field
-          [checked]="filters().hasIssues"
-          (checkedChange)="updateFilter('hasIssues', $event)"
-        >
-          {{ 'patients.needsReview' | translate }}
-        </pb-checkbox-field>
-        <pb-checkbox-field
-          [checked]="filters().hasMedicalHistory"
-          (checkedChange)="updateFilter('hasMedicalHistory', $event)"
-        >
-          {{ 'patients.hasMedicalHistory' | translate }}
-        </pb-checkbox-field>
-        <pb-checkbox-field
-          [checked]="filters().includeArchived"
-          (checkedChange)="updateFilter('includeArchived', $event)"
-        >
-          {{ 'patients.includeArchived' | translate }}
-        </pb-checkbox-field>
-
-        @if (activeFilterCount() > 0) {
-          <pb-button
-            variant="text"
-            tone="danger"
-            type="button"
-            (click)="clearFilters()"
-            icon="filter_alt_off"
-            class="filters__clear"
+        <div class="filters__group filters__group--checks">
+          <pb-checkbox-field
+            [checked]="filters().hasIssues"
+            (checkedChange)="updateFilter('hasIssues', $event)"
           >
-            {{ 'patients.clearFilters' | translate }}
-          </pb-button>
-        }
-      </div>
-    </section>
+            {{ 'patients.needsReview' | translate }}
+          </pb-checkbox-field>
+          <pb-checkbox-field
+            [checked]="filters().hasMedicalHistory"
+            (checkedChange)="updateFilter('hasMedicalHistory', $event)"
+          >
+            {{ 'patients.hasMedicalHistory' | translate }}
+          </pb-checkbox-field>
+          <pb-checkbox-field
+            [checked]="filters().includeArchived"
+            (checkedChange)="updateFilter('includeArchived', $event)"
+          >
+            {{ 'patients.includeArchived' | translate }}
+          </pb-checkbox-field>
+
+          @if (activeFilterCount() > 0) {
+            <pb-button
+              variant="text"
+              tone="danger"
+              type="button"
+              (click)="clearFilters()"
+              icon="filter_alt_off"
+              class="filters__clear"
+            >
+              {{ 'patients.clearFilters' | translate }}
+            </pb-button>
+          }
+        </div>
+      </section>
+    </pb-surface>
   }
 
   <!-- One box for everything a fetch can replace, so the progress bar can lie
@@ -238,13 +214,13 @@
             </a>
 
             @if (patient.mobile) {
-              <a
+              <pb-icon-button
                 class="card__call"
+                icon="call"
+                variant="tonal"
                 [href]="'tel:' + patient.mobile"
-                [attr.aria-label]="callLabel(patient.fullName)"
-              >
-                <mat-icon aria-hidden="true">call</mat-icon>
-              </a>
+                [ariaLabel]="callLabel(patient.fullName)"
+              />
             }
           </li>
         }
@@ -355,14 +331,11 @@
               [attr.aria-label]="'patients.operations' | translate"
             ></th>
             <td mat-cell *matCellDef="let p">
-              <button
-                mat-icon-button
-                type="button"
-                [matMenuTriggerFor]="rowMenu"
-                [attr.aria-label]="'patients.recordOperations' | translate"
-              >
-                <mat-icon aria-hidden="true">more_vert</mat-icon>
-              </button>
+              <pb-icon-button
+                icon="more_vert"
+                [menu]="rowMenu"
+                [ariaLabel]="'patients.recordOperations' | translate"
+              />
               <mat-menu #rowMenu="matMenu">
                 <a mat-menu-item [routerLink]="['/patients', p.id]">
                   <mat-icon aria-hidden="true">visibility</mat-icon>

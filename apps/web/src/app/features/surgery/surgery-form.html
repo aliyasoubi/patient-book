@@ -24,19 +24,13 @@
             <span class="form__kind-hint">{{ 'surgeryForm.kindFixedHint' | translate }}</span>
           </div>
         } @else {
-          <mat-button-toggle-group
+          <pb-segmented-button
             class="grid__full form__kind"
+            [options]="kindOptions"
             [value]="form.controls.kind.value"
-            (valueChange)="onKindChange($event)"
-            [attr.aria-label]="'surgeryForm.kind' | translate"
-          >
-            @for (kind of kinds; track kind) {
-              <mat-button-toggle [value]="kind">
-                <mat-icon aria-hidden="true">{{ kindIcon(kind) }}</mat-icon>
-                {{ kindLabel(kind) | translate }}
-              </mat-button-toggle>
-            }
-          </mat-button-toggle-group>
+            (valueChange)="onKindChange($any($event))"
+            [ariaLabel]="'surgeryForm.kind' | translate"
+          />
         }
 
         <pb-text-field

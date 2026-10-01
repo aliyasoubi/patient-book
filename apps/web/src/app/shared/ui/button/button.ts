@@ -38,7 +38,7 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
  * projected content, and so can exist only once — still goes through the
  * template.
  *
- * Passing `routerLink` or `href` renders an `<a>` instead of a `<button>` — a
+ * Passing `link` or `href` renders an `<a>` instead of a `<button>` — a
  * "New patient" action or a "Call" link is a real navigation the user can
  * middle-click or open in a new tab, which only an anchor supports; a
  * `<button>` with a click handler that calls the router or sets
@@ -46,9 +46,15 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
  *
  * The two anchors are separate branches, not one anchor with both bindings.
  * `RouterLink` host-binds `attr.href` to the URL it computes, and with no
- * `routerLink` that is `null` — so a `tel:` href set by the template was
- * removed again by the directive on the same element, and the Call button
- * rendered with no destination at all.
+ * route that is `null` — so a `tel:` href set by the template was removed
+ * again by the directive on the same element, and the Call button rendered
+ * with no destination at all.
+ *
+ * The route input is `link`, not `routerLink`: a page that imports
+ * `RouterLink` for its own anchors would otherwise match the directive on
+ * `<pb-button routerLink>` itself too — giving the wrapper its own
+ * `tabindex="0"` (a second tab stop) and a click handler that still navigated
+ * when the button was disabled.
  *
  * Everything that has to land on the real control — its accessible name, the
  * tooltip, the colour tokens — is applied here, not by the caller: the host
@@ -73,10 +79,10 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
     '[class.pb-button--collapsed]': 'collapsed()',
   },
   template: `
-    @if (routerLink() !== null) {
+    @if (link() !== null) {
       <a
         [matButton]="appearance()"
-        [routerLink]="isDisabled() ? null : routerLink()"
+        [routerLink]="isDisabled() ? null : link()"
         [queryParams]="queryParams()"
         class="pb-btn"
         [class.pb-btn--full]="fullWidth()"
@@ -211,7 +217,7 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
     /*
      * Material's own \`[disabled]\` only exists on <button>; an <a> has no such
      * attribute, so a disabled/loading link previously stayed fully clickable.
-     * routerLink/href are already cleared above — this just matches Material's
+     * link/href are already cleared above — this just matches Material's
      * visual disabled state and blocks hover/selection on the anchor.
      */
     .pb-btn--disabled {
@@ -246,7 +252,11 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
       --mat-button-filled-container-color: var(--mat-sys-error);
       --mat-button-filled-label-text-color: var(--mat-sys-on-error);
       --mat-button-filled-state-layer-color: var(--mat-sys-on-error);
-      --mat-button-filled-ripple-color: color-mix(in srgb, var(--mat-sys-on-error) 12%, transparent);
+      --mat-button-filled-ripple-color: color-mix(
+        in srgb,
+        var(--mat-sys-on-error) 12%,
+        transparent
+      );
       --mat-button-outlined-label-text-color: var(--mat-sys-error);
       --mat-button-outlined-state-layer-color: var(--mat-sys-error);
       --mat-button-outlined-ripple-color: color-mix(in srgb, var(--mat-sys-error) 12%, transparent);
@@ -289,8 +299,8 @@ export class PbButton {
   readonly loadingText = input('');
   /** Stretches to the width of its container — the login screen's sign-in button. */
   readonly fullWidth = input(false);
-  /** Renders an `<a>` navigating here instead of a `<button>`. */
-  readonly routerLink = input<ButtonRouterLink | null>(null);
+  /** Renders an `<a>` navigating here (a router link) instead of a `<button>`. */
+  readonly link = input<ButtonRouterLink | null>(null);
   readonly queryParams = input<Params | null>(null);
   /** Renders an `<a>` to a plain URL — `tel:`, `mailto:`, an external link. */
   readonly href = input<string | null>(null);

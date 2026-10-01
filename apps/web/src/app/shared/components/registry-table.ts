@@ -1,5 +1,4 @@
 import { Component, input, output } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -7,7 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { caseStatusLabel } from '../labels';
 import { EmptyState } from './empty-state';
-import { PbStatusChip } from '../ui';
+import { PbIconButton, PbStatusChip } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
 
 /**
@@ -21,11 +20,11 @@ import type { RegistryCase } from '../../core/models/common.model';
   selector: 'pb-registry-table',
   standalone: true,
   imports: [
-    MatButtonModule,
     MatMenuModule,
     MatTooltipModule,
     EmptyState,
     PbStatusChip,
+    PbIconButton,
     MatIconModule,
     TranslatePipe,
   ],

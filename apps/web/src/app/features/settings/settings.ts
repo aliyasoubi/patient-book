@@ -1,5 +1,4 @@
 import { Component, inject, signal } from '@angular/core';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -7,7 +6,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { PatientsService } from '../patients/data/patients.service';
 import { roleLabel } from '../../shared/labels';
-import { PbButton, PbPage, PbPageHeader, PbSurface } from '../../shared/ui';
+import { PbButton, PbPage, PbPageHeader, PbSegmentedButton, PbSurface } from '../../shared/ui';
+import type { SegmentOption } from '../../shared/ui';
 import type { TreatmentType } from '../patients/data/patient.model';
 
 /**
@@ -19,7 +19,7 @@ import type { TreatmentType } from '../patients/data/patient.model';
   selector: 'pb-settings',
   standalone: true,
   imports: [
-    MatButtonToggleModule,
+    PbSegmentedButton,
     PbButton,
     PbSurface,
     PbPageHeader,
@@ -36,6 +36,12 @@ export class Settings {
   private readonly patients = inject(PatientsService);
 
   protected readonly roleLabel = roleLabel;
+
+  protected readonly themeOptions: SegmentOption[] = [
+    { value: 'system', label: 'settings.automatic', icon: 'brightness_auto', translate: true },
+    { value: 'light', label: 'settings.light', icon: 'light_mode', translate: true },
+    { value: 'dark', label: 'settings.dark', icon: 'dark_mode', translate: true },
+  ];
 
   protected readonly treatments = signal<TreatmentType[]>([]);
 

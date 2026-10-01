@@ -12,9 +12,6 @@ import {
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   catchError,
@@ -29,7 +26,7 @@ import {
 
 import { PatientsService } from '../features/patients/data/patients.service';
 import type { PatientSuggestion } from '../features/patients/data/patient.model';
-import { PbSearchField, type SearchFieldOption } from '../shared/ui';
+import { PbIconButton, PbSearchField, type SearchFieldOption } from '../shared/ui';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /** Below this, a Persian query is too broad to be worth a round trip. */
@@ -38,7 +35,7 @@ const MIN_QUERY_LENGTH = 2;
 @Component({
   selector: 'pb-global-search',
   standalone: true,
-  imports: [PbSearchField, MatButtonModule, MatIconModule, MatTooltipModule, TranslatePipe],
+  imports: [PbSearchField, PbIconButton, TranslatePipe],
   templateUrl: './global-search.html',
   styleUrl: './global-search.scss',
 })
