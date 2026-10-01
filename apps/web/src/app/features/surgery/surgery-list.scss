@@ -1,3 +1,5 @@
+@use '../../../styles/a11y';
+
 .surgery {
   display: flex;
   flex-direction: column;
@@ -11,20 +13,19 @@
   }
 
   &__new {
-    gap: 6px;
     flex: 0 0 auto;
 
+    // Icon-only on the narrowest screens; the label crowds the title. The
+    // padding reaches the real button through its tokens — `pb-button` is a
+    // wrapper, and padding on it only widened the box around the button.
     @media (max-width: 560px) {
+      --mat-button-filled-horizontal-padding: 12px;
+      --mat-button-filled-icon-spacing: 0;
+      --mat-button-filled-icon-offset: 0;
+
       .surgery__new-label {
-        // Icon-only on the narrowest screens; the label crowds the title.
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
+        @include a11y.visually-hidden;
       }
-      min-width: 48px;
-      padding-inline: 12px;
     }
   }
 

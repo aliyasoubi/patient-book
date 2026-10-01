@@ -90,11 +90,19 @@
     }
   }
 
-  &__call {
-    gap: 6px;
-  }
-
+  // Icon-only on the narrowest screens. With the label gone, the spacing
+  // Material keeps between icon and label pushed the icon off-centre; reset
+  // it through the button tokens, which reach through the `pb-button` wrapper.
   @media (max-width: 460px) {
+    &__actions {
+      --mat-button-filled-horizontal-padding: 12px;
+      --mat-button-filled-icon-spacing: 0;
+      --mat-button-filled-icon-offset: 0;
+      --mat-button-outlined-horizontal-padding: 12px;
+      --mat-button-outlined-icon-spacing: 0;
+      --mat-button-outlined-icon-offset: 0;
+    }
+
     &__call-label,
     &__edit-label {
       @include a11y.visually-hidden;
@@ -381,7 +389,7 @@
 
   /* Compact: the row is one line of body text, not a 48px touch target. */
   &__edit {
-    --mdc-icon-button-state-layer-size: 32px;
+    --mat-icon-button-state-layer-size: 32px;
     padding: 4px;
     margin: -4px;
 

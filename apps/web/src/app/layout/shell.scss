@@ -105,18 +105,6 @@
   &__link.is-active &__icon {
     transform: scale(1.1);
   }
-
-  &__footer {
-    padding-top: 8px;
-    border-top: 1px solid var(--mat-sys-outline-variant);
-  }
-
-  &__theme {
-    width: 100%;
-    justify-content: flex-start;
-    gap: 12px;
-    color: var(--mat-sys-on-surface-variant);
-  }
 }
 
 /* ── Top bar ───────────────────────────────────────────────────────── */
