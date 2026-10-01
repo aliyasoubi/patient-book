@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, type FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -53,6 +53,18 @@ const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
   ['surgeryForm.followUp', (s) => `${s.followUpMonths}|${s.followUpDoneAt}`],
   ['surgeryForm.notes', (s) => s.notes],
 ];
+
+/**
+ * Fills the register number from a picked register entry. A value set from
+ * code stays pristine, but this one is the user's choice: marked dirty, it is
+ * sent with the save, and conflict recovery keeps it beside the name it was
+ * picked with instead of restoring the old number under the new name.
+ */
+export function pickRegistryNo(control: FormControl<string>, option: TextFieldOption): void {
+  if (!option.meta) return;
+  control.setValue(String(option.meta));
+  control.markAsDirty();
+}
 
 /**
  * Label keys of the fields that differ between two copies of a row — what a
@@ -180,7 +192,8 @@ export class SurgeryForm implements HasUnsavedChanges {
   });
   /**
    * LEGACY: the row's imported prosthesis note, shown when no date can be
-   * derived. Delete with apps/api/src/modules/surgery/legacy-prosthesis-due.ts.
+   * derived. Remove with the runtime fallbacks listed in
+   * apps/api/src/modules/surgery/legacy-prosthesis-due.ts.
    */
   private readonly legacyProsthesisDue = signal<string | null>(null);
 
@@ -332,7 +345,7 @@ export class SurgeryForm implements HasUnsavedChanges {
    * filling it in here is what makes the link real rather than just cosmetic.
    */
   protected onNameSelected(option: TextFieldOption): void {
-    if (option.meta) this.form.controls.implantRegistryNo.setValue(String(option.meta));
+    pickRegistryNo(this.form.controls.implantRegistryNo, option);
   }
 
   protected submit(): void {
@@ -363,7 +376,6 @@ export class SurgeryForm implements HasUnsavedChanges {
       // An extraction carries none of the implant fields; clear them so a new
       // row whose kind was switched before saving does not keep a stale
       // number or brand typed under the other one.
-      implantRegistryNo: implant ? identifierValue(raw.implantRegistryNo) : null,
       implantBrand: implant ? raw.implantBrand || null : null,
       abutmentType: implant ? raw.abutmentType : 'unknown',
       followUpMonths: raw.followUpMonths ? Number(raw.followUpMonths) : null,
@@ -371,6 +383,15 @@ export class SurgeryForm implements HasUnsavedChanges {
     };
     // Sent only when the row is created; the edit form does not offer it.
     if (!this.isEdit()) payload['kind'] = raw.kind;
+    // The register number is the link to a case, so an edit sends it only
+    // when the user changed it — by typing or by picking a name. Sent
+    // untouched it could only ever restate the link the row already has, and
+    // an empty one (an older row linked without its number copied) would
+    // read as "unlink". A new row always sends it.
+    const registryNo = this.form.controls.implantRegistryNo;
+    if (!this.isEdit() || registryNo.dirty || !implant) {
+      payload['implantRegistryNo'] = implant ? identifierValue(raw.implantRegistryNo) : null;
+    }
     // Whether the follow-up happened is the switch on the card, not a form
     // field: every row added here is waiting for its follow-up.
     // The date is only sent when this form owns it. A pristine empty picker on

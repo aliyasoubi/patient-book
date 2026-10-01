@@ -152,11 +152,12 @@ export class RegistryService<T extends RegistryCase> {
       // just adjacent. Read without the `patient` relation: TypeORM would
       // persist a loaded relation over a changed `patientId`, so a relink
       // would be audited and marked manual yet never stored.
-      const existing = (await repository.findOne({
+      const existing = await repository.findOne({
         where: { id } as never,
         lock: { mode: 'pessimistic_write' },
-      })) as T | null;
-      if (!existing) throw AppException.notFound(ErrorCode.RegistryCaseNotFound);
+      });
+      if (!existing)
+        throw AppException.notFound(ErrorCode.RegistryCaseNotFound);
       if (existing.version !== expectedVersion) {
         throw AppException.conflict(ErrorCode.RegistryCaseModified);
       }

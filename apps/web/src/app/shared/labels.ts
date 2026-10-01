@@ -77,8 +77,6 @@ export const EDUCATION_LEVELS: readonly EducationLevel[] = [
 
 export const GENDERS: readonly Gender[] = ['female', 'male', 'unknown'];
 
-export const CASE_STATUSES = ['active', 'completed', 'on_hold'] as const;
-
 /** Follow-up offsets a dentist chooses from, in months after the surgery. */
 export const FOLLOW_UP_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
@@ -153,17 +151,6 @@ export const SURGERY_KINDS = ['implant', 'extraction'] as const;
 
 export function surgeryKindLabel(kind: string): string {
   return kind === 'extraction' ? 'surgeryKind.extraction' : 'surgeryKind.implant';
-}
-
-export function caseStatusLabel(status: string): string {
-  switch (status) {
-    case 'active':
-      return 'caseStatus.active';
-    case 'completed':
-      return 'caseStatus.completed';
-    default:
-      return 'caseStatus.onHold';
-  }
 }
 
 export function abutmentLabel(type: string): string {

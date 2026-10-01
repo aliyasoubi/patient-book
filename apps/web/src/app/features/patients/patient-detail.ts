@@ -339,7 +339,7 @@ export class PatientDetail {
     const data: RegistryCaseDialogData = {
       mode: 'create',
       kind,
-      patient: { id: p.id, name: p.fullName, mobile: p.mobile, homePhone: p.homePhone },
+      patient: { id: p.id, name: p.fullName },
     };
     this.openCaseDialog(data, p.id, () =>
       this.i18n.instant(

@@ -17,11 +17,10 @@ import {
 import { PatientsService } from '../../features/patients/data/patients.service';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
-import { CASE_STATUSES, caseStatusLabel } from '../labels';
-import { digitString, identifierValue, iranianMobile, toLatinDigits } from '../validators';
+import { digitString, toLatinDigits } from '../validators';
 import { adoptUntouched, changedFields, type FieldReader } from '../form-sync';
-import { PbButton, PbIconButton, PbSelectField, PbTextareaField, PbTextField } from '../ui';
-import type { SelectOption, TextFieldOption } from '../ui';
+import { PbButton, PbIconButton, PbTextField } from '../ui';
+import type { TextFieldOption } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
 import type { PatientSuggestion } from '../../features/patients/data/patient.model';
 
@@ -30,24 +29,12 @@ import type { PatientSuggestion } from '../../features/patients/data/patient.mod
  * Label keys of the fields this dialog shows that differ between two copies
  * of a case — what a conflict message lists so the user knows what changed.
  */
-export function changedCaseFields(
-  before: RegistryCase,
-  after: RegistryCase,
-  showDetails: boolean,
-): string[] {
+export function changedCaseFields(before: RegistryCase, after: RegistryCase): string[] {
   const fields: FieldReader<RegistryCase>[] = [
     ['registryForm.registryNo', (c) => c.registryNo],
     ['registryForm.recordedName', (c) => c.recordedName],
     ['registryForm.patientLink', (c) => c.patientId],
   ];
-  if (showDetails) {
-    fields.push(
-      ['registryForm.status', (c) => c.status],
-      ['registryForm.mobile', (c) => c.mobile],
-      ['registryForm.homePhone', (c) => c.homePhone],
-      ['registryForm.notes', (c) => c.notes],
-    );
-  }
   return changedFields(before, after, fields);
 }
 
@@ -73,7 +60,7 @@ export type RegistryCaseDialogData =
       mode: 'create';
       kind: RegistryKind;
       /** The patient the new case is opened from; the link is fixed. */
-      patient: { id: string; name: string; mobile: string | null; homePhone: string | null };
+      patient: { id: string; name: string };
     }
   | {
       mode: 'edit';
@@ -90,9 +77,9 @@ const MIN_PATIENT_QUERY = 2;
  * {@link RegistryService}), so one dialog serves both rather than two nearly
  * identical forms. Opened from a patient's page it creates a case already
  * linked to that patient; opened from a register row it edits that row —
- * number, name, phones, status, notes and, since imported rows are often
- * unlinked or linked to the wrong file, the patient link itself. Both books
- * keep only the number, name and link.
+ * number, name and, since imported rows are often unlinked or linked to the
+ * wrong file, the patient link itself. Neither book keeps phones, a status or
+ * notes, so the dialog never sends them and whatever is stored stays.
  */
 @Component({
   selector: 'pb-registry-case-dialog',
@@ -103,8 +90,6 @@ const MIN_PATIENT_QUERY = 2;
     MatIconModule,
     MatProgressBarModule,
     PbTextField,
-    PbTextareaField,
-    PbSelectField,
     PbButton,
     PbIconButton,
     TranslatePipe,
@@ -155,34 +140,6 @@ const MIN_PATIENT_QUERY = 2;
             />
           </div>
         }
-        @if (showDetails) {
-          <pb-select-field
-            [control]="form.controls.status"
-            [label]="'registryForm.status' | translate"
-            [options]="statusOptions"
-          />
-        }
-      }
-
-      @if (showDetails) {
-        <pb-text-field
-          [control]="form.controls.mobile"
-          [label]="'registryForm.mobile' | translate"
-          type="tel"
-          [ltr]="true"
-          inputmode="tel"
-        />
-        <pb-text-field
-          [control]="form.controls.homePhone"
-          [label]="'registryForm.homePhone' | translate"
-          type="tel"
-          [ltr]="true"
-          inputmode="tel"
-        />
-        <pb-textarea-field
-          [control]="form.controls.notes"
-          [label]="'registryForm.notes' | translate"
-        />
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -251,12 +208,6 @@ export class RegistryCaseDialog {
         ? 'registryForm.newOrtho'
         : 'registryForm.newImplant';
 
-  protected readonly statusOptions: SelectOption[] = CASE_STATUSES.map((status) => ({
-    value: status,
-    label: caseStatusLabel(status),
-    translate: true,
-  }));
-
   private readonly existing = this.data.mode === 'edit' ? this.data.existing : null;
 
   /**
@@ -266,9 +217,6 @@ export class RegistryCaseDialog {
    */
   private readonly current = signal<RegistryCase | null>(this.existing);
 
-  /** Phones, status and notes; neither the implant nor the ortho book keeps them. */
-  protected readonly showDetails: boolean = false;
-
   protected readonly form = this.fb.nonNullable.group({
     registryNo: [this.existing?.registryNo ?? '', [Validators.required, digitString(1, 18)]],
     recordedName: [
@@ -276,31 +224,7 @@ export class RegistryCaseDialog {
       [Validators.required, Validators.maxLength(160)],
     ],
     patientSearch: [''],
-    status: [this.existing?.status ?? ('active' as RegistryCase['status'])],
-    mobile: [
-      this.existing?.mobile ??
-        (this.data.mode === 'create' ? this.data.patient.mobile : null) ??
-        '',
-      [iranianMobile],
-    ],
-    homePhone: [
-      this.existing?.homePhone ??
-        (this.data.mode === 'create' ? this.data.patient.homePhone : null) ??
-        '',
-      [digitString(4, 15)],
-    ],
-    notes: [this.existing?.notes ?? ''],
   });
-
-  constructor() {
-    // Hidden fields must not block a save with a value the user cannot see,
-    // such as an old malformed phone number prefilled from the patient.
-    if (!this.showDetails) {
-      for (const name of ['status', 'mobile', 'homePhone', 'notes'] as const) {
-        this.form.controls[name].disable();
-      }
-    }
-  }
 
   /** The link as it will be saved; starts as whatever the row already holds. */
   protected readonly linkedPatient = signal<LinkedPatient | null>(linkOf(this.existing));
@@ -365,17 +289,11 @@ export class RegistryCaseDialog {
 
     this.saving.set(true);
     const raw = this.form.getRawValue();
-    const blank = (v: string): string | null => (v.trim() ? v.trim() : null);
 
-    // Fields the form does not show are left out, so what is stored stays.
+    // Phones, status and notes are left out, so what is stored stays.
     const payload: RegistryCaseInput = {
       registryNo: toLatinDigits(raw.registryNo).trim(),
       recordedName: raw.recordedName.trim(),
-      ...(this.showDetails && {
-        mobile: identifierValue(raw.mobile),
-        homePhone: identifierValue(raw.homePhone),
-        notes: blank(raw.notes),
-      }),
     };
 
     let request;
@@ -384,7 +302,6 @@ export class RegistryCaseDialog {
       payload.patientId = this.data.patient.id;
       request = this.registry.createCase(this.data.kind, payload);
     } else if (current) {
-      if (this.showDetails) payload.status = raw.status;
       // Only a changed link is sent: the API treats any `patientId` it
       // receives as a deliberate, manual decision about the match.
       const linkedId = this.linkedPatient()?.id ?? null;
@@ -434,13 +351,9 @@ export class RegistryCaseDialog {
         adoptUntouched(this.form, {
           registryNo: after.registryNo,
           recordedName: after.recordedName,
-          status: after.status,
-          mobile: after.mobile ?? '',
-          homePhone: after.homePhone ?? '',
-          notes: after.notes ?? '',
         });
         if (!this.linkEdited) this.linkedPatient.set(linkOf(after));
-        const changed = changedCaseFields(before, after, this.showDetails)
+        const changed = changedCaseFields(before, after)
           .map((key) => this.i18n.instant(key))
           .join(this.i18n.instant('list.separator'));
         const message = changed
@@ -472,8 +385,6 @@ export class RegistryCaseDialog {
 
     const fieldForCode: Partial<Record<string, keyof typeof this.form.controls>> = {
       ERR_REGISTRY_NUMBER_TAKEN: 'registryNo',
-      ERR_MOBILE_INVALID: 'mobile',
-      ERR_PHONE_INVALID: 'homePhone',
     };
     const target = body?.code ? fieldForCode[body.code] : undefined;
     const message = this.errors.translate(error);

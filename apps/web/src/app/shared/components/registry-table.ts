@@ -4,7 +4,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { caseStatusLabel } from '../labels';
 import { EmptyState } from './empty-state';
 import { PbIconButton, PbStatusChip } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
@@ -38,16 +37,12 @@ export class RegistryTable {
   readonly emptyHint = input('');
   readonly canEdit = input(false);
   readonly canArchive = input(false);
-  /** Show the phone and status; off for the implant and ortho books, which keep neither. */
-  readonly showDetails = input(true);
   /** The rows are archived ones: offer restore instead of edit/archive. */
   readonly archived = input(false);
 
   readonly edit = output<RegistryCase>();
   readonly archive = output<RegistryCase>();
   readonly restore = output<RegistryCase>();
-
-  protected readonly statusLabel = caseStatusLabel;
 
   protected hasActions(): boolean {
     return this.archived() ? this.canArchive() : this.canEdit() || this.canArchive();
