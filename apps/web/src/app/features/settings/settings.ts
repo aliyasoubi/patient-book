@@ -7,7 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { PatientsService } from '../patients/data/patients.service';
 import { roleLabel } from '../../shared/labels';
-import { PbButton, PbPageHeader, PbSurface } from '../../shared/ui';
+import { PbButton, PbPage, PbPageHeader, PbSurface } from '../../shared/ui';
 import type { TreatmentType } from '../patients/data/patient.model';
 
 /**
@@ -25,6 +25,7 @@ import type { TreatmentType } from '../patients/data/patient.model';
     PbPageHeader,
     MatIconModule,
     TranslatePipe,
+    PbPage,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',

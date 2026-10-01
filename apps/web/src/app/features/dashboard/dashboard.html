@@ -1,4 +1,4 @@
-<div class="dash">
+<pb-page class="dash" width="wide">
   <!-- Date and clock ride in the header row as supporting content; a card of
        their own pushed the first real number a full section down the page. -->
   <pb-page-header [title]="greeting()" [subtitle]="'dashboard.subtitle' | translate">
@@ -15,11 +15,7 @@
   }
 
   @if (failed()) {
-    <pb-surface class="dash__error">
-      <mat-icon class="dash__error-icon" aria-hidden="true">cloud_off</mat-icon>
-      <p class="dash__error-text">{{ 'dashboard.loadFailed' | translate }}</p>
-      <pb-button icon="refresh" (click)="load()">{{ 'common.retry' | translate }}</pb-button>
-    </pb-surface>
+    <pb-load-error [message]="'dashboard.loadFailed' | translate" (retry)="load()" />
   }
 
   @if (stats(); as s) {
@@ -45,12 +41,10 @@
            seven days and has not happened yet, soonest first. -->
       <pb-surface class="dash__panel--follow-ups" [title]="'dashboard.followUpsTitle' | translate">
         @if (followUpsFailed()) {
-          <div class="panel__failed">
-            <p class="panel__empty">{{ 'dashboard.followUpsFailed' | translate }}</p>
-            <pb-button variant="stroked" icon="refresh" (click)="loadFollowUps()">
-              {{ 'common.retry' | translate }}
-            </pb-button>
-          </div>
+          <pb-load-error
+            [message]="'dashboard.followUpsFailed' | translate"
+            (retry)="loadFollowUps()"
+          />
         } @else if (followUps().length) {
           <ul class="upcoming">
             @for (item of followUps(); track item.id) {
@@ -67,7 +61,9 @@
                     <span class="upcoming__name">{{ item.recordedName }}</span>
                     @if (item.implantRegistryNo) {
                       <span class="upcoming__meta">
-                        {{ 'surgery.implantRegistry' | translate: { number: item.implantRegistryNo } }}
+                        {{
+                          'surgery.implantRegistry' | translate: { number: item.implantRegistryNo }
+                        }}
                       </span>
                     }
                   </span>
@@ -179,7 +175,9 @@
           @for (g of genderColumns(); track g.key) {
             <div class="gender__col" [attr.data-gender]="g.key">
               <span class="bars__label">
-                <mat-icon class="bars__icon gender__icon" aria-hidden="true">{{ genderIcon(g.key) }}</mat-icon>
+                <mat-icon class="bars__icon gender__icon" aria-hidden="true">{{
+                  genderIcon(g.key)
+                }}</mat-icon>
                 {{ genderLabel(g.key) | translate }}
               </span>
               <span class="bars__track">
@@ -236,4 +234,4 @@
       </pb-surface>
     </div>
   }
-</div>
+</pb-page>

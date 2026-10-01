@@ -39,9 +39,21 @@
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(circle 480px at 15% 15%, color-mix(in srgb, var(--mat-sys-tertiary) 55%, transparent), transparent),
-      radial-gradient(circle 520px at 90% 85%, color-mix(in srgb, var(--mat-sys-on-primary) 18%, transparent), transparent),
-      linear-gradient(155deg, var(--mat-sys-primary), color-mix(in srgb, var(--mat-sys-primary) 70%, black));
+      radial-gradient(
+        circle 480px at 15% 15%,
+        color-mix(in srgb, var(--mat-sys-tertiary) 55%, transparent),
+        transparent
+      ),
+      radial-gradient(
+        circle 520px at 90% 85%,
+        color-mix(in srgb, var(--mat-sys-on-primary) 18%, transparent),
+        transparent
+      ),
+      linear-gradient(
+        155deg,
+        var(--mat-sys-primary),
+        color-mix(in srgb, var(--mat-sys-primary) 70%, black)
+      );
   }
 
   &__aside-content {
@@ -93,7 +105,8 @@
   &__main {
     display: grid;
     place-items: center;
-    padding: var(--pb-space-5) var(--pb-space-4) calc(var(--pb-space-5) + env(safe-area-inset-bottom));
+    padding: var(--pb-space-5) var(--pb-space-4)
+      calc(var(--pb-space-5) + env(safe-area-inset-bottom));
 
     @media (min-width: 900px) {
       padding: var(--pb-space-6);
@@ -173,23 +186,7 @@
   }
 
   &__error {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 16px;
-    padding: 12px 14px;
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--mat-sys-error-container);
-    color: var(--mat-sys-on-error-container);
-    font-size: var(--mat-sys-body-medium-size);
-    font-weight: var(--mat-sys-body-medium-weight);
-    letter-spacing: var(--mat-sys-body-medium-tracking);
-    line-height: 1.6;
-
-    .material-symbols-rounded {
-      font-size: 20px;
-      flex: 0 0 auto;
-    }
+    margin-bottom: var(--pb-space-4);
   }
 
   &__submit {

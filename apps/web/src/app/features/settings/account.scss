@@ -1,25 +1,3 @@
-.account {
-  max-width: var(--pb-page-narrow);
-  margin-inline: auto;
-  padding: var(--pb-space-4) var(--pb-page-inline) var(--pb-page-block-end);
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-page-gap);
-
-  @media (max-width: 700px) {
-    padding: var(--pb-space-3) var(--pb-page-inline-compact) var(--pb-space-5);
-  }
-}
-
-.password-required {
-  margin: 0;
-  padding: var(--pb-space-3) var(--pb-space-4);
-  border-radius: var(--mat-sys-corner-medium);
-  background: var(--pb-warning-container);
-  color: var(--pb-on-warning-container);
-  font: var(--mat-sys-body-medium);
-}
-
 // pb-surface owns the bordered-panel look and its icon+title header now;
 // only the hint paragraph beneath the title is still this page's own concern.
 .panel__hint {

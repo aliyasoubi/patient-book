@@ -1,4 +1,4 @@
-<div class="account">
+<pb-page width="narrow">
   <pb-page-header
     [title]="'account.title' | translate"
     [backLabel]="auth.user()?.mustChangePassword ? null : ('common.back' | translate)"
@@ -6,9 +6,9 @@
   />
 
   @if (auth.user()?.mustChangePassword) {
-    <p class="password-required" role="alert">
+    <pb-banner tone="warning" icon="lock_reset" role="alert">
       {{ 'account.temporaryPasswordRequired' | translate }}
-    </p>
+    </pb-banner>
   }
 
   <pb-surface>
@@ -68,4 +68,4 @@
       </div>
     </form>
   </pb-surface>
-</div>
+</pb-page>

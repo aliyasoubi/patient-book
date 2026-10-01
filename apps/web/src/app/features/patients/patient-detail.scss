@@ -1,18 +1,5 @@
-.detail {
-  max-width: var(--pb-page-content);
-  margin-inline: auto;
-  padding: var(--pb-space-4) var(--pb-page-inline) var(--pb-page-block-end);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-
-  @media (max-width: 700px) {
-    padding: var(--pb-space-3) var(--pb-page-inline-compact) var(--pb-space-5);
-  }
-
-  &__tabs {
-    --mat-tab-header-divider-color: var(--mat-sys-outline-variant);
-  }
+.detail__tabs {
+  --mat-tab-header-divider-color: var(--mat-sys-outline-variant);
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────── */
@@ -89,64 +76,19 @@
   }
 }
 
-/* ── Alerts ────────────────────────────────────────────────────────── */
-.alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: var(--mat-sys-corner-large);
-  line-height: 1.8;
-
-  > .material-symbols-rounded {
-    font-size: 22px;
-    flex: 0 0 auto;
-    margin-top: 2px;
-  }
-
-  strong {
-    display: block;
-    font: var(--mat-sys-body-medium);
-    font-weight: 700;
-  }
-
-  p {
-    margin: 2px 0 0;
-    font: var(--mat-sys-body-medium);
-  }
-
-  // Medical history is the thing a dentist must not miss before treating —
-  // caution, not a broken record — so it gets the warning tone, not error.
-  &--medical {
-    background: var(--pb-warning-container);
-    color: var(--pb-on-warning-container);
-  }
-
-  // Import flags are record hygiene, not a clinical alert: neutral surface,
-  // the flag icon and resolve buttons carry the "to do" cue.
-  &--issues {
-    background: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface);
-  }
-
-  &__body {
-    flex: 1;
-    min-width: 0;
-  }
-
-  &__note {
-    opacity: 0.85;
-    font: var(--mat-sys-body-medium) !important;
-  }
-}
-
+/* ── Import issues ─────────────────────────────────────────────────── */
 .issues {
-  margin: 10px 0 0;
+  margin: var(--pb-space-2) 0 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
+
+  &__note {
+    margin: 0;
+    opacity: 0.85;
+  }
 
   &__item {
     display: flex;

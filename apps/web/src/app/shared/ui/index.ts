@@ -23,3 +23,8 @@ export type { StatusTone } from './status-chip/status-chip';
 export { PbDatetimeCard } from './datetime-card/datetime-card';
 export { PbLogo } from './logo/logo';
 export { firstErrorMessage } from './field-errors';
+export { PbBanner } from './banner/banner';
+export type { BannerSize, BannerTone } from './banner/banner';
+export { PbPage } from './page/page';
+export type { PageWidth } from './page/page';
+export { PbPaginator } from './paginator/paginator';

@@ -2,7 +2,11 @@ import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { PbButton } from '../ui';
+// Not from the `../ui` barrel: the unsaved-changes guard opens this dialog and
+// is imported eagerly by the routes, so a barrel import here pulled every
+// field component (datepicker, autocomplete, …) into the initial bundle —
+// about 90 kB over budget.
+import { PbButton } from '../ui/button/button';
 
 export interface ConfirmData {
   title: string;

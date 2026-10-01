@@ -18,7 +18,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
@@ -55,9 +55,12 @@ import {
 } from '../../shared/labels';
 import {
   PbAvatar,
+  PbBanner,
   PbButton,
   PbCheckboxField,
+  PbPage,
   PbPageHeader,
+  PbPaginator,
   PbSearchField,
   PbSelectField,
 } from '../../shared/ui';
@@ -213,7 +216,6 @@ function sameFilters(a: Filters, b: Filters): boolean {
     RouterLink,
     MatTableModule,
     MatSortModule,
-    MatPaginatorModule,
     MatChipsModule,
     MatButtonModule,
     MatMenuModule,
@@ -230,6 +232,9 @@ function sameFilters(a: Filters, b: Filters): boolean {
     PbButton,
     PbAvatar,
     PbPageHeader,
+    PbPage,
+    PbBanner,
+    PbPaginator,
     MatIconModule,
     TranslatePipe,
   ],

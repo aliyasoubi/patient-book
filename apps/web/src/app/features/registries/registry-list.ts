@@ -4,7 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -20,11 +20,7 @@ import {
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
-import {
-  RegistryKind,
-  RegistryQuery,
-  RegistryService,
-} from '../../core/services/registry.service';
+import { RegistryKind, RegistryQuery, RegistryService } from '../../core/services/registry.service';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import { LoadError } from '../../shared/components/load-error';
 import {
@@ -33,7 +29,7 @@ import {
 } from '../../shared/components/registry-case-dialog';
 import { RegistryTable } from '../../shared/components/registry-table';
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
-import { PbButton, PbPageHeader, PbSearchField } from '../../shared/ui';
+import { PbButton, PbPage, PbPageHeader, PbPaginator, PbSearchField } from '../../shared/ui';
 import type { RegistryCase } from '../../core/models/common.model';
 
 /** Everything that differs between the two registers' screens. */
@@ -77,13 +73,14 @@ const KINDS: Record<
     ReactiveFormsModule,
     MatChipsModule,
     MatIconModule,
-    MatPaginatorModule,
     MatProgressBarModule,
     RegistryTable,
     LoadError,
     PbSearchField,
     PbPageHeader,
     PbButton,
+    PbPage,
+    PbPaginator,
     TranslatePipe,
   ],
   templateUrl: './registry-list.html',
