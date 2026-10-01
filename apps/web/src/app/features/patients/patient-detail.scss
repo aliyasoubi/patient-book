@@ -1,5 +1,3 @@
-@use '../../../styles/a11y';
-
 .detail {
   max-width: var(--pb-page-content);
   margin-inline: auto;
@@ -87,17 +85,6 @@
     @media (max-width: 700px) {
       width: 100%;
       justify-content: flex-end;
-    }
-  }
-
-  &__call {
-    gap: 6px;
-  }
-
-  @media (max-width: 460px) {
-    &__call-label,
-    &__edit-label {
-      @include a11y.visually-hidden;
     }
   }
 }
@@ -381,7 +368,7 @@
 
   /* Compact: the row is one line of body text, not a 48px touch target. */
   &__edit {
-    --mdc-icon-button-state-layer-size: 32px;
+    --mat-icon-button-state-layer-size: 32px;
     padding: 4px;
     margin: -4px;
 

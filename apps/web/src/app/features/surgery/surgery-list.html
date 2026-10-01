@@ -5,8 +5,9 @@
     [count]="countLabel()"
   >
     @if (auth.can('editSurgery')) {
-      <pb-button routerLink="/surgery/new" icon="add" class="surgery__new">
-        <span class="surgery__new-label">{{ 'surgery.new' | translate }}</span>
+      <!-- Icon-only on the narrowest screens; the label crowds the title. -->
+      <pb-button routerLink="/surgery/new" icon="add" [collapseBelow]="560">
+        {{ 'surgery.new' | translate }}
       </pb-button>
     }
   </pb-page-header>

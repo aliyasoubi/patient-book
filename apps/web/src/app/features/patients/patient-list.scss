@@ -1,5 +1,3 @@
-@use '../../../styles/a11y';
-
 :host {
   display: block;
 }
@@ -51,17 +49,7 @@
   }
 
   &__new {
-    gap: 6px;
     flex: 0 0 auto;
-
-    @media (max-width: 560px) {
-      .list__new-label {
-        // Icon-only on the narrowest screens; the label crowds the title.
-        @include a11y.visually-hidden;
-      }
-      min-width: 48px;
-      padding-inline: 12px;
-    }
   }
 
   &__toolbar {
@@ -75,37 +63,16 @@
     min-width: 0;
   }
 
+  // As tall as the search pill beside it. While any filter is on, the
+  // outline and label take the primary colour, so the button reads as "set".
   &__filter-btn {
     flex: 0 0 auto;
-    height: var(--pb-search-height);
-    gap: 6px;
+    --mat-button-outlined-container-height: var(--pb-search-height);
 
     &.is-active {
-      border-color: var(--mat-sys-primary);
-      color: var(--mat-sys-primary);
+      --mat-button-outlined-outline-color: var(--mat-sys-primary);
+      --mat-button-outlined-label-text-color: var(--mat-sys-primary);
     }
-
-    @media (max-width: 560px) {
-      .list__filter-label {
-        @include a11y.visually-hidden;
-      }
-      min-width: 48px;
-      padding-inline: 12px;
-    }
-  }
-
-  &__filter-badge {
-    display: grid;
-    place-items: center;
-    min-width: 18px;
-    height: 18px;
-    padding-inline: 5px;
-    border-radius: var(--mat-sys-corner-small);
-    background: var(--mat-sys-primary);
-    color: var(--mat-sys-on-primary);
-    font: var(--mat-sys-label-small);
-    font-weight: 700;
-    letter-spacing: var(--mat-sys-label-small-tracking);
   }
 
   &__results {
@@ -129,9 +96,11 @@
   &__linked-chip {
     // A filter the panel cannot show or clear; colour it like the active
     // filter button so it reads as part of the same state.
-    --mdc-chip-elevated-container-color: var(--mat-sys-secondary-container);
-    --mdc-chip-label-text-color: var(--mat-sys-on-secondary-container);
-    --mdc-chip-with-icon-icon-color: var(--mat-sys-on-secondary-container);
+    --mat-chip-elevated-container-color: var(--mat-sys-secondary-container);
+    --mat-chip-outline-color: transparent;
+    --mat-chip-label-text-color: var(--mat-sys-on-secondary-container);
+    --mat-chip-with-icon-icon-color: var(--mat-sys-on-secondary-container);
+    --mat-chip-with-trailing-icon-trailing-icon-color: var(--mat-sys-on-secondary-container);
   }
 
   &__paginator {
@@ -187,8 +156,6 @@
 
   &__clear {
     margin-inline-start: auto;
-    gap: 6px;
-    color: var(--mat-sys-error);
   }
 }
 

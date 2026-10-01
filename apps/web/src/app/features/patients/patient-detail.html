@@ -41,13 +41,18 @@
 
       <div class="hero__actions">
         @if (p.mobile) {
-          <pb-button [href]="'tel:' + p.mobile" icon="call" class="hero__call">
-            <span class="hero__call-label">{{ 'common.call' | translate }}</span>
+          <pb-button [href]="'tel:' + p.mobile" icon="call" [collapseBelow]="460">
+            {{ 'common.call' | translate }}
           </pb-button>
         }
         @if (auth.can('editPatients') && !p.isArchived) {
-          <pb-button variant="stroked" [routerLink]="['/patients', p.id, 'edit']" icon="edit">
-            <span class="hero__edit-label">{{ 'common.edit' | translate }}</span>
+          <pb-button
+            variant="stroked"
+            [routerLink]="['/patients', p.id, 'edit']"
+            icon="edit"
+            [collapseBelow]="460"
+          >
+            {{ 'common.edit' | translate }}
           </pb-button>
         }
         <button
@@ -113,14 +118,13 @@
                   }
                 </div>
                 @if (auth.can('editPatients')) {
-                  <button
-                    mat-button
-                    type="button"
+                  <pb-button
+                    variant="text"
                     (click)="resolveIssue(issue.field)"
-                    [matTooltip]="'patientDetail.markReviewedTooltip' | translate"
+                    [tooltip]="'patientDetail.markReviewedTooltip' | translate"
                   >
-                    <span>{{ 'patientDetail.reviewed' | translate }}</span>
-                  </button>
+                    {{ 'patientDetail.reviewed' | translate }}
+                  </pb-button>
                 }
               </li>
             }

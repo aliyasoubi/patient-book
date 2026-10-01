@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -34,7 +33,7 @@ import {
 } from '../../shared/components/registry-case-dialog';
 import { RegistryTable } from '../../shared/components/registry-table';
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
-import { PbPageHeader, PbSearchField } from '../../shared/ui';
+import { PbButton, PbPageHeader, PbSearchField } from '../../shared/ui';
 import type { RegistryCase } from '../../core/models/common.model';
 
 /** Everything that differs between the two registers' screens. */
@@ -76,7 +75,6 @@ const KINDS: Record<
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatButtonModule,
     MatChipsModule,
     MatIconModule,
     MatPaginatorModule,
@@ -85,6 +83,7 @@ const KINDS: Record<
     LoadError,
     PbSearchField,
     PbPageHeader,
+    PbButton,
     TranslatePipe,
   ],
   templateUrl: './registry-list.html',

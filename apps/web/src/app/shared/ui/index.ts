@@ -13,7 +13,7 @@ export { PbCheckboxField } from './checkbox-field/checkbox-field';
 export { PbSearchField } from './search-field/search-field';
 export type { SearchFieldOption } from './search-field/search-field';
 export { PbButton } from './button/button';
-export type { ButtonSize, ButtonVariant } from './button/button';
+export type { ButtonSize, ButtonTone, ButtonVariant } from './button/button';
 export { PbSurface } from './surface/surface';
 export { PbPageHeader } from './page-header/page-header';
 export { PbAvatar } from './avatar/avatar';

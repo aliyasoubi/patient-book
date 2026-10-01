@@ -29,6 +29,24 @@
         "DB_NAME=patient_book_e2e npm run start:dev --workspace=api"
       ],
       "port": 3000
+    },
+    {
+      "name": "api-ui-e2e",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "DB_NAME=patient_book_ui_e2e API_PORT=3100 npm run start:dev --workspace=api"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "web-ui-e2e",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "API_PORT=3100 npm run start --workspace=web -- --port 4300"
+      ],
+      "port": 4300
     }
   ]
 }

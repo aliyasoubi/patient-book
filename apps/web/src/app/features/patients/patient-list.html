@@ -2,8 +2,9 @@
   <!-- ── Header ────────────────────────────────────────────────── -->
   <pb-page-header [title]="'patients.title' | translate" [count]="countLabel()">
     @if (auth.can('editPatients')) {
-      <pb-button routerLink="/patients/new" icon="person_add" class="list__new">
-        <span class="list__new-label">{{ 'patients.new' | translate }}</span>
+      <!-- Icon-only on the narrowest screens; the label crowds the title. -->
+      <pb-button routerLink="/patients/new" icon="person_add" class="list__new" [collapseBelow]="560">
+        {{ 'patients.new' | translate }}
       </pb-button>
     }
   </pb-page-header>
@@ -17,20 +18,18 @@
       [ariaLabel]="'patients.searchAria' | translate"
     />
 
-    <button
-      mat-stroked-button
-      type="button"
+    <pb-button
+      variant="stroked"
+      icon="tune"
       class="list__filter-btn"
       [class.is-active]="activeFilterCount() > 0"
+      [ariaExpanded]="filtersOpen()"
+      [badge]="activeFilterCount() > 0 ? (activeFilterCount() | faNum) : null"
+      [collapseBelow]="560"
       (click)="filtersOpen.set(!filtersOpen())"
-      [attr.aria-expanded]="filtersOpen()"
     >
-      <mat-icon aria-hidden="true">tune</mat-icon>
-      <span class="list__filter-label">{{ 'common.filters' | translate }}</span>
-      @if (activeFilterCount() > 0) {
-        <span class="list__filter-badge">{{ activeFilterCount() | faNum }}</span>
-      }
-    </button>
+      {{ 'common.filters' | translate }}
+    </pb-button>
   </div>
 
   <!-- ── Linked-in referral filter ─────────────────────────────── -->
@@ -136,6 +135,7 @@
         @if (activeFilterCount() > 0) {
           <pb-button
             variant="text"
+            tone="danger"
             type="button"
             (click)="clearFilters()"
             icon="filter_alt_off"

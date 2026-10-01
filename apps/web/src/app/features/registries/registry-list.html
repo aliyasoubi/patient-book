@@ -16,18 +16,17 @@
     <!-- One sort key, so a direction toggle rather than a sort menu: the
          label names the key, the arrow shows the current order, and the
          accessible name says both. -->
-    <button
-      mat-stroked-button
-      type="button"
+    <pb-button
+      variant="stroked"
       class="registry-page__sort"
-      (click)="toggleSort()"
-      [attr.aria-label]="
+      [icon]="sortDir() === 'DESC' ? 'arrow_downward' : 'arrow_upward'"
+      [ariaLabel]="
         (sortDir() === 'DESC' ? 'registry.sortDescAria' : 'registry.sortAscAria') | translate
       "
+      (click)="toggleSort()"
     >
-      <mat-icon aria-hidden="true">{{ sortDir() === 'DESC' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
-      <span>{{ 'registry.sortByNumber' | translate }}</span>
-    </button>
+      {{ 'registry.sortByNumber' | translate }}
+    </pb-button>
 
     <!-- Independent toggles on a list are M3 filter chips, not checkboxes. -->
     <mat-chip-listbox

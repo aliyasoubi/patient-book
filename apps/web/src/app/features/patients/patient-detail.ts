@@ -9,7 +9,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
@@ -46,7 +45,6 @@ import type { AuditEntry } from '../../core/models/common.model';
     MatMenuModule,
     MatTabsModule,
     MatProgressBarModule,
-    MatTooltipModule,
     MatDialogModule,
     JalaliPipe,
     PersianNumberPipe,
