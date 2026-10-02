@@ -57,12 +57,29 @@ export class PatientQueryBuilder {
   }
 
   /**
+   * The search bar's type-ahead: the same matching and ranking as the list,
+   * cut to the few best rows. Returns `null` for a query too short to search.
+   */
+  suggest(q: string, limit: number): SelectQueryBuilder<Patient> | null {
+    const key = searchKey(q);
+    if (key.length < 2) return null;
+
+    const qb = this.patients
+      .createQueryBuilder('p')
+      .select(['p.id', 'p.fileNo', 'p.firstName', 'p.lastName', 'p.mobile']);
+    this.applySearch(qb, key);
+    this.orderByRelevance(qb);
+    return qb.limit(limit);
+  }
+
+  /**
    * Free-text search over the folded `searchText` column.
    *
    * The query is folded exactly the way the column was, so a receptionist
    * typing Arabic ي or Persian digits matches rows stored in the Persian forms.
-   * Every word must match, which is what makes a two-word query narrow the
-   * result set rather than widen it.
+   * Every word must match, in any order and as any fragment, which is what
+   * makes "محمد مرادی" find محمدرضا مرادی and narrows a two-word query rather
+   * than widening it.
    */
   private applySearch(qb: SelectQueryBuilder<Patient>, q?: string): void {
     const key = searchKey(q);
@@ -77,11 +94,35 @@ export class PatientQueryBuilder {
       }),
     );
 
+    // How many query words begin a word of the patient's own name. This is
+    // what ranks the people *called* مرادی above those who merely live on a
+    // street of that name — `searchText` also holds addresses and occupation,
+    // so its similarity alone buries a patient with a long address.
+    const nameHits = words
+      .map((_, i) => `((' ' || p."nameKey") LIKE :n${i})::int`)
+      .join(' + ');
+    words.forEach((word, i) => qb.setParameter(`n${i}`, `% ${word}%`));
+
     // Ranking terms are exposed as select aliases: TypeORM's `orderBy` reads a
     // raw expression's leading token as a table alias and rejects it.
     qb.addSelect(`(p."fileNo" = :simKey)`, 'exact_file')
+      .addSelect(`(${nameHits})`, 'name_hits')
+      .addSelect(`similarity(p."nameKey", :simKey)`, 'name_sim')
       .addSelect(`similarity(p."searchText", :simKey)`, 'sim')
       .setParameter('simKey', key);
+  }
+
+  /**
+   * An exact file number outranks everything, then the patient whose name
+   * matches the most query words, then the closest name, and only then the
+   * rest of the record.
+   */
+  private orderByRelevance(qb: SelectQueryBuilder<Patient>): void {
+    qb.orderBy('exact_file', 'DESC')
+      .addOrderBy('name_hits', 'DESC')
+      .addOrderBy('name_sim', 'DESC')
+      .addOrderBy('sim', 'DESC')
+      .addOrderBy('p.lastName', 'ASC');
   }
 
   private applyFilters(
@@ -140,12 +181,9 @@ export class PatientQueryBuilder {
     qb: SelectQueryBuilder<Patient>,
     dto: QueryPatientsDto,
   ): void {
-    if (dto.q && !dto.sortBy) {
-      // Relevance only means something when there is a query. An exact file
-      // number outranks everything, then trigram closeness.
-      qb.orderBy('exact_file', 'DESC')
-        .addOrderBy('sim', 'DESC')
-        .addOrderBy('p.lastName', 'ASC');
+    if (searchKey(dto.q) && !dto.sortBy) {
+      // Relevance only means something when there is a query.
+      this.orderByRelevance(qb);
       return;
     }
 

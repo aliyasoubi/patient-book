@@ -107,9 +107,10 @@ export class PatientsService {
   }
 
   /**
-   * Type-ahead for the search bar. Returns the few best matches only, ranked by
-   * trigram similarity so a partial or slightly misspelled Persian name still
-   * surfaces the right patient.
+   * Type-ahead for the search bar. Returns the few best matches only, matched
+   * and ranked exactly as the patient list is, so a name that the list finds
+   * is never missing from the suggestions just because it was typed in
+   * fragments or in a different word order.
    */
   async suggest(
     q: string,
@@ -117,18 +118,9 @@ export class PatientsService {
   ): Promise<
     Array<Pick<PatientResponse, 'id' | 'fileNo' | 'fullName' | 'mobile'>>
   > {
-    const key = searchKey(q);
-    if (key.length < 2) return [];
-
-    const rows = await this.patients
-      .createQueryBuilder('p')
-      .select(['p.id', 'p.fileNo', 'p.firstName', 'p.lastName', 'p.mobile'])
-      .where('p."searchText" LIKE :like', { like: `%${key}%` })
-      .orderBy('similarity(p."searchText", :key)', 'DESC')
-      .addOrderBy('length(p."searchText")', 'ASC')
-      .setParameter('key', key)
-      .limit(limit)
-      .getMany();
+    const qb = this.queries.suggest(q, limit);
+    if (!qb) return [];
+    const rows = await qb.getMany();
 
     return rows.map((p) => ({
       id: p.id,

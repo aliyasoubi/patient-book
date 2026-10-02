@@ -121,3 +121,61 @@ describe('PatientQueryBuilder sorting', () => {
     expect(calls.get('orderBy')).not.toHaveBeenCalled();
   });
 });
+
+describe('PatientQueryBuilder search', () => {
+  const search = (q: string): QueryPatientsDto =>
+    ({ q, sortDir: 'ASC', page: 1, limit: 25 }) as QueryPatientsDto;
+
+  it('ranks by how well the name matches before the rest of the record', () => {
+    // `searchText` also holds addresses and occupation; ranking on it alone
+    // put محمدرضا مرادی 14th of 17 for "مرادی" because of a long address.
+    const { builder, calls } = stub();
+
+    builder.build(search('محمد مرادی'));
+
+    const order = [
+      ...calls.get('orderBy')!.mock.calls,
+      ...calls.get('addOrderBy')!.mock.calls,
+    ].map(([column]) => column);
+    expect(order).toEqual([
+      'exact_file',
+      'name_hits',
+      'name_sim',
+      'sim',
+      'p.lastName',
+    ]);
+  });
+
+  it('counts each query word that begins a word of the name', () => {
+    const { builder, calls } = stub();
+
+    builder.build(search('محمد مرادی'));
+
+    expect(calls.get('addSelect')).toHaveBeenCalledWith(
+      `(((' ' || p."nameKey") LIKE :n0)::int + ((' ' || p."nameKey") LIKE :n1)::int)`,
+      'name_hits',
+    );
+    expect(calls.get('setParameter')).toHaveBeenCalledWith('n0', '% محمد%');
+    expect(calls.get('setParameter')).toHaveBeenCalledWith('n1', '% مرادی%');
+  });
+
+  it('folds the query before matching, as the column was folded', () => {
+    const { builder, calls } = stub();
+
+    builder.build(search('علي'));
+
+    expect(calls.get('setParameter')).toHaveBeenCalledWith('simKey', 'علی');
+  });
+
+  it('does not rank a blank query by relevance', () => {
+    const { builder, calls } = stub();
+
+    builder.build(search('   '));
+
+    expect(calls.get('orderBy')).toHaveBeenCalledWith(
+      'p.lastName',
+      'ASC',
+      'NULLS LAST',
+    );
+  });
+});

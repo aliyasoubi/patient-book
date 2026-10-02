@@ -152,6 +152,14 @@ export class Patient {
   searchText!: string;
 
   /**
+   * The full name alone, folded like `searchText`. Search ranks on it so that
+   * a patient whose *name* matches is not outranked by one whose address or
+   * occupation merely contains the same word.
+   */
+  @Column({ type: 'text', default: '' })
+  nameKey!: string;
+
+  /**
    * Import-time complaints about this row — an unparseable date, a national id
    * that fails its check digit. Stored as codes rather than sentences so the
    * UI renders them in the reader's language and the API stays locale-free.
@@ -190,6 +198,7 @@ export class Patient {
   @BeforeInsert()
   @BeforeUpdate()
   buildSearchText(): void {
+    this.nameKey = searchKey(`${this.firstName ?? ''} ${this.lastName ?? ''}`);
     this.searchText = searchKey(
       [
         this.fileNo,
