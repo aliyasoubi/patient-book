@@ -65,3 +65,12 @@
 		file_server
 	}
 }
+
+# www.dentixo.ir → dentixo.ir, keeping the path and query, so anyone who types
+# `www` or follows an old link lands on the same page of the one real site —
+# the front page for `/`, the app for `/login` and the rest.
+# Needs its own DNS record pointing at this VPS (an A record, or a CNAME to the
+# bare domain); Caddy obtains its certificate the same way as the main one.
+www.{$PB_DOMAIN} {
+	redir https://{$PB_DOMAIN}{uri} permanent
+}
