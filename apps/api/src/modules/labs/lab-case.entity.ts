@@ -12,7 +12,7 @@ import {
   VersionColumn,
 } from 'typeorm';
 
-import { LabWorkType } from '../../domain';
+import { LabJaw, LabWorkType } from '../../domain';
 import { Patient } from '../patients/patient.entity';
 import { Lab } from './lab.entity';
 import { LabTrip } from './lab-trip.entity';
@@ -56,6 +56,10 @@ export class LabCase {
 
   @Column({ type: 'enum', enum: LabWorkType, array: true, default: [] })
   workTypes!: LabWorkType[];
+
+  /** فک: for a night guard, which is made per jaw and has no tooth numbers. */
+  @Column({ type: 'enum', enum: LabJaw, nullable: true })
+  jaw!: LabJaw | null;
 
   /** تعداد دندان‌ها */
   @Column({ type: 'smallint', nullable: true })

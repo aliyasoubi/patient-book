@@ -509,6 +509,7 @@ export class LabCasesService {
     }
     if (dto.recordedName !== undefined) c.recordedName = dto.recordedName;
     if (dto.workTypes !== undefined) c.workTypes = dto.workTypes;
+    if (dto.jaw !== undefined) c.jaw = dto.jaw ?? null;
     if (dto.toothCount !== undefined) c.toothCount = dto.toothCount ?? null;
     if (dto.teeth !== undefined) c.teeth = dto.teeth ?? '';
     if (dto.implantBrand !== undefined)
@@ -562,6 +563,7 @@ export class LabCasesService {
         ? { id: c.lab.id, name: c.lab.name, isActive: c.lab.isActive }
         : null,
       workTypes: c.workTypes,
+      jaw: c.jaw,
       toothCount: c.toothCount,
       teeth: c.teeth,
       implantBrand: c.implantBrand,

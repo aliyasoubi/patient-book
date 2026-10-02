@@ -35,6 +35,9 @@ interface LabCaseBody {
   id: string;
   version: number;
   stage: 'at_lab' | 'at_clinic' | 'delivered';
+  jaw: 'upper' | 'lower' | 'both' | null;
+  toothCount: number | null;
+  teeth: string;
   timeliness: 'on_time' | 'due_today' | 'overdue' | null;
   daysLate: number;
   partsOutstanding: boolean;
@@ -386,6 +389,40 @@ describeIfWritable('lab flows (e2e)', () => {
   });
 
   describe('editing a case', () => {
+    it('records a night guard by jaw, and moves it to teeth when it becomes other work', async () => {
+      const opened = await openCase(`آزمون نایت گارد ${runId}`, 0, 7, {
+        workTypes: ['night_guard'],
+        jaw: 'upper',
+      });
+      expect(opened).toMatchObject({
+        jaw: 'upper',
+        toothCount: null,
+        teeth: '',
+      });
+
+      const edited = (
+        await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
+          .send({
+            workTypes: ['crown'],
+            jaw: null,
+            toothCount: 1,
+            teeth: '۶ بالا راست',
+            expectedVersion: opened.version,
+          })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(edited).toMatchObject({
+        jaw: null,
+        toothCount: 1,
+        teeth: '۶ بالا راست',
+      });
+
+      // Not a jaw the form offers.
+      await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
+        .send({ jaw: 'left', expectedVersion: edited.version })
+        .expect(400);
+    });
+
     it('corrects the latest trip, and is refused once the case has moved', async () => {
       const opened = await openCase(`آزمون ویرایش ${runId}`, 0, 7);
 

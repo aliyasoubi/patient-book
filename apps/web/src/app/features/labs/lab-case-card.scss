@@ -58,6 +58,12 @@
     }
   }
 
+  /** Which lab has it is what staff scan the board for: it reads above the rest. */
+  &__detail--lab {
+    font-weight: 600;
+    color: var(--mat-sys-on-surface);
+  }
+
   &__status {
     display: flex;
     flex-wrap: wrap;

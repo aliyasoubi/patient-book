@@ -29,14 +29,22 @@ import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } fr
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import { HasUnsavedChanges, warnBeforeUnload } from '../../core/guards/unsaved-changes.guard';
-import type { Lab, LabCase, LabTripKind, LabWorkType } from '../../core/models/common.model';
+import type {
+  Lab,
+  LabCase,
+  LabJaw,
+  LabTripKind,
+  LabWorkType,
+} from '../../core/models/common.model';
 import { LabCaseInput, LabService } from '../../core/services/lab.service';
 import { PatientsService } from '../patients/data/patients.service';
 import type { PatientSuggestion } from '../patients/data/patient.model';
 import { adoptUntouched } from '../../shared/form-sync';
 import {
   IMPLANT_BRAND_KEYS,
+  LAB_JAWS,
   LAB_WORK_TYPES,
+  labJawLabel,
   defaultLabWaitDays,
   labTripKindLabel,
 } from '../../shared/labels';
@@ -51,12 +59,13 @@ import {
   PbIconButton,
   PbPage,
   PbPageHeader,
+  PbSegmentedButton,
   PbSelectField,
   PbSurface,
   PbTextField,
   PbTextareaField,
 } from '../../shared/ui';
-import type { SelectOption, TextFieldOption } from '../../shared/ui';
+import type { SegmentOption, SelectOption, TextFieldOption } from '../../shared/ui';
 import { labTripKindOptions, labWaitOptions, labWorkTypeOptions } from './lab-options';
 
 interface LinkedPatient {
@@ -105,6 +114,7 @@ const atLeastOne = (control: AbstractControl<string[]>): ValidationErrors | null
     PbIconButton,
     PbPage,
     PbPageHeader,
+    PbSegmentedButton,
     PbSelectField,
     PbSurface,
     PbTextField,
@@ -143,6 +153,7 @@ export class LabCaseForm implements HasUnsavedChanges {
     recordedName: ['', [Validators.required, Validators.maxLength(160)]],
     labId: ['', Validators.required],
     workTypes: this.fb.nonNullable.control<string[]>([], atLeastOne),
+    jaw: ['upper' as LabJaw],
     toothCount: ['', count(1, 32)],
     teeth: ['', Validators.maxLength(200)],
     implantBrand: [''],
@@ -158,6 +169,17 @@ export class LabCaseForm implements HasUnsavedChanges {
   private readonly workTypesValue = toSignal(this.form.controls.workTypes.valueChanges, {
     initialValue: [] as string[],
   });
+  /** A night guard on its own is made per jaw: the jaw replaces the tooth fields. */
+  protected readonly isNightGuardOnly = computed(() => {
+    const types = this.workTypesValue();
+    return types.length === 1 && types[0] === 'night_guard';
+  });
+  protected readonly jawOptions: SegmentOption[] = LAB_JAWS.map((jaw) => ({
+    value: jaw,
+    label: labJawLabel(jaw),
+    translate: true,
+  }));
+
   protected readonly isImplantCrown = computed(() =>
     this.workTypesValue().includes('implant_crown'),
   );
@@ -292,6 +314,11 @@ export class LabCaseForm implements HasUnsavedChanges {
     this.form.markAsDirty();
   }
 
+  protected setJaw(jaw: LabJaw): void {
+    this.form.controls.jaw.setValue(jaw);
+    this.form.controls.jaw.markAsDirty();
+  }
+
   protected setWorkTypes(types: string[]): void {
     const control = this.form.controls.workTypes;
     // In the catalogue's order, not the order they were tapped in, so every
@@ -332,6 +359,7 @@ export class LabCaseForm implements HasUnsavedChanges {
       recordedName: c.recordedName,
       labId: c.lab?.id ?? '',
       workTypes: [...c.workTypes] as string[],
+      jaw: c.jaw ?? ('upper' as LabJaw),
       toothCount: c.toothCount ? String(c.toothCount) : '',
       teeth: c.teeth,
       implantBrand: c.implantBrand ?? '',
@@ -360,13 +388,16 @@ export class LabCaseForm implements HasUnsavedChanges {
     const raw = this.form.getRawValue();
     const blank = (v: string): string | null => v.trim() || null;
     const implant = raw.workTypes.includes('implant_crown');
+    const nightGuard = this.isNightGuardOnly();
     const body: LabCaseInput = {
       patientId: this.linkedPatient()?.id ?? null,
       recordedName: raw.recordedName.trim(),
       labId: raw.labId,
       workTypes: raw.workTypes as LabWorkType[],
-      toothCount: countValue(raw.toothCount),
-      teeth: blank(raw.teeth),
+      // One or the other: a night guard by its jaw, everything else by its teeth.
+      jaw: nightGuard ? raw.jaw : null,
+      toothCount: nightGuard ? null : countValue(raw.toothCount),
+      teeth: nightGuard ? null : blank(raw.teeth),
       // The parts go with an implant crown only; a case that is no longer one
       // must not keep owing them.
       implantBrand: implant ? raw.implantBrand || null : null,

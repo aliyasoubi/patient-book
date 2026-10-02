@@ -62,18 +62,31 @@
           }
         </div>
 
-        <pb-text-field
-          [control]="form.controls.toothCount"
-          [label]="'labForm.toothCount' | translate"
-          inputmode="numeric"
-          [ltr]="true"
-        />
-        <pb-text-field
-          [control]="form.controls.teeth"
-          [label]="'labForm.teeth' | translate"
-          [hint]="'labForm.teethHint' | translate"
-          [maxlength]="200"
-        />
+        @if (isNightGuardOnly()) {
+          <!-- Made per jaw: no tooth count, no tooth numbers. -->
+          <div class="pb-field-grid__full form__work">
+            <span class="form__label">{{ 'labForm.jaw' | translate }}</span>
+            <pb-segmented-button
+              [options]="jawOptions"
+              [value]="form.controls.jaw.value"
+              (valueChange)="setJaw($any($event))"
+              [ariaLabel]="'labForm.jaw' | translate"
+            />
+          </div>
+        } @else {
+          <pb-text-field
+            [control]="form.controls.toothCount"
+            [label]="'labForm.toothCount' | translate"
+            inputmode="numeric"
+            [ltr]="true"
+          />
+          <pb-text-field
+            [control]="form.controls.teeth"
+            [label]="'labForm.teeth' | translate"
+            [hint]="'labForm.teethHint' | translate"
+            [maxlength]="200"
+          />
+        }
 
         <!-- The parts the clinic lends the lab for an implant crown, and owes back. -->
         @if (isImplantCrown()) {

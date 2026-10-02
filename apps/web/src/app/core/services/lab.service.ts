@@ -7,6 +7,7 @@ import type {
   Lab,
   LabBoard,
   LabCase,
+  LabJaw,
   LabTripKind,
   LabWorkType,
   PageResult,
@@ -19,6 +20,7 @@ export interface LabCaseInput {
   recordedName?: string;
   labId?: string;
   workTypes?: LabWorkType[];
+  jaw?: LabJaw | null;
   toothCount?: number | null;
   teeth?: string | null;
   implantBrand?: string | null;
