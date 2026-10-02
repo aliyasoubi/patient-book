@@ -61,6 +61,14 @@ if [[ "$routing_ok" != true ]]; then
   exit 1
 fi
 
+# www only redirects, and its DNS record is set up separately, so a miss here
+# is a warning: the real site above is already confirmed working.
+www_target="$(curl -sS --max-time 10 -o /dev/null -w '%{redirect_url}' \
+  --resolve "www.$domain:443:127.0.0.1" "https://www.$domain/login" 2>/dev/null || true)"
+if [[ "$www_target" != "https://$domain/login" ]]; then
+  echo "!  www.$domain does not redirect to https://$domain yet — check its DNS record" >&2
+fi
+
 # Old image layers accumulate quickly on a small VPS disk.
 docker image prune -f >/dev/null
 
