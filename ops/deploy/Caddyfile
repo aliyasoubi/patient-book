@@ -43,14 +43,22 @@
 	handle {
 		root * /srv
 
-		# Angular hashes every built filename, so those may be cached forever.
-		# The shell and the translation dictionary must not be, or an open tab
-		# keeps running the previous deploy. The two matchers are disjoint so
-		# the rule holds after try_files rewrites a deep link to index.html.
-		@immutable path *.js *.css *.woff2 *.woff *.ttf *.otf *.png *.jpg *.webp *.avif
-		@shell not path *.js *.css *.woff2 *.woff *.ttf *.otf *.png *.jpg *.webp *.avif
+		# Only what Angular builds carries a content hash in its name
+		# (`chunk-3KiqRAay.js`, `styles-YEQF2DVG.css`, fonts under media/), and
+		# only at those two places, so exactly those may be cached forever. Everything
+		# else revalidates: the shell and the translation dictionary, or an open
+		# tab keeps running the previous deploy, and the unhashed files from
+		# public/ (icons, the front page), or a replaced one never reaches anyone.
+		# The two matchers are disjoint so the rule holds after try_files
+		# rewrites a deep link to index.html.
+		@immutable path_regexp `^/(media/)?[^/]+-[A-Za-z0-9_-]{8}\.(js|css|woff2|woff|ttf|otf|png|jpg|webp|avif|svg)$`
+		@shell not path_regexp `^/(media/)?[^/]+-[A-Za-z0-9_-]{8}\.(js|css|woff2|woff|ttf|otf|png|jpg|webp|avif|svg)$`
 		header @immutable Cache-Control "public, max-age=31536000, immutable"
 		header @shell Cache-Control "no-cache"
+
+		# The public front page, at exactly `/`. Every other path is still the
+		# app, so /login, /dashboard and deep links are unchanged.
+		rewrite / /landing/index.html
 
 		# Client-side routing: /patients/123 is a route, not a file on disk.
 		try_files {path} /index.html

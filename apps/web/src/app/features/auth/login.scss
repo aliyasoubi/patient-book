@@ -35,11 +35,15 @@ $desktop: 900px;
 }
 
 /*
- * The hero is built from the M3 *fixed* roles, which hold the same tone in
- * light and dark mode — the brand panel is a deep navy in both, so the
- * glass and the glow on it never have to be tuned twice.
+ * The hero is the front page's scene (public/landing/landing.css) — its
+ * night background, colour fields, line grid and headline gradient — so
+ * stepping from dentixo.ir to sign-in feels like one product. Colours are
+ * the M3 *fixed* roles, which hold the same tone in light and dark mode;
+ * the two hexes below are the landing's own and have no M3 role.
  */
 .login {
+  --login-night: #060912;
+  --login-teal: #8fd6c9;
   --login-ink: var(--mat-sys-primary-fixed);
   --login-glass: color-mix(in srgb, white 7%, transparent);
   --login-glass-edge: color-mix(in srgb, white 14%, transparent);
@@ -62,17 +66,13 @@ $desktop: 900px;
     overflow: hidden;
     padding: var(--pb-space-5) var(--pb-space-5) calc(var(--pb-space-6) + 28px);
     color: var(--login-ink);
-    background: linear-gradient(
-      150deg,
-      var(--mat-sys-on-primary-fixed) 0%,
-      var(--mat-sys-on-primary-fixed-variant) 58%,
-      color-mix(in oklab, var(--mat-sys-on-tertiary-fixed-variant) 80%, black) 100%
-    );
+    background: var(--login-night);
 
     @media (min-width: $desktop) {
       margin: var(--pb-space-3);
       margin-inline-end: 0;
       padding: var(--pb-space-6) calc(var(--pb-space-6) + var(--pb-space-4));
+      border: 1px solid var(--login-glass-edge);
       border-radius: var(--mat-sys-corner-extra-large);
       box-shadow: 0 30px 60px -30px
         color-mix(in srgb, var(--mat-sys-on-primary-fixed) 70%, transparent);
@@ -88,8 +88,8 @@ $desktop: 900px;
   &__blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.32;
+    filter: blur(90px);
+    opacity: 0.5;
     animation: login-drift 22s ease-in-out infinite alternate;
 
     &--one {
@@ -97,7 +97,7 @@ $desktop: 900px;
       aspect-ratio: 1;
       inset-block-start: -15%;
       inset-inline-start: -10%;
-      background: var(--mat-sys-primary-fixed-dim);
+      background: var(--mat-sys-on-primary-fixed-variant);
     }
 
     &--two {
@@ -105,8 +105,7 @@ $desktop: 900px;
       aspect-ratio: 1;
       inset-block-end: -10%;
       inset-inline-end: -8%;
-      background: var(--mat-sys-tertiary-fixed-dim);
-      opacity: 0.26;
+      background: var(--mat-sys-on-tertiary-fixed-variant);
       animation-duration: 26s;
       animation-delay: -8s;
     }
@@ -116,23 +115,24 @@ $desktop: 900px;
       aspect-ratio: 1;
       inset-block-start: 40%;
       inset-inline-start: 35%;
-      background: var(--mat-sys-primary-fixed);
-      opacity: 0.12;
+      /* The landing's deep teal; no M3 role carries it. */
+      background: #12403a;
+      opacity: 0.45;
       animation-duration: 30s;
       animation-delay: -14s;
     }
   }
 
-  &__dots {
+  /* The landing's faint line grid, fading out from the headline. */
+  &__grid {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-image: radial-gradient(
-      color-mix(in srgb, white 22%, transparent) 1px,
-      transparent 1px
-    );
-    background-size: 22px 22px;
-    mask-image: radial-gradient(ellipse 70% 60% at 30% 35%, black, transparent 75%);
+    background-image:
+      linear-gradient(color-mix(in srgb, white 4.5%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, white 4.5%, transparent) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 60% at 60% 70%, black, transparent 75%);
   }
 
   /* The mark again, oversized and faint — a texture, not a second logo. */
@@ -162,10 +162,20 @@ $desktop: 900px;
     animation: login-rise 700ms var(--pb-ease-emphasized) both;
   }
 
+  /* Back to the front page — a plain link: the app router would send `/` to the dashboard. */
   &__brand {
     display: flex;
     align-items: center;
     gap: var(--pb-space-3);
+    inline-size: fit-content;
+    border-radius: var(--mat-sys-corner-medium);
+    color: inherit;
+    text-decoration: none;
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary-fixed-dim);
+      outline-offset: 4px;
+    }
 
     h1 {
       margin: 0;
@@ -203,10 +213,11 @@ $desktop: 900px;
     font-weight: 800;
     line-height: 1.6;
     background: linear-gradient(
-      90deg,
-      white,
-      var(--mat-sys-primary-fixed-dim) 55%,
-      var(--mat-sys-tertiary-fixed)
+      100deg,
+      var(--mat-sys-primary-fixed),
+      var(--mat-sys-primary-fixed-dim) 30%,
+      var(--mat-sys-tertiary-fixed-dim) 60%,
+      var(--login-teal) 90%
     );
     background-clip: text;
     color: transparent;
@@ -258,13 +269,14 @@ $desktop: 900px;
     flex: 0 0 auto;
     inline-size: 40px;
     block-size: 40px;
+    border: 1px solid var(--login-glass-edge);
     border-radius: var(--mat-sys-corner-medium);
     background: linear-gradient(
       135deg,
-      var(--mat-sys-primary-fixed-dim),
-      var(--mat-sys-tertiary-fixed-dim)
+      color-mix(in srgb, var(--mat-sys-primary-fixed-dim) 18%, transparent),
+      color-mix(in srgb, var(--mat-sys-tertiary-fixed-dim) 8%, transparent)
     );
-    color: var(--mat-sys-on-primary-fixed);
+    color: var(--mat-sys-primary-fixed-dim);
 
     mat-icon {
       font-size: var(--pb-icon-md);
