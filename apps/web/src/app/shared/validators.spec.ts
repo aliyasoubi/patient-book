@@ -60,13 +60,14 @@ describe('iranianNationalId', () => {
     expect(iranianNationalId(new FormControl('۰۰۷۸۹۸۰۵۰۱'))).toBeNull();
   });
 
-  it('flags length before the check digit', () => {
+  it('flags a code that is not ten digits', () => {
     expect(iranianNationalId(new FormControl('007898050'))).toEqual({ nationalIdLength: true });
     expect(iranianNationalId(new FormControl('007-898-0501'))).toEqual({ nationalIdLength: true });
   });
 
-  it('rejects a wrong check digit and the never-issued repeated codes', () => {
-    expect(iranianNationalId(new FormControl('0078980502'))).toEqual({ nationalIdInvalid: true });
-    expect(iranianNationalId(new FormControl('1111111111'))).toEqual({ nationalIdInvalid: true });
+  // The check digit is disabled for now: only the length is enforced.
+  it('accepts any ten digits, whatever the check digit', () => {
+    expect(iranianNationalId(new FormControl('0078980502'))).toBeNull();
+    expect(iranianNationalId(new FormControl('1111111111'))).toBeNull();
   });
 });

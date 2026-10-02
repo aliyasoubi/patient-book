@@ -73,6 +73,35 @@ describe('identifier fields fold Persian and Arabic-Indic digits before validati
     expect(failed).toEqual(['nationalId']);
   });
 
+  it('keeps a national id as a string, leading zeros and all', async () => {
+    const { dto, failed } = await build(CreatePatientDto, {
+      ...VALID_PATIENT,
+      nationalId: '0012345678',
+    });
+
+    expect(failed).toEqual([]);
+    expect(dto.nationalId).toBe('0012345678');
+  });
+
+  it('rejects a national id sent as a number, which has lost its zeros', async () => {
+    const { failed } = await build(CreatePatientDto, {
+      ...VALID_PATIENT,
+      nationalId: 12345678,
+    });
+
+    expect(failed).toEqual(['nationalId']);
+  });
+
+  // The check digit is disabled for now: only the length is enforced.
+  it('accepts a ten-digit national id whatever its check digit', async () => {
+    const { failed } = await build(CreatePatientDto, {
+      ...VALID_PATIENT,
+      nationalId: '0078980502',
+    });
+
+    expect(failed).toEqual([]);
+  });
+
   it('still rejects a mobile number that is wrong after folding', async () => {
     const { failed } = await build(CreatePatientDto, {
       ...VALID_PATIENT,

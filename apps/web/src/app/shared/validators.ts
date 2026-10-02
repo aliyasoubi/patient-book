@@ -35,24 +35,25 @@ export function digitString(min: number, max: number): ValidatorFn {
 }
 
 /**
- * Iranian national identifier (کد ملی), validated by its check digit rather
- * than by length alone — a ten-digit string that fails the checksum is a typo,
- * not an id. Mirrors the server-side rule so the user sees it before saving.
+ * Iranian national identifier (کد ملی): ten digits, in either digit script.
+ * Only the length is checked; the check-digit (weighted-sum) test is commented
+ * out below, matching the server, so it can be switched back on.
  */
 export function iranianNationalId(control: AbstractControl): ValidationErrors | null {
   const raw = control.value as string | null;
   if (!raw) return null;
 
   const id = toLatinDigits(String(raw)).trim();
-  if (!/^\d{10}$/.test(id)) return { nationalIdLength: true };
-  if (/^(\d)\1{9}$/.test(id)) return { nationalIdInvalid: true };
+  return /^\d{10}$/.test(id) ? null : { nationalIdLength: true };
 
-  let sum = 0;
-  for (let i = 0; i < 9; i++) sum += Number(id[i]) * (10 - i);
-  const remainder = sum % 11;
-  const check = Number(id[9]);
-  const valid = remainder < 2 ? check === remainder : check === 11 - remainder;
-  return valid ? null : { nationalIdInvalid: true };
+  // Check digit disabled: only the length is enforced for now.
+  // if (/^(\d)\1{9}$/.test(id)) return { nationalIdInvalid: true };
+  // let sum = 0;
+  // for (let i = 0; i < 9; i++) sum += Number(id[i]) * (10 - i);
+  // const remainder = sum % 11;
+  // const check = Number(id[9]);
+  // const valid = remainder < 2 ? check === remainder : check === 11 - remainder;
+  // return valid ? null : { nationalIdInvalid: true };
 }
 
 /** Iranian mobile number in local `09xxxxxxxxx` form. */

@@ -8,9 +8,12 @@ const MIN_PADDABLE_LENGTH = 8;
 /**
  * An Iranian national identifier (کد ملی).
  *
- * Ten digits with a check digit. Wrapping it in a type rather than passing a
- * `string` means an invalid code cannot reach the database: the only way to
- * obtain one of these is through a factory that has already verified it.
+ * Ten digits. Wrapping it in a type rather than passing a `string` means a
+ * malformed code cannot reach the database: the only way to obtain one of
+ * these is through a factory that has already verified it.
+ *
+ * Only the length is checked. The check-digit (weighted-sum) test is
+ * commented out below, not deleted, so it can be switched back on.
  */
 export class NationalId {
   private constructor(readonly value: string) {}
@@ -20,7 +23,7 @@ export class NationalId {
    * routinely store these as numbers and eat the leading zero, which is why
    * nine-digit codes are common in the practice's source data.
    *
-   * @throws InvalidInputError when the length or check digit is wrong.
+   * @throws InvalidInputError when the length is wrong.
    */
   static create(input: string): NationalId {
     const digits = NationalId.pad(input);
@@ -32,13 +35,14 @@ export class NationalId {
         `National id must be 10 digits, got ${digits?.length ?? 0}`,
       );
     }
-    if (!NationalId.hasValidChecksum(digits)) {
-      throw new InvalidInputError(
-        ErrorCode.NationalIdChecksum,
-        {},
-        `National id ${digits} fails its check digit`,
-      );
-    }
+    // Check digit disabled: only the length is enforced for now.
+    // if (!NationalId.hasValidChecksum(digits)) {
+    //   throw new InvalidInputError(
+    //     ErrorCode.NationalIdChecksum,
+    //     {},
+    //     `National id ${digits} fails its check digit`,
+    //   );
+    // }
     return new NationalId(digits);
   }
 
@@ -78,15 +82,16 @@ export class NationalId {
   /**
    * The published check-digit algorithm. Codes made of one repeated digit
    * satisfy the arithmetic but are never issued, so they are rejected too.
+   * Disabled along with its call in `create`.
    */
-  private static hasValidChecksum(id: string): boolean {
-    if (/^(\d)\1{9}$/.test(id)) return false;
-    let sum = 0;
-    for (let i = 0; i < 9; i++) sum += Number(id[i]) * (10 - i);
-    const remainder = sum % 11;
-    const check = Number(id[9]);
-    return remainder < 2 ? check === remainder : check === 11 - remainder;
-  }
+  // private static hasValidChecksum(id: string): boolean {
+  //   if (/^(\d)\1{9}$/.test(id)) return false;
+  //   let sum = 0;
+  //   for (let i = 0; i < 9; i++) sum += Number(id[i]) * (10 - i);
+  //   const remainder = sum % 11;
+  //   const check = Number(id[9]);
+  //   return remainder < 2 ? check === remainder : check === 11 - remainder;
+  // }
 
   equals(other: NationalId | null): boolean {
     return other !== null && other.value === this.value;

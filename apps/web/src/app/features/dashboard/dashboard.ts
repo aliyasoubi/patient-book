@@ -1,8 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { addMonths, format, startOfMonth } from 'date-fns-jalali';
 
 import { RegistryService } from '../../core/services/registry.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -70,10 +71,19 @@ export class Dashboard {
    * follow-ups this week" must never be what a failed request looks like.
    */
   protected readonly followUpsFailed = signal(false);
+  /** In flight, so the panel never shows "nobody to call" before it knows. */
+  protected readonly followUpsLoading = signal(true);
+
+  /**
+   * The current hour, re-read every minute so the greeting turns from morning
+   * to afternoon on a dashboard left open all day. Equal values do not
+   * propagate, so this only recomputes the greeting when the hour changes.
+   */
+  private readonly hour = signal(new Date().getHours());
 
   protected readonly greeting = computed(() => {
     this.i18n.currentLang();
-    const hour = new Date().getHours();
+    const hour = this.hour();
     const name = this.auth.user()?.fullName ?? '';
     const part =
       hour < 12
@@ -195,10 +205,19 @@ export class Dashboard {
     () => this.stats()?.gender.find((g) => g.key === 'unknown')?.count ?? 0,
   );
 
-  /** Last twelve months of new patients, as a sparkline path. */
+  /**
+   * The last twelve Jalali months up to this one, as a sparkline path. The API
+   * lists only months that had a new patient, so the window is laid out here
+   * and a month with none is a real zero rather than a skipped point.
+   */
   protected readonly trend = computed(() => {
-    const months = (this.stats()?.newPatientsByMonth ?? []).slice(-12);
-    if (months.length < 2) return null;
+    const counts = new Map((this.stats()?.newPatientsByMonth ?? []).map((m) => [m.month, m.count]));
+    const thisMonth = startOfMonth(new Date());
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const month = format(addMonths(thisMonth, i - 11), 'yyyy/MM');
+      return { month, count: counts.get(month) ?? 0 };
+    });
+    if (months.every((m) => m.count === 0)) return null;
     const max = Math.max(1, ...months.map((m) => m.count));
     const w = 100;
     const h = 32;
@@ -220,6 +239,8 @@ export class Dashboard {
   }
 
   constructor() {
+    const id = setInterval(() => this.hour.set(new Date().getHours()), 60_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(id));
     this.load();
   }
 
@@ -244,9 +265,16 @@ export class Dashboard {
   /** Also the panel's own retry, so a failed list can be re-fetched by itself. */
   protected loadFollowUps(): void {
     this.followUpsFailed.set(false);
+    this.followUpsLoading.set(true);
     this.registry.followUpsThisWeek().subscribe({
-      next: (rows) => this.followUps.set(rows),
-      error: () => this.followUpsFailed.set(true),
+      next: (rows) => {
+        this.followUps.set(rows);
+        this.followUpsLoading.set(false);
+      },
+      error: () => {
+        this.followUpsFailed.set(true);
+        this.followUpsLoading.set(false);
+      },
     });
   }
 }

@@ -79,8 +79,9 @@ export class IsJalaliDateConstraint implements ValidatorConstraintInterface {
 export class IsNationalIdConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
     if (value === null || value === undefined || value === '') return true;
-    // Digits only: the check-digit rule alone would pass `007-898-0501` and
-    // let the dashes through to the database.
+    // A string of exactly ten digits. Never a JSON number: as a number a code
+    // has already lost its leading zeros. Digits only, so `007-898-0501`
+    // cannot carry its dashes through to the database.
     return (
       typeof value === 'string' &&
       /^\d{10}$/.test(value) &&
@@ -88,7 +89,7 @@ export class IsNationalIdConstraint implements ValidatorConstraintInterface {
     );
   }
   defaultMessage(): string {
-    return 'National id fails its check digit';
+    return 'National id must be a string of 10 digits';
   }
 }
 

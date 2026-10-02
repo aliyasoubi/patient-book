@@ -7,6 +7,7 @@ import { OrthoCase } from '../../ortho/ortho-case.entity';
 import { TREATMENT_TYPES } from '../../../database/seeds/treatment-types.seed';
 import { classifyEducation, EducationLevel, Gender } from '../../../domain';
 import { SHEET } from '../../import/application/import-workbook.use-case';
+import { PATIENT_COLUMN } from '../../import/infrastructure/row-mappers/patient-row.mapper';
 
 /** Persian labels the original workbook used for this column. */
 const GENDER_LABEL: Record<Gender, string> = {
@@ -88,6 +89,9 @@ export class ExcelJsWorkbookWriter {
       'تاریخ آخرین مراجعه',
       ...TREATMENT_TYPES.map((t) => t.sheetColumn),
     ]);
+    // Text, not General: Excel would read a code typed or pasted into this
+    // column as a number and drop its leading `0` or `00`.
+    sheet.getColumn(PATIENT_COLUMN.nationalId).numFmt = '@';
 
     const codesOf = (p: Patient): Set<string> =>
       new Set(

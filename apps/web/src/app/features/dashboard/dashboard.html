@@ -31,56 +31,66 @@
         </a>
       }
     </section>
+  }
 
-    <div class="dash__grid">
-      <!-- ── Today: clock, date and this month ────────────────── -->
-      <pb-datetime-card />
+  <!-- The clock and the follow-ups have their own data, so they stay up
+       while the totals are loading or have failed. -->
+  <div class="dash__grid">
+    <!-- ── Today: clock, date and this month ────────────────── -->
+    <pb-datetime-card />
 
-      <!-- ── Follow-ups this week ───────────────────────────────
-           Who to call: the surgeries whose follow-up falls in the coming
-           seven days and has not happened yet, soonest first. -->
-      <pb-surface class="dash__panel--follow-ups" [title]="'dashboard.followUpsTitle' | translate">
-        @if (followUpsFailed()) {
-          <pb-load-error
-            [message]="'dashboard.followUpsFailed' | translate"
-            (retry)="loadFollowUps()"
-          />
-        } @else if (followUps().length) {
-          <ul class="upcoming">
-            @for (item of followUps(); track item.id) {
-              <li>
-                <a [routerLink]="['/surgery']" [queryParams]="{ q: item.recordedName }">
-                  <mat-icon
-                    class="upcoming__icon"
-                    [class.upcoming__icon--warn]="item.hasNameMismatch"
-                    aria-hidden="true"
-                  >
-                    {{ item.hasNameMismatch ? 'warning' : 'event_repeat' }}
-                  </mat-icon>
-                  <span class="upcoming__body">
-                    <span class="upcoming__name">{{ item.recordedName }}</span>
-                    @if (item.implantRegistryNo) {
-                      <span class="upcoming__meta">
-                        {{
-                          'surgery.implantRegistry' | translate: { number: item.implantRegistryNo }
-                        }}
-                      </span>
-                    }
-                  </span>
-                  <span class="upcoming__date">{{ item.followUpDate | faNum }}</span>
-                </a>
-              </li>
-            }
-          </ul>
-          <a class="dash__view-list" routerLink="/surgery" [queryParams]="{ followUp: 'week' }">
-            {{ 'dashboard.viewList' | translate }}
-            <mat-icon aria-hidden="true">arrow_back</mat-icon>
-          </a>
-        } @else {
-          <p class="panel__empty">{{ 'dashboard.followUpsEmpty' | translate }}</p>
-        }
-      </pb-surface>
+    <!-- ── Follow-ups this week ───────────────────────────────
+         Who to call: the surgeries whose follow-up falls in the coming
+         seven days and has not happened yet, soonest first. -->
+    <pb-surface class="dash__panel--follow-ups" [title]="'dashboard.followUpsTitle' | translate">
+      @if (followUpsFailed()) {
+        <pb-load-error
+          [message]="'dashboard.followUpsFailed' | translate"
+          (retry)="loadFollowUps()"
+        />
+      } @else if (followUpsLoading()) {
+        <!-- Never the empty message while in flight: "nobody to call" must
+             only ever mean the list came back empty. -->
+        <p class="panel__empty" role="status">
+          {{ 'dashboard.followUpsLoading' | translate }}
+        </p>
+      } @else if (followUps().length) {
+        <ul class="upcoming">
+          @for (item of followUps(); track item.id) {
+            <li>
+              <a [routerLink]="['/surgery']" [queryParams]="{ q: item.recordedName }">
+                <mat-icon
+                  class="upcoming__icon"
+                  [class.upcoming__icon--warn]="item.hasNameMismatch"
+                  aria-hidden="true"
+                >
+                  {{ item.hasNameMismatch ? 'warning' : 'event_repeat' }}
+                </mat-icon>
+                <span class="upcoming__body">
+                  <span class="upcoming__name">{{ item.recordedName }}</span>
+                  @if (item.implantRegistryNo) {
+                    <span class="upcoming__meta">
+                      {{
+                        'surgery.implantRegistry' | translate: { number: item.implantRegistryNo }
+                      }}
+                    </span>
+                  }
+                </span>
+                <span class="upcoming__date">{{ item.followUpDate | faNum }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+        <a class="dash__view-list" routerLink="/surgery" [queryParams]="{ followUp: 'week' }">
+          {{ 'dashboard.viewList' | translate }}
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        </a>
+      } @else {
+        <p class="panel__empty">{{ 'dashboard.followUpsEmpty' | translate }}</p>
+      }
+    </pb-surface>
 
+    @if (stats(); as s) {
       <!-- ── Recall ─────────────────────────────────────────────
            Operational follow-up work, so it leads the panels; the
            analytics below describe the practice rather than ask
@@ -130,6 +140,8 @@
               </span>
               <span class="bars__value">{{ t.count | faCount }}</span>
             </li>
+          } @empty {
+            <li class="panel__empty">{{ 'dashboard.noData' | translate }}</li>
           }
         </ul>
       </pb-surface>
@@ -208,6 +220,8 @@
               </span>
               <span class="bars__value">{{ b.count | faCount }}</span>
             </li>
+          } @empty {
+            <li class="panel__empty">{{ 'dashboard.noData' | translate }}</li>
           }
         </ul>
       </pb-surface>
@@ -229,9 +243,11 @@
                 <span class="referrals__count">{{ r.count | faCount }}</span>
               </a>
             </li>
+          } @empty {
+            <li class="panel__empty">{{ 'dashboard.noData' | translate }}</li>
           }
         </ul>
       </pb-surface>
-    </div>
-  }
+    }
+  </div>
 </pb-page>

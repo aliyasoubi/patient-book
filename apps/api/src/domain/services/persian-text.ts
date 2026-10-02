@@ -164,20 +164,24 @@ export function loosePersianKey(input: string | null | undefined): string {
 // -- Iranian identifiers ------------------------------------------------
 
 /**
- * Validate an Iranian national identifier by its check digit. Codes made of
- * one repeated digit satisfy the arithmetic but are never issued.
+ * Validate an Iranian national identifier: ten digits, kept as a string so
+ * the leading `0` or `00` most codes start with survives.
+ *
+ * Only the length is checked. The check-digit (weighted-sum) test is
+ * commented out, matching `NationalId`, so it can be switched back on.
  */
 export function isValidNationalId(value: string | null | undefined): boolean {
   if (!value) return false;
   const id = toLatinDigits(value).replace(/\D/g, '');
-  if (id.length !== 10) return false;
-  if (/^(\d)\1{9}$/.test(id)) return false;
+  return id.length === 10;
 
-  let sum = 0;
-  for (let i = 0; i < 9; i++) sum += Number(id[i]) * (10 - i);
-  const remainder = sum % 11;
-  const check = Number(id[9]);
-  return remainder < 2 ? check === remainder : check === 11 - remainder;
+  // Check digit disabled: only the length is enforced for now.
+  // if (/^(\d)\1{9}$/.test(id)) return false;
+  // let sum = 0;
+  // for (let i = 0; i < 9; i++) sum += Number(id[i]) * (10 - i);
+  // const remainder = sum % 11;
+  // const check = Number(id[9]);
+  // return remainder < 2 ? check === remainder : check === 11 - remainder;
 }
 
 /**
