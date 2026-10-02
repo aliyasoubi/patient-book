@@ -156,11 +156,24 @@ const column = (weekday: number): number => (weekday + 1) % 7;
         border-radius: 50%;
         font: var(--mat-sys-body-medium);
         color: var(--mat-sys-on-surface);
+        transition: background-color 120ms var(--pb-ease-standard);
 
         /* M3 date picker: today is the one filled circle. */
         &--today {
           background: var(--mat-sys-primary);
           color: var(--mat-sys-on-primary);
+        }
+
+        /* M3 state layer: an 8% wash of the content colour under the pointer.
+           Pointer devices only, so a tap on a tablet does not leave it stuck. */
+        @media (hover: hover) {
+          &:hover {
+            background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
+          }
+
+          &--today:hover {
+            background: color-mix(in srgb, var(--mat-sys-on-primary) 8%, var(--mat-sys-primary));
+          }
         }
       }
 
