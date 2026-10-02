@@ -9,16 +9,16 @@
       <span class="login__blob login__blob--two"></span>
       <span class="login__blob login__blob--three"></span>
     </div>
-    <div class="login__dots" aria-hidden="true"></div>
+    <div class="login__grid" aria-hidden="true"></div>
     <pb-logo class="login__watermark" [size]="520" />
 
     <div class="login__hero-content">
-      <div class="login__brand">
+      <a class="login__brand" href="/" [attr.aria-label]="'auth.homeLink' | translate">
         <span class="login__mark">
           <pb-logo [size]="28" />
         </span>
         <h1>{{ 'app.title' | translate }}</h1>
-      </div>
+      </a>
 
       <div class="login__pitch">
         <p class="login__tagline">{{ 'app.description' | translate }}</p>
