@@ -37,16 +37,6 @@ export class ExcelJsWorkbookReader extends WorkbookPort {
     return this.workbook?.worksheets.map((w) => w.name) ?? [];
   }
 
-  header(sheetName: string): string[] {
-    const row = this.workbook?.getWorksheet(sheetName)?.getRow(1);
-    if (!row) return [];
-    const cells: string[] = [];
-    for (let column = 1; column <= row.cellCount; column++) {
-      cells.push(ExcelJsWorkbookReader.text(row.getCell(column).value));
-    }
-    return cells;
-  }
-
   rows(sheetName: string): SheetRow[] {
     const sheet = this.workbook?.getWorksheet(sheetName);
     if (!sheet) return [];
