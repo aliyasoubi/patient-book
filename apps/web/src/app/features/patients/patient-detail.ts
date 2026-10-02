@@ -262,9 +262,14 @@ export class PatientDetail {
     return this.id() === patientId;
   }
 
-  /** Renders an import flag in the reader's language, from its code. */
+  /**
+   * Renders an import flag in the reader's language, from its code. A flag
+   * saved before issues carried codes has only the importer's Persian
+   * sentence; show that, not a generic "unexpected error".
+   */
   protected issueMessage(issue: DataIssue): string {
-    return this.errors.forCode(issue.code, issue.params);
+    if (!issue.code && issue.message) return issue.message;
+    return this.errors.forCode(issue.code ?? '', issue.params);
   }
 
   protected loadHistory(): void {

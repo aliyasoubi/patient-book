@@ -11,8 +11,11 @@ import type { EducationLevel, Gender, JalaliValue, PatientTreatment } from '../.
  */
 export interface DataIssue {
   field: string;
-  code: ApiErrorCode | string;
-  params: ApiErrorParams;
+  /** Absent on flags saved before issues carried codes; see `message`. */
+  code?: ApiErrorCode | string;
+  params?: ApiErrorParams;
+  /** The importer's own Persian sentence, on those older flags only. */
+  message?: string;
   /** Exactly what the source said. */
   rawValue?: string;
   severity: 'warning' | 'error';
