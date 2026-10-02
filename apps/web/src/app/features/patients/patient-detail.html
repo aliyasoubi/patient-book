@@ -319,7 +319,10 @@
                         {{ labWorkTypes(c) }}
                       }
                       @if (c.lab) {
-                        <small>{{ c.lab.name }} · {{ c.trips[0]?.sentAt | faNum }}</small>
+                        <small
+                          ><strong>{{ c.lab.name }}</strong> ·
+                          {{ c.trips[0]?.sentAt | faNum }}</small
+                        >
                       }
                     </span>
                     <pb-status-chip [tone]="labStageTone(c)">

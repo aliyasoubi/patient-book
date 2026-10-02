@@ -129,6 +129,8 @@ export interface FollowUpDue {
 
 /** Where a lab case's work is now — the lab board's three columns. */
 export type LabStage = 'at_lab' | 'at_clinic' | 'delivered';
+/** A night guard is made per jaw, so it records this instead of teeth. */
+export type LabJaw = 'upper' | 'lower' | 'both';
 export type LabWorkType = 'crown' | 'implant_crown' | 'laminate' | 'post' | 'night_guard' | 'sx';
 export type LabTripKind =
   'impression' | 'scan' | 'wax_alginate' | 'resin' | 'frame' | 'correction' | 'remake';
@@ -163,6 +165,7 @@ export interface LabCase {
   recordedName: string;
   lab: Lab | null;
   workTypes: LabWorkType[];
+  jaw: LabJaw | null;
   toothCount: number | null;
   teeth: string;
   implantBrand: string | null;

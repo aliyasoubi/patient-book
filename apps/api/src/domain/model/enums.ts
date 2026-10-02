@@ -101,6 +101,16 @@ export enum LabWorkType {
 }
 
 /**
+ * Which jaw a whole-arch piece of work is for. A night guard is made per jaw,
+ * not per tooth, so it carries this instead of a tooth count and numbers.
+ */
+export enum LabJaw {
+  Upper = 'upper',
+  Lower = 'lower',
+  Both = 'both',
+}
+
+/**
  * Why a case went to the lab this time. A crown or a laminate makes several
  * trips — the impression, a resin or frame try-in, now and then a correction
  * or a remake — and each is one of these.

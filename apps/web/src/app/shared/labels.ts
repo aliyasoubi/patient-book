@@ -1,6 +1,7 @@
 import type {
   EducationLevel,
   Gender,
+  LabJaw,
   LabStage,
   LabTripKind,
   LabWorkType,
@@ -354,4 +355,17 @@ export const LAB_WAIT_DAYS = [3, 7, 10, 14, 21, 28] as const;
 
 export function defaultLabWaitDays(workTypes: readonly LabWorkType[]): number {
   return workTypes.includes('laminate') ? 21 : 7;
+}
+
+/** The jaws a night guard is offered for, in the order the form shows them. */
+export const LAB_JAWS: readonly LabJaw[] = ['upper', 'lower', 'both'];
+
+const LAB_JAW_LABELS: Record<LabJaw, string> = {
+  upper: 'labJaw.upper',
+  lower: 'labJaw.lower',
+  both: 'labJaw.both',
+};
+
+export function labJawLabel(jaw: LabJaw): string {
+  return LAB_JAW_LABELS[jaw];
 }

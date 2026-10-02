@@ -10,7 +10,7 @@ import {
   formatPersianNumber,
   PersianNumberPipe,
 } from '../../shared/pipes/persian-number.pipe';
-import { labTripKindLabel, labWorkTypeLabel } from '../../shared/labels';
+import { labJawLabel, labTripKindLabel, labWorkTypeLabel } from '../../shared/labels';
 import { PbButton, PbIconButton, PbStatusChip } from '../../shared/ui';
 import type { StatusTone } from '../../shared/ui';
 
@@ -91,7 +91,7 @@ import type { StatusTone } from '../../shared/ui';
           <mat-icon aria-hidden="true">dentistry</mat-icon>{{ workTypes() }}
         </span>
         @if (c.lab) {
-          <span class="card__detail">
+          <span class="card__detail card__detail--lab">
             <mat-icon aria-hidden="true">science</mat-icon>{{ c.lab.name }}
           </span>
         }
@@ -241,7 +241,8 @@ export class LabCaseCard {
 
   protected readonly teeth = computed(() => {
     this.i18n.currentLang();
-    const { toothCount, teeth } = this.labCase();
+    const { jaw, toothCount, teeth } = this.labCase();
+    if (jaw) return this.i18n.instant(labJawLabel(jaw));
     const count = toothCount
       ? this.i18n.instant('labs.toothCount', { count: formatPersianCount(toothCount) })
       : null;

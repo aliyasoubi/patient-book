@@ -22,6 +22,7 @@ import {
 import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
 import {
   IMPLANT_BRAND_NAMES,
+  LabJaw,
   LabTripKind,
   LabWorkType,
   normalizeForDisplay,
@@ -116,6 +117,12 @@ export class CreateLabCaseDto {
   @ArrayUnique()
   @IsEnum(LabWorkType, { each: true })
   workTypes!: LabWorkType[];
+
+  /** For a night guard, instead of the tooth count and numbers. */
+  @ApiPropertyOptional({ enum: LabJaw })
+  @IsEnum(LabJaw)
+  @IsOptional()
+  jaw?: LabJaw | null;
 
   @ApiPropertyOptional({ minimum: 1, maximum: 32 })
   @IsInt()
