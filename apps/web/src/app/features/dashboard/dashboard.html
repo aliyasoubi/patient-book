@@ -1,8 +1,5 @@
 <pb-page class="dash" width="wide">
-  <!-- Date and clock ride in the header row as supporting content; a card of
-       their own pushed the first real number a full section down the page. -->
   <pb-page-header [title]="greeting()" [subtitle]="'dashboard.subtitle' | translate">
-    <pb-datetime-card />
     @if (auth.can('editPatients')) {
       <pb-button link="/patients/new" icon="person_add">{{
         'dashboard.newPatient' | translate
@@ -36,6 +33,9 @@
     </section>
 
     <div class="dash__grid">
+      <!-- ── Today: clock, date and this month ────────────────── -->
+      <pb-datetime-card />
+
       <!-- ── Follow-ups this week ───────────────────────────────
            Who to call: the surgeries whose follow-up falls in the coming
            seven days and has not happened yet, soonest first. -->

@@ -91,6 +91,9 @@
     "trendAria": "روند بیماران جدید، بیشینه {{max}} نفر در ماه",
     "maximum": "بیشینه {{count}}",
     "dateTimeAria": "تاریخ و ساعت امروز",
+    "today": "امروز",
+    "previousMonth": "ماه قبل",
+    "nextMonth": "ماه بعد",
     "loadFailed": "اطلاعات داشبورد بارگذاری نشد."
   },
   "greeting": {
