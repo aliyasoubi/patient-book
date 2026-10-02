@@ -18,6 +18,9 @@ export abstract class WorkbookPort {
   /** Load a workbook from disk. Must be called before {@link rows}. */
   abstract open(filePath: string): Promise<void>;
 
+  /** The header row of one sheet, by column, as text. Empty when the sheet is absent. */
+  abstract header(sheetName: string): string[];
+
   /** Data rows of one sheet, header excluded. Empty when the sheet is absent. */
   abstract rows(sheetName: string): SheetRow[];
 

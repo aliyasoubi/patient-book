@@ -100,6 +100,31 @@ already exist by file number and corrects fields on them; it never creates
 records, so a workbook fed into an empty register reports every row as
 unmatched. The importer above is the answer.
 
+### Loading the lab book
+
+The practice's lab sheet (لابراتوار.xlsx) has its own one-time importer, for
+after the lab board is deployed. Preview first — nothing is written:
+
+```bash
+./ops/deploy/import-labs.sh ~/lab-book.xlsx
+```
+
+It prints every row with what it will become — lab, work type, trip, where the
+work is, and the patient file it was matched to by name (an ambiguous name is
+left unlinked, as everywhere else) — and every row it will skip, with why: no
+work type, no lab, or a lab missing from Settings → labs. When the plan reads
+right:
+
+```bash
+./ops/deploy/import-labs.sh ~/lab-book.xlsx --apply
+```
+
+All rows are written in one transaction, each audited as `cli:<user>`. A board
+that already holds cases is refused unless `--force` is added too. The sheet
+does not record when work came back from the lab, so cases marked as back (or
+delivered) get the import day, noted on the trip. From then on, correct cases
+in the app. Delete the copy on the server afterwards; it is patient data.
+
 ### Export and reconcile
 
 The other half of the Excel round-trip, also run inside the API image:

@@ -96,7 +96,8 @@ const IMPLANT_BRANDS: Array<[RegExp, string]> = [
   [/ایمپلنتیوم|implantium/i, 'ایمپلنتیوم'],
   [/اوستم|osstem/i, 'اوستم'],
   [/نوبل|nobel/i, 'نوبل'],
-  [/\btri\b/i, 'TRI'],
+  // The lab book spells it out: «تی آر آی».
+  [/\btri\b|تی ?ار ?ای/i, 'TRI'],
   [/دیو|dio/i, 'دیو'],
   [/سوپرلاین|superline/i, 'سوپرلاین'],
 ];

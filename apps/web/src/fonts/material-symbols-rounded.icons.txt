@@ -17,6 +17,8 @@ cancel
 cards
 cases
 check
+chevron_left
+chevron_right
 chips
 cleaning_services
 close
