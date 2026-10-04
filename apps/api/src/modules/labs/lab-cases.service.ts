@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { addDays, differenceInCalendarDays } from 'date-fns-jalali';
-import {
-  Brackets,
-  EntityManager,
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
+import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { LabCase } from './lab-case.entity';
 import { LabTrip } from './lab-trip.entity';
@@ -56,6 +51,9 @@ const dayOrToday = (value: string | undefined): Date =>
 const partsOwed = (c: LabCase): boolean =>
   (c.impressionCount ?? 0) + (c.analogCount ?? 0) > 0 && !c.partsReturnedAt;
 
+/** `partsOwed` as SQL; never null, so `NOT` of it is its exact complement. */
+const PARTS_OWED_SQL = `(coalesce(c."impressionCount", 0) + coalesce(c."analogCount", 0) > 0 AND c."partsReturnedAt" IS NULL)`;
+
 /**
  * Lab work, case by case. A case only ever moves through the four commands
  * here — receive, send, deliver, undo — each of which checks where the case
@@ -86,32 +84,33 @@ export class LabCasesService {
 
   async board(dto: LabBoardQueryDto): Promise<LabBoard> {
     const active = this.query().andWhere('c."deliveredAt" IS NULL');
-    const delivered = this.query().andWhere('c."deliveredAt" IS NOT NULL');
-    for (const qb of [active, delivered]) {
+    // A case whose parts the lab still owes is not done: those are fetched on
+    // their own, uncapped, so a busy month of deliveries cannot push them out.
+    const owed = this.query()
+      .andWhere('c."deliveredAt" IS NOT NULL')
+      .andWhere(PARTS_OWED_SQL);
+    const delivered = this.query()
+      .andWhere('c."deliveredAt" IS NOT NULL')
+      .andWhere(`NOT ${PARTS_OWED_SQL}`);
+    for (const qb of [active, owed, delivered]) {
       this.search(qb, dto.q);
       if (dto.labId) qb.andWhere('c."labId" = :labId', { labId: dto.labId });
     }
-    // A search reaches every delivery; without one the column is the last
-    // month's, plus any case whose parts the lab still owes — that is not done.
+    // A search reaches every delivery; without one the column is the last month's.
     if (!searchKey(dto.q)) {
       const since = JalaliDate.fromDate(addDays(new Date(), -DELIVERED_DAYS))!;
-      delivered.andWhere(
-        new Brackets((w) =>
-          w
-            .where('c."deliveredAt" >= :since', { since: since.toIsoDate() })
-            .orWhere(
-              `(coalesce(c."impressionCount", 0) + coalesce(c."analogCount", 0) > 0 AND c."partsReturnedAt" IS NULL)`,
-            ),
-        ),
-      );
+      delivered.andWhere('c."deliveredAt" >= :since', {
+        since: since.toIsoDate(),
+      });
     }
-    delivered
-      .orderBy('c.deliveredAt', 'DESC')
-      .addOrderBy('c.id', 'ASC')
-      .take(DELIVERED_LIMIT);
+    for (const qb of [owed, delivered]) {
+      qb.orderBy('c.deliveredAt', 'DESC').addOrderBy('c.id', 'ASC');
+    }
+    delivered.take(DELIVERED_LIMIT);
 
-    const [open, done] = await Promise.all([
+    const [open, owing, recent] = await Promise.all([
       active.getMany(),
+      owed.getMany(),
       delivered.getMany(),
     ]);
     const now = new Date();
@@ -126,12 +125,11 @@ export class LabCasesService {
       storedDate(latestTrip(c.trips)?.receivedAt ?? c.createdAt).getTime();
     atLab.sort((a, b) => due(a) - due(b));
     atClinic.sort((a, b) => back(a) - back(b));
-    done.sort((a, b) => Number(partsOwed(b)) - Number(partsOwed(a)));
 
     return {
       atLab: atLab.map((c) => this.toResponse(c, now)),
       atClinic: atClinic.map((c) => this.toResponse(c, now)),
-      delivered: done.map((c) => this.toResponse(c, now)),
+      delivered: [...owing, ...recent].map((c) => this.toResponse(c, now)),
     };
   }
 
@@ -379,8 +377,9 @@ export class LabCasesService {
 
   /**
    * The lab gave back the impression copings and analogs — or, switched off,
-   * has not after all. Like the surgery list's follow-up switch it is one fact,
-   * overwrites nothing else, and so needs no version.
+   * has not after all. Like the surgery list's follow-up switch it is one fact
+   * and needs no version; the lock keeps the save from writing back a copy
+   * another edit has moved on from.
    */
   async partsReturned(
     id: string,
@@ -389,7 +388,10 @@ export class LabCasesService {
   ): Promise<unknown> {
     await this.cases.manager.transaction(async (manager) => {
       const cases = manager.getRepository(LabCase);
-      const c = await cases.findOne({ where: { id } });
+      const c = await cases.findOne({
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
       if (!c) throw AppException.notFound(ErrorCode.LabCaseNotFound);
       c.partsReturnedAt = returned ? storedDate(todayIso()) : null;
       await cases.save(c);
