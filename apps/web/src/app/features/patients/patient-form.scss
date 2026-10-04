@@ -65,3 +65,35 @@
     color: var(--tx-fg);
   }
 }
+
+/* ── Possibly already on file ──────────────────────────────────────── */
+/* An empty live region takes no room, so the form's gap does not double. */
+.duplicates:empty {
+  display: none;
+}
+
+.duplicates__hint {
+  margin: 0 0 var(--pb-space-2);
+}
+
+.duplicates__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.duplicates__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pb-space-2);
+}
+
+.duplicates__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--pb-space-1);
+}
