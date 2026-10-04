@@ -326,6 +326,40 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(await edit(first)).toBe(first);
     });
 
+    it('finds a patient by a number written any way, and says which number matched', async () => {
+      const stamp = String(Date.now());
+      const nationalId = stamp.slice(-10);
+      const mobile = `09${stamp.slice(-9)}`;
+      const created = await asAdmin(http().post('/api/patients'))
+        .send({
+          fileNo: nextNumber(),
+          firstName: 'کاوه',
+          lastName: `num-${runId}`,
+          nationalId,
+          mobile,
+        })
+        .expect(201);
+      const { id, fileNo } = created.body as { id: string; fileNo: string };
+      patientIds.push(id);
+
+      const top = async (q: string) => {
+        const res = await asAdmin(
+          http().get('/api/patients/suggest').query({ q }),
+        ).expect(200);
+        return (res.body as Array<{ id: string; match: string | null }>)[0];
+      };
+      expect(await top(fileNo)).toEqual(
+        expect.objectContaining({ id, match: 'fileNo' }),
+      );
+      expect(
+        await top(`${nationalId.slice(0, 3)}-${nationalId.slice(3)}`),
+      ).toEqual(expect.objectContaining({ id, match: 'nationalId' }));
+      // The country code is not part of the stored `09…` form.
+      expect(await top(`+98 ${mobile.slice(1, 4)} ${mobile.slice(4)}`)).toEqual(
+        expect.objectContaining({ id, match: 'mobile' }),
+      );
+    });
+
     it('lets the front desk save a patient but not change clinical notes', async () => {
       const created = await asAdmin(http().post('/api/patients'))
         .send({

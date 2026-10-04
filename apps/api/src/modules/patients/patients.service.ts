@@ -12,7 +12,12 @@ import {
   UpdatePatientDto,
 } from './dto/patient.dto';
 import { QueryPatientsDto } from './dto/query-patients.dto';
-import { PatientQueryBuilder } from './patient-query.builder';
+import {
+  exactIdentifier,
+  identifierQuery,
+  PatientQueryBuilder,
+  type IdentifierMatch,
+} from './patient-query.builder';
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
 import { PatientResponse, toPatientResponse } from './patient.mapper';
 import { JalaliDate } from '../../domain';
@@ -116,17 +121,24 @@ export class PatientsService {
     q: string,
     limit = 8,
   ): Promise<
-    Array<Pick<PatientResponse, 'id' | 'fileNo' | 'fullName' | 'mobile'>>
+    Array<
+      Pick<PatientResponse, 'id' | 'fileNo' | 'fullName' | 'mobile'> & {
+        /** Set when a typed number is this patient's own — the search box opens it on Enter. */
+        match: IdentifierMatch | null;
+      }
+    >
   > {
     const qb = this.queries.suggest(q, limit);
     if (!qb) return [];
     const rows = await qb.getMany();
+    const ids = identifierQuery(q);
 
     return rows.map((p) => ({
       id: p.id,
       fileNo: p.fileNo,
       fullName: `${p.firstName} ${p.lastName}`.trim(),
       mobile: p.mobile,
+      match: exactIdentifier(ids, p),
     }));
   }
 

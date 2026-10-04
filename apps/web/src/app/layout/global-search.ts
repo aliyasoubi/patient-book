@@ -25,12 +25,26 @@ import {
 } from 'rxjs';
 
 import { PatientsService } from '../features/patients/data/patients.service';
+import { RecentPatientsService } from '../features/patients/data/recent-patients.service';
 import type { PatientSuggestion } from '../features/patients/data/patient.model';
 import { PbIconButton, PbSearchField, type SearchFieldOption } from '../shared/ui';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /** Below this, a Persian query is too broad to be worth a round trip. */
 const MIN_QUERY_LENGTH = 2;
+
+/** Literal keys, so the i18n check can see every one is translated. */
+const MATCH_KEYS: Readonly<Record<NonNullable<PatientSuggestion['match']>, string>> = {
+  fileNo: 'globalSearch.match.fileNo',
+  nationalId: 'globalSearch.match.nationalId',
+  mobile: 'globalSearch.match.mobile',
+};
+
+/** Suggestions, with the query they answer — Enter must not act on an older one. */
+interface SuggestionResult {
+  q: string;
+  items: PatientSuggestion[];
+}
 
 @Component({
   selector: 'pb-global-search',
@@ -41,6 +55,7 @@ const MIN_QUERY_LENGTH = 2;
 })
 export class GlobalSearch {
   private readonly patients = inject(PatientsService);
+  private readonly recent = inject(RecentPatientsService);
   private readonly router = inject(Router);
   private readonly i18n = inject(TranslateService);
   private readonly injector = inject(Injector);
@@ -65,46 +80,69 @@ export class GlobalSearch {
     });
   }
 
+  /** What is in the field now, undebounced: an empty field offers recent files at once. */
+  private readonly query = toSignal(this.control.valueChanges.pipe(map((value) => value.trim())), {
+    initialValue: '',
+  });
+
   /**
    * Suggestions for the type-ahead. Debounced so a fast typist issues one
    * request rather than one per keystroke, and `switchMap` so a slow earlier
    * response can never overwrite a newer one.
    */
-  protected readonly suggestions = toSignal(
+  private readonly results = toSignal(
     this.control.valueChanges.pipe(
       startWith(''),
       debounceTime(220),
       map((value) => value.trim()),
       distinctUntilChanged(),
-      tap((value) => this.loading.set(value.length >= MIN_QUERY_LENGTH)),
-      switchMap((value) => {
-        if (value.length < MIN_QUERY_LENGTH) {
+      tap((q) => this.loading.set(q.length >= MIN_QUERY_LENGTH)),
+      switchMap((q) => {
+        if (q.length < MIN_QUERY_LENGTH) {
           this.loading.set(false);
-          return of<PatientSuggestion[]>([]);
+          return of<SuggestionResult>({ q, items: [] });
         }
-        return this.patients.suggest(value).pipe(
+        return this.patients.suggest(q).pipe(
+          map((items): SuggestionResult => ({ q, items })),
           tap(() => this.loading.set(false)),
           // A failed suggestion must not tear down the stream; the search box
           // has to keep working for the next keystroke.
           catchError(() => {
             this.loading.set(false);
-            return of<PatientSuggestion[]>([]);
+            return of<SuggestionResult>({ q, items: [] });
           }),
         );
       }),
     ),
-    { initialValue: [] as PatientSuggestion[] },
+    { initialValue: { q: '', items: [] } as SuggestionResult },
   );
 
   protected readonly searchOptions = computed<SearchFieldOption[]>(() => {
     this.i18n.currentLang();
-    return this.suggestions().map((item) => ({
+    const unnamed = this.i18n.instant('patient.unnamed');
+    if (!this.query()) {
+      return this.recent.items().map((p) => ({
+        value: p.id,
+        label: p.fullName || unnamed,
+        meta: p.fileNo,
+        icon: 'history',
+      }));
+    }
+    return this.results().items.map((item) => ({
       value: item.id,
-      label: item.fullName || this.i18n.instant('patient.unnamed'),
+      label: item.fullName || unnamed,
       meta: item.fileNo,
       supporting: item.mobile,
-      icon: 'person',
+      // A typed number that is this patient's own: say which, and mark it.
+      tag: item.match ? this.i18n.instant(MATCH_KEYS[item.match]) : null,
+      icon: item.match ? 'task_alt' : 'person',
     }));
+  });
+
+  /** Names what an empty field is offering. */
+  protected readonly heading = computed(() => {
+    this.i18n.currentLang();
+    return this.query() ? null : this.i18n.instant('globalSearch.recent');
   });
 
   /** Ctrl/Cmd+K focuses the search from anywhere, as staff expect. */
@@ -146,17 +184,36 @@ export class GlobalSearch {
     void this.router.navigate(['/patients', patientId]);
   }
 
-  /** Enter without picking a suggestion runs a full search. */
+  /**
+   * Enter without picking a suggestion. A number that is exactly one
+   * patient's file, national id or mobile opens that patient; anything else
+   * — a name, a number a whole family shares — runs a full search. Enter can
+   * beat the debounce, so the answer is fetched afresh unless the suggestions
+   * on screen are for this very query.
+   */
   protected onSubmit(event: Event): void {
     event.preventDefault();
     const q = this.control.value.trim();
     if (!q) return;
-    this.control.setValue('');
-    this.expanded.set(false);
-    void this.router.navigate(['/patients'], { queryParams: { q } });
+    const shown = this.results();
+    const lookup =
+      shown.q === q
+        ? of(shown.items)
+        : q.length < MIN_QUERY_LENGTH
+          ? of<PatientSuggestion[]>([])
+          : this.patients.suggest(q).pipe(catchError(() => of<PatientSuggestion[]>([])));
+    lookup.subscribe((items) => {
+      const exact = items.filter((item) => item.match);
+      this.control.setValue('');
+      this.expanded.set(false);
+      if (exact.length === 1) void this.router.navigate(['/patients', exact[0].id]);
+      else void this.router.navigate(['/patients'], { queryParams: { q } });
+    });
   }
 
+  /** "Nobody found" only once the answer for this very query is in, not while it is on its way. */
   protected displayEmpty(): boolean {
-    return this.control.value.trim().length >= MIN_QUERY_LENGTH;
+    const q = this.query();
+    return q.length >= MIN_QUERY_LENGTH && this.results().q === q;
   }
 }

@@ -12,6 +12,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { PatientsService } from './data/patients.service';
+import { RecentPatientsService } from './data/recent-patients.service';
 import { PatientListContext } from './patient-list-context';
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryKind, RegistryService } from '../../core/services/registry.service';
@@ -74,6 +75,7 @@ import type { StatusTone } from '../../shared/ui';
 })
 export class PatientDetail {
   private readonly service = inject(PatientsService);
+  private readonly recent = inject(RecentPatientsService);
   private readonly registry = inject(RegistryService);
   private readonly labService = inject(LabService);
   private readonly listContext = inject(PatientListContext);
@@ -200,6 +202,7 @@ export class PatientDetail {
           return;
         }
         this.patient.set(patient);
+        this.recent.record(patient);
       });
 
     this.history$

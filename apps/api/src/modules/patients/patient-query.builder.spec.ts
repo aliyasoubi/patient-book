@@ -1,7 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Repository, SelectQueryBuilder } from 'typeorm';
 
-import { PatientQueryBuilder } from './patient-query.builder';
+import {
+  exactIdentifier,
+  identifierQuery,
+  PatientQueryBuilder,
+} from './patient-query.builder';
 import { Patient } from './patient.entity';
 import type { QueryPatientsDto } from './dto/query-patients.dto';
 import { ErrorCode } from '../../domain';
@@ -138,7 +142,7 @@ describe('PatientQueryBuilder search', () => {
       ...calls.get('addOrderBy')!.mock.calls,
     ].map(([column]) => column);
     expect(order).toEqual([
-      'exact_file',
+      'exact_id',
       'name_hits',
       'name_sim',
       'sim',
@@ -176,6 +180,89 @@ describe('PatientQueryBuilder search', () => {
       'p.lastName',
       'ASC',
       'NULLS LAST',
+    );
+  });
+});
+
+describe('identifierQuery', () => {
+  it('reads a mobile written with its country code as the stored form', () => {
+    // «98912…» is not part of «0912…», so the digits alone could never match.
+    for (const typed of [
+      '+98 912 123 4567',
+      '0098-912-123-4567',
+      '۹۸۹۱۲۱۲۳۴۵۶۷',
+    ]) {
+      expect(identifierQuery(typed)).toEqual({
+        key: '09121234567',
+        nationalId: null,
+        mobile: '09121234567',
+      });
+    }
+  });
+
+  it('searches the bare digits otherwise, so punctuation does not split a number', () => {
+    expect(identifierQuery('0912 123 4567')?.key).toBe('09121234567');
+    expect(identifierQuery('007-898-0501')).toEqual({
+      key: '0078980501',
+      nationalId: '0078980501',
+      mobile: null,
+    });
+  });
+
+  it('keeps a ten-digit number open to being a national id or a mobile', () => {
+    // 9121234567 is a national id as typed, and inside the mobile 09121234567.
+    expect(identifierQuery('9121234567')).toEqual({
+      key: '9121234567',
+      nationalId: '9121234567',
+      mobile: '09121234567',
+    });
+  });
+
+  it('leaves anything with letters to the name search', () => {
+    expect(identifierQuery('مرادی 12')).toBeNull();
+    expect(identifierQuery('   ')).toBeNull();
+  });
+});
+
+describe('exactIdentifier', () => {
+  const p = { fileNo: '1234', nationalId: '0078980501', mobile: '09121234567' };
+
+  it('names the identifier a whole number matched', () => {
+    expect(exactIdentifier(identifierQuery('۱۲۳۴'), p)).toBe('fileNo');
+    expect(exactIdentifier(identifierQuery('007-898-0501'), p)).toBe(
+      'nationalId',
+    );
+    expect(exactIdentifier(identifierQuery('+98 912 123 4567'), p)).toBe(
+      'mobile',
+    );
+  });
+
+  it('is null for a fragment or a name', () => {
+    expect(exactIdentifier(identifierQuery('123'), p)).toBeNull();
+    expect(exactIdentifier(identifierQuery('مرادی'), p)).toBeNull();
+  });
+});
+
+describe('PatientQueryBuilder identifier search', () => {
+  const search = (q: string): QueryPatientsDto =>
+    ({ q, sortDir: 'ASC', page: 1, limit: 25 }) as QueryPatientsDto;
+
+  it('ranks an exact national id or mobile first, never a missing one', () => {
+    const { builder, calls } = stub();
+
+    builder.build(search('9121234567'));
+
+    expect(calls.get('addSelect')).toHaveBeenCalledWith(
+      `coalesce(p."fileNo" = :simKey OR p."nationalId" = :exactNid OR p."mobile" = :exactMobile, false)`,
+      'exact_id',
+    );
+    expect(calls.get('setParameter')).toHaveBeenCalledWith(
+      'exactNid',
+      '9121234567',
+    );
+    expect(calls.get('setParameter')).toHaveBeenCalledWith(
+      'exactMobile',
+      '09121234567',
     );
   });
 });

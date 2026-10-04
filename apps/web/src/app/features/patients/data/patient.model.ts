@@ -73,6 +73,8 @@ export interface PatientSuggestion {
   fileNo: string;
   fullName: string;
   mobile: string | null;
+  /** Set when the typed number is this patient's own file, national id or mobile. */
+  match: 'fileNo' | 'nationalId' | 'mobile' | null;
 }
 
 /** A distinct first/last-name spelling on file, folded to collapse visual duplicates. */
