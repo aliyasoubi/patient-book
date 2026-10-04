@@ -15,6 +15,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PatientsService } from './patients.service';
 import { CreatePatientDto, UpdatePatientDto } from './dto/patient.dto';
 import { QueryPatientsDto } from './dto/query-patients.dto';
+import { PossibleDuplicatesQueryDto } from './dto/possible-duplicates.dto';
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
 import type { RequestUser } from '../auth/strategies/jwt.strategy';
@@ -54,6 +55,15 @@ export class PatientsController {
       });
     }
     return this.patients.nameSuggestions(field);
+  }
+
+  @Get('possible-duplicates')
+  @ApiOperation({
+    summary:
+      'Existing records that may be the person being registered (same national id, name or mobile)',
+  })
+  possibleDuplicates(@Query() query: PossibleDuplicatesQueryDto) {
+    return this.patients.possibleDuplicates(query);
   }
 
   @Get('next-file-no')

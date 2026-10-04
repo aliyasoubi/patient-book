@@ -326,6 +326,67 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(await edit(first)).toBe(first);
     });
 
+    it('points a registration at an existing record by national id, name or mobile', async () => {
+      const stamp = String(Date.now());
+      const nationalId = stamp.slice(-10);
+      const mobile = `09${stamp.slice(-9)}`;
+      const lastName = `dup-${runId}`;
+      const created = await asAdmin(http().post('/api/patients'))
+        .send({
+          fileNo: nextNumber(),
+          firstName: 'پریسا',
+          lastName,
+          fatherName: 'حسن',
+          nationalId,
+          mobile,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      patientIds.push(id);
+
+      interface Duplicate {
+        id: string;
+        archived: boolean;
+        reasons: string[];
+      }
+      const check = async (query: Record<string, string>) => {
+        const res = await asAdmin(
+          http().get('/api/patients/possible-duplicates').query(query),
+        ).expect(200);
+        return (res.body as Duplicate[]).filter((d) => d.id === id);
+      };
+
+      // Persian digits, as a Persian keyboard types them.
+      const toFa = (s: string) =>
+        s.replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+      expect(await check({ nationalId: toFa(nationalId) })).toEqual([
+        {
+          id,
+          fileNo: expect.any(String),
+          fullName: `پریسا ${lastName}`,
+          fatherName: 'حسن',
+          archived: false,
+          reasons: ['nationalId'],
+        },
+      ]);
+      // Spaced differently, and with a father who agrees — or is not given.
+      expect(
+        (await check({ firstName: 'پری سا', lastName, fatherName: 'حسن' }))[0]
+          ?.reasons,
+      ).toEqual(['name']);
+      expect(
+        await check({ firstName: 'پریسا', lastName, fatherName: 'حسین' }),
+      ).toEqual([]);
+      expect(
+        (await check({ mobile: `+98 ${mobile.slice(1)}` }))[0]?.reasons,
+      ).toEqual(['mobile']);
+      // Half-typed numbers match nothing.
+      expect(await check({ nationalId: nationalId.slice(0, 5) })).toEqual([]);
+
+      await asAdmin(http().delete(`/api/patients/${id}`)).expect(204);
+      expect((await check({ nationalId }))[0]?.archived).toBe(true);
+    });
+
     it('lets the front desk save a patient but not change clinical notes', async () => {
       const created = await asAdmin(http().post('/api/patients'))
         .send({

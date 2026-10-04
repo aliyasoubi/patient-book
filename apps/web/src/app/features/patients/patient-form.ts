@@ -8,7 +8,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { catchError, map, of, Subject, switchMap } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, of, Subject, switchMap } from 'rxjs';
 
 import { PatientsService } from './data/patients.service';
 import { HasUnsavedChanges, warnBeforeUnload } from '../../core/guards/unsaved-changes.guard';
@@ -28,9 +28,12 @@ import {
   toLatinDigits,
 } from '../../shared/validators';
 import type {
+  DuplicateQuery,
+  DuplicateReason,
   NameSuggestion,
   Patient,
   PatientInput,
+  PossibleDuplicate,
   ReferralSource,
   TreatmentType,
 } from './data/patient.model';
@@ -38,6 +41,7 @@ import type { EducationLevel, Gender } from '../../core/models/common.model';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import {
+  PbBanner,
   PbButton,
   PbDateField,
   PbFieldGrid,
@@ -45,6 +49,7 @@ import {
   PbPage,
   PbPageHeader,
   PbSelectField,
+  PbStatusChip,
   PbSurface,
   PbTextField,
   PbTextareaField,
@@ -58,12 +63,21 @@ import {
 } from './patient-form.utils';
 import { AuthService } from '../../core/services/auth.service';
 
+/** Literal keys, so the i18n check can see every one is translated. */
+const DUPLICATE_REASON_KEYS: Readonly<Record<DuplicateReason, string>> = {
+  nationalId: 'patientForm.duplicates.reason.nationalId',
+  name: 'patientForm.duplicates.reason.name',
+  mobile: 'patientForm.duplicates.reason.mobile',
+};
+
 @Component({
   selector: 'pb-patient-form',
   standalone: true,
   imports: [
     ReactiveFormsModule,
     MatProgressBarModule,
+    PbBanner,
+    PbStatusChip,
     PbTextField,
     PbTextareaField,
     PbSelectField,
@@ -193,6 +207,54 @@ export class PatientForm implements HasUnsavedChanges {
     const needle = typed.trim().toLowerCase();
     const matches = needle ? all.filter((s) => s.name.toLowerCase().includes(needle)) : all;
     return matches.slice(0, 8).map((s) => ({ value: s.name, label: s.name }));
+  }
+
+  /**
+   * Records already on file that may be the person being registered — same
+   * national id, same name, or same mobile. A warning while the form is
+   * filled in, never a block: two people can share a name, and a family
+   * shares a phone. Debounced to one request per pause in typing, and
+   * `switchMap` so a slow answer for an earlier spelling never lands last.
+   */
+  protected readonly duplicates = toSignal(
+    this.form.valueChanges.pipe(
+      map(() => this.duplicateQuery()),
+      debounceTime(400),
+      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+      switchMap((query) =>
+        query ? this.service.possibleDuplicates(query).pipe(catchError(() => of([]))) : of([]),
+      ),
+    ),
+    { initialValue: [] as PossibleDuplicate[] },
+  );
+
+  protected duplicateReasons(d: PossibleDuplicate): string {
+    return d.reasons
+      .map((r) => this.i18n.instant(DUPLICATE_REASON_KEYS[r]))
+      .join(this.i18n.instant('list.separator'));
+  }
+
+  /**
+   * What is worth asking about. New records only — an edit is of a record
+   * already chosen — and whole identifiers only: the API ignores a half-typed
+   * number, so there is no point sending one.
+   */
+  private duplicateQuery(): DuplicateQuery | null {
+    if (this.isEdit()) return null;
+    const v = this.form.getRawValue();
+    const nationalId = toLatinDigits(v.nationalId).replace(/\D/g, '');
+    const mobile = toLatinDigits(v.mobile).replace(/\D/g, '');
+    const firstName = v.firstName.trim();
+    const lastName = v.lastName.trim();
+    const named = Boolean(firstName && lastName);
+    const query: DuplicateQuery = {
+      nationalId: nationalId.length === 10 ? nationalId : undefined,
+      mobile: mobile.length === 11 ? mobile : undefined,
+      firstName: named ? firstName : undefined,
+      lastName: named ? lastName : undefined,
+      fatherName: named ? v.fatherName.trim() || undefined : undefined,
+    };
+    return query.nationalId || query.mobile || named ? query : null;
   }
 
   /**
