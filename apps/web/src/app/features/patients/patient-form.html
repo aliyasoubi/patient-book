@@ -63,6 +63,45 @@
       </pb-field-grid>
     </pb-surface>
 
+    <!-- ── Possibly already on file ─────────────────────────────── -->
+    <!-- Between identity and contact: the national id and names are typed
+         just above, the mobile just below. A warning, never a block. The live
+         region stays in the DOM so the banner's arrival is announced. -->
+    <div class="duplicates" aria-live="polite">
+      @if (duplicates().length > 0) {
+        <pb-banner
+          tone="warning"
+          icon="person_search"
+          [title]="'patientForm.duplicates.title' | translate"
+        >
+          <p class="duplicates__hint">{{ 'patientForm.duplicates.hint' | translate }}</p>
+          <ul class="duplicates__list">
+            @for (d of duplicates(); track d.id) {
+              <li class="duplicates__item">
+                <pb-status-chip icon="folder" [link]="['/patients', d.id]">
+                  {{ d.fullName || ('patient.unnamed' | translate) }}
+                </pb-status-chip>
+                <span class="duplicates__meta">
+                  <span>{{ 'patients.file' | translate: { fileNo: d.fileNo } }}</span>
+                  @if (d.fatherName) {
+                    <span aria-hidden="true">·</span>
+                    <span>{{ 'patients.childOf' | translate: { name: d.fatherName } }}</span>
+                  }
+                  <span aria-hidden="true">·</span>
+                  <strong>{{ duplicateReasons(d) }}</strong>
+                </span>
+                @if (d.archived) {
+                  <pb-status-chip tone="neutral" icon="inventory_2">
+                    {{ 'patients.archived' | translate }}
+                  </pb-status-chip>
+                }
+              </li>
+            }
+          </ul>
+        </pb-banner>
+      }
+    </div>
+
     <!-- ── Contact ───────────────────────────────────────────────── -->
     <pb-surface icon="contact_phone" [title]="'patientForm.contact' | translate">
       <pb-field-grid>

@@ -10,6 +10,7 @@ import {
 } from '../../domain';
 import { Patient } from './patient.entity';
 import { QueryPatientsDto } from './dto/query-patients.dto';
+import type { DuplicateCriteria } from './possible-duplicates';
 
 /**
  * Columns a client may sort by.
@@ -132,6 +133,50 @@ export class PatientQueryBuilder {
       ]);
     this.applySearch(qb, key);
     this.orderByRelevance(qb);
+    return qb.limit(limit);
+  }
+
+  /**
+   * Records that may be the person being registered, archived ones included.
+   * Deliberately broad — any one identifier or the folded name — because the
+   * rules in `possible-duplicates.ts` decide which rows really match. A
+   * national-id hit is fetched first so a common name cannot crowd it past
+   * the limit.
+   */
+  possibleDuplicates(
+    c: DuplicateCriteria,
+    limit: number,
+  ): SelectQueryBuilder<Patient> {
+    const qb = this.patients
+      .createQueryBuilder('p')
+      .withDeleted()
+      .select([
+        'p.id',
+        'p.fileNo',
+        'p.firstName',
+        'p.lastName',
+        'p.fatherName',
+        'p.nationalId',
+        'p.mobile',
+        'p.deletedAt',
+      ])
+      .where(
+        new Brackets((b) => {
+          if (c.nationalId) b.orWhere('p."nationalId" = :nid');
+          if (c.mobile) b.orWhere('p."mobile" = :mobile');
+          // `nameKey` is the folded "first last"; without its spaces it is
+          // the loose key, so «علیرضا» and «علی رضا» meet.
+          if (c.name) b.orWhere(`replace(p."nameKey", ' ', '') = :name`);
+        }),
+      )
+      .setParameters({ nid: c.nationalId, mobile: c.mobile, name: c.name });
+    if (c.nationalId) {
+      qb.addSelect(`(p."nationalId" = :nid)`, 'nid_hit').orderBy(
+        'nid_hit',
+        'DESC',
+        'NULLS LAST',
+      );
+    }
     return qb.limit(limit);
   }
 

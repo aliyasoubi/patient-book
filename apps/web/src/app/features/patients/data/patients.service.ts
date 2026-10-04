@@ -5,7 +5,16 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { toParams } from '../../../core/services/http-params.util';
 import { AuditEntry, PageResult } from '../../../core/models/common.model';
-import { NameSuggestion, Patient, PatientInput, PatientSuggestion, ReferralSource, TreatmentType } from './patient.model';
+import {
+  DuplicateQuery,
+  NameSuggestion,
+  Patient,
+  PatientInput,
+  PatientSuggestion,
+  PossibleDuplicate,
+  ReferralSource,
+  TreatmentType,
+} from './patient.model';
 
 export interface PatientQuery {
   q?: string;
@@ -40,6 +49,13 @@ export class PatientsService {
 
   suggest(q: string): Observable<PatientSuggestion[]> {
     return this.http.get<PatientSuggestion[]>(`${this.base}/suggest`, { params: { q } });
+  }
+
+  /** Existing records that may be the person the registration form describes. */
+  possibleDuplicates(query: DuplicateQuery): Observable<PossibleDuplicate[]> {
+    return this.http.get<PossibleDuplicate[]>(`${this.base}/possible-duplicates`, {
+      params: toParams(query),
+    });
   }
 
   nextFileNo(): Observable<{ fileNo: string }> {

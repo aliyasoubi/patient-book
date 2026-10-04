@@ -18,6 +18,14 @@ import {
   PatientQueryBuilder,
   type IdentifierMatch,
 } from './patient-query.builder';
+import {
+  duplicateCriteria,
+  duplicateRank,
+  duplicateReasons,
+  hasCriteria,
+  type DuplicateQuery,
+  type PossibleDuplicate,
+} from './possible-duplicates';
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
 import { PatientResponse, toPatientResponse } from './patient.mapper';
 import { JalaliDate } from '../../domain';
@@ -178,6 +186,34 @@ export class PatientsService {
         count: variants.reduce((sum, v) => sum + v.count, 0),
       }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }
+
+  /**
+   * Existing records that may be the person the registration form describes,
+   * strongest match first. A warning for the form, never a refusal: two
+   * people can share a name, and a family shares a phone.
+   */
+  async possibleDuplicates(
+    query: DuplicateQuery,
+    limit = 5,
+  ): Promise<PossibleDuplicate[]> {
+    const criteria = duplicateCriteria(query);
+    if (!hasCriteria(criteria)) return [];
+    // Fetched past the cut so the ranking, not row order, picks the few shown.
+    const rows = await this.queries.possibleDuplicates(criteria, 50).getMany();
+    return rows
+      .map((p) => ({ p, reasons: duplicateReasons(criteria, p) }))
+      .filter(({ reasons }) => reasons.length > 0)
+      .sort((a, b) => duplicateRank(b.reasons) - duplicateRank(a.reasons))
+      .slice(0, limit)
+      .map(({ p, reasons }) => ({
+        id: p.id,
+        fileNo: p.fileNo,
+        fullName: p.fullName,
+        fatherName: p.fatherName,
+        archived: p.deletedAt !== null,
+        reasons,
+      }));
   }
 
   /** The next unused file number, so staff never have to guess one. */

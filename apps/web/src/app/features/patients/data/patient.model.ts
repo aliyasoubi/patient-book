@@ -77,6 +77,29 @@ export interface PatientSuggestion {
   match: 'fileNo' | 'nationalId' | 'mobile' | null;
 }
 
+/** Why an existing record may be the person being registered. */
+export type DuplicateReason = 'nationalId' | 'name' | 'mobile';
+
+/** An existing record the registration form points the user to. */
+export interface PossibleDuplicate {
+  id: string;
+  fileNo: string;
+  fullName: string;
+  fatherName: string | null;
+  archived: boolean;
+  /** Strongest first. */
+  reasons: DuplicateReason[];
+}
+
+/** What the registration form has typed so far; every field optional. */
+export interface DuplicateQuery {
+  firstName?: string;
+  lastName?: string;
+  fatherName?: string;
+  nationalId?: string;
+  mobile?: string;
+}
+
 /** A distinct first/last-name spelling on file, folded to collapse visual duplicates. */
 export interface NameSuggestion {
   name: string;
