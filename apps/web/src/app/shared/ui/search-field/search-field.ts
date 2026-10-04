@@ -1,4 +1,5 @@
 import { Component, ElementRef, input, output, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import {
   MatAutocompleteModule,
@@ -16,6 +17,8 @@ export interface SearchFieldOption {
   meta?: string | null;
   /** Usually a phone number or short secondary identifier. */
   supporting?: string | null;
+  /** A few words of text — unlike `meta`/`supporting`, not laid out as a number. */
+  tag?: string | null;
   icon?: string;
 }
 
@@ -32,6 +35,7 @@ export interface SearchFieldOption {
   selector: 'pb-search-field',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     MatAutocompleteModule,
     MatButtonModule,
@@ -78,35 +82,61 @@ export interface SearchFieldOption {
       panelClass="pb-search-panel"
       (optionSelected)="selectOption($event)"
     >
-      @for (option of options(); track option.value) {
-        <mat-option [value]="option.value">
-          <div class="pb-search-option">
-            <mat-icon class="pb-search-option__icon" aria-hidden="true">
-              {{ option.icon || 'person' }}
-            </mat-icon>
-            <span class="pb-search-option__body">
-              <span class="pb-search-option__label">{{ option.label }}</span>
-              @if (option.meta || option.supporting) {
-                <span class="pb-search-option__meta">
-                  @if (option.meta) {
-                    <span class="ltr-nums">{{ option.meta }}</span>
-                  }
-                  @if (option.meta && option.supporting) {
-                    <span aria-hidden="true">·</span>
-                  }
-                  @if (option.supporting) {
-                    <span class="ltr-nums">{{ option.supporting }}</span>
-                  }
-                </span>
-              }
-            </span>
-          </div>
-        </mat-option>
+      <!-- Options sit directly under the autocomplete, never inside a
+           template outlet: its keyboard handling finds them by query. Only
+           their body is shared. -->
+      @if (heading(); as heading) {
+        <mat-optgroup [label]="heading">
+          @for (option of options(); track option.value) {
+            <mat-option [value]="option.value">
+              <ng-container
+                [ngTemplateOutlet]="optionBody"
+                [ngTemplateOutletContext]="{ $implicit: option }"
+              />
+            </mat-option>
+          }
+        </mat-optgroup>
+      } @else {
+        @for (option of options(); track option.value) {
+          <mat-option [value]="option.value">
+            <ng-container
+              [ngTemplateOutlet]="optionBody"
+              [ngTemplateOutletContext]="{ $implicit: option }"
+            />
+          </mat-option>
+        }
       }
       @if (showEmpty() && options().length === 0 && !loading()) {
         <mat-option disabled>{{ emptyMessage() }}</mat-option>
       }
     </mat-autocomplete>
+
+    <ng-template #optionBody let-option>
+      <div class="pb-search-option">
+        <mat-icon class="pb-search-option__icon" aria-hidden="true">
+          {{ option.icon || 'person' }}
+        </mat-icon>
+        <span class="pb-search-option__body">
+          <span class="pb-search-option__label">{{ option.label }}</span>
+          @if (option.meta || option.supporting || option.tag) {
+            <span class="pb-search-option__meta">
+              @if (option.meta) {
+                <span class="ltr-nums">{{ option.meta }}</span>
+              }
+              @if (option.meta && option.supporting) {
+                <span aria-hidden="true">·</span>
+              }
+              @if (option.supporting) {
+                <span class="ltr-nums">{{ option.supporting }}</span>
+              }
+              @if (option.tag) {
+                <span class="pb-search-option__tag">{{ option.tag }}</span>
+              }
+            </span>
+          }
+        </span>
+      </div>
+    </ng-template>
   `,
   styles: `
     :host {
@@ -220,6 +250,11 @@ export interface SearchFieldOption {
       color: var(--mat-sys-on-surface-variant);
       font: var(--mat-sys-body-small);
     }
+
+    .pb-search-option__tag {
+      color: var(--mat-sys-primary);
+      font-weight: 500;
+    }
   `,
 })
 export class PbSearchField {
@@ -230,6 +265,8 @@ export class PbSearchField {
   readonly options = input<readonly SearchFieldOption[]>([]);
   readonly showEmpty = input(false);
   readonly emptyMessage = input('');
+  /** Labels the options as a group, e.g. what an empty field is offering. */
+  readonly heading = input<string | null>(null);
   readonly optionSelected = output<string>();
 
   private readonly inputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');

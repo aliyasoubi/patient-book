@@ -73,6 +73,8 @@ export interface PatientSuggestion {
   fileNo: string;
   fullName: string;
   mobile: string | null;
+  /** Set when the typed number is this patient's own file, national id or mobile. */
+  match: 'fileNo' | 'nationalId' | 'mobile' | null;
 }
 
 /** Why an existing record may be the person being registered. */

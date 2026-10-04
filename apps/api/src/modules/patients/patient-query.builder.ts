@@ -1,7 +1,13 @@
 import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { AppException } from '../../application/errors/app.exception';
-import { ErrorCode, JalaliDate, searchKey } from '../../domain';
+import {
+  ErrorCode,
+  JalaliDate,
+  MobileNumber,
+  searchKey,
+  toLatinDigits,
+} from '../../domain';
 import { Patient } from './patient.entity';
 import { QueryPatientsDto } from './dto/query-patients.dto';
 import type { DuplicateCriteria } from './possible-duplicates';
@@ -24,6 +30,55 @@ const SORTABLE: Readonly<Record<string, string>> = {
   createdAt: 'p.createdAt',
   updatedAt: 'p.updatedAt',
 };
+
+/** Which identifier a search matched exactly. */
+export type IdentifierMatch = 'fileNo' | 'nationalId' | 'mobile';
+
+/** A search typed as a number, in the forms the database holds. */
+export interface IdentifierQuery {
+  /** What to look for in `searchText`; also compared with the file number. */
+  key: string;
+  nationalId: string | null;
+  mobile: string | null;
+}
+
+/** Digits plus the punctuation phone numbers are written with. */
+const NUMBER_SHAPED = /^\+?[\d\s\-().]+$/;
+
+/**
+ * Reads a query typed as a number — a file number, a national id, a mobile
+ * written any of the ways the practice writes them (`+98 912 …`,
+ * `0912-123-4567`, Persian digits) — or `null` for anything with letters.
+ *
+ * The search key is the bare digits, so `007-898-0501` finds 0078980501 and
+ * `0912 123 4567` is one number rather than three fragments. Only a mobile
+ * written with its country code is rewritten to the stored `09…` form: its
+ * digits are not part of that form, so they could never match it.
+ */
+export function identifierQuery(q: string | undefined): IdentifierQuery | null {
+  const text = toLatinDigits(q ?? '').trim();
+  if (!NUMBER_SHAPED.test(text)) return null;
+  const digits = text.replace(/\D/g, '');
+  if (!digits) return null;
+  const mobile = MobileNumber.tryCreate(text)?.value ?? null;
+  return {
+    key: mobile && !mobile.includes(digits) ? mobile : digits,
+    nationalId: digits.length === 10 ? digits : null,
+    mobile,
+  };
+}
+
+/** The identifier `p` shares exactly with the query, if any. */
+export function exactIdentifier(
+  ids: IdentifierQuery | null,
+  p: Pick<Patient, 'fileNo' | 'nationalId' | 'mobile'>,
+): IdentifierMatch | null {
+  if (!ids) return null;
+  if (p.fileNo === ids.key) return 'fileNo';
+  if (ids.nationalId && p.nationalId === ids.nationalId) return 'nationalId';
+  if (ids.mobile && p.mobile === ids.mobile) return 'mobile';
+  return null;
+}
 
 /**
  * Translates a {@link QueryPatientsDto} into a TypeORM query.
@@ -65,9 +120,17 @@ export class PatientQueryBuilder {
     const key = searchKey(q);
     if (key.length < 2) return null;
 
+    // `nationalId` is read to tell which identifier matched, not returned.
     const qb = this.patients
       .createQueryBuilder('p')
-      .select(['p.id', 'p.fileNo', 'p.firstName', 'p.lastName', 'p.mobile']);
+      .select([
+        'p.id',
+        'p.fileNo',
+        'p.firstName',
+        'p.lastName',
+        'p.mobile',
+        'p.nationalId',
+      ]);
     this.applySearch(qb, key);
     this.orderByRelevance(qb);
     return qb.limit(limit);
@@ -124,10 +187,11 @@ export class PatientQueryBuilder {
    * typing Arabic ي or Persian digits matches rows stored in the Persian forms.
    * Every word must match, in any order and as any fragment, which is what
    * makes "محمد مرادی" find محمدرضا مرادی and narrows a two-word query rather
-   * than widening it.
+   * than widening it. A number is read as one, see {@link identifierQuery}.
    */
   private applySearch(qb: SelectQueryBuilder<Patient>, q?: string): void {
-    const key = searchKey(q);
+    const ids = identifierQuery(q);
+    const key = ids?.key ?? searchKey(q);
     if (!key) return;
 
     const words = key.split(' ').filter(Boolean);
@@ -148,9 +212,22 @@ export class PatientQueryBuilder {
       .join(' + ');
     words.forEach((word, i) => qb.setParameter(`n${i}`, `% ${word}%`));
 
+    // A number typed whole — file, national id, mobile — names one record.
+    // `coalesce`: a NULL column makes its comparison NULL, and DESC sorts
+    // NULLs first, which would float every patient without one to the top.
+    const exact = [`p."fileNo" = :simKey`];
+    if (ids?.nationalId) {
+      exact.push(`p."nationalId" = :exactNid`);
+      qb.setParameter('exactNid', ids.nationalId);
+    }
+    if (ids?.mobile) {
+      exact.push(`p."mobile" = :exactMobile`);
+      qb.setParameter('exactMobile', ids.mobile);
+    }
+
     // Ranking terms are exposed as select aliases: TypeORM's `orderBy` reads a
     // raw expression's leading token as a table alias and rejects it.
-    qb.addSelect(`(p."fileNo" = :simKey)`, 'exact_file')
+    qb.addSelect(`coalesce(${exact.join(' OR ')}, false)`, 'exact_id')
       .addSelect(`(${nameHits})`, 'name_hits')
       .addSelect(`similarity(p."nameKey", :simKey)`, 'name_sim')
       .addSelect(`similarity(p."searchText", :simKey)`, 'sim')
@@ -158,12 +235,12 @@ export class PatientQueryBuilder {
   }
 
   /**
-   * An exact file number outranks everything, then the patient whose name
+   * An exact identifier outranks everything, then the patient whose name
    * matches the most query words, then the closest name, and only then the
    * rest of the record.
    */
   private orderByRelevance(qb: SelectQueryBuilder<Patient>): void {
-    qb.orderBy('exact_file', 'DESC')
+    qb.orderBy('exact_id', 'DESC')
       .addOrderBy('name_hits', 'DESC')
       .addOrderBy('name_sim', 'DESC')
       .addOrderBy('sim', 'DESC')
