@@ -93,6 +93,8 @@ export class Patient {
   @Column({ type: 'varchar', length: 80, nullable: true })
   educationRaw!: string | null;
 
+  // Pairs with `referralSourceId`. With this relation loaded, save() takes the id from it
+  // and ignores a changed `referralSourceId` — set both, or drop the relation (CLAUDE.md).
   @ManyToOne(() => ReferralSource, (r) => r.patients, {
     nullable: true,
     onDelete: 'SET NULL',

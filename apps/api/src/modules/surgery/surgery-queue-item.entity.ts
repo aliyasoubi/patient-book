@@ -35,6 +35,8 @@ export class SurgeryQueueItem {
   @Column({ type: 'uuid', nullable: true })
   implantCaseId!: string | null;
 
+  // Pairs with `implantCaseId`. With this relation loaded, save() takes the id from it
+  // and ignores a changed `implantCaseId` — set both, or drop the relation (CLAUDE.md).
   @ManyToOne(() => ImplantCase, (c) => c.surgeries, {
     nullable: true,
     onDelete: 'SET NULL',

@@ -28,6 +28,8 @@ export class LabTrip {
   @Column({ type: 'uuid' })
   labCaseId!: string;
 
+  // Pairs with `labCaseId`. With this relation loaded, save() takes the id from it
+  // and ignores a changed `labCaseId` — set both, or drop the relation (CLAUDE.md).
   @ManyToOne(() => LabCase, (c) => c.trips, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'labCaseId' })
   labCase!: LabCase;
