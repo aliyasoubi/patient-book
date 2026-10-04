@@ -35,6 +35,8 @@ export class LabCase {
   @Column({ type: 'uuid', nullable: true })
   patientId!: string | null;
 
+  // Pairs with `patientId`. With this relation loaded, save() takes the id from it
+  // and ignores a changed `patientId` — set both, or drop the relation (CLAUDE.md).
   @ManyToOne(() => Patient, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'patientId' })
   patient!: Patient | null;
@@ -50,6 +52,8 @@ export class LabCase {
   @Column({ type: 'uuid' })
   labId!: string;
 
+  // Pairs with `labId`. With this relation loaded, save() takes the id from it
+  // and ignores a changed `labId` — set both, or drop the relation (CLAUDE.md).
   @ManyToOne(() => Lab, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'labId' })
   lab!: Lab;

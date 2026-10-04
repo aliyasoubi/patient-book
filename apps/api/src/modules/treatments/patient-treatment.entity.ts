@@ -26,6 +26,8 @@ export class PatientTreatment {
   @Column({ type: 'uuid' })
   patientId!: string;
 
+  // Pairs with `patientId`. With this relation loaded, save() takes the id from it
+  // and ignores a changed `patientId` — set both, or drop the relation (CLAUDE.md).
   @ManyToOne(() => Patient, (p) => p.treatments, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'patientId' })
   patient!: Patient;
@@ -34,6 +36,8 @@ export class PatientTreatment {
   @Column({ type: 'uuid' })
   treatmentTypeId!: string;
 
+  // Pairs with `treatmentTypeId`. With this relation loaded, save() takes the id from it
+  // and ignores a changed `treatmentTypeId` — set both, or drop the relation (CLAUDE.md).
   @ManyToOne(() => TreatmentType, (t) => t.patientTreatments, {
     eager: true,
     onDelete: 'CASCADE',
