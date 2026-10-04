@@ -4,7 +4,10 @@ import { classifyEducation, EducationLevel, Gender } from '../../../domain';
 import { Patient } from '../../patients/patient.entity';
 import { SHEET } from '../../import/application/import-workbook.use-case';
 import { PATIENT_COLUMN } from '../../import/infrastructure/row-mappers/patient-row.mapper';
-import { educationCell, ExcelJsWorkbookWriter } from './exceljs-workbook.writer';
+import {
+  educationCell,
+  ExcelJsWorkbookWriter,
+} from './exceljs-workbook.writer';
 
 describe('educationCell', () => {
   it('keeps the imported spelling while it still matches the level', () => {

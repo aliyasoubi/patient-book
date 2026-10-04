@@ -226,6 +226,8 @@ export class LabCaseForm implements HasUnsavedChanges {
 
   /** The patient file the case belongs to; picking a name from the book sets it. */
   protected readonly linkedPatient = signal<LinkedPatient | null>(null);
+  /** The user picked or unlinked a patient here — a conflict must not undo that. */
+  private linkChanged = false;
 
   private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
     this.form.controls.recordedName.valueChanges.pipe(
@@ -305,12 +307,14 @@ export class LabCaseForm implements HasUnsavedChanges {
     const match = this.patientMatches().find((p) => p.id === option.value);
     if (!match) return;
     this.linkedPatient.set({ id: match.id, fileNo: match.fileNo, fullName: match.fullName });
+    this.linkChanged = true;
     this.form.controls.recordedName.setValue(match.fullName, { emitEvent: false });
-    this.form.markAsDirty();
+    this.form.controls.recordedName.markAsDirty();
   }
 
   protected unlink(): void {
     this.linkedPatient.set(null);
+    this.linkChanged = true;
     this.form.markAsDirty();
   }
 
@@ -345,11 +349,14 @@ export class LabCaseForm implements HasUnsavedChanges {
   private apply(c: LabCase): void {
     this.loaded.set(c);
     this.form.reset(this.formValues(c));
-    this.linkedPatient.set(
-      c.patient
-        ? { id: c.patient.id, fileNo: c.patient.fileNo, fullName: c.patient.fullName }
-        : null,
-    );
+    this.linkedPatient.set(this.linkOf(c));
+    this.linkChanged = false;
+  }
+
+  private linkOf(c: LabCase): LinkedPatient | null {
+    return c.patient
+      ? { id: c.patient.id, fileNo: c.patient.fileNo, fullName: c.patient.fullName }
+      : null;
   }
 
   /** The case as the form's controls hold it; the trip fields are its latest trip. */
@@ -453,6 +460,7 @@ export class LabCaseForm implements HasUnsavedChanges {
       next: (after) => {
         this.loaded.set(after);
         adoptUntouched(this.form, this.formValues(after));
+        if (!this.linkChanged) this.linkedPatient.set(this.linkOf(after));
         this.snackBar.open(
           this.i18n.instant('labForm.conflict'),
           this.i18n.instant('action.dismiss'),

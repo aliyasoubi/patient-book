@@ -340,7 +340,11 @@ export class PatientsService {
     userId: string | null,
   ): Promise<PatientResponse> {
     await this.dataSource.transaction(async (manager) => {
-      const patient = await manager.findOne(Patient, { where: { id } });
+      // Locked, so the save cannot write back fields a concurrent edit changed.
+      const patient = await manager.findOne(Patient, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
       if (!patient) throw AppException.notFound(ErrorCode.PatientNotFound);
 
       patient.dataIssues = (patient.dataIssues ?? []).filter(
@@ -431,6 +435,14 @@ export class PatientsService {
     this.assignDate(patient, 'firstVisitAt', dto.firstVisitAt);
     this.assignDate(patient, 'lastVisitAt', dto.lastVisitAt);
 
+    // A loaded `referralSource` would win over the id on save — TypeORM reads
+    // the join column from the relation object — so drop it when the id moves.
+    if (
+      dto.referralSourceId !== undefined ||
+      dto.referralSourceName !== undefined
+    ) {
+      delete (patient as Partial<Patient>).referralSource;
+    }
     if (dto.referralSourceId !== undefined) {
       patient.referralSourceId = dto.referralSourceId;
     } else if (dto.referralSourceName !== undefined) {

@@ -63,6 +63,7 @@ describeIfWritable('clinic flows (e2e)', () => {
   const password = `E2e!${runId}Pass`;
   const userIds: string[] = [];
   const patientIds: string[] = [];
+  const referralNames: string[] = [];
   const implantCaseIds: string[] = [];
   const surgeryIds: string[] = [];
 
@@ -135,6 +136,11 @@ describeIfWritable('clinic flows (e2e)', () => {
         [patientIds],
       );
       await db.query(`DELETE FROM patients WHERE id = ANY($1)`, [patientIds]);
+    }
+    if (referralNames.length) {
+      await db.query(`DELETE FROM referral_sources WHERE name = ANY($1)`, [
+        referralNames,
+      ]);
     }
     if (userIds.length) {
       await db.query(`DELETE FROM audit_logs WHERE "userId" = ANY($1)`, [
@@ -286,6 +292,38 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect((missing.body as ErrorBody).fieldErrors).toHaveProperty(
         'expectedVersion',
       );
+    });
+
+    it('moves and clears a referral a patient already has', async () => {
+      const [first, second] = [`e2e-ref-a-${runId}`, `e2e-ref-b-${runId}`];
+      referralNames.push(first, second);
+      const created = await asAdmin(http().post('/api/patients'))
+        .send({
+          fileNo: nextNumber(),
+          firstName: 'نرگس',
+          lastName: 'کریمی',
+          referralSourceName: first,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      let { version } = created.body as { version: number };
+      patientIds.push(id);
+
+      // The loaded relation must not outvote the id the edit sets.
+      const edit = async (referralSourceName: string | null) => {
+        const res = await asAdmin(http().patch(`/api/patients/${id}`))
+          .send({ referralSourceName, expectedVersion: version })
+          .expect(200);
+        const body = res.body as {
+          version: number;
+          referralSource: { name: string } | null;
+        };
+        version = body.version;
+        return body.referralSource?.name ?? null;
+      };
+      expect(await edit(second)).toBe(second);
+      expect(await edit(null)).toBeNull();
+      expect(await edit(first)).toBe(first);
     });
 
     it('lets the front desk save a patient but not change clinical notes', async () => {
