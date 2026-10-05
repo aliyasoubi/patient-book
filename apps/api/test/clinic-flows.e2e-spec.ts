@@ -558,6 +558,37 @@ describeIfWritable('clinic flows (e2e)', () => {
       await edit(first);
     });
 
+    it("opens a case with the book's next number and the patient's name when neither is sent", async () => {
+      const res = await asAdmin(http().post('/api/patients'))
+        .send({ fileNo: nextNumber(), firstName: 'نرگس', lastName: 'صالحی' })
+        .expect(201);
+      const patientId = (res.body as { id: string }).id;
+      patientIds.push(patientId);
+
+      // Two at once, as a double click would send: each gets its own number.
+      const created = await Promise.all(
+        [0, 1].map(() =>
+          asAdmin(http().post('/api/implant-cases'))
+            .send({ patientId })
+            .expect(201),
+        ),
+      );
+      const cases = created.map(
+        (r) => r.body as { id: string; registryNo: string },
+      );
+      implantCaseIds.push(...cases.map((c) => c.id));
+
+      for (const c of cases) {
+        expect(c).toMatchObject({
+          recordedName: 'نرگس صالحی',
+          patientId,
+          matchMethod: 'manual',
+        });
+      }
+      const [a, b] = cases.map((c) => BigInt(c.registryNo));
+      expect(a > b ? a - b : b - a).toBe(1n);
+    });
+
     it('edits, archives and restores a case through the same audited path', async () => {
       const registryNo = nextNumber();
       const created = await asAdmin(http().post('/api/implant-cases'))

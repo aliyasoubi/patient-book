@@ -176,3 +176,78 @@ describe('RegistryService.update concurrency', () => {
     ).rejects.toMatchObject({ code: ErrorCode.RegistryCaseModified });
   });
 });
+
+describe('RegistryService.create defaults', () => {
+  /** A book whose highest number is `max`, holding one patient. */
+  const makeService = (max: string | null) => {
+    const saved: Array<Record<string, unknown>> = [];
+    const queries: string[] = [];
+    const repository = {
+      metadata: { tableName: 'implant_cases' },
+      findOne: () => Promise.resolve(null),
+      create: (fields: Record<string, unknown>) => ({ ...fields }),
+      save: (entity: Record<string, unknown>) => {
+        saved.push(entity);
+        return Promise.resolve({ ...entity, id: 'case-new' });
+      },
+    };
+    const manager = {
+      getRepository: () => repository,
+      query: (sql: string) => {
+        queries.push(sql);
+        return Promise.resolve(sql.includes('max(') ? [{ max }] : []);
+      },
+      findOne: () =>
+        Promise.resolve({ id: 'p-1', firstName: 'مریم', lastName: 'کریمی' }),
+    };
+    const rootRepository = {
+      target: TestRegistryCase,
+      manager: {
+        transaction: (run: (m: unknown) => Promise<unknown>) => run(manager),
+      },
+    } as unknown as Repository<TestRegistryCase>;
+    const audit = {
+      recordRequired: () => Promise.resolve(),
+    } as unknown as AuditService;
+    return {
+      service: new RegistryService(rootRepository, 'implant_case', audit),
+      saved,
+      queries,
+    };
+  };
+
+  it("takes the book's next number and the patient's name when neither is given", async () => {
+    const { service, saved, queries } = makeService('41');
+
+    await service.create({ patientId: 'p-1' }, 'u');
+
+    expect(saved[0]).toMatchObject({
+      registryNo: '42',
+      recordedName: 'مریم کریمی',
+      patientId: 'p-1',
+      matchMethod: 'manual',
+    });
+    // Numbering is serialised so two creates cannot share a number.
+    expect(queries[0]).toContain('pg_advisory_xact_lock');
+  });
+
+  it('starts an empty book at 1', async () => {
+    const { service, saved } = makeService(null);
+
+    await service.create({ patientId: 'p-1' }, 'u');
+
+    expect(saved[0]).toMatchObject({ registryNo: '1' });
+  });
+
+  it('keeps a number and name the caller did give', async () => {
+    const { service, saved, queries } = makeService('41');
+
+    await service.create(
+      { registryNo: '7', recordedName: 'سارا', patientId: 'p-1' },
+      'u',
+    );
+
+    expect(saved[0]).toMatchObject({ registryNo: '7', recordedName: 'سارا' });
+    expect(queries).toEqual([]);
+  });
+});
