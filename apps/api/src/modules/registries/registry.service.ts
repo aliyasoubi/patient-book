@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository, ObjectLiteral } from 'typeorm';
+import { EntityManager, Repository, ObjectLiteral } from 'typeorm';
 
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
 import {
@@ -11,6 +11,7 @@ import { searchKey } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { ErrorCode } from '../../domain';
+import { Patient } from '../patients/patient.entity';
 
 /** Fields every register row shares — implant and ortho differ only in table. */
 export interface RegistryCase extends ObjectLiteral {
@@ -107,18 +108,41 @@ export class RegistryService<T extends RegistryCase> {
     return row;
   }
 
+  /**
+   * Opens a case. Number and name are both optional: opened from a patient's
+   * page, nobody should have to look up the book's next number or retype a
+   * name the main book already holds, so a missing number is the next unused
+   * one and a missing name is the linked patient's.
+   */
   async create(dto: UpsertRegistryCaseDto, userId: string | null): Promise<T> {
     return this.repo.manager.transaction(async (manager) => {
       const repository = manager.getRepository(this.repo.target);
-      const clash = await repository.findOne({
-        where: { registryNo: dto.registryNo } as never,
-      });
-      if (clash) {
-        throw AppException.conflict(ErrorCode.RegistryNumberTaken, {
-          registryNo: dto.registryNo,
+      const registryNo =
+        dto.registryNo ?? (await this.nextRegistryNo(manager, repository));
+      if (dto.registryNo) {
+        const clash = await repository.findOne({
+          where: { registryNo } as never,
         });
+        if (clash) {
+          throw AppException.conflict(ErrorCode.RegistryNumberTaken, {
+            registryNo,
+          });
+        }
       }
-      const entity = repository.create(dto as never) as unknown as T;
+      let recordedName = dto.recordedName;
+      if (!recordedName && dto.patientId) {
+        const patient = await manager.findOne(Patient, {
+          where: { id: dto.patientId },
+          select: { id: true, firstName: true, lastName: true },
+        });
+        if (!patient) throw AppException.notFound(ErrorCode.PatientNotFound);
+        recordedName = `${patient.firstName} ${patient.lastName}`.trim();
+      }
+      const entity = repository.create({
+        ...dto,
+        registryNo,
+        recordedName: recordedName ?? '',
+      } as never) as unknown as T;
       entity.matchMethod = dto.patientId ? 'manual' : 'unmatched';
       entity.searchText = this.buildSearch(entity);
 
@@ -230,6 +254,25 @@ export class RegistryService<T extends RegistryCase> {
       );
     });
     return this.findOne(id);
+  }
+
+  /**
+   * One past the highest numeric number in this book, archived rows included
+   * so a restore can never collide. The transaction-scoped advisory lock
+   * queues concurrent creates here, so two cannot be handed the same number.
+   */
+  private async nextRegistryNo(
+    manager: EntityManager,
+    repository: Repository<T>,
+  ): Promise<string> {
+    const table = repository.metadata.tableName;
+    await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+      `registry_no:${table}`,
+    ]);
+    const rows = await manager.query<Array<{ max: string | null }>>(
+      `SELECT max("registryNo"::bigint)::text AS max FROM "${table}" WHERE "registryNo" ~ '^[0-9]+$'`,
+    );
+    return String(BigInt(rows[0]?.max ?? '0') + 1n);
   }
 
   private buildSearch(c: RegistryCase): string {

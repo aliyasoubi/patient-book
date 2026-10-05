@@ -55,30 +55,23 @@ interface LinkedPatient {
   fullName: string;
 }
 
-export type RegistryCaseDialogData =
-  | {
-      mode: 'create';
-      kind: RegistryKind;
-      /** The patient the new case is opened from; the link is fixed. */
-      patient: { id: string; name: string };
-    }
-  | {
-      mode: 'edit';
-      kind: RegistryKind;
-      existing: RegistryCase;
-    };
+export interface RegistryCaseDialogData {
+  mode: 'edit';
+  kind: RegistryKind;
+  existing: RegistryCase;
+}
 
 const MIN_PATIENT_QUERY = 2;
 
 /**
- * Creates or corrects an ortho or implant پرونده.
+ * Corrects an ortho or implant پرونده.
  *
  * Both registers share one DTO and one pair of endpoints (see
  * {@link RegistryService}), so one dialog serves both rather than two nearly
- * identical forms. Opened from a patient's page it creates a case already
- * linked to that patient; opened from a register row it edits that row —
- * number, name and, since imported rows are often unlinked or linked to the
- * wrong file, the patient link itself. Neither book keeps phones, a status or
+ * identical forms. It edits the number, the name and, since imported rows are
+ * often unlinked or linked to the wrong file, the patient link itself. New
+ * cases need no dialog: the patient page opens them with the book's next
+ * number and the patient's name. Neither book keeps phones, a status or
  * notes, so the dialog never sends them and whatever is stored stays.
  */
 @Component({
@@ -113,33 +106,31 @@ const MIN_PATIENT_QUERY = 2;
         [maxlength]="160"
       />
 
-      @if (data.mode === 'edit') {
-        <!-- The link to the main book. Typing searches; picking links; the
+      <!-- The link to the main book. Typing searches; picking links; the
              chip's cross unlinks. Text left in the box without a pick changes
              nothing, so a half-typed search cannot silently drop a link. -->
-        <pb-text-field
-          [control]="form.controls.patientSearch"
-          [label]="'registryForm.patientLink' | translate"
-          [hint]="linkHint()"
-          prefixIcon="person_search"
-          [options]="patientOptions()"
-          (optionSelected)="onPatientSelected($event)"
-        />
-        @if (linkedPatient(); as linked) {
-          <div class="form__linked">
-            <mat-icon aria-hidden="true">link</mat-icon>
-            <span
-              >{{ linked.fullName }} —
-              {{ 'registry.patientFile' | translate: { fileNo: linked.fileNo } }}</span
-            >
-            <pb-icon-button
-              icon="close"
-              size="compact"
-              (click)="unlink()"
-              [ariaLabel]="'registryForm.unlink' | translate"
-            />
-          </div>
-        }
+      <pb-text-field
+        [control]="form.controls.patientSearch"
+        [label]="'registryForm.patientLink' | translate"
+        [hint]="linkHint()"
+        prefixIcon="person_search"
+        [options]="patientOptions()"
+        (optionSelected)="onPatientSelected($event)"
+      />
+      @if (linkedPatient(); as linked) {
+        <div class="form__linked">
+          <mat-icon aria-hidden="true">link</mat-icon>
+          <span
+            >{{ linked.fullName }} —
+            {{ 'registry.patientFile' | translate: { fileNo: linked.fileNo } }}</span
+          >
+          <pb-icon-button
+            icon="close"
+            size="compact"
+            (click)="unlink()"
+            [ariaLabel]="'registryForm.unlink' | translate"
+          />
+        </div>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -156,7 +147,7 @@ const MIN_PATIENT_QUERY = 2;
         [loading]="saving()"
         [loadingText]="'common.saving' | translate"
       >
-        {{ (data.mode === 'edit' ? 'registryForm.save' : 'registryForm.create') | translate }}
+        {{ 'registryForm.save' | translate }}
       </pb-button>
     </mat-dialog-actions>
   `,
@@ -200,29 +191,20 @@ export class RegistryCaseDialog {
   protected readonly saving = signal(false);
 
   protected readonly title =
-    this.data.mode === 'edit'
-      ? this.data.kind === 'ortho'
-        ? 'registryForm.editOrtho'
-        : 'registryForm.editImplant'
-      : this.data.kind === 'ortho'
-        ? 'registryForm.newOrtho'
-        : 'registryForm.newImplant';
+    this.data.kind === 'ortho' ? 'registryForm.editOrtho' : 'registryForm.editImplant';
 
-  private readonly existing = this.data.mode === 'edit' ? this.data.existing : null;
+  private readonly existing = this.data.existing;
 
   /**
    * The copy of the case the next save is made against. Starts as the one the
    * dialog opened on; after a conflict it is the one someone else saved, so
    * the retry is checked against what the user has now been told about.
    */
-  private readonly current = signal<RegistryCase | null>(this.existing);
+  private readonly current = signal<RegistryCase>(this.existing);
 
   protected readonly form = this.fb.nonNullable.group({
-    registryNo: [this.existing?.registryNo ?? '', [Validators.required, digitString(1, 18)]],
-    recordedName: [
-      this.existing?.recordedName ?? (this.data.mode === 'create' ? this.data.patient.name : ''),
-      [Validators.required, Validators.maxLength(160)],
-    ],
+    registryNo: [this.existing.registryNo, [Validators.required, digitString(1, 18)]],
+    recordedName: [this.existing.recordedName, [Validators.required, Validators.maxLength(160)]],
     patientSearch: [''],
   });
 
@@ -296,36 +278,25 @@ export class RegistryCaseDialog {
       recordedName: raw.recordedName.trim(),
     };
 
-    let request;
+    // Only a changed link is sent: the API treats any `patientId` it
+    // receives as a deliberate, manual decision about the match.
     const current = this.current();
-    if (this.data.mode === 'create') {
-      payload.patientId = this.data.patient.id;
-      request = this.registry.createCase(this.data.kind, payload);
-    } else if (current) {
-      // Only a changed link is sent: the API treats any `patientId` it
-      // receives as a deliberate, manual decision about the match.
-      const linkedId = this.linkedPatient()?.id ?? null;
-      if (linkedId !== current.patientId) payload.patientId = linkedId;
-      request = this.registry.updateCase(this.data.kind, current.id, {
-        ...payload,
-        expectedVersion: current.version,
-      });
-    } else {
-      this.saving.set(false);
-      return;
-    }
+    const linkedId = this.linkedPatient()?.id ?? null;
+    if (linkedId !== current.patientId) payload.patientId = linkedId;
 
-    request.subscribe({
-      next: (saved) => {
-        this.saving.set(false);
-        this.ref.close(saved);
-      },
-      error: (error: unknown) => {
-        this.saving.set(false);
-        if (this.isConflict(error)) this.onConflict();
-        else this.applyServerErrors(error);
-      },
-    });
+    this.registry
+      .updateCase(this.data.kind, current.id, { ...payload, expectedVersion: current.version })
+      .subscribe({
+        next: (saved) => {
+          this.saving.set(false);
+          this.ref.close(saved);
+        },
+        error: (error: unknown) => {
+          this.saving.set(false);
+          if (this.isConflict(error)) this.onConflict();
+          else this.applyServerErrors(error);
+        },
+      });
   }
 
   private isConflict(error: unknown): boolean {
@@ -344,7 +315,6 @@ export class RegistryCaseDialog {
    */
   private onConflict(): void {
     const before = this.current();
-    if (!before) return;
     this.registry.getCase(this.data.kind, before.id).subscribe({
       next: (after) => {
         this.current.set(after);

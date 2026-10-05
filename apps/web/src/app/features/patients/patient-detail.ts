@@ -9,7 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { catchError, map, of, Subject, switchMap } from 'rxjs';
+import { catchError, finalize, map, of, Subject, switchMap } from 'rxjs';
 
 import { PatientsService } from './data/patients.service';
 import { RecentPatientsService } from './data/recent-patients.service';
@@ -340,20 +340,32 @@ export class PatientDetail {
     });
   }
 
-  /** Opens a new ortho or implant پرونده already linked to this patient. */
+  /** Which register a case is being opened in, so the button cannot fire twice. */
+  protected readonly openingCase = signal<RegistryKind | null>(null);
+
+  /**
+   * Opens a new ortho or implant پرونده linked to this patient. Nothing is
+   * asked: the API gives it the book's next number and the patient's name.
+   */
   protected addCase(kind: RegistryKind): void {
     const p = this.patient();
-    if (!p) return;
-    const data: RegistryCaseDialogData = {
-      mode: 'create',
-      kind,
-      patient: { id: p.id, name: p.fullName },
-    };
-    this.openCaseDialog(data, p.id, () =>
-      this.i18n.instant(
-        kind === 'ortho' ? 'patientDetail.orthoCaseCreated' : 'patientDetail.implantCaseCreated',
-      ),
-    );
+    if (!p || this.openingCase()) return;
+    this.openingCase.set(kind);
+    this.registry
+      .createCase(kind, { patientId: p.id })
+      .pipe(finalize(() => this.openingCase.set(null)))
+      .subscribe((created) => {
+        this.snackBar.open(
+          this.i18n.instant(
+            kind === 'ortho'
+              ? 'patientDetail.orthoCaseCreated'
+              : 'patientDetail.implantCaseCreated',
+            { number: created.registryNo },
+          ),
+          this.i18n.instant('action.dismiss'),
+        );
+        if (this.stillShowing(p.id)) this.load(p.id);
+      });
   }
 
   /**

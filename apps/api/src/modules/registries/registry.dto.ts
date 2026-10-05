@@ -58,13 +58,18 @@ export class QueryRegistryDto extends PaginationDto {
 export class UpsertRegistryCaseDto {
   @ApiPropertyOptional({
     description:
-      'Number within this register (independent of the main file number)',
+      'Number within this register (independent of the main file number); ' +
+      'left out, a new case takes the next unused one',
   })
   @Transform(identifier)
   @Matches(REGISTER_NUMBER)
-  registryNo!: string;
+  @IsOptional()
+  registryNo?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description:
+      "Name as the register records it; left out, a linked case takes the patient's name",
+  })
   @Transform(clean)
   @IsString()
   @MaxLength(160)
