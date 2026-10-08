@@ -1,14 +1,14 @@
 import 'reflect-metadata';
 import { existsSync } from 'node:fs';
 import { userInfo } from 'node:os';
-import { basename, resolve } from 'node:path';
+import { basename, extname, resolve } from 'node:path';
 
 import dataSource from '../../../database/data-source';
 import { AuditLog } from '../../../infrastructure/persistence/entities/audit-log.entity';
 import { InventoryMovementKind } from '../../../domain';
 import { InventoryItem } from '../inventory-item.entity';
-import { InventoryMovement } from '../inventory-movement.entity';
-import { identityKey, itemSearchText } from '../inventory-stock';
+import { writeMovement } from '../inventory-ledger';
+import { identityKey, itemSearchText, receive } from '../inventory-stock';
 import { readInventoryWorkbook } from './exceljs-inventory.reader';
 import {
   ImportNote,
@@ -24,8 +24,8 @@ import {
  *
  * The preview reads the workbook without touching the database and prints
  * every item it found and everything it had to interpret. `--apply` writes
- * them in one transaction, each with an opening count on its stock card that
- * names the cell it came from, and refuses an inventory that already holds
+ * them in one transaction, each with its stock as one batch and an opening
+ * count on its stock card that names the cell it came from, and refuses an inventory that already holds
  * items: after the first run the app is where stock is kept, and a second
  * load would double it.
  */
@@ -74,9 +74,11 @@ async function main(): Promise<void> {
 
     const actor = `cli:${userInfo().username}`;
     const workbook = basename(filePath);
+    // The name without `.xlsx`: a Latin extension after a Persian name turns
+    // round in a right-to-left line, and the stock card reads it there.
+    const source = basename(filePath, extname(filePath));
     await dataSource.transaction(async (manager) => {
       const items = manager.getRepository(InventoryItem);
-      const movements = manager.getRepository(InventoryMovement);
       for (const row of result.items) {
         const item = items.create({
           category: row.category,
@@ -84,29 +86,31 @@ async function main(): Promise<void> {
           brand: row.brand,
           spec: row.spec,
           unit: row.unit,
-          quantity: row.quantity,
+          quantity: 0,
           minQuantity: null,
-          expiresOn: row.expiry?.date ?? null,
-          expiryText: row.expiry?.text ?? null,
+          expiresOn: null,
+          expiryText: null,
           notes: row.notes,
         });
         item.identityKey = identityKey(item);
         item.searchText = itemSearchText(item);
         const saved = await items.save(item);
-        // Every item's card opens with the count the workbook recorded.
-        await movements.save(
-          movements.create({
-            itemId: saved.id,
-            kind: InventoryMovementKind.Count,
-            change: row.quantity,
-            quantityAfter: row.quantity,
-            expiryText: row.expiry?.text ?? null,
-            // `انبار C36`, not `انبار!C36`: a `!` between Persian and Latin
-            // turns the reference round in a right-to-left line.
-            note: `${workbook} · ${row.source.replace('!', ' ')}`,
+        // Every item's card opens with the count the workbook recorded, as
+        // its first batch — the same line the app writes for an opening count.
+        await writeMovement(
+          manager,
+          saved,
+          InventoryMovementKind.Count,
+          row.quantity
+            ? [receive([], { quantity: row.quantity, expiry: row.expiry })]
+            : [],
+          {
             userId: null,
             username: actor,
-          }),
+            // `انبار C36`, not `انبار!C36`: a `!` between Persian and Latin
+            // turns the reference round in a right-to-left line.
+            note: `${source} · ${row.source.replace('!', ' ')}`,
+          },
         );
       }
       await manager.getRepository(AuditLog).save({

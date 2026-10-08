@@ -24,15 +24,31 @@ export interface InventoryItemInput {
   /** As printed on the pack; the API reads Gregorian and Jalali. */
   expiry?: string | null;
   notes?: string | null;
+  /** On creation only: what is on the shelf, as the first batch. */
   quantity?: number;
+  lotNumber?: string | null;
 }
 
 export interface InventoryMovementInput {
   kind: InventoryMovementKind;
   /** How many came in or went out — or, for a count, how many are on the shelf. */
   quantity: number;
+  /** A delivery's packs. */
   expiry?: string | null;
+  lotNumber?: string | null;
+  /** A use's or discard's batch; first-expiring first when absent. */
+  lotId?: string | null;
+  /** The patient a use went into. */
+  patientFileNo?: string | null;
   note?: string | null;
+}
+
+/** One item of a stocktake; only what changed is sent. */
+export interface InventoryCountLine {
+  id: string;
+  quantity?: number;
+  /** `null` stops reordering it by level. */
+  minQuantity?: number | null;
 }
 
 export interface InventoryQuery {
@@ -75,6 +91,22 @@ export class InventoryService {
 
   move(id: string, body: InventoryMovementInput): Observable<InventoryItemDetail> {
     return this.http.post<InventoryItemDetail>(`${this.items}/${id}/movements`, body);
+  }
+
+  /** A shelf counted at once, saved whole or not at all. */
+  count(lines: InventoryCountLine[]): Observable<{ counted: number; minimums: number }> {
+    return this.http.post<{ counted: number; minimums: number }>(`${this.items}/count`, {
+      lines,
+    });
+  }
+
+  /** Correct a batch's lot number or expiry. */
+  updateLot(
+    id: string,
+    lotId: string,
+    body: { lotNumber?: string | null; expiry?: string | null },
+  ): Observable<InventoryItemDetail> {
+    return this.http.patch<InventoryItemDetail>(`${this.items}/${id}/lots/${lotId}`, body);
   }
 
   /** A soft delete: the item leaves the list and can be restored. */

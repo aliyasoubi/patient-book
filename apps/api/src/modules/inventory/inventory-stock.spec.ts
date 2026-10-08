@@ -1,14 +1,18 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { InventoryMovementKind } from '../../domain';
 import {
-  applyMovement,
+  count,
   expiryState,
+  fefo,
   identityKey,
   inventorySearchKey,
+  LotLevel,
+  nearestExpiry,
+  normalizeLot,
   parseExpiry,
-  StockLevel,
+  receive,
   stockState,
+  take,
 } from './inventory-stock';
 
 const iso = (d: Date): string =>
@@ -94,84 +98,129 @@ describe('expiryState', () => {
   });
 });
 
-describe('applyMovement', () => {
-  const level = (
-    quantity: number,
-    expiryText: string | null = null,
-  ): StockLevel => ({
+/** A batch: `expiry` as printed, arriving `day` days into the month. */
+const lot = (
+  id: string,
+  quantity: number,
+  expiry: string | null,
+  day = 1,
+  lotNumber: string | null = null,
+): LotLevel => {
+  const parsed = expiry ? parseExpiry(expiry) : null;
+  return {
+    id,
+    lotNumber,
     quantity,
-    expiryText,
-    expiresOn: expiryText ? parseExpiry(expiryText)!.date : null,
-  });
+    expiresOn: parsed?.date ?? null,
+    expiryText: parsed?.text ?? null,
+    createdAt: new Date(2026, 0, day),
+  };
+};
+const ids = (changes: Array<{ lot: LotLevel; change: number }>) =>
+  changes.map(({ lot, change }) => [lot.id, change]);
 
-  it('adds a delivery, keeping the earlier expiry of what was already there', () => {
-    const r = applyMovement(level(3, '2027/01'), {
-      kind: InventoryMovementKind.Receive,
-      quantity: 10,
-      expiry: parseExpiry('2029/06'),
-    });
-    expect(r).toMatchObject({
-      change: 10,
-      quantity: 13,
-      expiryText: '2027/01',
-    });
+describe('fefo', () => {
+  it('puts the soonest expiry first, undated last, then the first to arrive', () => {
+    const order = fefo([
+      lot('undated', 1, null),
+      lot('late', 1, '2029/01'),
+      lot('soon-second', 1, '2027/01', 5),
+      lot('soon-first', 1, '2027/01', 2),
+    ]).map((l) => l.id);
+    expect(order).toEqual(['soon-first', 'soon-second', 'late', 'undated']);
   });
+});
 
-  it('takes a delivery’s expiry when it is the earlier one', () => {
-    const r = applyMovement(level(3, '2029/01'), {
-      kind: InventoryMovementKind.Receive,
-      quantity: 1,
-      expiry: parseExpiry('2027/06'),
-    });
-    expect(r.expiryText).toBe('2027/06');
-  });
-
-  it('replaces a used-up batch’s expiry on an empty shelf, even with none', () => {
-    const empty = level(0, '2025/01');
+describe('nearestExpiry', () => {
+  it('is the first-expiring batch still on the shelf', () => {
     expect(
-      applyMovement(empty, {
-        kind: InventoryMovementKind.Receive,
-        quantity: 5,
-        expiry: parseExpiry('2029/06'),
-      }).expiryText,
-    ).toBe('2029/06');
-    expect(
-      applyMovement(empty, { kind: InventoryMovementKind.Receive, quantity: 5 })
-        .expiryText,
-    ).toBeNull();
+      nearestExpiry([
+        lot('a', 0, '2026/01'),
+        lot('b', 3, '2027/06'),
+        lot('c', 1, null),
+      ]).expiryText,
+    ).toBe('2027/06');
+    expect(nearestExpiry([lot('a', 0, '2026/01')]).expiryText).toBeNull();
   });
+});
 
-  it('takes out what is used or discarded', () => {
-    const r = applyMovement(level(4, '2027/01'), {
-      kind: InventoryMovementKind.Use,
-      quantity: 4,
+describe('normalizeLot', () => {
+  it('reads one lot number one way', () => {
+    expect(normalizeLot(' ab۱۲  3 ')).toBe('AB12 3');
+    expect(normalizeLot('  ')).toBeNull();
+  });
+});
+
+describe('receive', () => {
+  it('adds to the batch with the same lot and expiry', () => {
+    const lots = [lot('a', 2, '2027/01', 1, 'X1')];
+    const change = receive(lots, {
+      quantity: 5,
+      lotNumber: 'x1',
+      expiry: parseExpiry('2027-01'),
     });
-    expect(r).toMatchObject({ change: -4, quantity: 0, expiryText: '2027/01' });
+    expect(change).toEqual({ lot: lots[0], change: 5 });
   });
 
-  it('refuses to take out more than there is', () => {
-    expect(() =>
-      applyMovement(level(2), {
-        kind: InventoryMovementKind.Discard,
-        quantity: 3,
-      }),
-    ).toThrow(expect.objectContaining({ params: { available: 2 } }));
+  it('opens a new batch for another lot or expiry', () => {
+    const change = receive([lot('a', 2, '2027/01', 1, 'X1')], {
+      quantity: 5,
+      lotNumber: 'X2',
+      expiry: parseExpiry('2029/03'),
+    });
+    expect(change.lot).toMatchObject({
+      id: null,
+      lotNumber: 'X2',
+      expiryText: '2029/03',
+      quantity: 0,
+    });
+    expect(change.change).toBe(5);
+  });
+});
+
+describe('take', () => {
+  const shelf = [lot('late', 5, '2029/01'), lot('soon', 2, '2027/01')];
+
+  it('takes first-expiring first, across batches', () => {
+    expect(ids(take(shelf, 3))).toEqual([
+      ['soon', -2],
+      ['late', -1],
+    ]);
   });
 
-  it('sets the balance to a count, recording the difference', () => {
-    expect(
-      applyMovement(level(7, '2027/01'), {
-        kind: InventoryMovementKind.Count,
-        quantity: 5,
-      }),
-    ).toMatchObject({ change: -2, quantity: 5, expiryText: '2027/01' });
-    expect(
-      applyMovement(level(5), {
-        kind: InventoryMovementKind.Count,
-        quantity: 5,
-        expiry: parseExpiry('2028/03'),
-      }),
-    ).toMatchObject({ change: 0, quantity: 5, expiryText: '2028/03' });
+  it('takes from the batch named', () => {
+    expect(ids(take(shelf, 3, 'late'))).toEqual([['late', -3]]);
+  });
+
+  it('refuses more than the shelf, or the batch, holds', () => {
+    expect(() => take(shelf, 8)).toThrow(
+      expect.objectContaining({ params: { available: 7 } }),
+    );
+    expect(() => take(shelf, 3, 'soon')).toThrow(
+      expect.objectContaining({ params: { available: 2 } }),
+    );
+  });
+});
+
+describe('count', () => {
+  it('takes what is missing from the first-expiring batches', () => {
+    const shelf = [lot('late', 5, '2029/01'), lot('soon', 2, '2027/01')];
+    expect(ids(count(shelf, 4))).toEqual([
+      ['soon', -2],
+      ['late', -1],
+    ]);
+  });
+
+  it('adds what is found to the last batch to arrive', () => {
+    const shelf = [lot('first', 1, '2027/01', 1), lot('last', 1, '2029/01', 9)];
+    expect(ids(count(shelf, 5))).toEqual([['last', 3]]);
+  });
+
+  it('opens an undated batch on an empty record, and changes nothing when right', () => {
+    const [opened] = count([], 4);
+    expect(opened.lot).toMatchObject({ id: null, expiryText: null });
+    expect(opened.change).toBe(4);
+    expect(count([lot('a', 3, null)], 3)).toEqual([]);
   });
 });
 

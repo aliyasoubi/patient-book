@@ -4,8 +4,11 @@ import {
   OmitType,
   PartialType,
 } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsIn,
@@ -13,10 +16,13 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
+  Matches,
   Max,
   MaxLength,
   Min,
   Validate,
+  ValidateNested,
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -28,6 +34,10 @@ import {
   InventoryUnit,
   normalizeForDisplay,
 } from '../../../domain';
+import {
+  REGISTER_NUMBER,
+  optionalIdentifier,
+} from '../../patients/dto/patient.dto';
 import { parseExpiry } from '../inventory-stock';
 
 const toBool = ({ value }: { value: unknown }): boolean | undefined => {
@@ -159,18 +169,35 @@ export class CreateInventoryItemDto {
   @IsOptional()
   notes?: string | null;
 
-  /** What is on the shelf now; recorded as the item's first count. */
+  /**
+   * What is on the shelf now, recorded as the item's first count. It opens
+   * the item's first batch, with `expiry` and `lotNumber`.
+   */
   @ApiPropertyOptional({ minimum: 0, default: 0 })
   @IsInt()
   @Min(0)
   @Max(MAX_QUANTITY)
   @IsOptional()
   quantity?: number;
+
+  @ApiPropertyOptional({ example: 'LOT 2304A' })
+  @Transform(clean)
+  @IsString()
+  @MaxLength(60)
+  @IsOptional()
+  lotNumber?: string | null;
 }
 
-/** The item's own fields. Its quantity changes only through a movement. */
+/**
+ * The item's own fields. Its quantity changes only through a movement, and
+ * its expiry is its batches'.
+ */
 export class UpdateInventoryItemDto extends PartialType(
-  OmitType(CreateInventoryItemDto, ['quantity'] as const),
+  OmitType(CreateInventoryItemDto, [
+    'quantity',
+    'expiry',
+    'lotNumber',
+  ] as const),
 ) {
   /** The item's `version` as the form loaded it. Movements bump it too. */
   @ApiProperty()
@@ -191,7 +218,7 @@ export class InventoryMovementDto {
   @Max(MAX_QUANTITY)
   quantity!: number;
 
-  /** On a delivery or a count: the expiry printed on these packs. */
+  /** On a delivery: the expiry printed on these packs. */
   @ApiPropertyOptional({ example: '2028/07' })
   @Transform(clean)
   @Validate(IsExpiryConstraint)
@@ -199,10 +226,81 @@ export class InventoryMovementDto {
   @IsOptional()
   expiry?: string | null;
 
-  @ApiPropertyOptional({ description: 'Supplier, patient file, reason' })
+  /** On a delivery: the LOT printed on these packs. */
+  @ApiPropertyOptional({ example: 'LOT 2304A' })
+  @Transform(clean)
+  @IsString()
+  @MaxLength(60)
+  @IsOptional()
+  lotNumber?: string | null;
+
+  /** On a use or a discard: the batch it comes from. First-expiring first if none. */
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  lotId?: string | null;
+
+  /** On a use: the file of the patient it went into. */
+  @ApiPropertyOptional({ example: '10234' })
+  @Transform(optionalIdentifier)
+  @Matches(REGISTER_NUMBER)
+  @IsOptional()
+  patientFileNo?: string | null;
+
+  @ApiPropertyOptional({ description: 'Supplier, invoice, reason' })
   @Transform(clean)
   @IsString()
   @MaxLength(300)
   @IsOptional()
   note?: string | null;
+}
+
+/** One item of a stocktake: what was counted on the shelf, and its reorder level. */
+export class InventoryCountLineDto {
+  @ApiProperty()
+  @IsUUID()
+  id!: string;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsInt()
+  @Min(0)
+  @Max(MAX_QUANTITY)
+  @IsOptional()
+  quantity?: number;
+
+  /** `null` clears it: the item is no longer reordered by level. */
+  @ApiPropertyOptional({ minimum: 0, nullable: true })
+  @IsInt()
+  @Min(0)
+  @Max(MAX_QUANTITY)
+  @IsOptional()
+  minQuantity?: number | null;
+}
+
+/** A shelf counted at once: only the lines that changed are sent. */
+export class InventoryCountDto {
+  @ApiProperty({ type: [InventoryCountLineDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(500)
+  @ValidateNested({ each: true })
+  @Type(() => InventoryCountLineDto)
+  lines!: InventoryCountLineDto[];
+}
+
+/** Correct what a batch's packs say — a lot number or an expiry typed wrong. */
+export class UpdateInventoryLotDto {
+  @ApiPropertyOptional({ example: 'LOT 2304A' })
+  @Transform(clean)
+  @IsString()
+  @MaxLength(60)
+  @IsOptional()
+  lotNumber?: string | null;
+
+  @ApiPropertyOptional({ example: '2028/07' })
+  @Transform(clean)
+  @Validate(IsExpiryConstraint)
+  @MaxLength(20)
+  @IsOptional()
+  expiry?: string | null;
 }

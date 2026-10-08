@@ -29,6 +29,7 @@ close
 cloud_off
 colorize
 contact_phone
+content_copy
 content_cut
 contrast
 crown

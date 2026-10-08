@@ -37,15 +37,24 @@ interface ItemBody {
   id: string;
   name: string;
   quantity: number;
+  minQuantity: number | null;
   stockState: 'ok' | 'low' | 'out';
   expiry: string | null;
   expiryState: 'ok' | 'expiring' | 'expired' | null;
   version: number;
   isArchived: boolean;
+  lots: Array<{
+    id: string;
+    lotNumber: string | null;
+    expiry: string | null;
+    quantity: number;
+  }>;
   movements: Array<{
     kind: string;
     change: number;
     quantityAfter: number;
+    lotNumber: string | null;
+    patient: { id: string; fileNo: string } | null;
     note: string | null;
     by: string | null;
   }>;
@@ -63,6 +72,7 @@ describeIfWritable('inventory flows (e2e)', () => {
   const password = `E2e!${runId}Pass`;
   const userIds: string[] = [];
   const itemIds: string[] = [];
+  const patientIds: string[] = [];
 
   const http = () => request(app.getHttpServer());
   const asStaff = (req: request.Test) =>
@@ -102,7 +112,7 @@ describeIfWritable('inventory flows (e2e)', () => {
   const list = async (query: Record<string, string>): Promise<ItemBody[]> =>
     (
       await asStaff(http().get('/api/inventory/items'))
-        .query({ q: runId, ...query })
+        .query({ q: `line-${runId}`, ...query })
         .expect(200)
     ).body as ItemBody[];
 
@@ -143,6 +153,9 @@ describeIfWritable('inventory flows (e2e)', () => {
         itemIds,
       ]);
     }
+    if (patientIds.length) {
+      await db.query(`DELETE FROM patients WHERE id = ANY($1)`, [patientIds]);
+    }
     if (userIds.length) {
       await db.query(`DELETE FROM audit_logs WHERE "userId" = ANY($1)`, [
         userIds,
@@ -179,7 +192,7 @@ describeIfWritable('inventory flows (e2e)', () => {
     );
   });
 
-  it('receives, uses and counts, keeping the nearest expiry on the shelf', async () => {
+  it('receives, uses and counts batch by batch, first-expiring first', async () => {
     const item = await addItem({
       spec: '4.5x8',
       quantity: 2,
@@ -213,19 +226,151 @@ describeIfWritable('inventory flows (e2e)', () => {
       await move(item.id, { kind: 'count', quantity: 8 }).expect(200)
     ).body as ItemBody;
     expect(counted.quantity).toBe(8);
-    expect(counted.movements.map((m) => [m.kind, m.change])).toEqual([
-      ['count', -1],
-      ['use', -3],
-      ['receive', 10],
-      ['count', 2],
+    // The two that expire first went first, then one of the delivery; the
+    // count's missing one comes out of what is left.
+    expect(
+      counted.movements.map((m) => [m.kind, m.change, m.quantityAfter]),
+    ).toEqual([
+      ['count', -1, 8],
+      ['use', -1, 9],
+      ['use', -2, 10],
+      ['receive', 10, 12],
+      ['count', 2, 2],
     ]);
-    expect(counted.movements[2]).toMatchObject({
+    expect(counted.movements[3]).toMatchObject({
       note: 'فاکتور ۱۲',
       by: 'e2e receptionist',
     });
+    expect(counted.lots).toEqual([
+      expect.objectContaining({ expiry: printed(36), quantity: 8 }),
+    ]);
+    expect(counted.expiry).toBe(printed(36));
 
     // Something has to move; only a count may find the shelf empty.
     await move(item.id, { kind: 'receive', quantity: 0 }).expect(400);
+  });
+
+  it('traces a batch of implants to the patient it went into', async () => {
+    const fileNo = `9${Date.now()}`;
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({ fileNo, firstName: 'آزمون', lastName: 'انبار' })
+      .expect(201);
+    patientIds.push((patient.body as { id: string }).id);
+
+    const item = await addItem({
+      name: `traced-${runId}`,
+      quantity: 2,
+      lotNumber: 'a-100',
+      expiry: printed(30),
+    });
+    // The same lot and expiry delivered again is the same batch.
+    let body = (
+      await move(item.id, {
+        kind: 'receive',
+        quantity: 3,
+        lotNumber: ' A-100 ',
+        expiry: printed(30),
+      }).expect(200)
+    ).body as ItemBody;
+    body = (
+      await move(item.id, {
+        kind: 'receive',
+        quantity: 4,
+        lotNumber: 'B-200',
+        expiry: printed(40),
+      }).expect(200)
+    ).body as ItemBody;
+    expect(body.lots.map((l) => [l.lotNumber, l.quantity])).toEqual([
+      ['A-100', 5],
+      ['B-200', 4],
+    ]);
+
+    // From the batch named, not the first-expiring one, and into a patient.
+    const later = body.lots[1];
+    body = (
+      await move(item.id, {
+        kind: 'use',
+        quantity: 1,
+        lotId: later.id,
+        patientFileNo: fileNo.replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]),
+      }).expect(200)
+    ).body as ItemBody;
+    expect(body.movements[0]).toMatchObject({
+      kind: 'use',
+      change: -1,
+      lotNumber: 'B-200',
+      patient: { fileNo },
+    });
+
+    const tooMany = await move(item.id, {
+      kind: 'use',
+      quantity: 4,
+      lotId: later.id,
+    }).expect(409);
+    expect(tooMany.body).toMatchObject({
+      code: ErrorCode.InventoryInsufficientStock,
+      params: { available: 3 },
+    });
+
+    const unknown = await move(item.id, {
+      kind: 'use',
+      quantity: 1,
+      patientFileNo: '1',
+    }).expect(404);
+    expect(unknown.body).toMatchObject({
+      code: ErrorCode.PatientNotFound,
+      params: { fileNo: '1' },
+    });
+
+    // A lot number typed wrong on delivery is put right on the batch.
+    const fixed = (
+      await asStaff(
+        http().patch(`/api/inventory/items/${item.id}/lots/${later.id}`),
+      )
+        .send({ lotNumber: 'B-201' })
+        .expect(200)
+    ).body as ItemBody;
+    expect(fixed.lots[1]).toMatchObject({ lotNumber: 'B-201', quantity: 3 });
+    const clash = await asStaff(
+      http().patch(`/api/inventory/items/${item.id}/lots/${later.id}`),
+    )
+      .send({ lotNumber: 'A-100', expiry: printed(30) })
+      .expect(409);
+    expect((clash.body as { code: string }).code).toBe(
+      ErrorCode.InventoryLotExists,
+    );
+  });
+
+  it('counts a shelf at once, setting reorder levels alongside', async () => {
+    const shelf = `counted-${runId}`;
+    const a = await addItem({ name: shelf, spec: '4x12', quantity: 5 });
+    const b = await addItem({ name: shelf, spec: '4x14', quantity: 1 });
+    const res = await asStaff(http().post('/api/inventory/items/count'))
+      .send({
+        lines: [
+          { id: a.id, quantity: 3, minQuantity: 4 },
+          { id: b.id, minQuantity: 2 },
+        ],
+      })
+      .expect(200);
+    expect(res.body).toEqual({ counted: 1, minimums: 2 });
+
+    const after = await list({ q: shelf, filter: 'reorder' });
+    expect(after.map((i) => [i.id, i.quantity, i.minQuantity])).toEqual([
+      [a.id, 3, 4],
+      [b.id, 1, 2],
+    ]);
+
+    // Saved whole or not at all: one bad line refuses the stocktake.
+    await asStaff(http().post('/api/inventory/items/count'))
+      .send({
+        lines: [
+          { id: a.id, quantity: 9 },
+          { id: '00000000-0000-4000-8000-000000000000', quantity: 1 },
+        ],
+      })
+      .expect(404);
+    expect((await list({ q: shelf, filter: 'reorder' }))[0].quantity).toBe(3);
   });
 
   it('refuses an expiry it cannot read, on the field', async () => {

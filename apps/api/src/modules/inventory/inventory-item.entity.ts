@@ -17,9 +17,10 @@ import { InventoryMovement } from './inventory-movement.entity';
  * One thing on the clinic's shelves — a size of implant, a shade of
  * composite, a box of gloves — and how many of it there are.
  *
- * `quantity` is never written directly: it moves only through
- * {@link InventoryMovement}s, each in the same transaction as the change it
- * records, so the balance always equals the sum of its history.
+ * `quantity` is never written directly: it is the sum of the item's batches
+ * (`inventory_lots`), which move only through {@link InventoryMovement}s,
+ * each in the same transaction as the change it records — so the balance
+ * always equals the sum of its history.
  */
 @Entity('inventory_items')
 export class InventoryItem {
@@ -55,12 +56,16 @@ export class InventoryItem {
   @Column({ type: 'int', nullable: true })
   minQuantity!: number | null;
 
-  /** The last day the nearest-expiring stock on the shelf is good for. */
+  /**
+   * The last day the first-expiring batch on the shelf is good for — kept
+   * from the batches by every movement, so the list and the dashboard can
+   * filter on it without reading them.
+   */
   @Index()
   @Column({ type: 'date', nullable: true })
   expiresOn!: Date | null;
 
-  /** The same expiry as printed on the pack, in its own calendar: `2028/07`, `1407/05`. */
+  /** That batch's expiry as printed on the pack, in its own calendar: `2028/07`, `1407/05`. */
   @Column({ type: 'varchar', length: 20, nullable: true })
   expiryText!: string | null;
 

@@ -242,14 +242,27 @@ export interface InventoryItem {
   version: number;
 }
 
-/** One line of an item's stock card. */
+/** One batch of an item on the shelf. */
+export interface InventoryLot {
+  id: string;
+  lotNumber: string | null;
+  /** As printed on the pack. */
+  expiry: string | null;
+  expiryState: ExpiryState | null;
+  quantity: number;
+}
+
+/** One line of an item's stock card — one batch's change. */
 export interface InventoryMovement {
   id: string;
   kind: InventoryMovementKind;
   /** Signed; for a count, the difference it found. */
   change: number;
   quantityAfter: number;
+  lotNumber: string | null;
   expiry: string | null;
+  /** The patient a use went into. */
+  patient: { id: string; fileNo: string } | null;
   note: string | null;
   /** Who recorded it, by the name staff know them by. */
   by: string | null;
@@ -258,6 +271,8 @@ export interface InventoryMovement {
 }
 
 export interface InventoryItemDetail extends InventoryItem {
+  /** The batches on the shelf, first-expiring first. */
+  lots: InventoryLot[];
   /** Newest first. */
   movements: InventoryMovement[];
 }

@@ -57,8 +57,11 @@ npm run icons:check   # a new Material Symbol needs `npm run icons:build --works
 - **Edits are versioned.** Updates lock the row and check `expectedVersion`;
   a write path that reads, changes and saves a whole entity must lock it too.
 - **Stock moves only through a movement.** Never write
-  `inventory_items.quantity` directly: record a receive/use/discard/count via
-  `applyMovement` (`inventory-stock.ts`) so the stock card still adds up.
+  `inventory_items.quantity`, its expiry or `inventory_lots.quantity`
+  directly: work out the batch changes with `receive`/`take`/`count`
+  (`inventory-stock.ts`) and write them with `writeMovement`
+  (`inventory-ledger.ts`), so the batches, the stock card and the item's
+  cached balance still agree.
 - **Errors leave the API as codes** (`ErrorCode`), never prose; the web app
   owns the wording in `public/i18n/fa.json`.
 - **Persian text is folded before comparing**: `searchKey` / `loosePersianKey`

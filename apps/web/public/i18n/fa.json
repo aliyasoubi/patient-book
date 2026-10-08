@@ -27,6 +27,8 @@
     "labNew": "ارسال به لابراتوار — Dentixo",
     "labEdit": "ویرایش کار لابراتوار — Dentixo",
     "inventory": "انبار — Dentixo",
+    "inventoryCount": "شمارش انبار — Dentixo",
+    "inventoryOrder": "لیست سفارش — Dentixo",
     "stats": "آمار — Dentixo"
   },
   "common": {
@@ -404,7 +406,7 @@
     "expiry": "تاریخ انقضا",
     "expiryHint": "مثل روی بسته: 2028/07 یا 1407/05",
     "notes": "یادداشت",
-    "quantityNote": "موجودی فقط با ورود، مصرف، دورریز یا شمارش تغییر می‌کند — از منوی هر کالا.",
+    "quantityNote": "موجودی و انقضا از سری‌های ساخت هر کالا می‌آیند: با ورود، مصرف و شمارش تغییر می‌کنند و هر سری در کاردکس قابل اصلاح است.",
     "save": "ذخیره",
     "created": "کالا ثبت شد.",
     "saved": "تغییرات ذخیره شد."
@@ -416,7 +418,7 @@
     "receiveConfirm": "ثبت ورود",
     "useTitle": "ثبت مصرف",
     "useQuantity": "تعداد مصرف",
-    "useNote": "مثلاً شماره پرونده بیمار",
+    "useNote": "مثلاً دندان یا درمان",
     "useConfirm": "ثبت مصرف",
     "discardTitle": "ثبت دورریز",
     "discardQuantity": "تعداد دورریز",
@@ -430,13 +432,55 @@
     "after": "موجودی پس از ثبت: {{count}}",
     "expiry": "تاریخ انقضای این بسته‌ها",
     "note": "توضیح",
-    "recorded": "{{kind}} «{{name}}» ثبت شد؛ موجودی: {{count}} {{unit}}"
+    "recorded": "{{kind}} «{{name}}» ثبت شد؛ موجودی: {{count}} {{unit}}",
+    "lot": "سری ساخت",
+    "lotAuto": "اول آنچه زودتر منقضی می‌شود",
+    "noLotNumber": "بدون شماره سری",
+    "lotLeft": "{{count}} مانده",
+    "lotNumber": "شماره سری ساخت (LOT)",
+    "lotNumberHint": "اختیاری؛ کنار LOT روی بسته",
+    "lotNumberTraced": "برای ردیابی در فراخوان، از روی بسته وارد کنید",
+    "patientFileNo": "شماره پرونده بیمار",
+    "patientFileNoHint": "این سری تا بیمار ردیابی می‌شود"
   },
   "inventoryHistory": {
     "title": "کاردکس",
     "loadFailed": "کاردکس بارگذاری نشد.",
-    "countedTo": "به {{count}}",
-    "empty": "هنوز حرکتی ثبت نشده است."
+    "empty": "هنوز حرکتی ثبت نشده است.",
+    "lots": "سری‌های موجود",
+    "lines": "گردش",
+    "confirmed": "بدون اختلاف",
+    "lot": "سری {{lot}}",
+    "patient": "پرونده {{fileNo}}"
+  },
+  "inventoryLot": {
+    "title": "اصلاح سری ساخت"
+  },
+  "inventoryCount": {
+    "title": "شمارش انبار",
+    "subtitle": "یک قفسه را بشمارید: تعداد روی قفسه و حداقل موجودی هر کالا را وارد کنید و یک‌جا ثبت کنید.",
+    "shelf": "قفسه",
+    "empty": "کالایی در این قفسه نیست",
+    "recorded": "ثبت‌شده: {{count}} {{unit}}",
+    "counted": "روی قفسه",
+    "min": "حداقل",
+    "save": "ثبت شمارش",
+    "saveCount": "ثبت شمارش ({{count}} کالا)",
+    "saved": "شمارش ثبت شد: {{counted}} موجودی و {{minimums}} حداقل اصلاح شد."
+  },
+  "inventoryOrder": {
+    "title": "لیست سفارش",
+    "subtitle": "کالاهایی که به حداقل موجودی رسیده‌اند، به تفکیک برند، با تعداد پیشنهادی.",
+    "copy": "کپی برای تأمین‌کننده",
+    "copied": "لیست سفارش کپی شد.",
+    "copyFailed": "کپی انجام نشد؛ دوباره تلاش کنید.",
+    "empty": "چیزی برای سفارش نیست",
+    "emptyHint": "کالایی به حداقل موجودی نرسیده است. حداقل‌ها را در شمارش انبار تعیین کنید.",
+    "noBrand": "سایر کالاها",
+    "levels": "موجودی {{count}} — حداقل {{min}} {{unit}}",
+    "amount": "سفارش",
+    "textTitle": "لیست سفارش {{date}}",
+    "textLine": "• {{item}} — {{count}} {{unit}}"
   },
   "inventoryCategory": {
     "implant": "ایمپلنت",
@@ -868,7 +912,9 @@
     "inventoryItemNotFound": "کالا پیدا نشد.",
     "inventoryItemExists": "کالایی با همین مشخصات در انبار هست.",
     "inventoryItemModified": "این کالا هم‌زمان توسط کاربر دیگری تغییر کرده است؛ فهرست به‌روز شد.",
-    "inventoryInsufficientStock": "بیش از موجودی است؛ فقط {{available}} در انبار هست."
+    "inventoryInsufficientStock": "بیش از موجودی است؛ فقط {{available}} در انبار هست.",
+    "inventoryLotNotFound": "سری ساخت پیدا نشد.",
+    "inventoryLotExists": "سری دیگری از این کالا با همین شماره و انقضا هست."
   },
   "paginator": {
     "itemsPerPage": "تعداد در هر صفحه:",

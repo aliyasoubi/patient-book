@@ -425,6 +425,12 @@ export const INVENTORY_CATEGORY_ICONS: Record<InventoryCategory, string> = {
   other: 'inventory_2',
 };
 
+/**
+ * Where a use is recorded against the patient and its batch: implants, and
+ * the grafts and membranes placed with them — what a recall is traced through.
+ */
+export const TRACEABLE_CATEGORIES: readonly InventoryCategory[] = ['implant', 'regenerative'];
+
 export const INVENTORY_UNITS: readonly InventoryUnit[] = [
   'piece',
   'pack',

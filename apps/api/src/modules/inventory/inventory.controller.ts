@@ -15,9 +15,11 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import {
   CreateInventoryItemDto,
+  InventoryCountDto,
   InventoryMovementDto,
   QueryInventoryDto,
   UpdateInventoryItemDto,
+  UpdateInventoryLotDto,
 } from './dto/inventory.dto';
 import { Roles } from '../../presentation/http/decorators/roles.decorator';
 import { CurrentUser } from '../../presentation/http/decorators/current-user.decorator';
@@ -69,10 +71,35 @@ export class InventoryController {
     return this.inventory.update(id, dto, userId);
   }
 
+  @Post('count')
+  @HttpCode(200)
+  @Roles(...STAFF)
+  @ApiOperation({
+    summary: 'A shelf counted at once: counts and reorder levels, saved whole',
+  })
+  count(@Body() dto: InventoryCountDto, @CurrentUser('id') userId: string) {
+    return this.inventory.count(dto, userId);
+  }
+
+  @Patch(':id/lots/:lotId')
+  @Roles(...STAFF)
+  @ApiOperation({ summary: "Correct a batch's lot number or expiry" })
+  updateLot(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('lotId', ParseUUIDPipe) lotId: string,
+    @Body() dto: UpdateInventoryLotDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.inventory.updateLot(id, lotId, dto, userId);
+  }
+
   @Post(':id/movements')
   @HttpCode(200)
   @Roles(...STAFF)
-  @ApiOperation({ summary: 'Record a delivery, a use, a discard or a count' })
+  @ApiOperation({
+    summary:
+      'Record a delivery, a use (to a patient, from a batch), a discard or a count',
+  })
   move(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: InventoryMovementDto,

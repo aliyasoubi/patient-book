@@ -156,13 +156,23 @@ const MAX_SUGGESTIONS = 8;
             inputmode="numeric"
             [ltr]="true"
           />
-          <pb-text-field
-            [control]="form.controls.expiry"
-            [label]="'inventoryForm.expiry' | translate"
-            [hint]="'inventoryForm.expiryHint' | translate"
-            [maxlength]="20"
-            [ltr]="true"
-          />
+          <!-- The stock counted now is the item's first batch; after that
+               each delivery brings its own lot and expiry. -->
+          @if (!item) {
+            <pb-text-field
+              [control]="form.controls.expiry"
+              [label]="'inventoryForm.expiry' | translate"
+              [hint]="'inventoryForm.expiryHint' | translate"
+              [maxlength]="20"
+              [ltr]="true"
+            />
+            <pb-text-field
+              [control]="form.controls.lotNumber"
+              [label]="'inventoryMove.lotNumber' | translate"
+              [maxlength]="60"
+              [ltr]="true"
+            />
+          }
           <pb-textarea-field
             class="pb-field-grid__full"
             [control]="form.controls.notes"
@@ -242,7 +252,8 @@ export class InventoryItemDialog {
     unit: [(this.base?.unit ?? 'piece') as string, Validators.required],
     quantity: ['', count],
     minQuantity: [this.base?.minQuantity != null ? String(this.base.minQuantity) : '', count],
-    expiry: [this.item?.expiry ?? '', Validators.maxLength(20)],
+    expiry: ['', Validators.maxLength(20)],
+    lotNumber: ['', Validators.maxLength(60)],
     notes: [this.item?.notes ?? '', Validators.maxLength(2000)],
   });
 
@@ -315,14 +326,18 @@ export class InventoryItemDialog {
       spec: blank(raw.spec),
       unit: raw.unit as InventoryUnit,
       minQuantity: countValue(raw.minQuantity),
-      expiry: blank(toLatinDigits(raw.expiry)),
       notes: blank(raw.notes),
     };
     this.saving.set(true);
     this.formError.set(null);
     const request = this.item
       ? this.inventory.update(this.item.id, { ...body, expectedVersion: this.item.version })
-      : this.inventory.create({ ...body, quantity: countValue(raw.quantity) ?? 0 });
+      : this.inventory.create({
+          ...body,
+          quantity: countValue(raw.quantity) ?? 0,
+          expiry: blank(toLatinDigits(raw.expiry)),
+          lotNumber: blank(raw.lotNumber),
+        });
     request.subscribe({
       next: (saved) => this.ref.close(saved),
       error: (error: unknown) => {

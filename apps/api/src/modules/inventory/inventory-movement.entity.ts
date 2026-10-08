@@ -43,9 +43,22 @@ export class InventoryMovement {
   @Column({ type: 'int' })
   quantityAfter!: number;
 
-  /** The expiry on the delivered or counted packs, as printed. */
+  /** The batch it moved; null only on lines from before batches were kept. */
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  lotId!: string | null;
+
+  /** The batch's expiry as printed, kept on the line as it was then. */
   @Column({ type: 'varchar', length: 20, nullable: true })
   expiryText!: string | null;
+
+  /**
+   * The patient a use went into — for an implant, a graft or a membrane, what
+   * a recall of its batch is traced back through.
+   */
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  patientId!: string | null;
 
   /** Supplier and invoice, the patient's file, why it was thrown away. */
   @Column({ type: 'varchar', length: 300, nullable: true })
@@ -60,4 +73,12 @@ export class InventoryMovement {
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
+
+  /**
+   * The order lines were written in. One movement can write several lines in
+   * one transaction — a use split across batches — and those share
+   * `createdAt`, so the card is ordered by this instead. Set by the database.
+   */
+  @Column({ type: 'bigint', insert: false, update: false, select: false })
+  seq!: string;
 }

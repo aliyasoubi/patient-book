@@ -1,5 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   type AbstractControl,
   FormBuilder,
@@ -15,12 +15,13 @@ import { InventoryService } from '../../core/services/inventory.service';
 import type {
   InventoryItem,
   InventoryItemDetail,
+  InventoryLot,
   InventoryMovementKind,
 } from '../../core/models/common.model';
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
-import { inventoryUnitLabel } from '../../shared/labels';
+import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
-import { PbBanner, PbButton, PbTextField } from '../../shared/ui';
+import { PbBanner, PbButton, PbSelectField, PbTextField, type SelectOption } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
 
 export interface InventoryMovementDialogData {
@@ -66,14 +67,25 @@ const COPY: Record<
 /**
  * One delivery, use, discard or count, filled in already for the common case
  * — one used, one received, the count as recorded — so Enter alone records
- * it. A delivery or a count may read an expiry off the packs; what is taken out is checked against the shelf here
- * as well as by the API, which has the final word if someone else took the
- * last one meanwhile.
+ * it. A delivery reads its lot and expiry off the packs. A use or a discard
+ * comes out of the first-expiring batch unless another is picked; an implant
+ * or a graft names its batch and the patient it went into, which is what a
+ * recall is traced through. What is taken out is checked against the shelf
+ * here as well as by the API, which has the final word if someone else took
+ * the last one meanwhile.
  */
 @Component({
   selector: 'pb-inventory-movement-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, MatDialogModule, TranslatePipe, PbBanner, PbButton, PbTextField],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    TranslatePipe,
+    PbBanner,
+    PbButton,
+    PbSelectField,
+    PbTextField,
+  ],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()">
       <h2 mat-dialog-title>{{ copy.title | translate }}</h2>
@@ -87,6 +99,14 @@ const COPY: Record<
         @if (formError(); as message) {
           <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
         }
+        <!-- Which batch, when there is a choice to make. -->
+        @if (takesOut && lotOptions().length > 1) {
+          <pb-select-field
+            [control]="form.controls.lotId"
+            [options]="lotOptions()"
+            [label]="'inventoryMove.lot' | translate"
+          />
+        }
         <pb-text-field
           [control]="form.controls.quantity"
           [label]="copy.quantity | translate"
@@ -95,12 +115,32 @@ const COPY: Record<
           inputmode="numeric"
           [ltr]="true"
         />
-        @if (kind === 'receive' || kind === 'count') {
+        @if (kind === 'receive') {
+          <pb-text-field
+            [control]="form.controls.lotNumber"
+            [label]="'inventoryMove.lotNumber' | translate"
+            [hint]="
+              (traceable ? 'inventoryMove.lotNumberTraced' : 'inventoryMove.lotNumberHint')
+                | translate
+            "
+            [maxlength]="60"
+            [ltr]="true"
+          />
           <pb-text-field
             [control]="form.controls.expiry"
             [label]="'inventoryMove.expiry' | translate"
             [hint]="'inventoryForm.expiryHint' | translate"
             [maxlength]="20"
+            [ltr]="true"
+          />
+        }
+        @if (kind === 'use' && traceable) {
+          <pb-text-field
+            [control]="form.controls.patientFileNo"
+            [label]="'inventoryMove.patientFileNo' | translate"
+            [hint]="'inventoryMove.patientFileNoHint' | translate"
+            inputmode="numeric"
+            [maxlength]="18"
             [ltr]="true"
           />
         }
@@ -132,7 +172,7 @@ const COPY: Record<
       display: flex;
       flex-direction: column;
       gap: var(--pb-space-1);
-      width: min(400px, 80vw);
+      width: min(440px, 80vw);
     }
     .form__item {
       display: flex;
@@ -157,9 +197,13 @@ export class InventoryMovementDialog {
   private readonly i18n = inject(TranslateService);
   private readonly fb = inject(FormBuilder);
 
+  private readonly destroyRef = inject(DestroyRef);
+
   protected readonly item = this.data.item;
   protected readonly kind = this.data.kind;
   protected readonly copy = COPY[this.kind];
+  protected readonly takesOut = this.kind === 'use' || this.kind === 'discard';
+  protected readonly traceable = TRACEABLE_CATEGORIES.includes(this.item.category);
   protected readonly faNum = formatPersianNumber;
   protected readonly itemLabel = [this.item.name, this.item.brand, this.item.spec]
     .filter(Boolean)
@@ -167,11 +211,14 @@ export class InventoryMovementDialog {
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
 
-  /** Out of what is there: more than that cannot leave the shelf. */
+  /** The batches on the shelf, first-expiring first — read once the dialog opens. */
+  protected readonly lots = signal<InventoryLot[]>([]);
+  /** What the batch picked, or the shelf, holds: more cannot leave it. */
+  private available = this.item.quantity;
+
   private readonly withinStock = (control: AbstractControl<string>): ValidationErrors | null => {
     const n = Number(toLatinDigits(control.value ?? '').trim());
-    const takesOut = this.kind === 'use' || this.kind === 'discard';
-    return takesOut && n > this.item.quantity ? { stock: true } : null;
+    return this.takesOut && n > this.available ? { stock: true } : null;
   };
 
   private readonly quantityValid = (control: AbstractControl<string>): ValidationErrors | null => {
@@ -181,12 +228,16 @@ export class InventoryMovementDialog {
   };
 
   protected readonly form = this.fb.nonNullable.group({
+    // An empty choice is first-expiring first, across batches.
+    lotId: [''],
     // A count starts from the record, to be corrected; anything else from one.
     quantity: [
       this.kind === 'count' ? String(this.item.quantity) : '1',
       [Validators.required, this.quantityValid, this.withinStock],
     ],
+    lotNumber: ['', Validators.maxLength(60)],
     expiry: ['', Validators.maxLength(20)],
+    patientFileNo: ['', Validators.pattern(/^[0-9۰-۹٠-٩]{1,18}$/)],
     note: ['', Validators.maxLength(300)],
   });
 
@@ -194,15 +245,48 @@ export class InventoryMovementDialog {
     initialValue: this.form.controls.quantity.value,
   });
 
+  /** «A-100 · انقضا ۲۰۲۷/۰۱ · ۵ مانده», first-expiring first, after «first-expiring». */
+  protected readonly lotOptions = computed<SelectOption[]>(() => {
+    const lots = this.lots();
+    if (lots.length < 2) return [];
+    return [
+      { value: '', label: 'inventoryMove.lotAuto', translate: true },
+      ...lots.map((lot) => ({ value: lot.id, label: this.lotLabel(lot) })),
+    ];
+  });
+
+  constructor() {
+    if (!this.takesOut) return;
+    this.form.controls.lotId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.recheckStock());
+    this.inventory.get(this.item.id).subscribe({
+      next: (detail) => {
+        this.lots.set(detail.lots);
+        // An implant or a graft names its batch — the first to expire, unless
+        // the box opened was another.
+        if (this.traceable && detail.lots.length > 1) {
+          this.form.controls.lotId.setValue(detail.lots[0].id);
+        }
+        this.recheckStock();
+      },
+      // Without the batches the use still goes first-expiring first.
+      error: () => this.lots.set([]),
+    });
+  }
+
   protected unit(): string {
     return this.i18n.instant(inventoryUnitLabel(this.item.unit));
   }
 
-  protected readonly quantityErrors = computed(() => ({
-    stock: this.i18n.instant('error.inventoryInsufficientStock', {
-      available: formatPersianNumber(this.item.quantity),
-    }),
-  }));
+  protected readonly quantityErrors = computed(() => {
+    this.quantity();
+    return {
+      stock: this.i18n.instant('error.inventoryInsufficientStock', {
+        available: formatPersianNumber(this.available),
+      }),
+    };
+  });
 
   /** What the shelf will hold once this is saved, so nobody has to add up. */
   protected readonly afterHint = computed(() => {
@@ -219,6 +303,26 @@ export class InventoryMovementDialog {
     return this.i18n.instant('inventoryMove.after', { count: formatPersianNumber(after) });
   });
 
+  private recheckStock(): void {
+    const lotId = this.form.controls.lotId.value;
+    this.available = lotId
+      ? (this.lots().find((l) => l.id === lotId)?.quantity ?? 0)
+      : this.item.quantity;
+    this.form.controls.quantity.updateValueAndValidity();
+  }
+
+  private lotLabel(lot: InventoryLot): string {
+    return [
+      lot.lotNumber ?? this.i18n.instant('inventoryMove.noLotNumber'),
+      lot.expiry
+        ? this.i18n.instant('inventory.expiresOn', { date: formatPersianNumber(lot.expiry) })
+        : null,
+      this.i18n.instant('inventoryMove.lotLeft', { count: formatPersianNumber(lot.quantity) }),
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
   protected submit(): void {
     if (this.saving()) return;
     if (this.form.invalid) {
@@ -232,7 +336,16 @@ export class InventoryMovementDialog {
       .move(this.item.id, {
         kind: this.kind,
         quantity: Number(toLatinDigits(raw.quantity).trim()),
-        expiry: toLatinDigits(raw.expiry).trim() || null,
+        ...(this.kind === 'receive'
+          ? {
+              lotNumber: raw.lotNumber.trim() || null,
+              expiry: toLatinDigits(raw.expiry).trim() || null,
+            }
+          : {}),
+        ...(this.takesOut ? { lotId: raw.lotId || null } : {}),
+        ...(this.kind === 'use' && this.traceable
+          ? { patientFileNo: toLatinDigits(raw.patientFileNo).trim() || null }
+          : {}),
         note: raw.note.trim() || null,
       })
       .subscribe({
@@ -242,6 +355,7 @@ export class InventoryMovementDialog {
           this.formError.set(
             showOnFields(error, this.errors, this.form.controls, {
               ERR_INVENTORY_INSUFFICIENT_STOCK: 'quantity',
+              ERR_PATIENT_NOT_FOUND: 'patientFileNo',
             }),
           );
         },

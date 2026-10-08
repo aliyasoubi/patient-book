@@ -4,24 +4,36 @@ import { format as formatJalali } from 'date-fns-jalali';
 import { EntityManager, Not, Repository } from 'typeorm';
 
 import { InventoryItem } from './inventory-item.entity';
+import { InventoryLot } from './inventory-lot.entity';
 import { InventoryMovement } from './inventory-movement.entity';
+import { loadLots, writeMovement } from './inventory-ledger';
+import { Patient } from '../patients/patient.entity';
 import {
   CreateInventoryItemDto,
+  InventoryCountDto,
   InventoryMovementDto,
   QueryInventoryDto,
   UpdateInventoryItemDto,
+  UpdateInventoryLotDto,
 } from './dto/inventory.dto';
 import {
-  applyMovement,
+  count,
   expiryHorizon,
   expirySoonSql,
   expiryState,
+  fefo,
   identityKey,
   inventorySearchKey,
   itemSearchText,
+  LotChange,
+  LotLevel,
+  nearestExpiry,
+  normalizeLot,
   parseExpiry,
+  receive,
   reorderSql,
   stockState,
+  take,
 } from './inventory-stock';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
@@ -47,10 +59,11 @@ const SHELF_ORDER = [
 
 /**
  * The clinic's stock. Items are edited here; their quantities move only
- * through {@link move}, which locks the item, applies the rule in
- * `inventory-stock.ts`, and writes the line on the stock card in the same
- * transaction — the card is the stock's audit trail, so a movement writes no
- * separate audit row. Edits, archiving and restoring do.
+ * through a movement — {@link move}, or a shelf counted at once with
+ * {@link count} — which locks the item, works out which batches change by the
+ * rules in `inventory-stock.ts`, and writes one stock card line per batch in
+ * the same transaction. The card is the stock's audit trail, so a movement
+ * writes no separate audit row; edits, archiving and restoring do.
  */
 @Injectable()
 export class InventoryService {
@@ -98,31 +111,54 @@ export class InventoryService {
     return (await qb.getMany()).map((i) => this.toResponse(i, now));
   }
 
-  /** One item, with its stock card newest first. */
+  /** One item, its batches on the shelf first-expiring first, and its stock card newest first. */
   async findOne(id: string): Promise<unknown> {
     const item = await this.items.findOne({ where: { id }, withDeleted: true });
     if (!item) throw AppException.notFound(ErrorCode.InventoryItemNotFound);
+    const lots = await loadLots(this.items.manager, id);
     const movements = await this.items.query<
       Array<
-        InventoryMovement & { fullName: string | null; account: string | null }
+        InventoryMovement & {
+          fullName: string | null;
+          account: string | null;
+          lotNumber: string | null;
+          fileNo: string | null;
+        }
       >
     >(
-      `SELECT m.*, u."fullName", u.username AS account
+      `SELECT m.*, u."fullName", u.username AS account, l."lotNumber", p."fileNo"
          FROM inventory_movements m
          LEFT JOIN users u ON u.id = m."userId"
+         LEFT JOIN inventory_lots l ON l.id = m."lotId"
+         LEFT JOIN patients p ON p.id = m."patientId"
         WHERE m."itemId" = $1
-        ORDER BY m."createdAt" DESC, m.id
+        ORDER BY m.seq DESC
         LIMIT ${HISTORY_LIMIT}`,
       [id],
     );
+    const now = new Date();
     return {
-      ...this.toResponse(item, new Date()),
+      ...this.toResponse(item, now),
+      lots: fefo(lots)
+        .filter((l) => l.quantity > 0)
+        .map((l) => ({
+          id: l.id,
+          lotNumber: l.lotNumber,
+          expiry: l.expiryText,
+          expiryState: expiryState(l.expiresOn, l.quantity, now),
+          quantity: l.quantity,
+        })),
       movements: movements.map((m) => ({
         id: m.id,
         kind: m.kind,
         change: m.change,
         quantityAfter: m.quantityAfter,
+        lotNumber: m.lotNumber,
         expiry: m.expiryText,
+        patient:
+          m.patientId && m.fileNo
+            ? { id: m.patientId, fileNo: m.fileNo }
+            : null,
         note: m.note,
         by: m.fullName?.trim() || m.account || m.username,
         at: formatJalali(new Date(m.createdAt), 'yyyy/MM/dd HH:mm'),
@@ -146,13 +182,23 @@ export class InventoryService {
       this.assign(item, dto);
       await this.refuseDuplicate(manager, item);
       const saved = await items.save(item);
-      // The opening balance is the item's first count, so its stock card
-      // adds up from the very first line.
+      // What is on the shelf opens the first batch, as the item's first
+      // count, so its stock card adds up from the very first line.
       if (dto.quantity) {
-        await this.record(manager, saved, userId, {
-          kind: InventoryMovementKind.Count,
+        const opening = receive([], {
           quantity: dto.quantity,
+          lotNumber: dto.lotNumber,
+          expiry: parseExpiry(dto.expiry),
         });
+        await writeMovement(
+          manager,
+          saved,
+          InventoryMovementKind.Count,
+          [opening],
+          {
+            userId,
+          },
+        );
       }
       await this.audit.recordRequired(
         {
@@ -176,11 +222,7 @@ export class InventoryService {
   ): Promise<unknown> {
     await this.items.manager.transaction(async (manager) => {
       const items = manager.getRepository(InventoryItem);
-      const item = await items.findOne({
-        where: { id },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!item) throw AppException.notFound(ErrorCode.InventoryItemNotFound);
+      const item = await this.lock(manager, id);
       if (item.version !== expectedVersion) {
         throw AppException.conflict(ErrorCode.InventoryItemModified);
       }
@@ -204,7 +246,7 @@ export class InventoryService {
   /**
    * A delivery, a use, a discard or a count. Needs no version: a delivery
    * adds to whatever is there, and a count is what is on the shelf now. The
-   * lock makes two at once queue rather than both read the same balance.
+   * lock makes two at once queue rather than both read the same batches.
    */
   async move(
     id: string,
@@ -212,14 +254,143 @@ export class InventoryService {
     userId: string | null,
   ): Promise<unknown> {
     await this.items.manager.transaction(async (manager) => {
-      const item = await manager.getRepository(InventoryItem).findOne({
-        where: { id },
-        lock: { mode: 'pessimistic_write' },
+      const item = await this.lock(manager, id);
+      const lots = await loadLots(manager, id);
+      let changes: LotChange<InventoryLot | LotLevel>[];
+      switch (dto.kind) {
+        case InventoryMovementKind.Receive:
+          changes = [
+            receive(lots, {
+              quantity: dto.quantity,
+              lotNumber: dto.lotNumber,
+              expiry: parseExpiry(dto.expiry),
+            }),
+          ];
+          break;
+        case InventoryMovementKind.Use:
+        case InventoryMovementKind.Discard:
+          changes = take(lots, dto.quantity, dto.lotId);
+          break;
+        case InventoryMovementKind.Count:
+          changes = count(lots, dto.quantity);
+          break;
+      }
+      const patientId =
+        dto.kind === InventoryMovementKind.Use && dto.patientFileNo
+          ? await this.patientByFile(manager, dto.patientFileNo)
+          : null;
+      await writeMovement(manager, item, dto.kind, changes, {
+        userId,
+        note: dto.note,
+        patientId,
       });
-      if (!item) throw AppException.notFound(ErrorCode.InventoryItemNotFound);
-      await this.record(manager, item, userId, dto);
     });
     return this.findOne(id);
+  }
+
+  /**
+   * A shelf counted at once: each line's count corrects its batches as a
+   * single count would, and its reorder level is set alongside — the moment
+   * someone is looking at the shelf is when the level is best judged. One
+   * transaction: a stocktake is saved whole or not at all.
+   */
+  async count(
+    dto: InventoryCountDto,
+    userId: string | null,
+  ): Promise<{ counted: number; minimums: number }> {
+    return this.items.manager.transaction(async (manager) => {
+      let counted = 0;
+      let minimums = 0;
+      // Locked in one order, so two stocktakes overlapping cannot deadlock.
+      const lines = [...dto.lines].sort((a, b) => a.id.localeCompare(b.id));
+      for (const line of lines) {
+        const item = await this.lock(manager, line.id);
+        if (line.quantity !== undefined && line.quantity !== item.quantity) {
+          const lots = await loadLots(manager, item.id);
+          await writeMovement(
+            manager,
+            item,
+            InventoryMovementKind.Count,
+            count(lots, line.quantity),
+            { userId },
+          );
+          counted++;
+        }
+        const minQuantity = line.minQuantity;
+        if (minQuantity !== undefined && minQuantity !== item.minQuantity) {
+          await manager.getRepository(InventoryItem).update(item.id, {
+            minQuantity,
+            version: () => '"version" + 1',
+          });
+          await this.audit.recordRequired(
+            {
+              userId,
+              action: 'update',
+              entity: 'inventory_item',
+              entityId: item.id,
+              changes: { minQuantity },
+            },
+            manager,
+          );
+          minimums++;
+        }
+      }
+      return { counted, minimums };
+    });
+  }
+
+  /**
+   * Put right what a batch's packs say — a lot number or an expiry typed
+   * wrong on delivery. Its quantity is not touched: that moves by a movement.
+   */
+  async updateLot(
+    itemId: string,
+    lotId: string,
+    dto: UpdateInventoryLotDto,
+    userId: string | null,
+  ): Promise<unknown> {
+    await this.items.manager.transaction(async (manager) => {
+      const item = await this.lock(manager, itemId);
+      const lots = await loadLots(manager, itemId);
+      const lot = lots.find((l) => l.id === lotId);
+      if (!lot) throw AppException.notFound(ErrorCode.InventoryLotNotFound);
+      if (dto.lotNumber !== undefined)
+        lot.lotNumber = normalizeLot(dto.lotNumber);
+      if (dto.expiry !== undefined) {
+        const expiry = parseExpiry(dto.expiry);
+        lot.expiresOn = expiry?.date ?? null;
+        lot.expiryText = expiry?.text ?? null;
+      }
+      const clash = lots.some(
+        (l) =>
+          l.id !== lot.id &&
+          l.lotNumber === lot.lotNumber &&
+          l.expiryText === lot.expiryText,
+      );
+      if (clash) throw AppException.conflict(ErrorCode.InventoryLotExists);
+      await manager.getRepository(InventoryLot).save(lot);
+      await manager.getRepository(InventoryItem).update(item.id, {
+        ...nearestExpiry(lots),
+        version: () => '"version" + 1',
+      });
+      await this.audit.recordRequired(
+        {
+          userId,
+          action: 'update',
+          entity: 'inventory_item',
+          entityId: item.id,
+          changes: {
+            lot: {
+              id: lot.id,
+              lotNumber: lot.lotNumber,
+              expiry: lot.expiryText,
+            },
+          },
+        },
+        manager,
+      );
+    });
+    return this.findOne(itemId);
   }
 
   async archive(id: string, userId: string | null): Promise<void> {
@@ -263,38 +434,30 @@ export class InventoryService {
     return this.findOne(id);
   }
 
-  /** Apply a movement to a locked item and write its line on the stock card. */
-  private async record(
+  private async lock(
     manager: EntityManager,
-    item: InventoryItem,
-    userId: string | null,
-    dto: Pick<InventoryMovementDto, 'kind' | 'quantity'> &
-      Partial<InventoryMovementDto>,
-  ): Promise<void> {
-    const expiry = parseExpiry(dto.expiry);
-    const result = applyMovement(item, {
-      kind: dto.kind,
-      quantity: dto.quantity,
-      expiry,
+    id: string,
+  ): Promise<InventoryItem> {
+    const item = await manager.getRepository(InventoryItem).findOne({
+      where: { id },
+      lock: { mode: 'pessimistic_write' },
     });
-    await manager.getRepository(InventoryItem).update(item.id, {
-      quantity: result.quantity,
-      expiresOn: result.expiresOn,
-      expiryText: result.expiryText,
-      version: () => '"version" + 1',
-    });
-    const movements = manager.getRepository(InventoryMovement);
-    await movements.save(
-      movements.create({
-        itemId: item.id,
-        kind: dto.kind,
-        change: result.change,
-        quantityAfter: result.quantity,
-        expiryText: expiry?.text ?? null,
-        note: dto.note ?? null,
-        userId,
-      }),
-    );
+    if (!item) throw AppException.notFound(ErrorCode.InventoryItemNotFound);
+    return item;
+  }
+
+  /** The patient a use went into, by the file number staff read off the chart. */
+  private async patientByFile(
+    manager: EntityManager,
+    fileNo: string,
+  ): Promise<string> {
+    const patient = await manager
+      .getRepository(Patient)
+      .findOne({ where: { fileNo }, select: { id: true } });
+    if (!patient) {
+      throw AppException.notFound(ErrorCode.PatientNotFound, { fileNo });
+    }
+    return patient.id;
   }
 
   /** Apply the item's own fields and refresh what is derived from them. */
@@ -309,11 +472,6 @@ export class InventoryService {
     if (dto.unit !== undefined) item.unit = dto.unit;
     if (dto.minQuantity !== undefined) {
       item.minQuantity = dto.minQuantity ?? null;
-    }
-    if (dto.expiry !== undefined) {
-      const expiry = parseExpiry(dto.expiry);
-      item.expiresOn = expiry?.date ?? null;
-      item.expiryText = expiry?.text ?? null;
     }
     if (dto.notes !== undefined) item.notes = dto.notes ?? null;
     item.identityKey = identityKey(item);
@@ -349,7 +507,7 @@ export class InventoryService {
       quantity: i.quantity,
       minQuantity: i.minQuantity,
       stockState: stockState(i.quantity, i.minQuantity),
-      /** As printed on the pack, in its own calendar. */
+      /** The first-expiring batch's, as printed on the pack. */
       expiry: i.expiryText,
       expiryState: expiryState(i.expiresOn, i.quantity, now),
       notes: i.notes,

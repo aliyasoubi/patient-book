@@ -9,7 +9,6 @@ import {
 import {
   ConflictError,
   ErrorCode,
-  InventoryMovementKind,
   JalaliDate,
   searchKey,
   storedDate,
@@ -19,7 +18,7 @@ import {
 /**
  * The rules of the clinic's stock, with no database and no framework: what an
  * expiry printed on a pack means, when an item is running low or about to
- * expire, and how each kind of movement changes the balance. The list's
+ * expire, and how each kind of movement changes its batches. The list's
  * filters and the dashboard's counts both use the SQL forms at the bottom, so
  * the two never disagree.
  */
@@ -151,83 +150,154 @@ export function expiryHorizon(now = new Date()): string {
   return JalaliDate.fromDate(addDays(now, EXPIRY_WARNING_DAYS))!.toIsoDate();
 }
 
-/** An item's balance and the expiry of what is on the shelf. */
-export interface StockLevel {
-  quantity: number;
-  expiresOn: Date | null;
+/** One batch on the shelf: what its packs say, and how many are left. */
+export interface LotLevel {
+  /** Null for a batch this movement opens. */
+  id: string | null;
+  lotNumber: string | null;
+  expiresOn: Date | string | null;
   expiryText: string | null;
-}
-
-export interface MovementInput {
-  kind: InventoryMovementKind;
-  /** How many came in or went out; for a count, how many are on the shelf. */
   quantity: number;
-  /** The expiry on the delivered or counted packs, when one was read. */
-  expiry?: Expiry | null;
+  /** When the batch arrived — the tie-break between batches of one date. */
+  createdAt?: Date | string | null;
 }
 
-/** What a movement does: the change it records and the level it leaves. */
-export interface MovementResult extends StockLevel {
+/** What a movement does to one batch. */
+export interface LotChange<T extends LotLevel = LotLevel> {
+  lot: T;
   change: number;
 }
 
 /**
- * Apply one movement to a stock level.
- *
- * The item keeps one expiry — the nearest of what is on the shelf, which is
- * what a warning is about. A delivery onto an empty shelf brings its own
- * expiry; onto stock already there, the earlier of the two stays, since the
- * old packs are used first. A count that read a date off the packs replaces
- * it. Nothing taken out may exceed what is there: a shelf that holds less than
- * the record says is corrected with a count, not by going negative.
+ * A lot number as one spelling: trimmed, ASCII digits, upper case — so «ab12»
+ * typed today and «AB۱۲» last month are the same batch.
  */
-export function applyMovement(
-  level: StockLevel,
-  movement: MovementInput,
-): MovementResult {
-  const { kind, quantity } = movement;
-  const expiry = movement.expiry ?? null;
-  switch (kind) {
-    case InventoryMovementKind.Receive: {
-      let next: Expiry | null = current(level);
-      if (level.quantity <= 0) next = expiry;
-      else if (expiry && (!next || expiry.date < next.date)) next = expiry;
-      return {
-        change: quantity,
-        quantity: level.quantity + quantity,
-        expiresOn: next?.date ?? null,
-        expiryText: next?.text ?? null,
-      };
-    }
-    case InventoryMovementKind.Use:
-    case InventoryMovementKind.Discard:
-      if (quantity > level.quantity) {
-        throw new ConflictError(
-          ErrorCode.InventoryInsufficientStock,
-          { available: level.quantity },
-          `Cannot take ${quantity} out of ${level.quantity}`,
-        );
-      }
-      return {
-        change: -quantity,
-        quantity: level.quantity - quantity,
-        expiresOn: level.expiresOn,
-        expiryText: level.expiryText,
-      };
-    case InventoryMovementKind.Count:
-      return {
-        change: quantity - level.quantity,
-        quantity,
-        expiresOn: expiry ? expiry.date : level.expiresOn,
-        expiryText: expiry ? expiry.text : level.expiryText,
-      };
-  }
+export function normalizeLot(lot: string | null | undefined): string | null {
+  const value = toLatinDigits(String(lot ?? ''))
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
+  return value || null;
 }
 
-function current(level: StockLevel): Expiry | null {
-  return level.expiresOn && level.expiryText
-    ? { date: storedDate(level.expiresOn), text: level.expiryText }
-    : null;
+const time = (value: Date | string | null | undefined): number =>
+  value ? storedDate(value).getTime() : Number.POSITIVE_INFINITY;
+
+/**
+ * First expiring, first out: the batch that expires soonest goes first, an
+ * undated one last, and of two alike the one that came in first.
+ */
+export function fefo<T extends LotLevel>(lots: readonly T[]): T[] {
+  return [...lots].sort(
+    (a, b) =>
+      time(a.expiresOn) - time(b.expiresOn) ||
+      time(a.createdAt) - time(b.createdAt),
+  );
+}
+
+/** The nearest expiry of what is on the shelf — what a warning is about. */
+export function nearestExpiry(lots: readonly LotLevel[]): {
+  expiresOn: Date | string | null;
+  expiryText: string | null;
+} {
+  const next = fefo(lots).find((l) => l.quantity > 0 && l.expiresOn);
+  return {
+    expiresOn: next?.expiresOn ?? null,
+    expiryText: next?.expiryText ?? null,
+  };
+}
+
+const insufficient = (available: number, wanted: number): ConflictError =>
+  new ConflictError(
+    ErrorCode.InventoryInsufficientStock,
+    { available },
+    `Cannot take ${wanted} out of ${available}`,
+  );
+
+/**
+ * A delivery: into the batch with the same lot number and expiry when there
+ * is one — the same batch delivered twice — or a new batch.
+ */
+export function receive<T extends LotLevel>(
+  lots: readonly T[],
+  delivery: {
+    quantity: number;
+    lotNumber?: string | null;
+    expiry?: Expiry | null;
+  },
+): LotChange<T | LotLevel> {
+  const lotNumber = normalizeLot(delivery.lotNumber);
+  const expiryText = delivery.expiry?.text ?? null;
+  const same = lots.find(
+    (l) => l.lotNumber === lotNumber && l.expiryText === expiryText,
+  );
+  return {
+    lot: same ?? {
+      id: null,
+      lotNumber,
+      expiresOn: delivery.expiry?.date ?? null,
+      expiryText,
+      quantity: 0,
+    },
+    change: delivery.quantity,
+  };
+}
+
+/**
+ * A use or a discard: from the batch named, or else first-expiring first,
+ * across as many batches as it takes. Nothing may leave a shelf that does not
+ * hold it; a shelf that holds less than the record is corrected by a count.
+ */
+export function take<T extends LotLevel>(
+  lots: readonly T[],
+  quantity: number,
+  lotId?: string | null,
+): LotChange<T>[] {
+  if (lotId) {
+    const lot = lots.find((l) => l.id === lotId);
+    if (!lot || lot.quantity < quantity) {
+      throw insufficient(lot?.quantity ?? 0, quantity);
+    }
+    return [{ lot, change: -quantity }];
+  }
+  const available = lots.reduce((n, l) => n + l.quantity, 0);
+  if (available < quantity) throw insufficient(available, quantity);
+  const changes: LotChange<T>[] = [];
+  let left = quantity;
+  for (const lot of fefo(lots)) {
+    if (left === 0) break;
+    const from = Math.min(lot.quantity, left);
+    if (from > 0) changes.push({ lot, change: -from });
+    left -= from;
+  }
+  return changes;
+}
+
+/**
+ * A stocktake of the item as a whole. What is missing is taken from the
+ * first-expiring batches, which should have gone first; what is found extra
+ * joins the last batch to arrive, or a new undated one on an empty record.
+ */
+export function count<T extends LotLevel>(
+  lots: readonly T[],
+  counted: number,
+): LotChange<T | LotLevel>[] {
+  const held = lots.reduce((n, l) => n + l.quantity, 0);
+  if (counted < held) return take(lots, held - counted);
+  if (counted === held) return [];
+  const latest = [...lots].sort(
+    (a, b) => time(b.createdAt) - time(a.createdAt),
+  )[0];
+  return [
+    receive(latest ? [latest] : [], {
+      quantity: counted - held,
+      lotNumber: latest?.lotNumber,
+      expiry:
+        latest?.expiresOn && latest.expiryText
+          ? { date: storedDate(latest.expiresOn), text: latest.expiryText }
+          : null,
+    }),
+  ];
 }
 
 /**

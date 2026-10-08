@@ -115,6 +115,10 @@ export class ApiErrorTranslator {
         return this.t('error.inventoryItemModified');
       case 'ERR_INVENTORY_INSUFFICIENT_STOCK':
         return this.t('error.inventoryInsufficientStock', params);
+      case 'ERR_INVENTORY_LOT_NOT_FOUND':
+        return this.t('error.inventoryLotNotFound');
+      case 'ERR_INVENTORY_LOT_EXISTS':
+        return this.t('error.inventoryLotExists');
       case 'ERR_NOT_FOUND':
         return this.t('error.notFound');
 

@@ -74,8 +74,14 @@ export enum ErrorCode {
   InventoryItemExists = 'ERR_INVENTORY_ITEM_EXISTS',
   /** As {@link ErrorCode.PatientModified}, for an inventory item. */
   InventoryItemModified = 'ERR_INVENTORY_ITEM_MODIFIED',
-  /** More taken out than is on the shelf. `params.available` is the balance. */
+  /**
+   * More taken out than is on the shelf — or in the batch named.
+   * `params.available` is what there is.
+   */
   InventoryInsufficientStock = 'ERR_INVENTORY_INSUFFICIENT_STOCK',
+  InventoryLotNotFound = 'ERR_INVENTORY_LOT_NOT_FOUND',
+  /** A batch corrected to the lot and expiry of another batch of the same item. */
+  InventoryLotExists = 'ERR_INVENTORY_LOT_EXISTS',
 
   // -- Value objects ----------------------------------------------------
   NationalIdLength = 'ERR_NATIONAL_ID_LENGTH',

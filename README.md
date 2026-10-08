@@ -212,31 +212,43 @@ Implant crowns travel with impression copings and analogs that belong to the
 clinic. A case keeps owing them — on the board, even after delivery — until
 someone marks them returned.
 
-### Stock is a ledger, not a number
+### Stock is a ledger of batches, not a number
 
-An item's quantity is never edited. It changes only through a movement — a
-delivery (ورود), a use (مصرف), a discard (دورریز) or a count (شمارش) — and
-each movement is one line on the item's stock card (`inventory_movements`)
-with who recorded it and the balance it left, written in the same
-transaction as the new balance. The card is the stock's audit trail; a wrong
-line is put right with a count, never rewritten. Nothing may leave a shelf
-that does not hold it, so a balance that disagrees with the shelf is corrected
-by counting it, not by going negative.
+An item's quantity is never edited. It is the sum of its batches
+(`inventory_lots`) — each a lot number, an expiry and how many are left — and
+a batch changes only through a movement: a delivery (ورود), a use (مصرف), a
+discard (دورریز) or a count (شمارش). Each movement writes one line per batch
+it touched on the item's stock card (`inventory_movements`), with who
+recorded it and the balance it left, in the same transaction as the new
+balance (`inventory-ledger.ts`). The card is the stock's audit trail; a wrong
+line is put right with a count, never rewritten. Nothing may leave a shelf —
+or a batch — that does not hold it, so a balance that disagrees with the
+shelf is corrected by counting it, not by going negative.
 
-An item keeps one expiry: the nearest of what is on the shelf, which is what a
-warning is about. A delivery onto stock already there keeps the earlier date,
-since the older packs go first; onto an empty shelf it brings its own. The
-expiry is stored as printed — `2028/07` from an imported pack, `1407/05` from
-an Iranian one, told apart by the year — and a month-only date runs to the
-end of that month, as GS1 labels define it.
+- **A delivery** joins the batch with the same lot and expiry, or opens a new
+  one. The expiry is stored as printed — `2028/07` from an imported pack,
+  `1407/05` from an Iranian one, told apart by the year — and a month-only
+  date runs to the end of that month, as GS1 labels define it.
+- **A use or a discard** comes out of the first-expiring batch, across as
+  many as it takes, unless the batch is named. For implants, grafts and
+  membranes the form names it, and a use can name the patient's file: the
+  line then links the batch to the patient, which is what a recall is traced
+  through.
+- **A count** takes what is missing from the first-expiring batches and adds
+  what is found to the last to arrive. The count sheet (`/inventory/count`)
+  counts a whole shelf at once and sets each item's reorder level beside its
+  count; it is saved whole or not at all.
 
-The list answers three questions — what to order (at or under the minimum
-staff set for the item), what has run out, and what expires within 90 days —
-and the dashboard counts the first and last with the same SQL
-(`apps/api/src/modules/inventory/inventory-stock.ts`). An item with no minimum
-is never "to order" at zero: plenty of sizes stay on the list unstocked. One
-active row per product (category, name, brand and size, Persian-folded) keeps
-a product's stock from splitting across two rows.
+The item keeps its balance and its first-expiring batch's date as a cache, so
+the list, its filters and the dashboard read one table. The list answers
+three questions — what to order (at or under the minimum staff set), what
+has run out, and what expires within 90 days — and the dashboard counts the
+first and last with the same SQL (`inventory-stock.ts`). The order list
+(`/inventory/order`) is the first of those, by brand, each with a quantity
+that brings it back to twice its minimum, copied as text for the supplier.
+An item with no minimum is never "to order" at zero: plenty of sizes stay on
+the list unstocked. One active row per product (category, name, brand and
+size, Persian-folded) keeps a product's stock from splitting across two rows.
 
 ### Dates are free-form Jalali, and often imprecise
 
@@ -376,7 +388,8 @@ Persian sentence frozen into the database at import time.
 | `lab_cases`           | One piece of lab work for one patient, until it is fitted. |
 | `lab_case_trips`      | Each trip of a case to the lab and back.                   |
 | `inventory_items`     | One product on the shelves and its balance.                |
-| `inventory_movements` | Its stock card: every delivery, use, discard and count.    |
+| `inventory_lots`      | Its batches: lot number, expiry, how many are left.        |
+| `inventory_movements` | Its stock card: each batch's deliveries, uses and counts.  |
 | `users`               | Staff accounts.                                            |
 | `audit_logs`          | Append-only record of who changed what.                    |
 

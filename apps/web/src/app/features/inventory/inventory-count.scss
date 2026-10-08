@@ -1,0 +1,150 @@
+@use '../../../styles/surface';
+
+.count {
+  &__toolbar {
+    display: flex;
+  }
+
+  &__category {
+    flex: 0 1 320px;
+    min-width: 220px;
+  }
+
+  /* The save stays at the foot of the screen while a long shelf scrolls under it. */
+  &__bar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--pb-space-3) 0;
+    background: linear-gradient(to top, var(--mat-sys-surface) 70%, transparent);
+  }
+}
+
+.shelf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    margin: 0;
+    font: var(--mat-sys-title-small);
+    color: var(--mat-sys-on-surface-variant);
+
+    .material-symbols-rounded {
+      font-size: var(--pb-icon-sm);
+      color: var(--mat-sys-primary);
+    }
+  }
+}
+
+.sheet {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  @include surface.outlined;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-2) var(--pb-space-4);
+    padding: var(--pb-space-3) var(--pb-space-4) var(--pb-space-1);
+    border-inline-start: 3px solid transparent;
+
+    & + & {
+      border-top: 1px solid var(--mat-sys-outline-variant);
+    }
+
+    /* What the count changed reads at a glance down the sheet. */
+    &--changed {
+      border-inline-start-color: var(--mat-sys-primary);
+      background: color-mix(in srgb, var(--mat-sys-primary) 4%, transparent);
+    }
+
+    @media (max-width: 720px) {
+      flex-wrap: wrap;
+    }
+  }
+
+  &__what {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: var(--pb-space-2);
+
+    @media (max-width: 720px) {
+      flex-basis: 100%;
+    }
+  }
+
+  &__name {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 var(--pb-space-2);
+
+    strong {
+      font: var(--mat-sys-title-small);
+    }
+  }
+
+  &__brand {
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__spec {
+    font: var(--mat-sys-body-medium);
+    font-weight: 600;
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
+  &__recorded {
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__fields {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--pb-space-3);
+    flex: 0 0 auto;
+
+    @media (max-width: 720px) {
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+  }
+
+  &__field {
+    width: 120px;
+
+    /* Shrink below a form field's own 180px, so two fit a phone's width. */
+    @media (max-width: 720px) {
+      flex: 1;
+      width: auto;
+      min-width: 0;
+    }
+  }
+
+  &__diff {
+    display: flex;
+    align-items: center;
+    min-width: 56px;
+    min-height: 56px;
+
+    @media (max-width: 720px) {
+      min-width: 0;
+
+      &:empty {
+        display: none;
+      }
+    }
+  }
+}

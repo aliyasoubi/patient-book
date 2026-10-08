@@ -319,7 +319,11 @@ export class InventoryList {
   }
 
   protected history(item: InventoryItem): void {
-    this.dialog.open(InventoryHistoryDialog, { data: item });
+    const ref = this.dialog.open(InventoryHistoryDialog, { data: item, maxWidth: '96vw' });
+    // A batch corrected there can move the item's expiry.
+    ref.afterClosed().subscribe(() => {
+      if (ref.componentInstance.changed) this.retry();
+    });
   }
 
   /** A soft delete: the item reappears under the archive chip, to be restored. */

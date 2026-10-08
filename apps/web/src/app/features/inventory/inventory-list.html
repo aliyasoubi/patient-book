@@ -4,7 +4,20 @@
     [subtitle]="'inventory.subtitle' | translate"
     [count]="countLabel()"
   >
+    <!-- The two sheets worked from now and then, beside the everyday add. -->
+    <pb-button variant="stroked" icon="shopping_cart" link="/inventory/order" [collapseBelow]="900">
+      {{ 'inventoryOrder.title' | translate }}
+    </pb-button>
     @if (canEdit()) {
+      <pb-button
+        variant="stroked"
+        icon="fact_check"
+        link="/inventory/count"
+        [queryParams]="category() ? { category: category() } : null"
+        [collapseBelow]="900"
+      >
+        {{ 'inventoryCount.title' | translate }}
+      </pb-button>
       <pb-button icon="add" (click)="addItem()" [collapseBelow]="560">
         {{ 'inventory.new' | translate }}
       </pb-button>
