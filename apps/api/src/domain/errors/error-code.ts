@@ -64,6 +64,19 @@ export enum ErrorCode {
   /** Undo on a case that has only its first trip: archive it instead. */
   LabCaseNothingToUndo = 'ERR_LAB_CASE_NOTHING_TO_UNDO',
 
+  // -- Inventory --------------------------------------------------------
+  InventoryItemNotFound = 'ERR_INVENTORY_ITEM_NOT_FOUND',
+  /**
+   * An active item with the same category, name, brand and specification
+   * already exists; stock of one thing must not be split across two rows.
+   * `params.id` is the existing item.
+   */
+  InventoryItemExists = 'ERR_INVENTORY_ITEM_EXISTS',
+  /** As {@link ErrorCode.PatientModified}, for an inventory item. */
+  InventoryItemModified = 'ERR_INVENTORY_ITEM_MODIFIED',
+  /** More taken out than is on the shelf. `params.available` is the balance. */
+  InventoryInsufficientStock = 'ERR_INVENTORY_INSUFFICIENT_STOCK',
+
   // -- Value objects ----------------------------------------------------
   NationalIdLength = 'ERR_NATIONAL_ID_LENGTH',
   NationalIdChecksum = 'ERR_NATIONAL_ID_CHECKSUM',

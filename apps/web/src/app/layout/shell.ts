@@ -70,6 +70,12 @@ function navItems(): NavItem[] {
       primary: false,
     },
     {
+      path: '/inventory',
+      label: 'nav.inventory',
+      icon: 'inventory',
+      primary: false,
+    },
+    {
       path: '/settings',
       label: 'nav.settings',
       icon: 'settings',

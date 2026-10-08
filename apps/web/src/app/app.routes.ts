@@ -119,6 +119,12 @@ export const routes: Routes = [
         title: translatedTitle('route.labEdit'),
       },
       {
+        path: 'inventory',
+        loadComponent: () =>
+          import('./features/inventory/inventory-list').then((m) => m.InventoryList),
+        title: translatedTitle('route.inventory'),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
         title: translatedTitle('route.settings'),

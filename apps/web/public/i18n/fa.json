@@ -25,7 +25,8 @@
     "account": "حساب کاربری — Dentixo",
     "labs": "لابراتوار — Dentixo",
     "labNew": "ارسال به لابراتوار — Dentixo",
-    "labEdit": "ویرایش کار لابراتوار — Dentixo"
+    "labEdit": "ویرایش کار لابراتوار — Dentixo",
+    "inventory": "انبار — Dentixo"
   },
   "common": {
     "back": "بازگشت",
@@ -64,7 +65,8 @@
     "implants": "پرونده ایمپلنت",
     "ortho": "پرونده ارتودنسی",
     "settings": "تنظیمات",
-    "labs": "لابراتوار"
+    "labs": "لابراتوار",
+    "inventory": "انبار"
   },
   "dashboard": {
     "subtitle": "خلاصه‌ای از وضعیت پرونده‌های مطب",
@@ -112,7 +114,9 @@
     "followUpsOverdue": "پیگیری‌های عقب‌افتاده",
     "needsReview": "نیازمند بازبینی",
     "followUpsThisWeek": "پیگیری‌های این هفته",
-    "labsOverdue": "دیرکرد لابراتوار"
+    "labsOverdue": "دیرکرد لابراتوار",
+    "inventoryReorder": "نیاز به سفارش",
+    "inventoryExpiring": "انقضای نزدیک"
   },
   "registry": {
     "independentNumberNotice": "شماره‌گذاری این پرونده مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره نمی‌کند.",
@@ -340,6 +344,127 @@
     "w4": "چهار هفته",
     "days": "{{count}} روز"
   },
+  "inventory": {
+    "title": "انبار",
+    "subtitle": "موجودی مواد و قطعات مطب، ورود و مصرف، و تاریخ انقضا.",
+    "new": "کالای جدید",
+    "searchPlaceholder": "جستجوی نام، برند یا سایز…",
+    "searchAria": "جستجو در انبار",
+    "category": "دسته",
+    "allCategories": "همه دسته‌ها",
+    "filtersAria": "فیلترهای انبار",
+    "filterReorder": "نیاز به سفارش",
+    "filterOut": "ناموجود",
+    "filterExpiry": "انقضای نزدیک",
+    "archivedOnly": "فقط بایگانی‌شده‌ها",
+    "emptyTitle": "کالایی پیدا نشد",
+    "emptyHint": "با «کالای جدید» اولین کالا را ثبت کنید.",
+    "loadFailed": "انبار بارگذاری نشد.",
+    "loadFailedStale": "به‌روزرسانی انبار انجام نشد؛ آخرین فهرست نمایش داده می‌شود.",
+    "rowActions": "عملیات کالا",
+    "stateOut": "ناموجود",
+    "stateLow": "کمتر از حداقل",
+    "minQuantity": "حداقل {{count}}",
+    "expiresOn": "انقضا {{date}}",
+    "expiringOn": "انقضای نزدیک: {{date}}",
+    "expiredOn": "منقضی‌شده: {{date}}",
+    "useOne": "ثبت مصرف {{name}}",
+    "receiveOne": "ثبت ورود {{name}}",
+    "history": "کاردکس",
+    "archive": "بایگانی",
+    "restore": "بازگردانی",
+    "archiveTitle": "بایگانی کالا",
+    "archiveMessage": "«{{name}}» از فهرست انبار برداشته می‌شود و کاردکس آن می‌ماند. از «فقط بایگانی‌شده‌ها» قابل بازگردانی است.",
+    "archiveConfirm": "بایگانی",
+    "archived": "کالا بایگانی شد.",
+    "restored": "کالا بازگردانده شد."
+  },
+  "inventoryForm": {
+    "createTitle": "کالای جدید",
+    "editTitle": "ویرایش کالا",
+    "category": "دسته",
+    "name": "نام کالا",
+    "nameHint": "مثلاً Supe Line یا نخ بخیه",
+    "brand": "برند",
+    "spec": "مدل / سایز / رنگ",
+    "specHint": "مثلاً 4x10، A2 یا 4/0",
+    "unit": "واحد",
+    "quantity": "موجودی فعلی",
+    "quantityHint": "اولین شمارش این کالا",
+    "minQuantity": "حداقل موجودی",
+    "minQuantityHint": "برای فیلتر «نیاز به سفارش»",
+    "expiry": "تاریخ انقضا",
+    "expiryHint": "مثل روی بسته: 2028/07 یا 1407/05",
+    "notes": "یادداشت",
+    "quantityNote": "موجودی فقط با ورود، مصرف، دورریز یا شمارش تغییر می‌کند — از منوی هر کالا.",
+    "save": "ذخیره",
+    "created": "کالا ثبت شد.",
+    "saved": "تغییرات ذخیره شد."
+  },
+  "inventoryMove": {
+    "receiveTitle": "ورود به انبار",
+    "receiveQuantity": "تعداد ورودی",
+    "receiveNote": "تأمین‌کننده یا شماره فاکتور",
+    "receiveConfirm": "ثبت ورود",
+    "useTitle": "ثبت مصرف",
+    "useQuantity": "تعداد مصرف",
+    "useNote": "مثلاً شماره پرونده بیمار",
+    "useConfirm": "ثبت مصرف",
+    "discardTitle": "ثبت دورریز",
+    "discardQuantity": "تعداد دورریز",
+    "discardNote": "دلیل: منقضی، آسیب‌دیده، گم‌شده…",
+    "discardConfirm": "ثبت دورریز",
+    "countTitle": "شمارش انبار",
+    "countQuantity": "تعداد روی قفسه",
+    "countNote": "مثلاً شمارش پایان ماه",
+    "countConfirm": "ثبت شمارش",
+    "current": "موجودی فعلی: {{count}} {{unit}}",
+    "after": "موجودی پس از ثبت: {{count}}",
+    "expiry": "تاریخ انقضای این بسته‌ها",
+    "note": "توضیح",
+    "recorded": "{{kind}} «{{name}}» ثبت شد؛ موجودی: {{count}} {{unit}}"
+  },
+  "inventoryHistory": {
+    "title": "کاردکس",
+    "loadFailed": "کاردکس بارگذاری نشد.",
+    "countedTo": "به {{count}}",
+    "empty": "هنوز حرکتی ثبت نشده است."
+  },
+  "inventoryCategory": {
+    "implant": "ایمپلنت",
+    "healing": "هیلینگ",
+    "abutment": "اباتمنت و قطعات",
+    "graft": "پودر استخوان",
+    "membrane": "ممبران",
+    "anesthesia": "بی‌حسی",
+    "composite": "کامپوزیت",
+    "laminate": "لمینت",
+    "impression": "مواد قالب‌گیری",
+    "endo": "اندو",
+    "surgery": "جراحی",
+    "restorative": "ترمیمی و عمومی",
+    "orthodontic": "ارتودنسی",
+    "consumable": "مصرفی",
+    "hygiene": "مسواک و خمیردندان",
+    "other": "سایر"
+  },
+  "inventoryUnit": {
+    "piece": "عدد",
+    "pack": "بسته",
+    "box": "جعبه",
+    "bottle": "شیشه",
+    "syringe": "سرنگ",
+    "cartridge": "کارپول",
+    "tube": "تیوب",
+    "kit": "کیت",
+    "roll": "رول"
+  },
+  "inventoryMovement": {
+    "receive": "ورود",
+    "use": "مصرف",
+    "discard": "دورریز",
+    "count": "شمارش"
+  },
   "patients": {
     "title": "بیماران",
     "new": "بیمار جدید",
@@ -548,7 +673,8 @@
   },
   "count": {
     "records": "{{count}} پرونده",
-    "rows": "{{count}} ردیف"
+    "rows": "{{count}} ردیف",
+    "items": "{{count}} قلم"
   },
   "action": {
     "dismiss": "بستن",
@@ -685,7 +811,8 @@
     "fileNoDigits": "شماره پرونده باید فقط رقم باشد.",
     "mobile": "شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.",
     "homePhone": "شماره تلفن معتبر نیست.",
-    "username": "نام کاربری فقط می‌تواند شامل حروف انگلیسی، رقم، نقطه، خط تیره و زیرخط باشد."
+    "username": "نام کاربری فقط می‌تواند شامل حروف انگلیسی، رقم، نقطه، خط تیره و زیرخط باشد.",
+    "expiry": "تاریخ خوانده نشد؛ مثلاً 2028/07"
   },
   "error": {
     "network": "ارتباط با سرور برقرار نشد. اتصال شبکه را بررسی کنید.",
@@ -733,7 +860,11 @@
     "labCaseNotFound": "کار لابراتوار پیدا نشد.",
     "labCaseModified": "این کار هم‌زمان توسط کاربر دیگری تغییر کرده است؛ تابلو به‌روز شد.",
     "labCaseMoved": "این کار پیش‌تر توسط کاربر دیگری جابه‌جا شده است؛ تابلو به‌روز شد.",
-    "labCaseNothingToUndo": "این اولین ارسال این کار است و اقدام قبلی ندارد؛ در صورت اشتباه، کار را حذف کنید."
+    "labCaseNothingToUndo": "این اولین ارسال این کار است و اقدام قبلی ندارد؛ در صورت اشتباه، کار را حذف کنید.",
+    "inventoryItemNotFound": "کالا پیدا نشد.",
+    "inventoryItemExists": "کالایی با همین مشخصات در انبار هست.",
+    "inventoryItemModified": "این کالا هم‌زمان توسط کاربر دیگری تغییر کرده است؛ فهرست به‌روز شد.",
+    "inventoryInsufficientStock": "بیش از موجودی است؛ فقط {{available}} در انبار هست."
   },
   "paginator": {
     "itemsPerPage": "تعداد در هر صفحه:",

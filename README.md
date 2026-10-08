@@ -108,6 +108,30 @@ On the VPS the same tools run inside the API image:
 ./ops/deploy/reconcile.sh workbook.xlsx [--apply]
 ```
 
+### Loading the stock workbook
+
+The inventory starts from the practice's own stock workbook («موجودی انبار»):
+an implant sheet per system, healing caps, abutments, grafts and membranes,
+and the general store's nine categories side by side. Like the register
+import it runs once, from the terminal, into an empty inventory:
+
+```bash
+npm run import:inventory -- path/to/workbook.xlsx            # preview: nothing is written
+npm run import:inventory -- path/to/workbook.xlsx --apply    # write it
+```
+
+The preview needs no database. It lists every item it found and everything it
+had to interpret, to check on the shelf: a hand-typed sheet total that
+disagrees with its rows, a diameter Excel had turned into a date («6/5» → 6.5),
+an expiry with only a year, a row with no quantity, a product listed on two
+rows (merged, the counts added). An unreadable quantity or date goes into the
+item's notes as written; the sheet's prices, whose units vary row to row, are
+kept there too. The layout is spelled out column by column in
+`inventory-workbook.mapper.ts` and every header is checked, so a workbook whose
+columns have moved is refused rather than read askew. `--apply` refuses an
+inventory that already holds items: after the first load, stock is kept in the
+app.
+
 ---
 
 ## Why the schema looks like this
@@ -185,6 +209,32 @@ the board and the dashboard alike.
 Implant crowns travel with impression copings and analogs that belong to the
 clinic. A case keeps owing them — on the board, even after delivery — until
 someone marks them returned.
+
+### Stock is a ledger, not a number
+
+An item's quantity is never edited. It changes only through a movement — a
+delivery (ورود), a use (مصرف), a discard (دورریز) or a count (شمارش) — and
+each movement is one line on the item's stock card (`inventory_movements`)
+with who recorded it and the balance it left, written in the same
+transaction as the new balance. The card is the stock's audit trail; a wrong
+line is put right with a count, never rewritten. Nothing may leave a shelf
+that does not hold it, so a balance that disagrees with the shelf is corrected
+by counting it, not by going negative.
+
+An item keeps one expiry: the nearest of what is on the shelf, which is what a
+warning is about. A delivery onto stock already there keeps the earlier date,
+since the older packs go first; onto an empty shelf it brings its own. The
+expiry is stored as printed — `2028/07` from an imported pack, `1407/05` from
+an Iranian one, told apart by the year — and a month-only date runs to the
+end of that month, as GS1 labels define it.
+
+The list answers three questions — what to order (at or under the minimum
+staff set for the item), what has run out, and what expires within 90 days —
+and the dashboard counts the first and last with the same SQL
+(`apps/api/src/modules/inventory/inventory-stock.ts`). An item with no minimum
+is never "to order" at zero: plenty of sizes stay on the list unstocked. One
+active row per product (category, name, brand and size, Persian-folded) keeps
+a product's stock from splitting across two rows.
 
 ### Dates are free-form Jalali, and often imprecise
 
@@ -311,20 +361,22 @@ Persian sentence frozen into the database at import time.
 
 ### Data model
 
-| Table                | Purpose                                                    |
-| -------------------- | ---------------------------------------------------------- |
-| `patients`           | The main register. Soft-deleted, never destroyed.          |
-| `treatment_types`    | The procedure catalogue, seeded from code.                 |
-| `patient_treatments` | Join, with room for a date and note.                       |
-| `referral_sources`   | نحوه آشنایی, deduplicated on its Persian-folded form.      |
-| `implant_cases`      | Implant register — **its own numbering**.                  |
-| `ortho_cases`        | Ortho register — **its own numbering**.                    |
-| `surgery_queue`      | Second-stage surgery list, linked to the implant register. |
-| `labs`               | The labs work is sent to; managed in Settings.             |
-| `lab_cases`          | One piece of lab work for one patient, until it is fitted. |
-| `lab_case_trips`     | Each trip of a case to the lab and back.                   |
-| `users`              | Staff accounts.                                            |
-| `audit_logs`         | Append-only record of who changed what.                    |
+| Table                 | Purpose                                                    |
+| --------------------- | ---------------------------------------------------------- |
+| `patients`            | The main register. Soft-deleted, never destroyed.          |
+| `treatment_types`     | The procedure catalogue, seeded from code.                 |
+| `patient_treatments`  | Join, with room for a date and note.                       |
+| `referral_sources`    | نحوه آشنایی, deduplicated on its Persian-folded form.      |
+| `implant_cases`       | Implant register — **its own numbering**.                  |
+| `ortho_cases`         | Ortho register — **its own numbering**.                    |
+| `surgery_queue`       | Second-stage surgery list, linked to the implant register. |
+| `labs`                | The labs work is sent to; managed in Settings.             |
+| `lab_cases`           | One piece of lab work for one patient, until it is fitted. |
+| `lab_case_trips`      | Each trip of a case to the lab and back.                   |
+| `inventory_items`     | One product on the shelves and its balance.                |
+| `inventory_movements` | Its stock card: every delivery, use, discard and count.    |
+| `users`               | Staff accounts.                                            |
+| `audit_logs`          | Append-only record of who changed what.                    |
 
 ### Security
 
@@ -531,21 +583,22 @@ them.
 
 ## Commands
 
-| Command                                      | Does                                             |
-| -------------------------------------------- | ------------------------------------------------ |
-| `npm run dev`                                | API and web app together                         |
-| `npm run dev:api` / `npm run dev:web`        | Either one alone                                 |
-| `npm run build`                              | Production build of both                         |
-| `npm test`                                   | API and web unit tests (no database needed)      |
-| `npm run test:e2e`                           | API over HTTP against PostgreSQL (see below)     |
-| `npm run lint` / `lint:fix`                  | ESLint on both apps (+ Prettier on the API); CI  |
-| `npm run i18n:check`                         | Validate JSON keys and reject hard-coded UI text |
-| `npm run migration:run` / `migration:revert` | Schema                                           |
-| `npm run seed`                               | Treatment catalogue + admin account              |
-| `npm run import -- [file] [--force]`         | Load a source workbook into an empty register    |
-| `npm run export -- [file]`                   | Snapshot the register to an Excel workbook       |
-| `npm run reconcile -- <file> [--apply]`      | Preview, then apply, corrections from a workbook |
-| `npm run db:up` / `db:down`                  | Postgres via Docker                              |
+| Command                                        | Does                                             |
+| ---------------------------------------------- | ------------------------------------------------ |
+| `npm run dev`                                  | API and web app together                         |
+| `npm run dev:api` / `npm run dev:web`          | Either one alone                                 |
+| `npm run build`                                | Production build of both                         |
+| `npm test`                                     | API and web unit tests (no database needed)      |
+| `npm run test:e2e`                             | API over HTTP against PostgreSQL (see below)     |
+| `npm run lint` / `lint:fix`                    | ESLint on both apps (+ Prettier on the API); CI  |
+| `npm run i18n:check`                           | Validate JSON keys and reject hard-coded UI text |
+| `npm run migration:run` / `migration:revert`   | Schema                                           |
+| `npm run seed`                                 | Treatment catalogue + admin account              |
+| `npm run import -- [file] [--force]`           | Load a source workbook into an empty register    |
+| `npm run export -- [file]`                     | Snapshot the register to an Excel workbook       |
+| `npm run reconcile -- <file> [--apply]`        | Preview, then apply, corrections from a workbook |
+| `npm run import:inventory -- <file> [--apply]` | Preview, then load, the stock workbook           |
+| `npm run db:up` / `db:down`                    | Postgres via Docker                              |
 
 The e2e suite signs in, writes patients and register rows, and checks the
 concurrency, uniqueness and role rules over HTTP. It writes, so it only runs

@@ -197,6 +197,75 @@ export interface LabBoard {
   delivered: LabCase[];
 }
 
+/** The store's shelves, as the API's `InventoryCategory`. */
+export type InventoryCategory =
+  | 'implant'
+  | 'healing'
+  | 'abutment'
+  | 'graft'
+  | 'membrane'
+  | 'anesthesia'
+  | 'composite'
+  | 'laminate'
+  | 'impression'
+  | 'endo'
+  | 'surgery'
+  | 'restorative'
+  | 'orthodontic'
+  | 'consumable'
+  | 'hygiene'
+  | 'other';
+export type InventoryUnit =
+  'piece' | 'pack' | 'box' | 'bottle' | 'syringe' | 'cartridge' | 'tube' | 'kit' | 'roll';
+/** Why a balance changed; quantity changes only through one of these. */
+export type InventoryMovementKind = 'receive' | 'use' | 'discard' | 'count';
+/** The list's questions: what to order, what has run out, what expires soon. */
+export type InventoryFilter = 'reorder' | 'out' | 'expiry';
+/** Judged by the API: nothing left, or at or under the reorder level. */
+export type StockState = 'ok' | 'low' | 'out';
+/** Of what is on the shelf; null when the shelf is empty or undated. */
+export type ExpiryState = 'ok' | 'expiring' | 'expired';
+
+export interface InventoryItem {
+  id: string;
+  category: InventoryCategory;
+  name: string;
+  brand: string | null;
+  /** Model, size or shade, as written. */
+  spec: string | null;
+  unit: InventoryUnit;
+  quantity: number;
+  minQuantity: number | null;
+  stockState: StockState;
+  /** As printed on the pack, in its own calendar: `2028/07`, `1407/05`. */
+  expiry: string | null;
+  expiryState: ExpiryState | null;
+  notes: string | null;
+  isArchived: boolean;
+  /** Bumped by every edit and every movement; sent back on an edit. */
+  version: number;
+}
+
+/** One line of an item's stock card. */
+export interface InventoryMovement {
+  id: string;
+  kind: InventoryMovementKind;
+  /** Signed; for a count, the difference it found. */
+  change: number;
+  quantityAfter: number;
+  expiry: string | null;
+  note: string | null;
+  /** Who recorded it, by the name staff know them by. */
+  by: string | null;
+  /** Jalali `yyyy/MM/dd HH:mm`. */
+  at: string;
+}
+
+export interface InventoryItemDetail extends InventoryItem {
+  /** Newest first. */
+  movements: InventoryMovement[];
+}
+
 export interface DashboardStats {
   totals: {
     patients: number;
@@ -206,6 +275,8 @@ export interface DashboardStats {
     followUpsThisWeek: number;
     followUpsOverdue: number;
     labsOverdue: number;
+    inventoryReorder: number;
+    inventoryExpiring: number;
     needsReview: number;
   };
   gender: { key: string; count: number }[];

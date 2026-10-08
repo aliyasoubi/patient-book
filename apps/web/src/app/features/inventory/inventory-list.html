@@ -1,0 +1,210 @@
+<pb-page class="stock">
+  <pb-page-header
+    [title]="'inventory.title' | translate"
+    [subtitle]="'inventory.subtitle' | translate"
+    [count]="countLabel()"
+  >
+    @if (canEdit()) {
+      <pb-button icon="add" (click)="addItem()" [collapseBelow]="560">
+        {{ 'inventory.new' | translate }}
+      </pb-button>
+    }
+  </pb-page-header>
+
+  <div class="stock__toolbar">
+    <pb-search-field
+      class="stock__search"
+      [control]="search"
+      [placeholder]="'inventory.searchPlaceholder' | translate"
+      [ariaLabel]="'inventory.searchAria' | translate"
+    />
+    <pb-select-field
+      class="stock__category"
+      [value]="category()"
+      (valueChange)="setCategory($event)"
+      [options]="categoryOptions"
+      [anyLabel]="'inventory.allCategories' | translate"
+      [label]="'inventory.category' | translate"
+    />
+  </div>
+
+  <div class="stock__filters">
+    <!-- One question at a time; clicking the selected chip shows everything again. -->
+    <pb-filter-chips
+      [options]="filters"
+      [selected]="filterSelected()"
+      (selectedChange)="setFilter($event[0])"
+      [ariaLabel]="'inventory.filtersAria' | translate"
+    />
+    @if (canEdit()) {
+      <pb-filter-chips
+        multiple
+        [options]="archiveFilter"
+        [selected]="archivedOnly() ? ['archived'] : []"
+        (selectedChange)="toggleArchived($event.length > 0)"
+        [ariaLabel]="'common.filters' | translate"
+      />
+    }
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (failed()) {
+    <pb-load-error
+      [message]="
+        (items().length > 0 ? 'inventory.loadFailedStale' : 'inventory.loadFailed') | translate
+      "
+      (retry)="retry()"
+    />
+  }
+
+  @if (!loading() && !failed() && items().length === 0) {
+    <pb-empty-state
+      icon="inventory"
+      [title]="'inventory.emptyTitle' | translate"
+      [hint]="emptyHint()"
+    />
+  } @else {
+    <ul class="shelf">
+      @for (item of items(); track item.id) {
+        <li class="shelf__item" [attr.data-stock]="item.stockState">
+          <div class="shelf__body">
+            <div class="shelf__title">
+              <strong dir="auto">{{ item.name }}</strong>
+              @if (item.brand) {
+                <span class="shelf__brand" dir="auto">{{ item.brand }}</span>
+              }
+              @if (item.spec) {
+                <span class="shelf__spec" dir="auto">{{ item.spec }}</span>
+              }
+            </div>
+
+            <div class="shelf__details">
+              <!-- Said once, by the filter, when the list is one category. -->
+              @if (!category()) {
+                <span>{{ categoryLabel(item.category) | translate }}</span>
+              }
+              @if (item.minQuantity !== null) {
+                <span>{{ 'inventory.minQuantity' | translate: { count: (item.minQuantity | faNum) } }}</span>
+              }
+              @if (item.expiry && item.expiryState === 'ok') {
+                <span>{{ 'inventory.expiresOn' | translate: { date: (item.expiry | faNum) } }}</span>
+              }
+              @if (item.notes) {
+                <span class="shelf__notes" dir="auto">{{ item.notes }}</span>
+              }
+            </div>
+
+            <!-- Chips only for what asks for attention: an item that is fine says nothing. -->
+            @if (item.stockState !== 'ok' || (item.expiryState && item.expiryState !== 'ok')) {
+              <div class="shelf__chips">
+                @if (item.stockState === 'out') {
+                  <pb-status-chip tone="error" icon="remove_shopping_cart">
+                    {{ 'inventory.stateOut' | translate }}
+                  </pb-status-chip>
+                } @else if (item.stockState === 'low') {
+                  <pb-status-chip tone="warning" icon="shopping_cart">
+                    {{ 'inventory.stateLow' | translate }}
+                  </pb-status-chip>
+                }
+                @if (item.expiryState === 'expired' || item.expiryState === 'expiring') {
+                  <pb-status-chip
+                    [tone]="expiryTone(item)"
+                    [icon]="item.expiryState === 'expired' ? 'event_busy' : 'hourglass_bottom'"
+                  >
+                    {{ expiryLabel(item.expiryState) | translate: { date: (item.expiry | faNum) } }}
+                  </pb-status-chip>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="shelf__stock">
+            <span class="shelf__quantity">{{ item.quantity | faNum }}</span>
+            <span class="shelf__unit">{{ unitLabel(item.unit) | translate }}</span>
+          </div>
+
+          @if (canEdit()) {
+            <div class="shelf__actions">
+              @if (archivedOnly()) {
+                <pb-icon-button
+                  icon="restore_from_trash"
+                  [ariaLabel]="'inventory.restore' | translate"
+                  [tooltip]="'inventory.restore' | translate"
+                  (click)="restore(item)"
+                />
+              } @else {
+                <!-- The two moves made all day, one tap each; the rest wait in the menu. -->
+                <pb-icon-button
+                  icon="remove"
+                  variant="tonal"
+                  [ariaLabel]="'inventory.useOne' | translate: { name: item.name }"
+                  [tooltip]="'inventoryMovement.use' | translate"
+                  [disabled]="item.quantity === 0"
+                  (click)="move(item, 'use')"
+                />
+                <pb-icon-button
+                  icon="add"
+                  variant="tonal"
+                  [ariaLabel]="'inventory.receiveOne' | translate: { name: item.name }"
+                  [tooltip]="'inventoryMovement.receive' | translate"
+                  (click)="move(item, 'receive')"
+                />
+                <pb-icon-button
+                  icon="more_vert"
+                  [menu]="rowMenu"
+                  [ariaLabel]="'inventory.rowActions' | translate"
+                />
+                <mat-menu #rowMenu="matMenu">
+                  @for (kind of menuMoves; track kind) {
+                    <button
+                      mat-menu-item
+                      type="button"
+                      [disabled]="(kind === 'use' || kind === 'discard') && item.quantity === 0"
+                      (click)="move(item, kind)"
+                    >
+                      <mat-icon aria-hidden="true">{{ moveIcons[kind] }}</mat-icon>
+                      <span>{{ moveLabel(kind) | translate }}</span>
+                    </button>
+                  }
+                  <button mat-menu-item type="button" (click)="history(item)">
+                    <mat-icon aria-hidden="true">history</mat-icon>
+                    <span>{{ 'inventory.history' | translate }}</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="edit(item)">
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    <span>{{ 'common.edit' | translate }}</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="archive(item)">
+                    <mat-icon aria-hidden="true">archive</mat-icon>
+                    <span>{{ 'inventory.archive' | translate }}</span>
+                  </button>
+                </mat-menu>
+              }
+            </div>
+          } @else {
+            <div class="shelf__actions">
+              <pb-icon-button
+                icon="history"
+                [ariaLabel]="'inventory.history' | translate"
+                [tooltip]="'inventory.history' | translate"
+                (click)="history(item)"
+              />
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (total() > 0) {
+    <pb-paginator
+      [length]="total()"
+      [page]="page()"
+      [pageSize]="limit()"
+      (pageChange)="onPage($event)"
+    />
+  }
+</pb-page>

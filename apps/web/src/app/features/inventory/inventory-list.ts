@@ -1,0 +1,385 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import type { PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+
+import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
+import { AuthService } from '../../core/services/auth.service';
+import { InventoryQuery, InventoryService } from '../../core/services/inventory.service';
+import type {
+  ExpiryState,
+  InventoryCategory,
+  InventoryFilter,
+  InventoryItem,
+  InventoryMovementKind,
+} from '../../core/models/common.model';
+import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
+import { EmptyState } from '../../shared/components/empty-state';
+import { LoadError } from '../../shared/components/load-error';
+import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import {
+  expiryLabel,
+  INVENTORY_CATEGORIES,
+  INVENTORY_MOVEMENT_ICONS,
+  inventoryCategoryLabel,
+  inventoryMovementLabel,
+  inventoryUnitLabel,
+} from '../../shared/labels';
+import {
+  PbButton,
+  PbFilterChips,
+  PbIconButton,
+  PbPage,
+  PbPageHeader,
+  PbPaginator,
+  PbSearchField,
+  PbSelectField,
+  PbStatusChip,
+} from '../../shared/ui';
+import type { FilterChipOption, SelectOption, StatusTone } from '../../shared/ui';
+import {
+  InventoryItemDialog,
+  type InventoryItemDialogData,
+  type InventoryItemDialogResult,
+} from './inventory-item-dialog';
+import {
+  InventoryMovementDialog,
+  type InventoryMovementDialogData,
+} from './inventory-movement-dialog';
+import { InventoryHistoryDialog } from './inventory-history-dialog';
+
+/**
+ * The questions staff ask of their stock, one at a time. The API decides what
+ * each means, and the dashboard counts the first and last the same way.
+ */
+const FILTERS: readonly (FilterChipOption & { value: InventoryFilter })[] = [
+  { value: 'reorder', label: 'inventory.filterReorder', icon: 'shopping_cart', translate: true },
+  { value: 'out', label: 'inventory.filterOut', icon: 'remove_shopping_cart', translate: true },
+  { value: 'expiry', label: 'inventory.filterExpiry', icon: 'hourglass_bottom', translate: true },
+];
+
+const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
+  ok: 'neutral',
+  expiring: 'warning',
+  expired: 'error',
+};
+
+/** What the row menu offers besides the quick use and receive buttons. */
+const MENU_MOVES: readonly InventoryMovementKind[] = ['receive', 'use', 'discard', 'count'];
+
+/** A shelf is long; a page holds a category's worth of sizes at a time. */
+const PAGE_SIZE = 50;
+
+function isFilter(value: unknown): value is InventoryFilter {
+  return FILTERS.some((f) => f.value === value);
+}
+
+function isCategory(value: unknown): value is InventoryCategory {
+  return INVENTORY_CATEGORIES.includes(value as InventoryCategory);
+}
+
+/** The filters the dashboard links into, read once on arrival. */
+function readUrlFilters(params: ParamMap): {
+  q: string;
+  filter: InventoryFilter | '';
+  category: InventoryCategory | '';
+} {
+  const filter = params.get('filter');
+  const category = params.get('category');
+  return {
+    q: params.get('q')?.trim() ?? '',
+    filter: isFilter(filter) ? filter : '',
+    category: isCategory(category) ? category : '',
+  };
+}
+
+@Component({
+  selector: 'pb-inventory-list',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    MatIconModule,
+    MatMenuModule,
+    MatProgressBarModule,
+    TranslatePipe,
+    EmptyState,
+    LoadError,
+    PersianNumberPipe,
+    PbButton,
+    PbFilterChips,
+    PbIconButton,
+    PbPage,
+    PbPageHeader,
+    PbPaginator,
+    PbSearchField,
+    PbSelectField,
+    PbStatusChip,
+  ],
+  templateUrl: './inventory-list.html',
+  styleUrl: './inventory-list.scss',
+})
+export class InventoryList {
+  private readonly inventory = inject(InventoryService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly i18n = inject(TranslateService);
+  private readonly errors = inject(ApiErrorTranslator);
+  protected readonly auth = inject(AuthService);
+
+  protected readonly filters = FILTERS;
+  protected readonly menuMoves = MENU_MOVES;
+  protected readonly moveIcons = INVENTORY_MOVEMENT_ICONS;
+  protected readonly categoryLabel = inventoryCategoryLabel;
+  protected readonly unitLabel = inventoryUnitLabel;
+  protected readonly moveLabel = inventoryMovementLabel;
+  protected readonly expiryLabel = expiryLabel;
+  protected readonly categoryOptions: SelectOption[] = INVENTORY_CATEGORIES.map((c) => ({
+    value: c,
+    label: inventoryCategoryLabel(c),
+    translate: true,
+  }));
+  protected readonly archiveFilter: FilterChipOption[] = [
+    { value: 'archived', label: 'inventory.archivedOnly', icon: 'inventory_2', translate: true },
+  ];
+
+  private readonly urlFilters = readUrlFilters(this.route.snapshot.queryParamMap);
+  protected readonly search = new FormControl(this.urlFilters.q, { nonNullable: true });
+  protected readonly filter = signal<InventoryFilter | ''>(this.urlFilters.filter);
+  protected readonly category = signal<InventoryCategory | ''>(this.urlFilters.category);
+  protected readonly archivedOnly = signal(false);
+  protected readonly filterSelected = computed(() => {
+    const value = this.filter();
+    return value ? [value] : [];
+  });
+  protected readonly page = signal(1);
+  protected readonly limit = signal(PAGE_SIZE);
+
+  protected readonly loading = signal(false);
+  /** The most recent request failed; whatever rows are shown are stale. */
+  protected readonly failed = signal(false);
+  protected readonly items = signal<InventoryItem[]>([]);
+  protected readonly total = signal(0);
+  protected readonly countLabel = computed(() => {
+    const total = this.total();
+    if (this.loading() || total === 0) return null;
+    this.i18n.currentLang();
+    return this.i18n.instant('count.items', { count: formatPersianCount(total) });
+  });
+
+  /** A new search starts from page 1. */
+  private readonly query = toSignal(
+    this.search.valueChanges.pipe(
+      debounceTime(300),
+      map((v) => v.trim()),
+      distinctUntilChanged(),
+      tap(() => this.page.set(1)),
+    ),
+    { initialValue: this.urlFilters.q },
+  );
+
+  /** One subscription; `switchMap` drops a slower, older answer. */
+  private readonly fetchTrigger$ = new Subject<InventoryQuery>();
+  private readonly reloadTick = signal(0);
+
+  constructor() {
+    this.fetchTrigger$
+      .pipe(
+        switchMap((query) =>
+          this.inventory.list(query).pipe(
+            catchError(() => {
+              this.loading.set(false);
+              this.failed.set(true);
+              return EMPTY;
+            }),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((result) => {
+        this.items.set(result.items);
+        this.total.set(result.total);
+        this.loading.set(false);
+      });
+
+    effect(() => {
+      this.reloadTick();
+      const query: InventoryQuery = {
+        q: this.query() || undefined,
+        category: this.category() || undefined,
+        filter: this.filter() || undefined,
+        archivedOnly: this.archivedOnly() || undefined,
+        page: this.page(),
+        limit: this.limit(),
+      };
+      untracked(() => {
+        this.loading.set(true);
+        this.failed.set(false);
+        this.fetchTrigger$.next(query);
+      });
+    });
+  }
+
+  protected retry(): void {
+    this.reloadTick.update((n) => n + 1);
+  }
+
+  protected canEdit(): boolean {
+    return this.auth.can('editInventory');
+  }
+
+  protected setFilter(value: unknown): void {
+    this.filter.set(isFilter(value) ? value : '');
+    this.page.set(1);
+  }
+
+  protected setCategory(value: string): void {
+    this.category.set(isCategory(value) ? value : '');
+    this.page.set(1);
+  }
+
+  protected toggleArchived(checked: boolean): void {
+    this.archivedOnly.set(checked);
+    this.page.set(1);
+  }
+
+  protected onPage(event: PageEvent): void {
+    this.page.set(event.pageIndex + 1);
+    this.limit.set(event.pageSize);
+  }
+
+  protected expiryTone(item: InventoryItem): StatusTone {
+    return EXPIRY_TONE[item.expiryState ?? 'ok'];
+  }
+
+  protected emptyHint(): string {
+    if (this.search.value || this.filter() || this.category() || this.archivedOnly()) {
+      return this.i18n.instant('filters.changeThem');
+    }
+    return this.canEdit() ? this.i18n.instant('inventory.emptyHint') : '';
+  }
+
+  protected addItem(): void {
+    this.openItemDialog({ category: this.category() || undefined });
+  }
+
+  protected edit(item: InventoryItem): void {
+    this.openItemDialog({ item });
+  }
+
+  protected move(item: InventoryItem, kind: InventoryMovementKind): void {
+    const data: InventoryMovementDialogData = { item, kind };
+    this.dialog
+      .open(InventoryMovementDialog, { data, autoFocus: 'first-tabbable' })
+      .afterClosed()
+      .subscribe((saved) => {
+        if (!saved) return;
+        // In place, not reloaded: a row that just left the filter stays until
+        // the next search, rather than vanishing under the hand that moved it.
+        this.items.update((rows) => rows.map((r) => (r.id === saved.id ? saved : r)));
+        this.snackBar.open(
+          this.i18n.instant('inventoryMove.recorded', {
+            kind: this.i18n.instant(inventoryMovementLabel(kind)),
+            name: saved.name,
+            count: formatPersianCount(saved.quantity),
+            unit: this.i18n.instant(inventoryUnitLabel(saved.unit)),
+          }),
+          this.i18n.instant('action.dismiss'),
+        );
+      });
+  }
+
+  protected history(item: InventoryItem): void {
+    this.dialog.open(InventoryHistoryDialog, { data: item });
+  }
+
+  /** A soft delete: the item reappears under the archive chip, to be restored. */
+  protected archive(item: InventoryItem): void {
+    const data: ConfirmData = {
+      title: this.i18n.instant('inventory.archiveTitle'),
+      message: this.i18n.instant('inventory.archiveMessage', { name: item.name }),
+      confirmLabel: this.i18n.instant('inventory.archiveConfirm'),
+      tone: 'warn',
+    };
+    this.dialog
+      .open(ConfirmDialog, { data, width: '420px', maxWidth: '92vw' })
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.inventory.archive(item.id).subscribe({
+          next: () => this.removed('inventory.archived'),
+          error: (error: unknown) => this.writeFailed(error),
+        });
+      });
+  }
+
+  protected restore(item: InventoryItem): void {
+    this.inventory.restore(item.id).subscribe({
+      next: () => this.removed('inventory.restored'),
+      error: (error: unknown) => this.writeFailed(error),
+    });
+  }
+
+  private openItemDialog(data: InventoryItemDialogData): void {
+    this.dialog
+      .open<InventoryItemDialog, InventoryItemDialogData, InventoryItemDialogResult>(
+        InventoryItemDialog,
+        { data, autoFocus: 'first-tabbable', maxWidth: '96vw' },
+      )
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) return;
+        if (result === 'conflict') {
+          this.snackBar.open(
+            this.i18n.instant('error.inventoryItemModified'),
+            this.i18n.instant('action.dismiss'),
+            { duration: 6000 },
+          );
+        } else {
+          this.snackBar.open(
+            this.i18n.instant(data.item ? 'inventoryForm.saved' : 'inventoryForm.created'),
+            this.i18n.instant('action.dismiss'),
+          );
+        }
+        this.retry();
+      });
+  }
+
+  /** The row left this view; step back from a page it emptied. */
+  private removed(message: string): void {
+    this.snackBar.open(this.i18n.instant(message), this.i18n.instant('action.dismiss'));
+    if (this.items().length === 1 && this.page() > 1) {
+      this.page.update((p) => p - 1);
+    } else {
+      this.retry();
+    }
+  }
+
+  /** Someone else archived, restored or re-added it first: say so, show the list as it is. */
+  private writeFailed(error: unknown): void {
+    if (error instanceof HttpErrorResponse && [404, 409].includes(error.status)) {
+      this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
+        duration: 6000,
+      });
+    }
+    this.retry();
+  }
+}

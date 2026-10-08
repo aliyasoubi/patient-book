@@ -31,6 +31,7 @@ const UNIQUE_INDEX_CODES: Readonly<Record<string, ErrorCode>> = {
   idx_ortho_registry: ErrorCode.RegistryNumberTaken,
   idx_users_username: ErrorCode.UsernameTaken,
   IDX_users_username_lower_unique: ErrorCode.UsernameTaken,
+  idx_inventory_items_identity: ErrorCode.InventoryItemExists,
 };
 
 /** The fields node-postgres attaches to a constraint failure. */

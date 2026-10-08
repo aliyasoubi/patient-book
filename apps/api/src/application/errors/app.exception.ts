@@ -81,6 +81,10 @@ const DOMAIN_ERROR_STATUS: Partial<Record<ErrorCode, HttpStatus>> = {
   [ErrorCode.LabCaseModified]: HttpStatus.CONFLICT,
   [ErrorCode.LabCaseMoved]: HttpStatus.CONFLICT,
   [ErrorCode.LabCaseNothingToUndo]: HttpStatus.CONFLICT,
+  [ErrorCode.InventoryItemNotFound]: HttpStatus.NOT_FOUND,
+  [ErrorCode.InventoryItemExists]: HttpStatus.CONFLICT,
+  [ErrorCode.InventoryItemModified]: HttpStatus.CONFLICT,
+  [ErrorCode.InventoryInsufficientStock]: HttpStatus.CONFLICT,
   [ErrorCode.UsernameTaken]: HttpStatus.CONFLICT,
   [ErrorCode.RateLimited]: HttpStatus.TOO_MANY_REQUESTS,
 };

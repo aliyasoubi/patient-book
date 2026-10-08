@@ -1,6 +1,10 @@
 import type {
   EducationLevel,
+  ExpiryState,
   Gender,
+  InventoryCategory,
+  InventoryMovementKind,
+  InventoryUnit,
   LabJaw,
   LabStage,
   LabTripKind,
@@ -368,4 +372,104 @@ const LAB_JAW_LABELS: Record<LabJaw, string> = {
 
 export function labJawLabel(jaw: LabJaw): string {
   return LAB_JAW_LABELS[jaw];
+}
+
+/** The store's shelves, in the order the API lists them. */
+export const INVENTORY_CATEGORIES: readonly InventoryCategory[] = [
+  'implant',
+  'healing',
+  'abutment',
+  'graft',
+  'membrane',
+  'anesthesia',
+  'composite',
+  'laminate',
+  'impression',
+  'endo',
+  'surgery',
+  'restorative',
+  'orthodontic',
+  'consumable',
+  'hygiene',
+  'other',
+];
+
+const INVENTORY_CATEGORY_LABELS: Record<InventoryCategory, string> = {
+  implant: 'inventoryCategory.implant',
+  healing: 'inventoryCategory.healing',
+  abutment: 'inventoryCategory.abutment',
+  graft: 'inventoryCategory.graft',
+  membrane: 'inventoryCategory.membrane',
+  anesthesia: 'inventoryCategory.anesthesia',
+  composite: 'inventoryCategory.composite',
+  laminate: 'inventoryCategory.laminate',
+  impression: 'inventoryCategory.impression',
+  endo: 'inventoryCategory.endo',
+  surgery: 'inventoryCategory.surgery',
+  restorative: 'inventoryCategory.restorative',
+  orthodontic: 'inventoryCategory.orthodontic',
+  consumable: 'inventoryCategory.consumable',
+  hygiene: 'inventoryCategory.hygiene',
+  other: 'inventoryCategory.other',
+};
+
+export function inventoryCategoryLabel(category: InventoryCategory): string {
+  return INVENTORY_CATEGORY_LABELS[category];
+}
+
+export const INVENTORY_UNITS: readonly InventoryUnit[] = [
+  'piece',
+  'pack',
+  'box',
+  'bottle',
+  'syringe',
+  'cartridge',
+  'tube',
+  'kit',
+  'roll',
+];
+
+const INVENTORY_UNIT_LABELS: Record<InventoryUnit, string> = {
+  piece: 'inventoryUnit.piece',
+  pack: 'inventoryUnit.pack',
+  box: 'inventoryUnit.box',
+  bottle: 'inventoryUnit.bottle',
+  syringe: 'inventoryUnit.syringe',
+  cartridge: 'inventoryUnit.cartridge',
+  tube: 'inventoryUnit.tube',
+  kit: 'inventoryUnit.kit',
+  roll: 'inventoryUnit.roll',
+};
+
+export function inventoryUnitLabel(unit: InventoryUnit): string {
+  return INVENTORY_UNIT_LABELS[unit];
+}
+
+const INVENTORY_MOVEMENT_LABELS: Record<InventoryMovementKind, string> = {
+  receive: 'inventoryMovement.receive',
+  use: 'inventoryMovement.use',
+  discard: 'inventoryMovement.discard',
+  count: 'inventoryMovement.count',
+};
+
+export function inventoryMovementLabel(kind: InventoryMovementKind): string {
+  return INVENTORY_MOVEMENT_LABELS[kind];
+}
+
+export const INVENTORY_MOVEMENT_ICONS: Record<InventoryMovementKind, string> = {
+  receive: 'move_to_inbox',
+  use: 'outbox',
+  discard: 'delete_sweep',
+  count: 'fact_check',
+};
+
+const EXPIRY_LABELS: Record<ExpiryState, string> = {
+  ok: 'inventory.expiresOn',
+  expiring: 'inventory.expiringOn',
+  expired: 'inventory.expiredOn',
+};
+
+/** How an item's expiry reads on its row, by how near it is. */
+export function expiryLabel(state: ExpiryState | null): string {
+  return EXPIRY_LABELS[state ?? 'ok'];
 }

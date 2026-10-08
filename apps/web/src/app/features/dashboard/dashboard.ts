@@ -136,6 +136,28 @@ export class Dashboard {
         tone: 'warn',
       });
     }
+    // The stock's two questions, counted exactly as the inventory list's
+    // own filters answer them.
+    if (s.totals.inventoryReorder > 0) {
+      tiles.push({
+        label: 'tile.inventoryReorder',
+        value: s.totals.inventoryReorder,
+        icon: 'shopping_cart',
+        link: '/inventory',
+        queryParams: { filter: 'reorder' },
+        tone: 'warn',
+      });
+    }
+    if (s.totals.inventoryExpiring > 0) {
+      tiles.push({
+        label: 'tile.inventoryExpiring',
+        value: s.totals.inventoryExpiring,
+        icon: 'hourglass_bottom',
+        link: '/inventory',
+        queryParams: { filter: 'expiry' },
+        tone: 'warn',
+      });
+    }
     // Who to call this week: the operational number a receptionist opens
     // the dashboard for.
     tiles.push({

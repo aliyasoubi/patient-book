@@ -19,6 +19,8 @@ const stats = (over: Partial<DashboardStats> = {}): DashboardStats => ({
     followUpsThisWeek: 0,
     followUpsOverdue: 0,
     labsOverdue: 0,
+    inventoryReorder: 0,
+    inventoryExpiring: 0,
     needsReview: 0,
   },
   gender: [],

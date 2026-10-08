@@ -10,6 +10,11 @@ import {
   openFollowUpSql,
 } from '../surgery/follow-up';
 import { overdueSql, todayIso } from '../labs/lab-stage';
+import {
+  expiryHorizon,
+  expirySoonSql,
+  reorderSql,
+} from '../inventory/inventory-stock';
 import { JalaliDate } from '../../domain';
 
 /** Age buckets the dashboard groups patients into. */
@@ -28,6 +33,10 @@ export interface DashboardStats {
     followUpsOverdue: number;
     /** Lab work past the day the lab said it would be back — whose lab to call. */
     labsOverdue: number;
+    /** Stock at or under the reorder level staff set — what to order. */
+    inventoryReorder: number;
+    /** Stock on the shelf past or within 90 days of its expiry — what to use first. */
+    inventoryExpiring: number;
     needsReview: number;
   };
   gender: Array<{ key: string; count: number }>;
@@ -111,9 +120,14 @@ export class StatsService {
           (SELECT count(*) FROM lab_cases c
             WHERE c."deletedAt" IS NULL AND ${overdueSql('c', '$4')})                   AS "labsOverdue",
           (SELECT count(*) FROM patients
-            WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview"
+            WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview",
+          -- The inventory list's own filters, from inventory-stock.ts.
+          (SELECT count(*) FROM inventory_items i
+            WHERE i."deletedAt" IS NULL AND ${reorderSql('i')})                         AS "inventoryReorder",
+          (SELECT count(*) FROM inventory_items i
+            WHERE i."deletedAt" IS NULL AND ${expirySoonSql('i', '$5')})                AS "inventoryExpiring"
       `,
-        [week.from, week.to, overdue.to, todayIso()],
+        [week.from, week.to, overdue.to, todayIso(), expiryHorizon()],
       ),
       q<{ key: string; count: string }>(`
         SELECT gender AS key, count(*)::text AS count FROM patients
@@ -178,6 +192,8 @@ export class StatsService {
         followUpsThisWeek: Number(t.followUpsThisWeek ?? 0),
         followUpsOverdue: Number(t.followUpsOverdue ?? 0),
         labsOverdue: Number(t.labsOverdue ?? 0),
+        inventoryReorder: Number(t.inventoryReorder ?? 0),
+        inventoryExpiring: Number(t.inventoryExpiring ?? 0),
         needsReview: Number(t.needsReview ?? 0),
       },
       gender: gender.map((g) => ({ key: g.key, count: Number(g.count) })),

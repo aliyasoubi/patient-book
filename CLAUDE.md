@@ -56,6 +56,9 @@ npm run icons:check   # a new Material Symbol needs `npm run icons:build --works
   path, change the id and drop the loaded relation (or don't load it).
 - **Edits are versioned.** Updates lock the row and check `expectedVersion`;
   a write path that reads, changes and saves a whole entity must lock it too.
+- **Stock moves only through a movement.** Never write
+  `inventory_items.quantity` directly: record a receive/use/discard/count via
+  `applyMovement` (`inventory-stock.ts`) so the stock card still adds up.
 - **Errors leave the API as codes** (`ErrorCode`), never prose; the web app
   owns the wording in `public/i18n/fa.json`.
 - **Persian text is folded before comparing**: `searchKey` / `loosePersianKey`
