@@ -10,7 +10,6 @@ import type {
   InventoryItemDetail,
   InventoryMovementKind,
   InventoryUnit,
-  PageResult,
 } from '../models/common.model';
 import { toParams } from './http-params.util';
 
@@ -41,8 +40,6 @@ export interface InventoryQuery {
   category?: InventoryCategory;
   filter?: InventoryFilter;
   archivedOnly?: boolean;
-  page?: number;
-  limit?: number;
 }
 
 /**
@@ -55,8 +52,9 @@ export class InventoryService {
   private readonly http = inject(HttpClient);
   private readonly items = `${environment.apiUrl}/inventory/items`;
 
-  list(query: InventoryQuery): Observable<PageResult<InventoryItem>> {
-    return this.http.get<PageResult<InventoryItem>>(this.items, { params: toParams(query) });
+  /** The whole shelf, or what the query narrows it to — never paged, in shelf order. */
+  list(query: InventoryQuery): Observable<InventoryItem[]> {
+    return this.http.get<InventoryItem[]>(this.items, { params: toParams(query) });
   }
 
   /** One item with its stock card, newest first. */

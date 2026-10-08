@@ -22,6 +22,7 @@ check
 chevron_left
 chevron_right
 chips
+clean_hands
 cleaning_services
 close
 cloud_off
@@ -75,6 +76,7 @@ label
 labs
 language
 layers
+library_add
 light
 light_mode
 link
@@ -88,6 +90,7 @@ logout
 male
 man
 manage_accounts
+masks
 medical_information
 menu
 mobile
@@ -129,6 +132,7 @@ star_shine
 start
 stethoscope
 straighten
+stylus
 surgical
 syringe
 tab

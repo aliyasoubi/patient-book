@@ -133,40 +133,31 @@ export enum LabTripKind {
 }
 
 /**
- * The shelves of the clinic's store, as the practice's stock workbook groups
- * them: one sheet per implant system, one for healing caps, one for
- * abutments and their parts, the grafts and membranes, and the general
- * store's columns. A fixed list rather than a catalogue: the groups are the
+ * The shelves of a dental store, as supply catalogues group them. A fixed
+ * list rather than a catalogue managed in Settings: the groups are the
  * trade's own and rarely change, and a fixed list is what lets every screen
- * filter and the dashboard count the same way.
+ * filter, and the dashboard count, the same way.
  */
 export enum InventoryCategory {
   /** ایمپلنت — a fixture, by system, line and size. */
   Implant = 'implant',
-  /** هیلینگ اباتمنت */
-  Healing = 'healing',
-  /** اباتمنت و قطعات پروتزی — abutments, analogs, cover screws. */
-  Abutment = 'abutment',
-  /** پودر استخوان */
-  Graft = 'graft',
-  /** ممبران */
-  Membrane = 'membrane',
-  /** بی‌حسی — cartridges, needles. */
+  /** قطعات پروتزی ایمپلنت — healing caps, abutments, analogs, screws. */
+  Prosthetic = 'prosthetic',
+  /** پیوند استخوان و ممبران */
+  Regenerative = 'regenerative',
+  /** بی‌حسی — cartridges, needles, topical gel. */
   Anesthesia = 'anesthesia',
-  Composite = 'composite',
-  /** لمینت — veneer cements, porcelain etch, silane. */
-  Laminate = 'laminate',
-  /** مواد قالب‌گیری */
-  Impression = 'impression',
-  Endo = 'endo',
-  /** جراحی — sutures, blades, surgical consumables. */
-  Surgery = 'surgery',
-  /** ترمیمی و عمومی — the general store's first column. */
+  /** ترمیمی و زیبایی — composites, bonding, etch, cements, veneer materials. */
   Restorative = 'restorative',
+  Endo = 'endo',
+  /** قالب‌گیری */
+  Impression = 'impression',
+  /** جراحی — sutures, blades, surgical disposables. */
+  Surgery = 'surgery',
   Orthodontic = 'orthodontic',
-  /** مصرفی — gloves, gauze, masks, disinfectants. */
+  /** مصرفی و ضدعفونی — gloves, gauze, masks, disinfectants. */
   Consumable = 'consumable',
-  /** مسواک و خمیردندان — hygiene products handed or sold to patients. */
+  /** بهداشت دهان — toothbrushes and pastes handed or sold to patients. */
   Hygiene = 'hygiene',
   Other = 'other',
 }

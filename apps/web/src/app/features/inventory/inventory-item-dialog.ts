@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   type AbstractControl,
   FormBuilder,
@@ -11,10 +12,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
-import {
-  InventoryService,
-  type InventoryItemInput,
-} from '../../core/services/inventory.service';
+import { InventoryService, type InventoryItemInput } from '../../core/services/inventory.service';
 import type {
   InventoryCategory,
   InventoryItem,
@@ -36,18 +34,30 @@ import {
   PbTextField,
   PbTextareaField,
   type SelectOption,
+  type TextFieldOption,
 } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
 
 export interface InventoryItemDialogData {
   /** The item being corrected; absent when adding one. */
   item?: InventoryItem;
+  /** Another size or shade of this item: everything but those is carried over. */
+  template?: InventoryItem;
   /** The category a new item starts in — the one the list is showing. */
   category?: InventoryCategory;
 }
 
 /** What closing tells the list: the saved item, or that someone else got there first. */
 export type InventoryItemDialogResult = InventoryItemDetail | 'conflict' | undefined;
+
+/** A product already on the shelves, offered as the name is typed. */
+interface Known {
+  category: InventoryCategory;
+  name: string;
+  brand: string | null;
+  unit: InventoryUnit;
+  minQuantity: number | null;
+}
 
 /** Whole counts only, in either digit script. */
 function count(control: AbstractControl<string>): ValidationErrors | null {
@@ -60,11 +70,20 @@ const countValue = (raw: string): number | null => {
   return value ? Number(value) : null;
 };
 const blank = (raw: string): string | null => raw.trim() || null;
+const fold = (s: string): string => toLatinDigits(s).trim().toLowerCase();
+
+/** The fewest suggestions that still find a product in a long list. */
+const MAX_SUGGESTIONS = 8;
 
 /**
  * Add an item, or correct one. Saves itself, so a refused save lands on the
- * field it is about. An item's quantity is asked for once, when it is added,
- * as its first count; after that only a movement changes it.
+ * field it is about.
+ *
+ * Most of a new item is already known: picking a product the clinic stocks
+ * from the name's suggestions fills its category, brand, unit and minimum,
+ * leaving the size or shade — usually all that is new. An item's quantity is
+ * asked for once, when it is added, as its first count; after that only a
+ * movement changes it.
  */
 @Component({
   selector: 'pb-inventory-item-dialog',
@@ -81,91 +100,96 @@ const blank = (raw: string): string | null => raw.trim() || null;
     PbTextareaField,
   ],
   template: `
-    <h2 mat-dialog-title>
-      {{ (item ? 'inventoryForm.editTitle' : 'inventoryForm.createTitle') | translate }}
-    </h2>
-    <mat-dialog-content class="form">
-      @if (formError(); as message) {
-        <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
-      }
-      <pb-field-grid>
-        <pb-select-field
-          [control]="form.controls.category"
-          [options]="categoryOptions"
-          [label]="'inventoryForm.category' | translate"
-        />
-        <pb-text-field
-          [control]="form.controls.name"
-          [label]="'inventoryForm.name' | translate"
-          [hint]="'inventoryForm.nameHint' | translate"
-          [maxlength]="120"
-        />
-        <pb-text-field
-          [control]="form.controls.brand"
-          [label]="'inventoryForm.brand' | translate"
-          [maxlength]="80"
-        />
-        <pb-text-field
-          [control]="form.controls.spec"
-          [label]="'inventoryForm.spec' | translate"
-          [hint]="'inventoryForm.specHint' | translate"
-          [maxlength]="120"
-        />
-        <pb-select-field
-          [control]="form.controls.unit"
-          [options]="unitOptions"
-          [label]="'inventoryForm.unit' | translate"
-        />
-        @if (!item) {
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <h2 mat-dialog-title>
+        {{ (item ? 'inventoryForm.editTitle' : 'inventoryForm.createTitle') | translate }}
+      </h2>
+      <mat-dialog-content class="form">
+        @if (formError(); as message) {
+          <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
+        }
+        <pb-field-grid>
           <pb-text-field
-            [control]="form.controls.quantity"
-            [label]="'inventoryForm.quantity' | translate"
-            [hint]="'inventoryForm.quantityHint' | translate"
+            [control]="form.controls.name"
+            [label]="'inventoryForm.name' | translate"
+            [hint]="'inventoryForm.nameHint' | translate"
+            [options]="nameOptions()"
+            (optionSelected)="pickKnown($event)"
+            [maxlength]="120"
+          />
+          <pb-text-field
+            [control]="form.controls.brand"
+            [label]="'inventoryForm.brand' | translate"
+            [options]="brandOptions()"
+            [maxlength]="80"
+          />
+          <pb-text-field
+            class="item-form__spec"
+            [control]="form.controls.spec"
+            [label]="'inventoryForm.spec' | translate"
+            [hint]="'inventoryForm.specHint' | translate"
+            [maxlength]="120"
+          />
+          <pb-select-field
+            [control]="form.controls.category"
+            [options]="categoryOptions"
+            [label]="'inventoryForm.category' | translate"
+          />
+          @if (!item) {
+            <pb-text-field
+              [control]="form.controls.quantity"
+              [label]="'inventoryForm.quantity' | translate"
+              [hint]="'inventoryForm.quantityHint' | translate"
+              inputmode="numeric"
+              [ltr]="true"
+            />
+          }
+          <pb-select-field
+            [control]="form.controls.unit"
+            [options]="unitOptions"
+            [label]="'inventoryForm.unit' | translate"
+          />
+          <pb-text-field
+            [control]="form.controls.minQuantity"
+            [label]="'inventoryForm.minQuantity' | translate"
+            [hint]="'inventoryForm.minQuantityHint' | translate"
             inputmode="numeric"
             [ltr]="true"
           />
+          <pb-text-field
+            [control]="form.controls.expiry"
+            [label]="'inventoryForm.expiry' | translate"
+            [hint]="'inventoryForm.expiryHint' | translate"
+            [maxlength]="20"
+            [ltr]="true"
+          />
+          <pb-textarea-field
+            class="pb-field-grid__full"
+            [control]="form.controls.notes"
+            [label]="'inventoryForm.notes' | translate"
+            [maxlength]="2000"
+            [rows]="2"
+          />
+        </pb-field-grid>
+        @if (item) {
+          <p class="form__note">{{ 'inventoryForm.quantityNote' | translate }}</p>
         }
-        <pb-text-field
-          [control]="form.controls.minQuantity"
-          [label]="'inventoryForm.minQuantity' | translate"
-          [hint]="'inventoryForm.minQuantityHint' | translate"
-          inputmode="numeric"
-          [ltr]="true"
-        />
-        <pb-text-field
-          [control]="form.controls.expiry"
-          [label]="'inventoryForm.expiry' | translate"
-          [hint]="'inventoryForm.expiryHint' | translate"
-          [maxlength]="20"
-          [ltr]="true"
-        />
-        <pb-textarea-field
-          class="pb-field-grid__full"
-          [control]="form.controls.notes"
-          [label]="'inventoryForm.notes' | translate"
-          [maxlength]="2000"
-          [rows]="2"
-        />
-      </pb-field-grid>
-      @if (item) {
-        <p class="form__note">{{ 'inventoryForm.quantityNote' | translate }}</p>
-      }
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
-        {{ 'action.cancel' | translate }}
-      </pb-button>
-      <pb-button
-        variant="text"
-        type="button"
-        icon="save"
-        (click)="submit()"
-        [loading]="saving()"
-        [loadingText]="'common.saving' | translate"
-      >
-        {{ 'inventoryForm.save' | translate }}
-      </pb-button>
-    </mat-dialog-actions>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
+          {{ 'action.cancel' | translate }}
+        </pb-button>
+        <pb-button
+          variant="text"
+          type="submit"
+          icon="save"
+          [loading]="saving()"
+          [loadingText]="'common.saving' | translate"
+        >
+          {{ 'inventoryForm.save' | translate }}
+        </pb-button>
+      </mat-dialog-actions>
+    </form>
   `,
   styles: `
     .form {
@@ -190,6 +214,8 @@ export class InventoryItemDialog {
   private readonly fb = inject(FormBuilder);
 
   protected readonly item = this.data.item ?? null;
+  /** What the form starts from: the item itself, or the one it is like. */
+  private readonly base = this.data.item ?? this.data.template ?? null;
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
 
@@ -205,19 +231,75 @@ export class InventoryItemDialog {
   }));
 
   protected readonly form = this.fb.nonNullable.group({
+    name: [this.base?.name ?? '', [Validators.required, Validators.maxLength(120)]],
+    brand: [this.base?.brand ?? '', Validators.maxLength(80)],
+    // A similar item differs in exactly this, so it starts empty.
+    spec: [this.item?.spec ?? '', Validators.maxLength(120)],
     category: [
-      (this.item?.category ?? this.data.category ?? 'other') as string,
+      (this.base?.category ?? this.data.category ?? 'other') as string,
       Validators.required,
     ],
-    name: [this.item?.name ?? '', [Validators.required, Validators.maxLength(120)]],
-    brand: [this.item?.brand ?? '', Validators.maxLength(80)],
-    spec: [this.item?.spec ?? '', Validators.maxLength(120)],
-    unit: [(this.item?.unit ?? 'piece') as string, Validators.required],
+    unit: [(this.base?.unit ?? 'piece') as string, Validators.required],
     quantity: ['', count],
-    minQuantity: [this.item?.minQuantity != null ? String(this.item.minQuantity) : '', count],
+    minQuantity: [this.base?.minQuantity != null ? String(this.base.minQuantity) : '', count],
     expiry: [this.item?.expiry ?? '', Validators.maxLength(20)],
     notes: [this.item?.notes ?? '', Validators.maxLength(2000)],
   });
+
+  /** One of each product the clinic stocks, for the name and brand suggestions. */
+  private readonly known = signal<Known[]>([]);
+
+  private readonly nameTyped = toSignal(this.form.controls.name.valueChanges, {
+    initialValue: this.form.controls.name.value,
+  });
+  private readonly brandTyped = toSignal(this.form.controls.brand.valueChanges, {
+    initialValue: this.form.controls.brand.value,
+  });
+
+  /** «Supe Line (Dentium)»: picking one fills in the rest of what is known about it. */
+  protected readonly nameOptions = computed<TextFieldOption[]>(() => {
+    const typed = fold(this.nameTyped());
+    return this.known()
+      .map((k, i) => ({ k, i }))
+      .filter(({ k }) => !typed || fold(k.name).includes(typed))
+      .slice(0, MAX_SUGGESTIONS)
+      .map(({ k, i }) => ({
+        value: k.name,
+        label: k.name,
+        id: String(i),
+        meta: k.brand ?? undefined,
+      }));
+  });
+
+  /** Brands already written, so a new item spells one the same way as the rest. */
+  protected readonly brandOptions = computed<TextFieldOption[]>(() => {
+    const typed = fold(this.brandTyped());
+    const brands = [...new Set(this.known().flatMap((k) => (k.brand ? [k.brand] : [])))];
+    return brands
+      .filter((b) => !typed || fold(b).includes(typed))
+      .slice(0, MAX_SUGGESTIONS)
+      .map((b) => ({ value: b, label: b }));
+  });
+
+  constructor() {
+    this.inventory.list({}).subscribe({
+      next: (items) => this.known.set(distinctProducts(items)),
+      // Suggestions are a convenience: without them the form still works.
+      error: () => this.known.set([]),
+    });
+  }
+
+  /** A product the clinic already stocks: take its category, brand, unit and minimum. */
+  protected pickKnown(option: TextFieldOption): void {
+    const known = this.known()[Number(option.id)];
+    if (!known || this.item) return;
+    this.form.patchValue({
+      category: known.category,
+      brand: known.brand ?? '',
+      unit: known.unit,
+      minQuantity: known.minQuantity !== null ? String(known.minQuantity) : '',
+    });
+  }
 
   protected submit(): void {
     if (this.saving()) return;
@@ -245,7 +327,7 @@ export class InventoryItemDialog {
       next: (saved) => this.ref.close(saved),
       error: (error: unknown) => {
         this.saving.set(false);
-        // Moved or edited meanwhile: the list reloads and says so.
+        // Edited or moved meanwhile: the list reloads and says so.
         if (
           error instanceof HttpErrorResponse &&
           (error.error as { code?: string } | null)?.code === 'ERR_INVENTORY_ITEM_MODIFIED'
@@ -255,10 +337,28 @@ export class InventoryItemDialog {
         }
         this.formError.set(
           showOnFields(error, this.errors, this.form.controls, {
-            ERR_INVENTORY_ITEM_EXISTS: 'name',
+            ERR_INVENTORY_ITEM_EXISTS: 'spec',
           }),
         );
       },
     });
   }
+}
+
+/** One entry per product line — its sizes and shades share everything offered here. */
+function distinctProducts(items: readonly InventoryItem[]): Known[] {
+  const seen = new Map<string, Known>();
+  for (const i of items) {
+    const key = `${i.category}|${fold(i.name)}|${fold(i.brand ?? '')}`;
+    if (!seen.has(key)) {
+      seen.set(key, {
+        category: i.category,
+        name: i.name,
+        brand: i.brand,
+        unit: i.unit,
+        minQuantity: i.minQuantity,
+      });
+    }
+  }
+  return [...seen.values()];
 }

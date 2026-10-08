@@ -112,8 +112,10 @@ On the VPS the same tools run inside the API image:
 
 The inventory starts from the practice's own stock workbook («موجودی انبار»):
 an implant sheet per system, healing caps, abutments, grafts and membranes,
-and the general store's nine categories side by side. Like the register
-import it runs once, from the terminal, into an empty inventory:
+and the general store's nine categories side by side — mapped onto the
+app's twelve standard categories, so the workbook's layout does not outlive
+it. Like the register import it runs once, from the terminal, into an empty
+inventory:
 
 ```bash
 npm run import:inventory -- path/to/workbook.xlsx            # preview: nothing is written

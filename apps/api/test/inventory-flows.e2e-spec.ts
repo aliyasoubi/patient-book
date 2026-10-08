@@ -101,12 +101,10 @@ describeIfWritable('inventory flows (e2e)', () => {
 
   const list = async (query: Record<string, string>): Promise<ItemBody[]> =>
     (
-      (
-        await asStaff(http().get('/api/inventory/items'))
-          .query({ q: runId, ...query })
-          .expect(200)
-      ).body as { items: ItemBody[] }
-    ).items;
+      await asStaff(http().get('/api/inventory/items'))
+        .query({ q: runId, ...query })
+        .expect(200)
+    ).body as ItemBody[];
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({

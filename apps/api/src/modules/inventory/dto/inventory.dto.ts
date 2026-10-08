@@ -22,7 +22,6 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 
-import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
 import {
   InventoryCategory,
   InventoryMovementKind,
@@ -72,7 +71,12 @@ class MovementQuantityConstraint implements ValidatorConstraintInterface {
 export const INVENTORY_FILTERS = ['reorder', 'out', 'expiry'] as const;
 export type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
 
-export class QueryInventoryDto extends PaginationDto {
+/**
+ * What narrows the list. It is never paged: a clinic's shelves are a few
+ * hundred items, read best whole and grouped by category, as the lab board
+ * shows every open case.
+ */
+export class QueryInventoryDto {
   @ApiPropertyOptional()
   @IsString()
   @MaxLength(120)

@@ -53,7 +53,9 @@ import { PbButton } from '../../shared/ui';
                 <span class="line__what">
                   <strong>{{ kindLabel(m.kind) | translate }}</strong>
                   @if (m.kind === 'count') {
-                    {{ 'inventoryHistory.countedTo' | translate: { count: (m.quantityAfter | faNum) } }}
+                    {{
+                      'inventoryHistory.countedTo' | translate: { count: (m.quantityAfter | faNum) }
+                    }}
                   } @else {
                     <span class="line__change" dir="ltr">{{ signed(m.change) | faNum }}</span>
                   }

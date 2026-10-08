@@ -19,9 +19,8 @@ export class Inventory1791500000000 implements MigrationInterface {
     );
     await q.query(
       `CREATE TYPE "inventory_items_category_enum" AS ENUM
-         ('implant','healing','abutment','graft','membrane','anesthesia','composite',
-          'laminate','impression','endo','surgery','restorative','orthodontic',
-          'consumable','hygiene','other')`,
+         ('implant','prosthetic','regenerative','anesthesia','restorative','endo',
+          'impression','surgery','orthodontic','consumable','hygiene','other')`,
     );
     await q.query(
       `CREATE TYPE "inventory_items_unit_enum" AS ENUM

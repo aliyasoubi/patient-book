@@ -377,17 +377,13 @@ export function labJawLabel(jaw: LabJaw): string {
 /** The store's shelves, in the order the API lists them. */
 export const INVENTORY_CATEGORIES: readonly InventoryCategory[] = [
   'implant',
-  'healing',
-  'abutment',
-  'graft',
-  'membrane',
+  'prosthetic',
+  'regenerative',
   'anesthesia',
-  'composite',
-  'laminate',
-  'impression',
-  'endo',
-  'surgery',
   'restorative',
+  'endo',
+  'impression',
+  'surgery',
   'orthodontic',
   'consumable',
   'hygiene',
@@ -396,17 +392,13 @@ export const INVENTORY_CATEGORIES: readonly InventoryCategory[] = [
 
 const INVENTORY_CATEGORY_LABELS: Record<InventoryCategory, string> = {
   implant: 'inventoryCategory.implant',
-  healing: 'inventoryCategory.healing',
-  abutment: 'inventoryCategory.abutment',
-  graft: 'inventoryCategory.graft',
-  membrane: 'inventoryCategory.membrane',
+  prosthetic: 'inventoryCategory.prosthetic',
+  regenerative: 'inventoryCategory.regenerative',
   anesthesia: 'inventoryCategory.anesthesia',
-  composite: 'inventoryCategory.composite',
-  laminate: 'inventoryCategory.laminate',
-  impression: 'inventoryCategory.impression',
-  endo: 'inventoryCategory.endo',
-  surgery: 'inventoryCategory.surgery',
   restorative: 'inventoryCategory.restorative',
+  endo: 'inventoryCategory.endo',
+  impression: 'inventoryCategory.impression',
+  surgery: 'inventoryCategory.surgery',
   orthodontic: 'inventoryCategory.orthodontic',
   consumable: 'inventoryCategory.consumable',
   hygiene: 'inventoryCategory.hygiene',
@@ -416,6 +408,22 @@ const INVENTORY_CATEGORY_LABELS: Record<InventoryCategory, string> = {
 export function inventoryCategoryLabel(category: InventoryCategory): string {
   return INVENTORY_CATEGORY_LABELS[category];
 }
+
+/** Each shelf's icon; the implant, abutment and ortho ones match their registers'. */
+export const INVENTORY_CATEGORY_ICONS: Record<InventoryCategory, string> = {
+  implant: 'deployed_code',
+  prosthetic: 'hardware',
+  regenerative: 'healing',
+  anesthesia: 'syringe',
+  restorative: 'dentistry',
+  endo: 'stylus',
+  impression: 'layers',
+  surgery: 'surgical',
+  orthodontic: 'straighten',
+  consumable: 'masks',
+  hygiene: 'clean_hands',
+  other: 'inventory_2',
+};
 
 export const INVENTORY_UNITS: readonly InventoryUnit[] = [
   'piece',

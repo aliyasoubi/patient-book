@@ -64,8 +64,9 @@ const COPY: Record<
 };
 
 /**
- * One delivery, use, discard or count. A delivery or a count may read an
- * expiry off the packs; what is taken out is checked against the shelf here
+ * One delivery, use, discard or count, filled in already for the common case
+ * — one used, one received, the count as recorded — so Enter alone records
+ * it. A delivery or a count may read an expiry off the packs; what is taken out is checked against the shelf here
  * as well as by the API, which has the final word if someone else took the
  * last one meanwhile.
  */
@@ -74,56 +75,57 @@ const COPY: Record<
   standalone: true,
   imports: [ReactiveFormsModule, MatDialogModule, TranslatePipe, PbBanner, PbButton, PbTextField],
   template: `
-    <h2 mat-dialog-title>{{ copy.title | translate }}</h2>
-    <mat-dialog-content class="form">
-      <p class="form__item">
-        <strong dir="auto">{{ itemLabel }}</strong>
-        <span>{{
-          'inventoryMove.current' | translate: { count: faNum(item.quantity), unit: unit() }
-        }}</span>
-      </p>
-      @if (formError(); as message) {
-        <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
-      }
-      <pb-text-field
-        [control]="form.controls.quantity"
-        [label]="copy.quantity | translate"
-        [hint]="afterHint()"
-        [errorMessages]="quantityErrors()"
-        inputmode="numeric"
-        [ltr]="true"
-      />
-      @if (kind === 'receive' || kind === 'count') {
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <h2 mat-dialog-title>{{ copy.title | translate }}</h2>
+      <mat-dialog-content class="form">
+        <p class="form__item">
+          <strong dir="auto">{{ itemLabel }}</strong>
+          <span>{{
+            'inventoryMove.current' | translate: { count: faNum(item.quantity), unit: unit() }
+          }}</span>
+        </p>
+        @if (formError(); as message) {
+          <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
+        }
         <pb-text-field
-          [control]="form.controls.expiry"
-          [label]="'inventoryMove.expiry' | translate"
-          [hint]="'inventoryForm.expiryHint' | translate"
-          [maxlength]="20"
+          [control]="form.controls.quantity"
+          [label]="copy.quantity | translate"
+          [hint]="afterHint()"
+          [errorMessages]="quantityErrors()"
+          inputmode="numeric"
           [ltr]="true"
         />
-      }
-      <pb-text-field
-        [control]="form.controls.note"
-        [label]="'inventoryMove.note' | translate"
-        [hint]="copy.note | translate"
-        [maxlength]="300"
-      />
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
-        {{ 'action.cancel' | translate }}
-      </pb-button>
-      <pb-button
-        variant="text"
-        type="button"
-        [icon]="copy.icon"
-        (click)="submit()"
-        [loading]="saving()"
-        [loadingText]="'common.saving' | translate"
-      >
-        {{ copy.confirm | translate }}
-      </pb-button>
-    </mat-dialog-actions>
+        @if (kind === 'receive' || kind === 'count') {
+          <pb-text-field
+            [control]="form.controls.expiry"
+            [label]="'inventoryMove.expiry' | translate"
+            [hint]="'inventoryForm.expiryHint' | translate"
+            [maxlength]="20"
+            [ltr]="true"
+          />
+        }
+        <pb-text-field
+          [control]="form.controls.note"
+          [label]="'inventoryMove.note' | translate"
+          [hint]="copy.note | translate"
+          [maxlength]="300"
+        />
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
+          {{ 'action.cancel' | translate }}
+        </pb-button>
+        <pb-button
+          variant="text"
+          type="submit"
+          [icon]="copy.icon"
+          [loading]="saving()"
+          [loadingText]="'common.saving' | translate"
+        >
+          {{ copy.confirm | translate }}
+        </pb-button>
+      </mat-dialog-actions>
+    </form>
   `,
   styles: `
     .form {

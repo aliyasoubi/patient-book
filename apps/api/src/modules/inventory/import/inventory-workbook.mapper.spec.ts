@@ -228,7 +228,7 @@ describe('mapInventoryWorkbook', () => {
       items.map((i) => [i.category, i.name, i.brand, i.spec, i.quantity]),
     ).toEqual([
       [InventoryCategory.Anesthesia, 'لیدوکایین', null, null, 5],
-      [InventoryCategory.Composite, 'کامپوزیت', '3M', 'A2 Z250', 2],
+      [InventoryCategory.Restorative, 'کامپوزیت', '3M', 'A2 Z250', 2],
       [InventoryCategory.Impression, 'واش', null, null, 9],
       [InventoryCategory.Impression, 'اکتیواتور', null, null, 9],
     ]);

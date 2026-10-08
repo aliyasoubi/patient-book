@@ -1,4 +1,4 @@
-<pb-page class="stock">
+<pb-page class="stock" width="wide">
   <pb-page-header
     [title]="'inventory.title' | translate"
     [subtitle]="'inventory.subtitle' | translate"
@@ -26,9 +26,6 @@
       [anyLabel]="'inventory.allCategories' | translate"
       [label]="'inventory.category' | translate"
     />
-  </div>
-
-  <div class="stock__filters">
     <!-- One question at a time; clicking the selected chip shows everything again. -->
     <pb-filter-chips
       [options]="filters"
@@ -65,70 +62,95 @@
       icon="inventory"
       [title]="'inventory.emptyTitle' | translate"
       [hint]="emptyHint()"
-    />
-  } @else {
-    <ul class="shelf">
-      @for (item of items(); track item.id) {
-        <li class="shelf__item" [attr.data-stock]="item.stockState">
-          <div class="shelf__body">
-            <div class="shelf__title">
-              <strong dir="auto">{{ item.name }}</strong>
-              @if (item.brand) {
-                <span class="shelf__brand" dir="auto">{{ item.brand }}</span>
-              }
-              @if (item.spec) {
-                <span class="shelf__spec" dir="auto">{{ item.spec }}</span>
-              }
-            </div>
+    >
+      @if (canEdit() && !archivedOnly()) {
+        <pb-button variant="stroked" icon="add" (click)="addItem()">
+          {{ 'inventory.new' | translate }}
+        </pb-button>
+      }
+    </pb-empty-state>
+  }
 
-            <div class="shelf__details">
-              <!-- Said once, by the filter, when the list is one category. -->
-              @if (!category()) {
-                <span>{{ categoryLabel(item.category) | translate }}</span>
-              }
-              @if (item.minQuantity !== null) {
-                <span>{{ 'inventory.minQuantity' | translate: { count: (item.minQuantity | faNum) } }}</span>
-              }
-              @if (item.expiry && item.expiryState === 'ok') {
-                <span>{{ 'inventory.expiresOn' | translate: { date: (item.expiry | faNum) } }}</span>
-              }
-              @if (item.notes) {
-                <span class="shelf__notes" dir="auto">{{ item.notes }}</span>
-              }
-            </div>
+  @for (shelf of shelves(); track shelf.category) {
+    <section class="shelf">
+      @if (shelf.category; as category) {
+        <h2 class="shelf__title">
+          <mat-icon aria-hidden="true">{{ categoryIcons[category] }}</mat-icon>
+          {{ categoryLabel(category) | translate }}
+        </h2>
+      }
 
-            <!-- Chips only for what asks for attention: an item that is fine says nothing. -->
-            @if (item.stockState !== 'ok' || (item.expiryState && item.expiryState !== 'ok')) {
-              <div class="shelf__chips">
-                @if (item.stockState === 'out') {
-                  <pb-status-chip tone="error" icon="remove_shopping_cart">
-                    {{ 'inventory.stateOut' | translate }}
-                  </pb-status-chip>
-                } @else if (item.stockState === 'low') {
-                  <pb-status-chip tone="warning" icon="shopping_cart">
-                    {{ 'inventory.stateLow' | translate }}
-                  </pb-status-chip>
+      <ul class="shelf__items">
+        @for (item of shelf.items; track item.id) {
+          <li class="item" [attr.data-stock]="item.stockState">
+            <div class="item__what">
+              <div class="item__name">
+                <strong dir="auto">{{ item.name }}</strong>
+                @if (item.brand) {
+                  <span class="item__brand" dir="auto">{{ item.brand }}</span>
                 }
-                @if (item.expiryState === 'expired' || item.expiryState === 'expiring') {
-                  <pb-status-chip
-                    [tone]="expiryTone(item)"
-                    [icon]="item.expiryState === 'expired' ? 'event_busy' : 'hourglass_bottom'"
-                  >
-                    {{ expiryLabel(item.expiryState) | translate: { date: (item.expiry | faNum) } }}
-                  </pb-status-chip>
+                @if (item.spec) {
+                  <span class="item__spec" dir="auto">{{ item.spec }}</span>
                 }
               </div>
-            }
-          </div>
+              @if (
+                item.minQuantity !== null ||
+                (item.expiry && item.expiryState === 'ok') ||
+                item.notes
+              ) {
+                <div class="item__meta">
+                  @if (item.minQuantity !== null) {
+                    <span>{{
+                      'inventory.minQuantity' | translate: { count: (item.minQuantity | faNum) }
+                    }}</span>
+                  }
+                  @if (item.expiry && item.expiryState === 'ok') {
+                    <span>{{
+                      'inventory.expiresOn' | translate: { date: (item.expiry | faNum) }
+                    }}</span>
+                  }
+                  @if (item.notes) {
+                    <span class="item__notes" dir="auto">{{ item.notes }}</span>
+                  }
+                </div>
+              }
+            </div>
 
-          <div class="shelf__stock">
-            <span class="shelf__quantity">{{ item.quantity | faNum }}</span>
-            <span class="shelf__unit">{{ unitLabel(item.unit) | translate }}</span>
-          </div>
+            <!-- Only what asks for attention: an item that is fine says nothing. -->
+            <div class="item__alerts">
+              @if (item.stockState === 'out') {
+                <pb-status-chip tone="error" icon="remove_shopping_cart">
+                  {{ 'inventory.stateOut' | translate }}
+                </pb-status-chip>
+              } @else if (item.stockState === 'low') {
+                <pb-status-chip tone="warning" icon="shopping_cart">
+                  {{ 'inventory.stateLow' | translate }}
+                </pb-status-chip>
+              }
+              @if (item.expiryState === 'expired' || item.expiryState === 'expiring') {
+                <pb-status-chip
+                  [tone]="expiryTone(item)"
+                  [icon]="item.expiryState === 'expired' ? 'event_busy' : 'hourglass_bottom'"
+                >
+                  {{ expiryLabel(item.expiryState) | translate: { date: (item.expiry | faNum) } }}
+                </pb-status-chip>
+              }
+            </div>
 
-          @if (canEdit()) {
-            <div class="shelf__actions">
-              @if (archivedOnly()) {
+            <div class="item__stock">
+              <span class="item__quantity">{{ item.quantity | faNum }}</span>
+              <span class="item__unit">{{ unitLabel(item.unit) | translate }}</span>
+            </div>
+
+            <div class="item__actions">
+              @if (!canEdit()) {
+                <pb-icon-button
+                  icon="history"
+                  [ariaLabel]="'inventory.history' | translate"
+                  [tooltip]="'inventory.history' | translate"
+                  (click)="history(item)"
+                />
+              } @else if (archivedOnly()) {
                 <pb-icon-button
                   icon="restore_from_trash"
                   [ariaLabel]="'inventory.restore' | translate"
@@ -157,12 +179,12 @@
                   [menu]="rowMenu"
                   [ariaLabel]="'inventory.rowActions' | translate"
                 />
-                <mat-menu #rowMenu="matMenu">
+                <mat-menu #rowMenu="matMenu" xPosition="before">
                   @for (kind of menuMoves; track kind) {
                     <button
                       mat-menu-item
                       type="button"
-                      [disabled]="(kind === 'use' || kind === 'discard') && item.quantity === 0"
+                      [disabled]="kind === 'discard' && item.quantity === 0"
                       (click)="move(item, kind)"
                     >
                       <mat-icon aria-hidden="true">{{ moveIcons[kind] }}</mat-icon>
@@ -172,6 +194,10 @@
                   <button mat-menu-item type="button" (click)="history(item)">
                     <mat-icon aria-hidden="true">history</mat-icon>
                     <span>{{ 'inventory.history' | translate }}</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="addSimilar(item)">
+                    <mat-icon aria-hidden="true">library_add</mat-icon>
+                    <span>{{ 'inventory.addSimilar' | translate }}</span>
                   </button>
                   <button mat-menu-item type="button" (click)="edit(item)">
                     <mat-icon aria-hidden="true">edit</mat-icon>
@@ -184,27 +210,9 @@
                 </mat-menu>
               }
             </div>
-          } @else {
-            <div class="shelf__actions">
-              <pb-icon-button
-                icon="history"
-                [ariaLabel]="'inventory.history' | translate"
-                [tooltip]="'inventory.history' | translate"
-                (click)="history(item)"
-              />
-            </div>
-          }
-        </li>
-      }
-    </ul>
-  }
-
-  @if (total() > 0) {
-    <pb-paginator
-      [length]="total()"
-      [page]="page()"
-      [pageSize]="limit()"
-      (pageChange)="onPage($event)"
-    />
+          </li>
+        }
+      </ul>
+    </section>
   }
 </pb-page>

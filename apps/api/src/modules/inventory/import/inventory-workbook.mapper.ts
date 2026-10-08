@@ -146,7 +146,7 @@ export const SECTIONS: readonly Section[] = [
   }),
   {
     sheet: 'هیلینگ',
-    category: InventoryCategory.Healing,
+    category: InventoryCategory.Prosthetic,
     headerRow: 1,
     defaultName: 'هیلینگ',
     brand: ['A', 'برند'],
@@ -159,7 +159,7 @@ export const SECTIONS: readonly Section[] = [
   },
   {
     sheet: 'Abatement',
-    category: InventoryCategory.Abutment,
+    category: InventoryCategory.Prosthetic,
     headerRow: 1,
     defaultName: 'اباتمنت',
     nameOrBrand: ['A', 'برند ایمپلنت'],
@@ -181,14 +181,14 @@ export const SECTIONS: readonly Section[] = [
     quantity: ['F', 'تعداد'],
     expiry: ['G', 'تاریخ'],
   }),
-  storeSection(InventoryCategory.Composite, {
+  storeSection(InventoryCategory.Restorative, {
     defaultName: 'کامپوزیت',
     brand: ['H', 'برند'],
     spec: [{ column: ['I', 'مدل'] }],
     quantity: ['J', 'تعداد'],
     expiry: ['K', 'تاریخ'],
   }),
-  storeSection(InventoryCategory.Laminate, {
+  storeSection(InventoryCategory.Restorative, {
     defaultName: 'لمینت',
     brand: ['L', 'برند'],
     spec: [{ column: ['M', 'مدل'] }],
@@ -225,7 +225,7 @@ export const SECTIONS: readonly Section[] = [
   {
     // Untitled on the sheet: regen and the syringe grafts, by particle size.
     sheet: 'Membrane',
-    category: InventoryCategory.Graft,
+    category: InventoryCategory.Regenerative,
     headerRow: 2,
     defaultName: 'پودر استخوان',
     brand: ['A', 'برند'],
@@ -235,7 +235,7 @@ export const SECTIONS: readonly Section[] = [
   },
   {
     sheet: 'Membrane',
-    category: InventoryCategory.Membrane,
+    category: InventoryCategory.Regenerative,
     headerRow: 2,
     defaultName: 'ممبران',
     brand: ['E', 'برند'],

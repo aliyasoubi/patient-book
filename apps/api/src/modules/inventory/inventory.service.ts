@@ -23,7 +23,6 @@ import {
   reorderSql,
   stockState,
 } from './inventory-stock';
-import { PageResult } from '../../presentation/http/dto/pagination.dto';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { ErrorCode, InventoryMovementKind, InventoryUnit } from '../../domain';
@@ -61,11 +60,8 @@ export class InventoryService {
     private readonly audit: AuditService,
   ) {}
 
-  async list(dto: QueryInventoryDto): Promise<PageResult<unknown>> {
-    const qb = this.items
-      .createQueryBuilder('i')
-      .skip(dto.skip)
-      .take(dto.limit);
+  async list(dto: QueryInventoryDto): Promise<unknown[]> {
+    const qb = this.items.createQueryBuilder('i');
     const key = inventorySearchKey(dto.q);
     if (key) {
       for (const [n, word] of key.split(' ').entries()) {
@@ -98,13 +94,8 @@ export class InventoryService {
     }
     qb.addOrderBy('i.id', 'ASC');
 
-    const [items, total] = await qb.getManyAndCount();
     const now = new Date();
-    return PageResult.of(
-      items.map((i) => this.toResponse(i, now)),
-      total,
-      dto,
-    );
+    return (await qb.getMany()).map((i) => this.toResponse(i, now));
   }
 
   /** One item, with its stock card newest first. */

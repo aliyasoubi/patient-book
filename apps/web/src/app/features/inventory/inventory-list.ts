@@ -6,7 +6,6 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -17,7 +16,6 @@ import {
   map,
   Subject,
   switchMap,
-  tap,
 } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -38,6 +36,7 @@ import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persia
 import {
   expiryLabel,
   INVENTORY_CATEGORIES,
+  INVENTORY_CATEGORY_ICONS,
   INVENTORY_MOVEMENT_ICONS,
   inventoryCategoryLabel,
   inventoryMovementLabel,
@@ -49,7 +48,6 @@ import {
   PbIconButton,
   PbPage,
   PbPageHeader,
-  PbPaginator,
   PbSearchField,
   PbSelectField,
   PbStatusChip,
@@ -82,11 +80,14 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
   expired: 'error',
 };
 
-/** What the row menu offers besides the quick use and receive buttons. */
-const MENU_MOVES: readonly InventoryMovementKind[] = ['receive', 'use', 'discard', 'count'];
+/** The rarer moves; use and receive have their own buttons on the row. */
+const MENU_MOVES: readonly InventoryMovementKind[] = ['discard', 'count'];
 
-/** A shelf is long; a page holds a category's worth of sizes at a time. */
-const PAGE_SIZE = 50;
+/** A run of one category's items, under its heading. */
+interface Shelf {
+  category: InventoryCategory | null;
+  items: InventoryItem[];
+}
 
 function isFilter(value: unknown): value is InventoryFilter {
   return FILTERS.some((f) => f.value === value);
@@ -111,6 +112,11 @@ function readUrlFilters(params: ParamMap): {
   };
 }
 
+/**
+ * The clinic's shelves, whole and grouped by category, as a stock list reads
+ * best — a few hundred items is one page, not ten. Use and receive are one
+ * tap from the row; everything else waits in its menu.
+ */
 @Component({
   selector: 'pb-inventory-list',
   standalone: true,
@@ -128,7 +134,6 @@ function readUrlFilters(params: ParamMap): {
     PbIconButton,
     PbPage,
     PbPageHeader,
-    PbPaginator,
     PbSearchField,
     PbSelectField,
     PbStatusChip,
@@ -148,6 +153,7 @@ export class InventoryList {
   protected readonly filters = FILTERS;
   protected readonly menuMoves = MENU_MOVES;
   protected readonly moveIcons = INVENTORY_MOVEMENT_ICONS;
+  protected readonly categoryIcons = INVENTORY_CATEGORY_ICONS;
   protected readonly categoryLabel = inventoryCategoryLabel;
   protected readonly unitLabel = inventoryUnitLabel;
   protected readonly moveLabel = inventoryMovementLabel;
@@ -170,28 +176,39 @@ export class InventoryList {
     const value = this.filter();
     return value ? [value] : [];
   });
-  protected readonly page = signal(1);
-  protected readonly limit = signal(PAGE_SIZE);
 
   protected readonly loading = signal(false);
   /** The most recent request failed; whatever rows are shown are stale. */
   protected readonly failed = signal(false);
   protected readonly items = signal<InventoryItem[]>([]);
-  protected readonly total = signal(0);
   protected readonly countLabel = computed(() => {
-    const total = this.total();
+    const total = this.items().length;
     if (this.loading() || total === 0) return null;
     this.i18n.currentLang();
     return this.i18n.instant('count.items', { count: formatPersianCount(total) });
   });
 
-  /** A new search starts from page 1. */
+  /**
+   * Shelf by shelf, in the order the API sends them. Expiring stock is listed
+   * soonest first instead, across categories, so it is one run with no heading.
+   */
+  protected readonly shelves = computed<Shelf[]>(() => {
+    const items = this.items();
+    if (this.filter() === 'expiry') return items.length ? [{ category: null, items }] : [];
+    const shelves: Shelf[] = [];
+    for (const item of items) {
+      const last = shelves.at(-1);
+      if (last?.category === item.category) last.items.push(item);
+      else shelves.push({ category: item.category, items: [item] });
+    }
+    return shelves;
+  });
+
   private readonly query = toSignal(
     this.search.valueChanges.pipe(
       debounceTime(300),
       map((v) => v.trim()),
       distinctUntilChanged(),
-      tap(() => this.page.set(1)),
     ),
     { initialValue: this.urlFilters.q },
   );
@@ -214,9 +231,8 @@ export class InventoryList {
         ),
         takeUntilDestroyed(),
       )
-      .subscribe((result) => {
-        this.items.set(result.items);
-        this.total.set(result.total);
+      .subscribe((items) => {
+        this.items.set(items);
         this.loading.set(false);
       });
 
@@ -227,8 +243,6 @@ export class InventoryList {
         category: this.category() || undefined,
         filter: this.filter() || undefined,
         archivedOnly: this.archivedOnly() || undefined,
-        page: this.page(),
-        limit: this.limit(),
       };
       untracked(() => {
         this.loading.set(true);
@@ -248,22 +262,14 @@ export class InventoryList {
 
   protected setFilter(value: unknown): void {
     this.filter.set(isFilter(value) ? value : '');
-    this.page.set(1);
   }
 
   protected setCategory(value: string): void {
     this.category.set(isCategory(value) ? value : '');
-    this.page.set(1);
   }
 
   protected toggleArchived(checked: boolean): void {
     this.archivedOnly.set(checked);
-    this.page.set(1);
-  }
-
-  protected onPage(event: PageEvent): void {
-    this.page.set(event.pageIndex + 1);
-    this.limit.set(event.pageSize);
   }
 
   protected expiryTone(item: InventoryItem): StatusTone {
@@ -279,6 +285,11 @@ export class InventoryList {
 
   protected addItem(): void {
     this.openItemDialog({ category: this.category() || undefined });
+  }
+
+  /** Another size, shade or model of the same thing: everything but those carried over. */
+  protected addSimilar(item: InventoryItem): void {
+    this.openItemDialog({ template: item });
   }
 
   protected edit(item: InventoryItem): void {
@@ -325,7 +336,7 @@ export class InventoryList {
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this.inventory.archive(item.id).subscribe({
-          next: () => this.removed('inventory.archived'),
+          next: () => this.changed('inventory.archived'),
           error: (error: unknown) => this.writeFailed(error),
         });
       });
@@ -333,7 +344,7 @@ export class InventoryList {
 
   protected restore(item: InventoryItem): void {
     this.inventory.restore(item.id).subscribe({
-      next: () => this.removed('inventory.restored'),
+      next: () => this.changed('inventory.restored'),
       error: (error: unknown) => this.writeFailed(error),
     });
   }
@@ -342,7 +353,12 @@ export class InventoryList {
     this.dialog
       .open<InventoryItemDialog, InventoryItemDialogData, InventoryItemDialogResult>(
         InventoryItemDialog,
-        { data, autoFocus: 'first-tabbable', maxWidth: '96vw' },
+        {
+          data,
+          // A similar item is new in its size alone: start there.
+          autoFocus: data.template ? '.item-form__spec input' : 'first-tabbable',
+          maxWidth: '96vw',
+        },
       )
       .afterClosed()
       .subscribe((result) => {
@@ -353,24 +369,16 @@ export class InventoryList {
             this.i18n.instant('action.dismiss'),
             { duration: 6000 },
           );
-        } else {
-          this.snackBar.open(
-            this.i18n.instant(data.item ? 'inventoryForm.saved' : 'inventoryForm.created'),
-            this.i18n.instant('action.dismiss'),
-          );
+          this.retry();
+          return;
         }
-        this.retry();
+        this.changed(data.item ? 'inventoryForm.saved' : 'inventoryForm.created');
       });
   }
 
-  /** The row left this view; step back from a page it emptied. */
-  private removed(message: string): void {
+  private changed(message: string): void {
     this.snackBar.open(this.i18n.instant(message), this.i18n.instant('action.dismiss'));
-    if (this.items().length === 1 && this.page() > 1) {
-      this.page.update((p) => p - 1);
-    } else {
-      this.retry();
-    }
+    this.retry();
   }
 
   /** Someone else archived, restored or re-added it first: say so, show the list as it is. */
