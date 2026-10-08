@@ -108,7 +108,7 @@ interface Filters {
   hasIssues: boolean;
   hasMedicalHistory: boolean;
   inactiveMonths: number | null;
-  /** Only reachable from a dashboard link; there is no picker in the panel. */
+  /** Only reachable from a statistics-page link; there is no picker in the panel. */
   referralSourceId: string | null;
   includeArchived: boolean;
 }
@@ -361,7 +361,7 @@ export class PatientList {
   );
 
   /**
-   * Only a dashboard link can set the referral filter, and nothing in the
+   * Only a statistics-page link can set the referral filter, and nothing in the
    * panel would otherwise show why the register is suddenly short — so it
    * stands on its own as a selected chip; deselecting it clears the filter.
    */

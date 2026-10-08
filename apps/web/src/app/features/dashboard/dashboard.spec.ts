@@ -7,32 +7,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryService } from '../../core/services/registry.service';
-import type { DashboardStats, FollowUpDue } from '../../core/models/common.model';
+import type { DashboardSummary, FollowUpDue } from '../../core/models/common.model';
 import { Dashboard } from './dashboard';
 
-const stats = (over: Partial<DashboardStats> = {}): DashboardStats => ({
-  totals: {
-    patients: 3,
-    archived: 0,
-    implantCases: 0,
-    orthoCases: 0,
-    followUpsThisWeek: 0,
-    followUpsOverdue: 0,
-    labsOverdue: 0,
-    needsReview: 0,
-  },
-  gender: [],
-  topTreatments: [],
-  topReferrals: [],
-  newPatientsByMonth: [],
-  ageBands: [],
-  recentlyActive: 0,
+const summary = (over: Partial<DashboardSummary> = {}): DashboardSummary => ({
+  needsReview: 0,
+  followUpsThisWeek: 0,
+  followUpsOverdue: 0,
+  labsOverdue: 0,
   inactiveOverYear: 0,
   ...over,
 });
 
 describe('Dashboard', () => {
-  let dashboard$: Subject<DashboardStats>;
+  let dashboard$: Subject<DashboardSummary>;
   let followUps$: Subject<FollowUpDue[]>;
 
   beforeEach(() => {
@@ -74,12 +62,12 @@ describe('Dashboard', () => {
     expect(el.textContent).toContain('dashboard.loadFailed');
     expect(el.querySelector('pb-datetime-card')).not.toBeNull();
     expect(followUpsPanel()).toContain('dashboard.followUpsEmpty');
-    expect(el.querySelector('.dash__panel--recall')).toBeNull();
+    expect(el.querySelector('pb-stat-tile')).toBeNull();
   });
 
   it('never says "nobody to call" while the follow-ups are in flight', () => {
     const { fixture, followUpsPanel } = render();
-    dashboard$.next(stats());
+    dashboard$.next(summary());
     fixture.detectChanges();
 
     expect(followUpsPanel()).toContain('dashboard.followUpsLoading');
@@ -90,24 +78,20 @@ describe('Dashboard', () => {
     expect(followUpsPanel()).toContain('dashboard.followUpsEmpty');
   });
 
-  it('charts twelve months to this one, with empty months as zero', () => {
+  it('shows only work: late lists when there are any, then this week and recall', () => {
     const { fixture, el } = render();
-    dashboard$.next(
-      stats({
-        newPatientsByMonth: [
-          { month: '1403/01', count: 9 }, // Outside the window.
-          { month: '1404/08', count: 2 },
-          { month: '1405/07', count: 4 },
-        ],
-      }),
-    );
+    dashboard$.next(summary({ labsOverdue: 2, inactiveOverYear: 40 }));
     fixture.detectChanges();
 
-    const points = el.querySelector('.trend__line')!.getAttribute('d')!.split(' ');
-    expect(points).toHaveLength(12);
-    expect(points[0]).toBe('M0.0,16.0'); // 1404/08: 2 of a peak of 4.
-    expect(points[5]).toMatch(/,32\.0$/); // A month with none is a real zero.
-    expect(points[11]).toBe('L100.0,0.0'); // 1405/07, this month, the peak.
+    const tiles = [...el.querySelectorAll('pb-stat-tile')];
+    expect(tiles.map((t) => t.querySelector('.pb-stat-tile__label')?.textContent)).toEqual([
+      'tile.needsReview',
+      'tile.labsOverdue',
+      'tile.followUpsThisWeek',
+      'tile.recall',
+    ]);
+    // The recall tile opens exactly the list it counts.
+    expect(tiles[3].querySelector('a')?.getAttribute('href')).toBe('/patients?inactiveMonths=12');
   });
 
   it('turns the greeting over on a dashboard left open', () => {
@@ -117,18 +101,5 @@ describe('Dashboard', () => {
     vi.advanceTimersByTime(60_000);
     fixture.detectChanges();
     expect(el.textContent).toContain('greeting.afternoon');
-  });
-
-  it('says so when a panel has nothing to show', () => {
-    const { fixture, el } = render();
-    dashboard$.next(stats());
-    fixture.detectChanges();
-
-    for (const panel of ['treatments', 'age', 'referrals']) {
-      expect(el.querySelector(`.dash__panel--${panel}`)?.textContent).toContain('dashboard.noData');
-    }
-    expect(el.querySelector('.dash__panel--growth')?.textContent).toContain(
-      'dashboard.noChartData',
-    );
   });
 });

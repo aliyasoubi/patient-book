@@ -8,6 +8,7 @@ arrow_forward
 arrow_upward
 assignment_return
 badge
+bar_chart
 brightness_auto
 cake
 calendar_month
