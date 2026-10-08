@@ -660,17 +660,23 @@ describeIfWritable('clinic flows (e2e)', () => {
 
   describe('dashboard', () => {
     type Totals = {
-      totals: {
-        implantCases: number;
-        followUpsThisWeek: number;
-        followUpsOverdue: number;
-      };
+      implantCases: number;
+      followUpsThisWeek: number;
+      followUpsOverdue: number;
     };
-    const totals = async (): Promise<Totals['totals']> =>
-      (
-        (await asAdmin(http().get('/api/stats/dashboard')).expect(200))
-          .body as Totals
+    // The register count is a statistic and the follow-ups are work, so the
+    // two come from different endpoints; one helper keeps the tests whole.
+    const totals = async (): Promise<Totals> => {
+      const [work, overview] = await Promise.all([
+        asAdmin(http().get('/api/stats/dashboard')).expect(200),
+        asAdmin(http().get('/api/stats/overview')).expect(200),
+      ]);
+      const { followUpsThisWeek, followUpsOverdue } = work.body as Totals;
+      const { implantCases } = (
+        overview.body as { totals: { implantCases: number } }
       ).totals;
+      return { implantCases, followUpsThisWeek, followUpsOverdue };
+    };
 
     it('counts only active register cases and open follow-ups', async () => {
       // Archived is not deleted, so the raw-SQL counts have to exclude
@@ -781,7 +787,7 @@ describeIfWritable('clinic flows (e2e)', () => {
       // of Mehr; a Gregorian grouping would put both under one label.
       const months = async (): Promise<Record<string, number>> => {
         const body = (
-          await asAdmin(http().get('/api/stats/dashboard')).expect(200)
+          await asAdmin(http().get('/api/stats/overview')).expect(200)
         ).body as {
           newPatientsByMonth: Array<{ month: string; count: number }>;
         };
@@ -945,8 +951,7 @@ describeIfWritable('clinic flows (e2e)', () => {
 
     async function followUpsThisWeek(): Promise<number> {
       const res = await asAdmin(http().get('/api/stats/dashboard')).expect(200);
-      return (res.body as { totals: { followUpsThisWeek: number } }).totals
-        .followUpsThisWeek;
+      return (res.body as { followUpsThisWeek: number }).followUpsThisWeek;
     }
   });
 

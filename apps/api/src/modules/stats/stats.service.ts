@@ -17,27 +17,41 @@ import {
 } from '../inventory/inventory-stock';
 import { JalaliDate } from '../../domain';
 
-/** Age buckets the dashboard groups patients into. */
+/** Age buckets the statistics page groups patients into. */
 export type AgeBandKey =
   'under_13' | '13_19' | '20_29' | '30_39' | '40_49' | '50_64' | '65_plus';
 
-export interface DashboardStats {
+/**
+ * The front desk's work: each count is a list someone has to go through, and
+ * each matches the filter its dashboard tile links to. Nothing here describes
+ * the practice — that is {@link PracticeStats}, on its own page.
+ */
+export interface DashboardSummary {
+  /** Patient records the import flagged for a human to check. */
+  needsReview: number;
+  /** Open follow-ups in the coming seven days — who to call this week. */
+  followUpsThisWeek: number;
+  /** Follow-ups whose month has passed without being marked done. */
+  followUpsOverdue: number;
+  /** Lab work past the day the lab said it would be back — whose lab to call. */
+  labsOverdue: number;
+  /** Stock at or under the reorder level staff set — what to order. */
+  inventoryReorder: number;
+  /** Stock on the shelf past or within 90 days of its expiry — what to use first. */
+  inventoryExpiring: number;
+  /** Patients whose last visit is over a year ago — the recall list. */
+  inactiveOverYear: number;
+}
+
+/** How the practice looks: totals and breakdowns for the statistics page. */
+export interface PracticeStats {
   totals: {
     patients: number;
     archived: number;
     implantCases: number;
     orthoCases: number;
-    /** Open follow-ups in the coming seven days — who to call this week. */
-    followUpsThisWeek: number;
-    /** Follow-ups whose month has passed without being marked done. */
-    followUpsOverdue: number;
-    /** Lab work past the day the lab said it would be back — whose lab to call. */
-    labsOverdue: number;
-    /** Stock at or under the reorder level staff set — what to order. */
-    inventoryReorder: number;
-    /** Stock on the shelf past or within 90 days of its expiry — what to use first. */
-    inventoryExpiring: number;
-    needsReview: number;
+    /** Patients seen in the last six months. */
+    recentlyActive: number;
   };
   gender: Array<{ key: string; count: number }>;
   topTreatments: Array<{
@@ -57,8 +71,6 @@ export interface DashboardStats {
   newPatientsByMonth: Array<{ month: string; count: number }>;
   /** `band` is a stable key such as `30_39`; the client renders the label. */
   ageBands: Array<{ band: AgeBandKey; count: number }>;
-  recentlyActive: number;
-  inactiveOverYear: number;
 }
 
 /**
@@ -87,75 +99,92 @@ export class StatsService {
     private readonly surgery: Repository<SurgeryQueueItem>,
   ) {}
 
-  async dashboard(): Promise<DashboardStats> {
-    const q = <T>(sql: string, params?: unknown[]): Promise<T[]> =>
-      this.patients.query<T[]>(sql, params);
+  async dashboard(): Promise<DashboardSummary> {
     const week = followUpWindow('week');
     const overdue = followUpWindow('overdue');
+    const [row] = await this.patients.query<Array<Record<string, string>>>(
+      `
+      SELECT
+        (SELECT count(*) FROM patients
+          WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview",
+        -- Windows come from followUpWindow(), on the Jalali calendar, so
+        -- these agree with the list's own filters to the day.
+        (SELECT count(*) FROM surgery_queue s
+          WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
+            AND s."followUpDate" BETWEEN $1 AND $2)                                    AS "followUpsThisWeek",
+        (SELECT count(*) FROM surgery_queue s
+          WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
+            AND s."followUpDate" <= $3)                                                AS "followUpsOverdue",
+        (SELECT count(*) FROM lab_cases c
+          WHERE c."deletedAt" IS NULL AND ${overdueSql('c', '$4')})                   AS "labsOverdue",
+        -- The inventory list's own filters, from inventory-stock.ts.
+        (SELECT count(*) FROM inventory_items i
+          WHERE i."deletedAt" IS NULL AND ${reorderSql('i')})                         AS "inventoryReorder",
+        (SELECT count(*) FROM inventory_items i
+          WHERE i."deletedAt" IS NULL AND ${expirySoonSql('i', '$5')})                AS "inventoryExpiring",
+        -- The patient list's inactiveMonths=12 filter, which the tile opens,
+        -- so a record with no visit on file is on the recall list too.
+        (SELECT count(*) FROM patients
+          WHERE "deletedAt" IS NULL
+            AND ("lastVisitAt" IS NULL
+              OR "lastVisitAt" < now() - interval '12 months'))                       AS "inactiveOverYear"
+    `,
+      [week.from, week.to, overdue.to, todayIso(), expiryHorizon()],
+    );
 
-    const [
-      totals,
-      gender,
-      topTreatments,
-      topReferrals,
-      monthly,
-      ageBands,
-      activity,
-    ] = await Promise.all([
-      q<Record<string, string>>(
-        `
+    const n = (key: string): number => Number(row?.[key] ?? 0);
+    return {
+      needsReview: n('needsReview'),
+      followUpsThisWeek: n('followUpsThisWeek'),
+      followUpsOverdue: n('followUpsOverdue'),
+      labsOverdue: n('labsOverdue'),
+      inventoryReorder: n('inventoryReorder'),
+      inventoryExpiring: n('inventoryExpiring'),
+      inactiveOverYear: n('inactiveOverYear'),
+    };
+  }
+
+  async overview(): Promise<PracticeStats> {
+    const q = <T>(sql: string): Promise<T[]> => this.patients.query<T[]>(sql);
+
+    const [totals, gender, topTreatments, topReferrals, monthly, ageBands] =
+      await Promise.all([
+        q<Record<string, string>>(`
         SELECT
           (SELECT count(*) FROM patients WHERE "deletedAt" IS NULL)                    AS patients,
           (SELECT count(*) FROM patients WHERE "deletedAt" IS NOT NULL)                AS archived,
           (SELECT count(*) FROM implant_cases WHERE "deletedAt" IS NULL)                 AS "implantCases",
           (SELECT count(*) FROM ortho_cases WHERE "deletedAt" IS NULL)                   AS "orthoCases",
-          -- Windows come from followUpWindow(), on the Jalali calendar, so
-          -- these agree with the list's own filters to the day.
-          (SELECT count(*) FROM surgery_queue s
-            WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
-              AND s."followUpDate" BETWEEN $1 AND $2)                                    AS "followUpsThisWeek",
-          (SELECT count(*) FROM surgery_queue s
-            WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
-              AND s."followUpDate" <= $3)                                                AS "followUpsOverdue",
-          (SELECT count(*) FROM lab_cases c
-            WHERE c."deletedAt" IS NULL AND ${overdueSql('c', '$4')})                   AS "labsOverdue",
           (SELECT count(*) FROM patients
-            WHERE "deletedAt" IS NULL AND jsonb_array_length("dataIssues") > 0)         AS "needsReview",
-          -- The inventory list's own filters, from inventory-stock.ts.
-          (SELECT count(*) FROM inventory_items i
-            WHERE i."deletedAt" IS NULL AND ${reorderSql('i')})                         AS "inventoryReorder",
-          (SELECT count(*) FROM inventory_items i
-            WHERE i."deletedAt" IS NULL AND ${expirySoonSql('i', '$5')})                AS "inventoryExpiring"
-      `,
-        [week.from, week.to, overdue.to, todayIso(), expiryHorizon()],
-      ),
-      q<{ key: string; count: string }>(`
+            WHERE "deletedAt" IS NULL
+              AND "lastVisitAt" >= now() - interval '6 months')                         AS "recentlyActive"`),
+        q<{ key: string; count: string }>(`
         SELECT gender AS key, count(*)::text AS count FROM patients
         WHERE "deletedAt" IS NULL GROUP BY gender ORDER BY count(*) DESC`),
-      q<Record<string, string>>(`
+        q<Record<string, string>>(`
         SELECT t.code, t."nameFa", t.icon, t.color, count(*)::text AS count
         FROM patient_treatments pt
         JOIN treatment_types t ON t.id = pt."treatmentTypeId"
         JOIN patients p ON p.id = pt."patientId" AND p."deletedAt" IS NULL
         GROUP BY t.code, t."nameFa", t.icon, t.color, t."sortOrder"
         ORDER BY count(*) DESC`),
-      q<Record<string, string>>(`
+        q<Record<string, string>>(`
         SELECT rs.id, rs.name, rs.kind, count(*)::text AS count
         FROM patients p JOIN referral_sources rs ON rs.id = p."referralSourceId"
         WHERE p."deletedAt" IS NULL
         GROUP BY rs.id, rs.name, rs.kind ORDER BY count(*) DESC LIMIT 10`),
-      // The dates come out raw and are bucketed by Jalali month in
-      // {@link countByJalaliMonth}. Grouping in SQL would mean Gregorian
-      // months — Postgres has no Jalali date_trunc — and a Gregorian month
-      // straddles two Jalali ones, so "September" relabelled as Shahrivar
-      // would carry a week of Mehr's patients. Two years of first visits is
-      // a few hundred rows; counting them here is cheaper than being wrong.
-      q<{ date: Date | string }>(`
+        // The dates come out raw and are bucketed by Jalali month in
+        // {@link countByJalaliMonth}. Grouping in SQL would mean Gregorian
+        // months — Postgres has no Jalali date_trunc — and a Gregorian month
+        // straddles two Jalali ones, so "September" relabelled as Shahrivar
+        // would carry a week of Mehr's patients. Two years of first visits is
+        // a few hundred rows; counting them here is cheaper than being wrong.
+        q<{ date: Date | string }>(`
         SELECT "firstVisitAt" AS date
         FROM patients
         WHERE "deletedAt" IS NULL AND "firstVisitAt" IS NOT NULL
           AND "firstVisitAt" >= (now() - interval '24 months')`),
-      q<{ band: string; count: string }>(`
+        q<{ band: string; count: string }>(`
         -- Stable band keys, not labels: the client owns the wording, and the
         -- bounds travel with them so it can format them for any locale.
         SELECT CASE
@@ -175,12 +204,7 @@ export class StatsService {
         WHERE age BETWEEN 0 AND 120
         GROUP BY band
         ORDER BY min(age)`),
-      q<Record<string, string>>(`
-        SELECT
-          count(*) FILTER (WHERE "lastVisitAt" >= now() - interval '6 months')::text  AS recent,
-          count(*) FILTER (WHERE "lastVisitAt" <  now() - interval '12 months')::text AS inactive
-        FROM patients WHERE "deletedAt" IS NULL`),
-    ]);
+      ]);
 
     const t = totals[0] ?? {};
     return {
@@ -189,12 +213,7 @@ export class StatsService {
         archived: Number(t.archived ?? 0),
         implantCases: Number(t.implantCases ?? 0),
         orthoCases: Number(t.orthoCases ?? 0),
-        followUpsThisWeek: Number(t.followUpsThisWeek ?? 0),
-        followUpsOverdue: Number(t.followUpsOverdue ?? 0),
-        labsOverdue: Number(t.labsOverdue ?? 0),
-        inventoryReorder: Number(t.inventoryReorder ?? 0),
-        inventoryExpiring: Number(t.inventoryExpiring ?? 0),
-        needsReview: Number(t.needsReview ?? 0),
+        recentlyActive: Number(t.recentlyActive ?? 0),
       },
       gender: gender.map((g) => ({ key: g.key, count: Number(g.count) })),
       topTreatments: topTreatments.map((r) => ({
@@ -215,8 +234,6 @@ export class StatsService {
         band: a.band as AgeBandKey,
         count: Number(a.count),
       })),
-      recentlyActive: Number(activity[0]?.recent ?? 0),
-      inactiveOverYear: Number(activity[0]?.inactive ?? 0),
     };
   }
 

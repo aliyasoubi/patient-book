@@ -75,6 +75,14 @@ function navItems(): NavItem[] {
       icon: 'inventory',
       primary: false,
     },
+    // The practice's numbers: looked at now and then, not worked from, so
+    // it sits at the end with settings rather than among the registers.
+    {
+      path: '/stats',
+      label: 'nav.stats',
+      icon: 'bar_chart',
+      primary: false,
+    },
     {
       path: '/settings',
       label: 'nav.settings',

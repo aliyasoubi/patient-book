@@ -64,8 +64,10 @@ npm run icons:check   # a new Material Symbol needs `npm run icons:build --works
 - **Persian text is folded before comparing**: `searchKey` / `loosePersianKey`
   (Arabic ي/ك, ZWNJ, digits). Identifiers are stored as ASCII digits; mobiles
   as `09…`.
-- **Statistics live on the dashboard only** — no counts, charts or
-  sort-by-frequency lists on settings or other pages.
+- **Statistics live on the statistics page only** (`/stats`, «آمار») — no
+  counts, charts or sort-by-frequency lists on the dashboard, settings or
+  other pages. The dashboard is the front desk's work: each tile counts a
+  list and opens exactly that list.
 - **No patient data in `localStorage`.** The access token is in memory only;
   per-session conveniences (recent patients) use `sessionStorage` and are
   cleared on sign-out.

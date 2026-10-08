@@ -260,9 +260,9 @@ describeIfWritable('inventory flows (e2e)', () => {
 
     const stats = (
       await asStaff(http().get('/api/stats/dashboard')).expect(200)
-    ).body as { totals: Record<string, number> };
-    expect(stats.totals.inventoryReorder).toBeGreaterThanOrEqual(1);
-    expect(stats.totals.inventoryExpiring).toBeGreaterThanOrEqual(1);
+    ).body as Record<string, number>;
+    expect(stats.inventoryReorder).toBeGreaterThanOrEqual(1);
+    expect(stats.inventoryExpiring).toBeGreaterThanOrEqual(1);
   });
 
   it('refuses an edit loaded before a movement changed the item', async () => {

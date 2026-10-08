@@ -262,18 +262,27 @@ export interface InventoryItemDetail extends InventoryItem {
   movements: InventoryMovement[];
 }
 
-export interface DashboardStats {
+/** The front desk's work: each count is a list the dashboard links to. */
+export interface DashboardSummary {
+  needsReview: number;
+  followUpsThisWeek: number;
+  followUpsOverdue: number;
+  labsOverdue: number;
+  inventoryReorder: number;
+  inventoryExpiring: number;
+  /** The recall list: no visit on file in over a year. */
+  inactiveOverYear: number;
+}
+
+/** How the practice looks, for the statistics page. */
+export interface PracticeStats {
   totals: {
     patients: number;
     archived: number;
     implantCases: number;
     orthoCases: number;
-    followUpsThisWeek: number;
-    followUpsOverdue: number;
-    labsOverdue: number;
-    inventoryReorder: number;
-    inventoryExpiring: number;
-    needsReview: number;
+    /** Seen in the last six months. */
+    recentlyActive: number;
   };
   gender: { key: string; count: number }[];
   topTreatments: {
@@ -286,8 +295,6 @@ export interface DashboardStats {
   topReferrals: { id: string; name: string; kind: string; count: number }[];
   newPatientsByMonth: { month: string; count: number }[];
   ageBands: { band: string; count: number }[];
-  recentlyActive: number;
-  inactiveOverYear: number;
 }
 
 export interface AuditEntry {

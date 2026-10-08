@@ -8,9 +8,15 @@ export class StatsController {
   constructor(private readonly stats: StatsService) {}
 
   @Get('dashboard')
-  @ApiOperation({ summary: 'Practice-wide statistics' })
+  @ApiOperation({ summary: "The front desk's work: what needs attention" })
   dashboard() {
     return this.stats.dashboard();
+  }
+
+  @Get('overview')
+  @ApiOperation({ summary: 'Practice-wide statistics' })
+  overview() {
+    return this.stats.overview();
   }
 
   @Get('follow-ups')
