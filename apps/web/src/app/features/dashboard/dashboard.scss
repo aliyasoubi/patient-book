@@ -1,11 +1,9 @@
-@use '../../../styles/surface';
 @use '../../../styles/type';
 
 .dash {
   // M3 canonical layout: a 12-column grid on expanded windows, 2 columns on
-  // medium, 1 on compact. Every panel names its span so the rows pack with no
-  // holes (auto-fit plus a `span 2` panel used to leave an empty cell whenever
-  // three columns fit), and rows stretch so neighbours share a bottom edge.
+  // medium, 1 on compact. The clock is a fixed-size card; the follow-up list
+  // takes the rest of the row, since names and dates read better wide.
   &__grid {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -27,25 +25,12 @@
         grid-column: span 12;
       }
     }
-  }
 
-  // Expanded: work first (follow-ups, recall, growth), then the two long
-  // lists side by side, then the two short demographic panels.
-  @media (min-width: 1200px) {
-    &__panel--treatments {
-      grid-column: span 8;
-    }
-
-    &__panel--gender,
-    &__panel--age {
-      grid-column: span 6;
-    }
-  }
-
-  // Medium: pairs, with the long treatment list taking a full row.
-  @media (min-width: 840px) and (max-width: 1199px) {
-    &__panel--treatments {
-      grid-column: span 12;
+    // Through the grid, so it outweighs the `> *` default above.
+    @media (min-width: 1200px) {
+      > .dash__panel--follow-ups {
+        grid-column: span 8;
+      }
     }
   }
 
@@ -69,7 +54,7 @@
   }
 }
 
-/* ── Stat tiles ────────────────────────────────────────────────────── */
+/* ── Work tiles ────────────────────────────────────────────────────── */
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
@@ -80,252 +65,11 @@
   }
 }
 
-.tile {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-1);
-  padding: var(--pb-space-4);
-  @include surface.outlined;
-  text-decoration: none;
-  color: inherit;
-  transition:
-    border-color 160ms ease,
-    transform 160ms ease;
-
-  &:hover {
-    border-color: var(--mat-sys-primary);
-    transform: translateY(-2px);
-  }
-
-  &__icon {
-    font-size: var(--pb-icon-md);
-    color: var(--mat-sys-primary);
-    margin-bottom: var(--pb-space-1);
-  }
-
-  &__value {
-    font-size: var(--mat-sys-headline-medium-size);
-    font-weight: 700;
-    line-height: 1.15;
-  }
-
-  &__label {
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  /** A non-zero review backlog is the one number that should demand attention. */
-  &--warn {
-    border-color: color-mix(in srgb, var(--mat-sys-error) 40%, transparent);
-    background: var(--mat-sys-error-container);
-    color: var(--mat-sys-on-error-container);
-
-    .tile__icon {
-      color: var(--mat-sys-error);
-    }
-
-    .tile__label {
-      color: inherit;
-      opacity: 0.85;
-    }
-  }
-}
-
 /* ── Panels ────────────────────────────────────────────────────────── */
 // pb-surface owns the bordered-panel look and its title+hint header; the
 // grid placement lives on `.dash__panel--*` above.
 .panel__empty {
   @include type.supporting-text;
-}
-
-/* ── Horizontal bars ───────────────────────────────────────────────── */
-.bars {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  &__row {
-    display: grid;
-    grid-template-columns: minmax(96px, 132px) 1fr auto;
-    align-items: center;
-    gap: var(--pb-space-3);
-  }
-
-  &__label {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--pb-space-2);
-    font: var(--mat-sys-body-medium);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__icon {
-    font-size: var(--pb-icon-sm);
-    flex: 0 0 auto;
-  }
-
-  &__track {
-    height: 8px;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-surface-container-high);
-    overflow: hidden;
-  }
-
-  &__fill {
-    display: block;
-    height: 100%;
-    border-radius: var(--mat-sys-corner-full);
-    transition: width 500ms var(--pb-ease-standard);
-
-    &--primary {
-      background: var(--mat-sys-primary);
-    }
-  }
-
-  &__value {
-    font: var(--mat-sys-body-medium);
-    font-weight: 600;
-    font-feature-settings: var(--pb-font-numeric);
-    min-width: 3ch;
-    text-align: end;
-  }
-
-  &--compact .bars__row {
-    grid-template-columns: minmax(70px, 88px) 1fr auto;
-  }
-}
-
-/* ── Trend sparkline ───────────────────────────────────────────────── */
-.trend {
-  &__chart {
-    width: 100%;
-    height: 76px;
-    display: block;
-    overflow: visible;
-  }
-
-  &__area {
-    fill: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
-  }
-
-  &__line {
-    fill: none;
-    stroke: var(--mat-sys-primary);
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    // Keep the stroke an even weight despite the non-uniform viewBox scaling.
-    vector-effect: non-scaling-stroke;
-  }
-
-  &__foot {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--pb-space-2);
-    margin-top: var(--pb-space-3);
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__max {
-    font: var(--mat-sys-body-small);
-  }
-}
-
-/* ── Gender split ──────────────────────────────────────────────────── */
-/* Two columns in the age-band idiom: label, track, value. The gender colour
-   comes from the same tokens the rest of the app uses for the two. */
-.gender {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--pb-space-4);
-
-  &__col {
-    --_tone: var(--mat-sys-primary);
-
-    display: flex;
-    flex-direction: column;
-    gap: var(--pb-space-2);
-    min-width: 0;
-
-    &[data-gender='female'] {
-      --_tone: var(--mat-sys-tertiary);
-    }
-  }
-
-  &__icon {
-    color: var(--_tone);
-  }
-
-  &__fill {
-    background: var(--_tone);
-  }
-
-  &__value {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--pb-space-2);
-
-    small {
-      font: var(--mat-sys-body-small);
-      color: var(--mat-sys-on-surface-variant);
-    }
-  }
-
-  &__unknown {
-    margin: var(--pb-space-3) 0 0;
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
-  }
-}
-
-/* ── Referral list ─────────────────────────────────────────────────── */
-.referrals {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  a {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-3);
-    padding: var(--pb-space-2) var(--pb-space-3);
-    border-radius: var(--mat-sys-corner-medium);
-    text-decoration: none;
-    color: inherit;
-    font: var(--mat-sys-body-medium);
-
-    &:hover {
-      background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
-    }
-  }
-
-  &__icon {
-    font-size: var(--pb-icon-sm);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__name {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__count {
-    font-weight: 600;
-    font-feature-settings: var(--pb-font-numeric);
-  }
 }
 
 /* ── Upcoming surgeries ────────────────────────────────────────────── */
@@ -389,55 +133,5 @@
     font-weight: 600;
     font-feature-settings: var(--pb-font-numeric);
     color: var(--mat-sys-on-surface-variant);
-  }
-}
-
-/* ── Recall ────────────────────────────────────────────────────────── */
-.recall {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-2);
-
-  &__item {
-    display: flex;
-    flex-direction: column;
-    gap: var(--pb-space-1);
-    padding: var(--pb-space-4);
-    @include surface.tonal;
-    text-decoration: none;
-    color: inherit;
-
-    &:hover {
-      background: var(--mat-sys-surface-container);
-    }
-
-    &--warn {
-      background: var(--pb-warning-container);
-      color: var(--pb-on-warning-container);
-    }
-  }
-
-  &__value {
-    font-size: var(--mat-sys-headline-small-size);
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  &__label {
-    font: var(--mat-sys-body-medium);
-    opacity: 0.85;
-  }
-
-  &__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--pb-space-1);
-    margin-top: var(--pb-space-2);
-    font-size: var(--mat-sys-body-small-size);
-    font-weight: 600;
-
-    .material-symbols-rounded {
-      font-size: var(--pb-icon-xs);
-    }
   }
 }

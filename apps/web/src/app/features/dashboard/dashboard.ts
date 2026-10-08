@@ -3,41 +3,45 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { addMonths, format, startOfMonth } from 'date-fns-jalali';
 
 import { RegistryService } from '../../core/services/registry.service';
 import { AuthService } from '../../core/services/auth.service';
-import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
-import {
-  ageBandLabel,
-  genderIcon,
-  genderLabel,
-  referralKindIcon,
-  referralKindLabel,
-  treatmentColor,
-} from '../../shared/labels';
+import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { LoadError } from '../../shared/components/load-error';
-import { PbButton, PbDatetimeCard, PbPage, PbPageHeader, PbSurface } from '../../shared/ui';
-import type { DashboardStats, FollowUpDue } from '../../core/models/common.model';
+import {
+  PbButton,
+  PbDatetimeCard,
+  PbPage,
+  PbPageHeader,
+  PbStatTile,
+  PbSurface,
+} from '../../shared/ui';
+import type { StatTileTone } from '../../shared/ui';
+import type { DashboardSummary, FollowUpDue } from '../../core/models/common.model';
 
-interface StatTile {
+interface WorkTile {
   label: string;
   value: number;
   icon: string;
   link: string;
   queryParams?: Record<string, string>;
-  tone: 'neutral' | 'warn';
+  tone: StatTileTone;
 }
 
+/**
+ * The front desk's page: what needs doing today, each count a link to the
+ * list it counts. How the practice looks — totals, growth, demographics,
+ * referrals — is on the statistics page, not here.
+ */
 @Component({
   selector: 'pb-dashboard',
   standalone: true,
   imports: [
     RouterLink,
     MatProgressBarModule,
-    PersianCountPipe,
     PersianNumberPipe,
     PbButton,
+    PbStatTile,
     PbSurface,
     PbPageHeader,
     PbPage,
@@ -54,17 +58,9 @@ export class Dashboard {
   private readonly i18n = inject(TranslateService);
   protected readonly auth = inject(AuthService);
 
-  protected readonly genderLabel = genderLabel;
-  protected readonly genderIcon = genderIcon;
-  protected readonly ageBandLabel = ageBandLabel;
-  protected readonly referralKindLabel = referralKindLabel;
-  protected readonly referralKindIcon = referralKindIcon;
-
-  protected readonly color = treatmentColor;
-
   protected readonly loading = signal(true);
   protected readonly failed = signal(false);
-  protected readonly stats = signal<DashboardStats | null>(null);
+  protected readonly summary = signal<DashboardSummary | null>(null);
   protected readonly followUps = signal<FollowUpDue[]>([]);
   /**
    * Its own flag, not `failed`: the two requests are independent, and "no
@@ -95,17 +91,17 @@ export class Dashboard {
   });
 
   /**
-   * Ordered work-first: what needs attention, then what is happening next, then
-   * the plain counts. Someone opening this at 9 AM should meet the backlog
-   * before the totals, not after three charts.
+   * Ordered by urgency: what is late, then what is due this week, then the
+   * standing recall list. Every tile is a list to work through; the
+   * practice's totals live on the statistics page.
    */
-  protected readonly tiles = computed<StatTile[]>(() => {
-    const s = this.stats();
+  protected readonly tiles = computed<WorkTile[]>(() => {
+    const s = this.summary();
     if (!s) return [];
-    const tiles: StatTile[] = [
+    const tiles: WorkTile[] = [
       {
         label: 'tile.needsReview',
-        value: s.totals.needsReview,
+        value: s.needsReview,
         icon: 'error',
         link: '/patients',
         queryParams: { hasIssues: 'true' },
@@ -114,10 +110,10 @@ export class Dashboard {
     ];
     // A permanently-zero warning tile trains people to ignore warnings, so
     // these appear only when there is actually something overdue.
-    if (s.totals.followUpsOverdue > 0) {
+    if (s.followUpsOverdue > 0) {
       tiles.push({
         label: 'tile.followUpsOverdue',
-        value: s.totals.followUpsOverdue,
+        value: s.followUpsOverdue,
         icon: 'event_busy',
         link: '/surgery',
         // Exactly the rows the tile counts.
@@ -125,10 +121,10 @@ export class Dashboard {
         tone: 'warn',
       });
     }
-    if (s.totals.labsOverdue > 0) {
+    if (s.labsOverdue > 0) {
       tiles.push({
         label: 'tile.labsOverdue',
-        value: s.totals.labsOverdue,
+        value: s.labsOverdue,
         icon: 'schedule',
         link: '/labs',
         // The board, narrowed to exactly the cases the tile counts.
@@ -140,103 +136,24 @@ export class Dashboard {
     // the dashboard for.
     tiles.push({
       label: 'tile.followUpsThisWeek',
-      value: s.totals.followUpsThisWeek,
+      value: s.followUpsThisWeek,
       icon: 'event_repeat',
       link: '/surgery',
       queryParams: { followUp: 'week' },
       tone: 'neutral',
     });
-    tiles.push(
-      {
-        label: 'tile.patients',
-        value: s.totals.patients,
-        icon: 'groups',
-        link: '/patients',
-        tone: 'neutral',
-      },
-      {
-        label: 'tile.implants',
-        value: s.totals.implantCases,
-        icon: 'deployed_code',
-        link: '/implants',
-        tone: 'neutral',
-      },
-      {
-        label: 'tile.ortho',
-        value: s.totals.orthoCases,
-        icon: 'straighten',
-        link: '/ortho',
-        tone: 'neutral',
-      },
-    );
+    // The recall list: patients with no visit on file in over a year. A
+    // standing list rather than an alarm, so it never turns red.
+    tiles.push({
+      label: 'tile.recall',
+      value: s.inactiveOverYear,
+      icon: 'history',
+      link: '/patients',
+      queryParams: { inactiveMonths: '12' },
+      tone: 'neutral',
+    });
     return tiles;
   });
-
-  /** Bar heights for the treatment chart, scaled to the largest value. */
-  protected readonly treatmentBars = computed(() => {
-    const list = this.stats()?.topTreatments ?? [];
-    const max = Math.max(1, ...list.map((t) => t.count));
-    return list.map((t) => ({ ...t, percent: Math.round((t.count / max) * 100) }));
-  });
-
-  protected readonly ageBars = computed(() => {
-    const list = this.stats()?.ageBands ?? [];
-    const max = Math.max(1, ...list.map((b) => b.count));
-    return list.map((b) => ({ ...b, percent: Math.round((b.count / max) * 100) }));
-  });
-
-  /**
-   * Women and men as two fixed columns — always both, in this order, even
-   * when one count is zero, so the panel keeps its shape as the register
-   * fills. Shares are of every patient, including those with no gender
-   * recorded, so the two columns need not sum to 100%.
-   */
-  protected readonly genderColumns = computed(() => {
-    const list = this.stats()?.gender ?? [];
-    const total = list.reduce((sum, g) => sum + g.count, 0) || 1;
-    return (['female', 'male'] as const).map((key) => {
-      const count = list.find((g) => g.key === key)?.count ?? 0;
-      return { key, count, percent: Math.round((count / total) * 100) };
-    });
-  });
-
-  /** Records with no gender on file; shown only when there are any. */
-  protected readonly genderUnknown = computed(
-    () => this.stats()?.gender.find((g) => g.key === 'unknown')?.count ?? 0,
-  );
-
-  /**
-   * The last twelve Jalali months up to this one, as a sparkline path. The API
-   * lists only months that had a new patient, so the window is laid out here
-   * and a month with none is a real zero rather than a skipped point.
-   */
-  protected readonly trend = computed(() => {
-    const counts = new Map((this.stats()?.newPatientsByMonth ?? []).map((m) => [m.month, m.count]));
-    const thisMonth = startOfMonth(new Date());
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const month = format(addMonths(thisMonth, i - 11), 'yyyy/MM');
-      return { month, count: counts.get(month) ?? 0 };
-    });
-    if (months.every((m) => m.count === 0)) return null;
-    const max = Math.max(1, ...months.map((m) => m.count));
-    const w = 100;
-    const h = 32;
-    const step = w / (months.length - 1);
-    const points = months.map((m, i) => ({
-      x: i * step,
-      y: h - (m.count / max) * h,
-    }));
-    const line = points
-      .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
-      .join(' ');
-    const area = `${line} L${w},${h} L0,${h} Z`;
-    return { line, area, months, max, last: months[months.length - 1] };
-  });
-
-  /** Screen-reader description of the sparkline. */
-  protected trendLabel(max: number): string {
-    return this.i18n.instant('dashboard.trendAria', { max });
-  }
 
   constructor() {
     const id = setInterval(() => this.hour.set(new Date().getHours()), 60_000);
@@ -249,8 +166,8 @@ export class Dashboard {
     this.loading.set(true);
     this.failed.set(false);
     this.registry.dashboard().subscribe({
-      next: (stats) => {
-        this.stats.set(stats);
+      next: (summary) => {
+        this.summary.set(summary);
         this.loading.set(false);
       },
       error: () => {
@@ -258,7 +175,7 @@ export class Dashboard {
         this.loading.set(false);
       },
     });
-    // Independent of the totals above: one failing must not block the other.
+    // Independent of the counts above: one failing must not block the other.
     this.loadFollowUps();
   }
 

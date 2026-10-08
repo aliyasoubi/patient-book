@@ -15,26 +15,24 @@
     <pb-load-error [message]="'dashboard.loadFailed' | translate" (retry)="load()" />
   }
 
-  @if (stats(); as s) {
-    <!-- ── Headline tiles ──────────────────────────────────────── -->
-    <section class="tiles" [attr.aria-label]="'dashboard.overallStats' | translate">
+  @if (summary()) {
+    <!-- ── Work tiles ──────────────────────────────────────────── -->
+    <section class="tiles" [attr.aria-label]="'dashboard.workAria' | translate">
       @for (tile of tiles(); track tile.label) {
-        <a
-          class="tile"
-          [class.tile--warn]="tile.tone === 'warn' && tile.value > 0"
-          [routerLink]="tile.link"
-          [queryParams]="tile.queryParams ?? {}"
-        >
-          <mat-icon class="tile__icon" aria-hidden="true">{{ tile.icon }}</mat-icon>
-          <span class="tile__value">{{ tile.value | faCount }}</span>
-          <span class="tile__label">{{ tile.label | translate }}</span>
-        </a>
+        <pb-stat-tile
+          [label]="tile.label | translate"
+          [value]="tile.value"
+          [icon]="tile.icon"
+          [link]="tile.link"
+          [queryParams]="tile.queryParams ?? null"
+          [tone]="tile.tone"
+        />
       }
     </section>
   }
 
   <!-- The clock and the follow-ups have their own data, so they stay up
-       while the totals are loading or have failed. -->
+       while the counts are loading or have failed. -->
   <div class="dash__grid">
     <!-- ── Today: clock, date and this month ────────────────── -->
     <pb-datetime-card />
@@ -89,165 +87,5 @@
         <p class="panel__empty">{{ 'dashboard.followUpsEmpty' | translate }}</p>
       }
     </pb-surface>
-
-    @if (stats(); as s) {
-      <!-- ── Recall ─────────────────────────────────────────────
-           Operational follow-up work, so it leads the panels; the
-           analytics below describe the practice rather than ask
-           anything of it. -->
-      <pb-surface class="dash__panel--recall" [title]="'dashboard.recallTitle' | translate">
-        <div class="recall">
-          <a class="recall__item" routerLink="/patients">
-            <span class="recall__value">{{ s.recentlyActive | faCount }}</span>
-            <span class="recall__label">{{ 'dashboard.recentSixMonths' | translate }}</span>
-          </a>
-          <a
-            class="recall__item recall__item--warn"
-            routerLink="/patients"
-            [queryParams]="{ inactiveMonths: 12 }"
-          >
-            <span class="recall__value">{{ s.inactiveOverYear | faCount }}</span>
-            <span class="recall__label">{{ 'dashboard.inactiveOverYear' | translate }}</span>
-            <span class="recall__cta">
-              {{ 'dashboard.viewList' | translate }}
-              <mat-icon aria-hidden="true">arrow_back</mat-icon>
-            </span>
-          </a>
-        </div>
-      </pb-surface>
-
-      <!-- ── Treatments ────────────────────────────────────────── -->
-      <pb-surface
-        class="dash__panel--treatments"
-        [title]="'dashboard.treatmentsTitle' | translate"
-        [hint]="'dashboard.treatmentsHint' | translate"
-      >
-        <ul class="bars">
-          @for (t of treatmentBars(); track t.code) {
-            <li class="bars__row">
-              <span class="bars__label">
-                <mat-icon class="bars__icon" [style.color]="color(t.color).fg" aria-hidden="true">{{
-                  t.icon
-                }}</mat-icon>
-                {{ t.nameFa }}
-              </span>
-              <span class="bars__track">
-                <span
-                  class="bars__fill"
-                  [style.width.%]="t.percent"
-                  [style.background]="color(t.color).fg"
-                ></span>
-              </span>
-              <span class="bars__value">{{ t.count | faCount }}</span>
-            </li>
-          } @empty {
-            <li class="panel__empty">{{ 'dashboard.noData' | translate }}</li>
-          }
-        </ul>
-      </pb-surface>
-
-      <!-- ── Growth ────────────────────────────────────────────── -->
-      <pb-surface
-        class="dash__panel--growth"
-        [title]="'dashboard.newPatientsTitle' | translate"
-        [hint]="'dashboard.lastTwelveMonths' | translate"
-      >
-        @if (trend(); as t) {
-          <div class="trend">
-            <svg
-              class="trend__chart"
-              viewBox="0 0 100 32"
-              preserveAspectRatio="none"
-              role="img"
-              [attr.aria-label]="trendLabel(t.max)"
-            >
-              <path class="trend__area" [attr.d]="t.area" />
-              <path class="trend__line" [attr.d]="t.line" />
-            </svg>
-            <div class="trend__foot">
-              <span>{{
-                'dashboard.monthCount'
-                  | translate: { count: (t.last.count | faCount), month: (t.last.month | faNum) }
-              }}</span>
-              <span class="trend__max">{{
-                'dashboard.maximum' | translate: { count: (t.max | faCount) }
-              }}</span>
-            </div>
-          </div>
-        } @else {
-          <p class="panel__empty">{{ 'dashboard.noChartData' | translate }}</p>
-        }
-      </pb-surface>
-
-      <!-- ── Gender ────────────────────────────────────────────
-           Women and men as two columns, each drawn the way an age band is:
-           label, bar, count. A record with no gender is a footnote. -->
-      <pb-surface class="dash__panel--gender" [title]="'dashboard.genderTitle' | translate">
-        <div class="gender" role="group" [attr.aria-label]="'dashboard.genderAria' | translate">
-          @for (g of genderColumns(); track g.key) {
-            <div class="gender__col" [attr.data-gender]="g.key">
-              <span class="bars__label">
-                <mat-icon class="bars__icon gender__icon" aria-hidden="true">{{
-                  genderIcon(g.key)
-                }}</mat-icon>
-                {{ genderLabel(g.key) | translate }}
-              </span>
-              <span class="bars__track">
-                <span class="bars__fill gender__fill" [style.width.%]="g.percent"></span>
-              </span>
-              <span class="gender__value">
-                <span class="bars__value">{{ g.count | faCount }}</span>
-                <small>{{ g.percent | faNum }}{{ 'common.percentSign' | translate }}</small>
-              </span>
-            </div>
-          }
-        </div>
-        @if (genderUnknown(); as unknown) {
-          <p class="gender__unknown">
-            {{ 'dashboard.genderUnknown' | translate: { count: (unknown | faCount) } }}
-          </p>
-        }
-      </pb-surface>
-
-      <!-- ── Age ───────────────────────────────────────────────── -->
-      <pb-surface class="dash__panel--age" [title]="'dashboard.ageGroups' | translate">
-        <ul class="bars bars--compact">
-          @for (b of ageBars(); track b.band) {
-            <li class="bars__row">
-              <span class="bars__label">{{ ageBandLabel(b.band) | translate }}</span>
-              <span class="bars__track">
-                <span class="bars__fill bars__fill--primary" [style.width.%]="b.percent"></span>
-              </span>
-              <span class="bars__value">{{ b.count | faCount }}</span>
-            </li>
-          } @empty {
-            <li class="panel__empty">{{ 'dashboard.noData' | translate }}</li>
-          }
-        </ul>
-      </pb-surface>
-
-      <!-- ── Referrals ─────────────────────────────────────────── -->
-      <pb-surface
-        class="dash__panel--referrals"
-        [title]="'dashboard.referralsTitle' | translate"
-        [hint]="'dashboard.topTen' | translate"
-      >
-        <ul class="referrals">
-          @for (r of s.topReferrals; track r.id) {
-            <li>
-              <a [routerLink]="['/patients']" [queryParams]="{ referralSourceId: r.id }">
-                <mat-icon class="referrals__icon" aria-hidden="true">{{
-                  referralKindIcon(r.kind)
-                }}</mat-icon>
-                <span class="referrals__name">{{ r.name }}</span>
-                <span class="referrals__count">{{ r.count | faCount }}</span>
-              </a>
-            </li>
-          } @empty {
-            <li class="panel__empty">{{ 'dashboard.noData' | translate }}</li>
-          }
-        </ul>
-      </pb-surface>
-    }
   </div>
 </pb-page>

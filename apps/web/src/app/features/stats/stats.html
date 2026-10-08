@@ -1,0 +1,160 @@
+<pb-page class="stats" width="wide">
+  <pb-page-header [title]="'stats.title' | translate" [subtitle]="'stats.subtitle' | translate" />
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (failed()) {
+    <pb-load-error [message]="'stats.loadFailed' | translate" (retry)="load()" />
+  }
+
+  @if (stats(); as s) {
+    <!-- ── Totals ──────────────────────────────────────────────── -->
+    <section class="tiles" [attr.aria-label]="'stats.totalsAria' | translate">
+      @for (tile of tiles(); track tile.label) {
+        <pb-stat-tile
+          [label]="tile.label | translate"
+          [value]="tile.value"
+          [icon]="tile.icon"
+          [link]="tile.link"
+        />
+      }
+    </section>
+
+    <div class="stats__grid">
+      <!-- ── Treatments ────────────────────────────────────────── -->
+      <pb-surface
+        class="stats__panel--treatments"
+        [title]="'stats.treatmentsTitle' | translate"
+        [hint]="'stats.treatmentsHint' | translate"
+      >
+        <ul class="bars">
+          @for (t of treatmentBars(); track t.code) {
+            <li class="bars__row">
+              <span class="bars__label">
+                <mat-icon class="bars__icon" [style.color]="color(t.color).fg" aria-hidden="true">{{
+                  t.icon
+                }}</mat-icon>
+                {{ t.nameFa }}
+              </span>
+              <span class="bars__track">
+                <span
+                  class="bars__fill"
+                  [style.width.%]="t.percent"
+                  [style.background]="color(t.color).fg"
+                ></span>
+              </span>
+              <span class="bars__value">{{ t.count | faCount }}</span>
+            </li>
+          } @empty {
+            <li class="panel__empty">{{ 'stats.noData' | translate }}</li>
+          }
+        </ul>
+      </pb-surface>
+
+      <!-- ── Growth ────────────────────────────────────────────── -->
+      <pb-surface
+        class="stats__panel--growth"
+        [title]="'stats.newPatientsTitle' | translate"
+        [hint]="'stats.lastTwelveMonths' | translate"
+      >
+        @if (trend(); as t) {
+          <div class="trend">
+            <svg
+              class="trend__chart"
+              viewBox="0 0 100 32"
+              preserveAspectRatio="none"
+              role="img"
+              [attr.aria-label]="trendLabel(t.max)"
+            >
+              <path class="trend__area" [attr.d]="t.area" />
+              <path class="trend__line" [attr.d]="t.line" />
+            </svg>
+            <div class="trend__foot">
+              <span>{{
+                'stats.monthCount'
+                  | translate: { count: (t.last.count | faCount), month: (t.last.month | faNum) }
+              }}</span>
+              <span class="trend__max">{{
+                'stats.maximum' | translate: { count: (t.max | faCount) }
+              }}</span>
+            </div>
+          </div>
+        } @else {
+          <p class="panel__empty">{{ 'stats.noChartData' | translate }}</p>
+        }
+      </pb-surface>
+
+      <!-- ── Gender ────────────────────────────────────────────
+           Women and men as two columns, each drawn the way an age band is:
+           label, bar, count. A record with no gender is a footnote. -->
+      <pb-surface class="stats__panel--gender" [title]="'stats.genderTitle' | translate">
+        <div class="gender" role="group" [attr.aria-label]="'stats.genderAria' | translate">
+          @for (g of genderColumns(); track g.key) {
+            <div class="gender__col" [attr.data-gender]="g.key">
+              <span class="bars__label">
+                <mat-icon class="bars__icon gender__icon" aria-hidden="true">{{
+                  genderIcon(g.key)
+                }}</mat-icon>
+                {{ genderLabel(g.key) | translate }}
+              </span>
+              <span class="bars__track">
+                <span class="bars__fill gender__fill" [style.width.%]="g.percent"></span>
+              </span>
+              <span class="gender__value">
+                <span class="bars__value">{{ g.count | faCount }}</span>
+                <small>{{ g.percent | faNum }}{{ 'common.percentSign' | translate }}</small>
+              </span>
+            </div>
+          }
+        </div>
+        @if (genderUnknown(); as unknown) {
+          <p class="gender__unknown">
+            {{ 'stats.genderUnknown' | translate: { count: (unknown | faCount) } }}
+          </p>
+        }
+      </pb-surface>
+
+      <!-- ── Age ───────────────────────────────────────────────── -->
+      <pb-surface class="stats__panel--age" [title]="'stats.ageGroups' | translate">
+        <ul class="bars bars--compact">
+          @for (b of ageBars(); track b.band) {
+            <li class="bars__row">
+              <span class="bars__label">{{ ageBandLabel(b.band) | translate }}</span>
+              <span class="bars__track">
+                <span class="bars__fill bars__fill--primary" [style.width.%]="b.percent"></span>
+              </span>
+              <span class="bars__value">{{ b.count | faCount }}</span>
+            </li>
+          } @empty {
+            <li class="panel__empty">{{ 'stats.noData' | translate }}</li>
+          }
+        </ul>
+      </pb-surface>
+
+      <!-- ── Referrals ─────────────────────────────────────────── -->
+      <pb-surface
+        class="stats__panel--referrals"
+        [title]="'stats.referralsTitle' | translate"
+        [hint]="'stats.topTen' | translate"
+      >
+        <ul class="referrals">
+          @for (r of s.topReferrals; track r.id) {
+            <li>
+              <a [routerLink]="['/patients']" [queryParams]="{ referralSourceId: r.id }">
+                <mat-icon class="referrals__icon" aria-hidden="true">{{
+                  referralKindIcon(r.kind)
+                }}</mat-icon>
+                <span class="referrals__name">{{ r.name }}</span>
+                <span class="referrals__count">{{ r.count | faCount }}</span>
+              </a>
+            </li>
+          } @empty {
+            <li class="panel__empty">{{ 'stats.noData' | translate }}</li>
+          }
+        </ul>
+      </pb-surface>
+    </div>
+  }
+</pb-page>

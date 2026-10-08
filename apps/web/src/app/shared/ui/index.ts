@@ -20,6 +20,8 @@ export { PbAvatar } from './avatar/avatar';
 export type { AvatarSize, AvatarTone } from './avatar/avatar';
 export { PbStatusChip } from './status-chip/status-chip';
 export type { StatusTone } from './status-chip/status-chip';
+export { PbStatTile } from './stat-tile/stat-tile';
+export type { StatTileTone } from './stat-tile/stat-tile';
 export { PbDatetimeCard } from './datetime-card/datetime-card';
 export { PbLogo } from './logo/logo';
 export { firstErrorMessage } from './field-errors';

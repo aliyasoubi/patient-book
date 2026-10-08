@@ -4,10 +4,11 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
-  DashboardStats,
+  DashboardSummary,
   FollowUpDue,
   FollowUpFilter,
   PageResult,
+  PracticeStats,
   RegistryCase,
   SurgeryQueueItem,
 } from '../models/common.model';
@@ -115,8 +116,14 @@ export class RegistryService {
     return this.http.post<SurgeryQueueItem>(`${environment.apiUrl}/surgery-queue/${id}/restore`, {});
   }
 
-  dashboard(): Observable<DashboardStats> {
-    return this.http.get<DashboardStats>(`${environment.apiUrl}/stats/dashboard`);
+  /** The dashboard's work counts — what needs attention, not how the practice looks. */
+  dashboard(): Observable<DashboardSummary> {
+    return this.http.get<DashboardSummary>(`${environment.apiUrl}/stats/dashboard`);
+  }
+
+  /** Totals and breakdowns for the statistics page. */
+  practiceStats(): Observable<PracticeStats> {
+    return this.http.get<PracticeStats>(`${environment.apiUrl}/stats/overview`);
   }
 
   /** The coming week's open follow-ups, soonest first. */

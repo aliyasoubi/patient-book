@@ -25,7 +25,8 @@
     "account": "حساب کاربری — Dentixo",
     "labs": "لابراتوار — Dentixo",
     "labNew": "ارسال به لابراتوار — Dentixo",
-    "labEdit": "ویرایش کار لابراتوار — Dentixo"
+    "labEdit": "ویرایش کار لابراتوار — Dentixo",
+    "stats": "آمار — Dentixo"
   },
   "common": {
     "back": "بازگشت",
@@ -64,12 +65,29 @@
     "implants": "پرونده ایمپلنت",
     "ortho": "پرونده ارتودنسی",
     "settings": "تنظیمات",
-    "labs": "لابراتوار"
+    "labs": "لابراتوار",
+    "stats": "آمار"
   },
   "dashboard": {
-    "subtitle": "خلاصه‌ای از وضعیت پرونده‌های مطب",
+    "subtitle": "آنچه امروز به رسیدگی نیاز دارد",
     "newPatient": "بیمار جدید",
-    "overallStats": "آمار کلی",
+    "workAria": "کارهای پیش رو",
+    "followUpsTitle": "پیگیری‌های هفتهٔ پیش رو",
+    "followUpsEmpty": "در هفته آینده پیگیری‌ای در انتظار نیست.",
+    "followUpsFailed": "فهرست پیگیری‌ها بارگذاری نشد.",
+    "followUpsLoading": "در حال بارگذاری پیگیری‌ها…",
+    "viewList": "مشاهده فهرست",
+    "dateTimeAria": "تاریخ و ساعت امروز",
+    "today": "امروز",
+    "previousMonth": "ماه قبل",
+    "nextMonth": "ماه بعد",
+    "loadFailed": "اطلاعات داشبورد بارگذاری نشد."
+  },
+  "stats": {
+    "title": "آمار",
+    "subtitle": "تصویری کلی از بیماران و درمان‌های مطب",
+    "totalsAria": "آمار کلی",
+    "loadFailed": "آمار مطب بارگذاری نشد.",
     "treatmentsTitle": "درمان‌های ثبت‌شده",
     "treatmentsHint": "تعداد بیماران هر درمان",
     "newPatientsTitle": "بیماران جدید",
@@ -79,25 +97,12 @@
     "noData": "هنوز موردی ثبت نشده است.",
     "genderTitle": "ترکیب جنسیتی",
     "genderAria": "نسبت بیماران بر اساس جنسیت",
-    "followUpsTitle": "پیگیری‌های هفتهٔ پیش رو",
-    "followUpsEmpty": "در هفته آینده پیگیری‌ای در انتظار نیست.",
-    "followUpsFailed": "فهرست پیگیری‌ها بارگذاری نشد.",
-    "followUpsLoading": "در حال بارگذاری پیگیری‌ها…",
     "genderUnknown": "جنسیت {{count}} پرونده ثبت نشده است.",
     "ageGroups": "گروه‌های سنی",
     "referralsTitle": "نحوه آشنایی",
     "topTen": "۱۰ مورد برتر",
-    "recallTitle": "پیگیری مراجعه",
-    "recentSixMonths": "مراجعه در ۶ ماه اخیر",
-    "inactiveOverYear": "بیش از یک سال بدون مراجعه",
-    "viewList": "مشاهده فهرست",
     "trendAria": "روند بیماران جدید، بیشینه {{max}} نفر در ماه",
-    "maximum": "بیشینه {{count}}",
-    "dateTimeAria": "تاریخ و ساعت امروز",
-    "today": "امروز",
-    "previousMonth": "ماه قبل",
-    "nextMonth": "ماه بعد",
-    "loadFailed": "اطلاعات داشبورد بارگذاری نشد."
+    "maximum": "بیشینه {{count}}"
   },
   "greeting": {
     "morning": "صبح بخیر",
@@ -107,12 +112,14 @@
   },
   "tile": {
     "patients": "کل بیماران",
+    "recentlyActive": "مراجعه در ۶ ماه اخیر",
     "implants": "پرونده‌های ایمپلنت",
     "ortho": "پرونده‌های ارتودنسی",
     "followUpsOverdue": "پیگیری‌های عقب‌افتاده",
     "needsReview": "نیازمند بازبینی",
     "followUpsThisWeek": "پیگیری‌های این هفته",
-    "labsOverdue": "دیرکرد لابراتوار"
+    "labsOverdue": "دیرکرد لابراتوار",
+    "recall": "بیش از یک سال بدون مراجعه"
   },
   "registry": {
     "independentNumberNotice": "شماره‌گذاری این پرونده مستقل از شماره پرونده اصلی است؛ عدد یکسان لزوماً به یک بیمار اشاره نمی‌کند.",

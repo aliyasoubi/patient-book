@@ -264,8 +264,8 @@ describeIfWritable('lab flows (e2e)', () => {
       const before = await asStaff(http().get('/api/stats/dashboard')).expect(
         200,
       );
-      const overdueBefore = (before.body as { totals: { labsOverdue: number } })
-        .totals.labsOverdue;
+      const overdueBefore = (before.body as { labsOverdue: number })
+        .labsOverdue;
 
       const late = await openCase(`آزمون دیرکرد ${runId}`, 10, 7);
       expect(late).toMatchObject({ timeliness: 'overdue', daysLate: 3 });
@@ -275,9 +275,9 @@ describeIfWritable('lab flows (e2e)', () => {
       const after = await asStaff(http().get('/api/stats/dashboard')).expect(
         200,
       );
-      expect(
-        (after.body as { totals: { labsOverdue: number } }).totals.labsOverdue,
-      ).toBe(overdueBefore + 1);
+      expect((after.body as { labsOverdue: number }).labsOverdue).toBe(
+        overdueBefore + 1,
+      );
 
       // Most overdue first in the column.
       const columns = await board(`آزمون ${runId}`);

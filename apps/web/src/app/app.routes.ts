@@ -119,6 +119,11 @@ export const routes: Routes = [
         title: translatedTitle('route.labEdit'),
       },
       {
+        path: 'stats',
+        loadComponent: () => import('./features/stats/stats').then((m) => m.Stats),
+        title: translatedTitle('route.stats'),
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
         title: translatedTitle('route.settings'),
