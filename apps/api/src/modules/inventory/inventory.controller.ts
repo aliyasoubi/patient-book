@@ -18,6 +18,7 @@ import {
   InventoryCountDto,
   InventoryMovementDto,
   QueryInventoryDto,
+  UndoInventoryMovementDto,
   UpdateInventoryItemDto,
   UpdateInventoryLotDto,
 } from './dto/inventory.dto';
@@ -114,6 +115,20 @@ export class InventoryController {
     @CurrentUser('id') userId: string,
   ) {
     return this.inventory.move(id, dto, userId);
+  }
+
+  @Post(':id/movements/undo')
+  @HttpCode(200)
+  @Roles(...STAFF)
+  @ApiOperation({
+    summary: 'Take back the last movement, if nothing has moved since',
+  })
+  undo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UndoInventoryMovementDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.inventory.undo(id, dto.expectedVersion, userId);
   }
 
   @Delete(':id')

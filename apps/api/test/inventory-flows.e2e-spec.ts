@@ -203,6 +203,7 @@ describeIfWritable('inventory flows (e2e)', () => {
       await move(item.id, {
         kind: 'receive',
         quantity: 10,
+        lotNumber: 'L-36',
         expiry: printed(36),
         note: 'فاکتور ۱۲',
       }).expect(200)
@@ -389,6 +390,52 @@ describeIfWritable('inventory flows (e2e)', () => {
         name: 'Straumann',
         spellings: expect.arrayContaining(['اشترومن']),
       }),
+    );
+  });
+
+  it('takes back the last movement, but not once the item has moved on', async () => {
+    const item = await addItem({ name: `undo-${runId}`, quantity: 5 });
+    const received = (
+      await move(item.id, {
+        kind: 'receive',
+        quantity: 10,
+        lotNumber: 'U-1',
+        expiry: printed(20),
+      }).expect(200)
+    ).body as ItemBody;
+    expect(received.quantity).toBe(15);
+
+    const undone = (
+      await asStaff(
+        http().post(`/api/inventory/items/${item.id}/movements/undo`),
+      )
+        .send({ expectedVersion: received.version })
+        .expect(200)
+    ).body as ItemBody;
+    // The delivery and the batch it opened are gone; the opening count stays.
+    expect(undone.quantity).toBe(5);
+    expect(undone.lots.map((l) => l.lotNumber)).toEqual([null]);
+    expect(undone.movements.map((m) => m.kind)).toEqual(['count']);
+
+    // A use split across batches is one movement, taken back whole.
+    await move(item.id, { kind: 'use', quantity: 2 }).expect(200);
+    const stale = await asStaff(
+      http().post(`/api/inventory/items/${item.id}/movements/undo`),
+    )
+      .send({ expectedVersion: received.version })
+      .expect(409);
+    expect((stale.body as { code: string }).code).toBe(
+      ErrorCode.InventoryItemModified,
+    );
+  });
+
+  it('will not receive an implant without its lot and expiry', async () => {
+    const item = await addItem({ name: `lot-${runId}` });
+    const res = await move(item.id, { kind: 'receive', quantity: 1 }).expect(
+      400,
+    );
+    expect((res.body as { code: string }).code).toBe(
+      ErrorCode.InventoryLotRequired,
     );
   });
 

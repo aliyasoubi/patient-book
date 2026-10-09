@@ -306,17 +306,37 @@ export class InventoryList {
         // In place, not reloaded: a row that just left the filter stays until
         // the next search, rather than vanishing under the hand that moved it.
         this.items.update((rows) => rows.map((r) => (r.id === saved.id ? saved : r)));
+        // The wrong button or a mistyped number is put right from here, while
+        // nothing else has touched the item.
+        this.snackBar
+          .open(
+            this.i18n.instant('inventoryMove.recorded', {
+              kind: this.i18n.instant(inventoryMovementLabel(kind)),
+              // «Supe Line 4x12», not «Supe Line»: a line's sizes share its name.
+              name: [saved.name, saved.spec].filter(Boolean).join(' '),
+              count: formatPersianCount(saved.quantity),
+              unit: this.i18n.instant(inventoryUnitLabel(saved.unit)),
+            }),
+            this.i18n.instant('inventory.undo'),
+            { duration: 10000 },
+          )
+          .onAction()
+          .subscribe(() => this.undo(saved));
+      });
+  }
+
+  /** Take back the movement just recorded. */
+  private undo(item: InventoryItem): void {
+    this.inventory.undo(item.id, item.version).subscribe({
+      next: (restored) => {
+        this.items.update((rows) => rows.map((r) => (r.id === restored.id ? restored : r)));
         this.snackBar.open(
-          this.i18n.instant('inventoryMove.recorded', {
-            kind: this.i18n.instant(inventoryMovementLabel(kind)),
-            // «Supe Line 4x12», not «Supe Line»: a line's sizes share its name.
-            name: [saved.name, saved.spec].filter(Boolean).join(' '),
-            count: formatPersianCount(saved.quantity),
-            unit: this.i18n.instant(inventoryUnitLabel(saved.unit)),
-          }),
+          this.i18n.instant('inventory.undone', { count: formatPersianCount(restored.quantity) }),
           this.i18n.instant('action.dismiss'),
         );
-      });
+      },
+      error: (error: unknown) => this.writeFailed(error),
+    });
   }
 
   protected history(item: InventoryItem): void {
@@ -331,7 +351,14 @@ export class InventoryList {
   protected archive(item: InventoryItem): void {
     const data: ConfirmData = {
       title: this.i18n.instant('inventory.archiveTitle'),
-      message: this.i18n.instant('inventory.archiveMessage', { name: item.name }),
+      // Stock still on the shelf leaves the list with it: said, with how much.
+      message: item.quantity
+        ? this.i18n.instant('inventory.archiveMessageStock', {
+            name: item.name,
+            count: formatPersianCount(item.quantity),
+            unit: this.i18n.instant(inventoryUnitLabel(item.unit)),
+          })
+        : this.i18n.instant('inventory.archiveMessage', { name: item.name }),
       confirmLabel: this.i18n.instant('inventory.archiveConfirm'),
       tone: 'warn',
     };
@@ -368,6 +395,11 @@ export class InventoryList {
       .afterClosed()
       .subscribe((result) => {
         if (!result) return;
+        // Already on the shelves: the delivery goes onto that item.
+        if (typeof result === 'object' && 'receiveInto' in result) {
+          this.move(result.receiveInto, 'receive');
+          return;
+        }
         if (result === 'conflict') {
           this.snackBar.open(
             this.i18n.instant('error.inventoryItemModified'),

@@ -98,6 +98,13 @@ export class InventoryService {
     return this.http.post<InventoryItemDetail>(`${this.items}/${id}/movements`, body);
   }
 
+  /** Take back the last movement, if nothing has touched the item since `version`. */
+  undo(id: string, version: number): Observable<InventoryItemDetail> {
+    return this.http.post<InventoryItemDetail>(`${this.items}/${id}/movements/undo`, {
+      expectedVersion: version,
+    });
+  }
+
   /** A shelf counted at once, saved whole or not at all. */
   count(lines: InventoryCountLine[]): Observable<{ counted: number; minimums: number }> {
     return this.http.post<{ counted: number; minimums: number }>(`${this.items}/count`, {

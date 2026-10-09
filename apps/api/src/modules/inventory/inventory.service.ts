@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { format as formatJalali } from 'date-fns-jalali';
-import { EntityManager, Not, Repository } from 'typeorm';
+import { EntityManager, In, Not, Repository } from 'typeorm';
 
 import { InventoryItem } from './inventory-item.entity';
 import { InventoryLot } from './inventory-lot.entity';
 import { InventoryMovement } from './inventory-movement.entity';
 import { loadLots, writeMovement } from './inventory-ledger';
-import { BRANDS, canonicalBrand, normalizeSpec } from './inventory-catalog';
+import {
+  BRANDS,
+  canonicalBrand,
+  normalizeSpec,
+  TRACEABLE,
+} from './inventory-catalog';
 import { Patient } from '../patients/patient.entity';
 import {
   CreateInventoryItemDto,
@@ -280,6 +285,12 @@ export class InventoryService {
       let changes: LotChange<InventoryLot | LotLevel>[];
       switch (dto.kind) {
         case InventoryMovementKind.Receive:
+          if (
+            TRACEABLE.has(item.category) &&
+            (!normalizeLot(dto.lotNumber) || !parseExpiry(dto.expiry))
+          ) {
+            throw AppException.badRequest(ErrorCode.InventoryLotRequired);
+          }
           changes = [
             receive(lots, {
               quantity: dto.quantity,
@@ -305,6 +316,78 @@ export class InventoryService {
         note: dto.note,
         patientId,
       });
+    });
+    return this.findOne(id);
+  }
+
+  /**
+   * Take back the last movement on an item — a wrong button or a mistyped
+   * number, put right the moment it is seen. Only while nothing else has
+   * touched the item since (`expectedVersion`), so it can never take back
+   * someone else's work. Its lines leave the stock card, its batches go back
+   * to what they held — a batch it opened goes with it — and an audit row
+   * keeps what was taken back.
+   */
+  async undo(
+    id: string,
+    expectedVersion: number,
+    userId: string | null,
+  ): Promise<unknown> {
+    await this.items.manager.transaction(async (manager) => {
+      const item = await this.lock(manager, id);
+      if (item.version !== expectedVersion) {
+        throw AppException.conflict(ErrorCode.InventoryItemModified);
+      }
+      const movements = manager.getRepository(InventoryMovement);
+      // One movement is every line written in its transaction, which share
+      // `createdAt` to the microsecond — compared in SQL, since a JS date
+      // keeps only milliseconds.
+      const rows = await manager.query<Array<{ id: string }>>(
+        `SELECT id FROM inventory_movements
+          WHERE "itemId" = $1
+            AND "createdAt" = (SELECT "createdAt" FROM inventory_movements
+                                WHERE "itemId" = $1 ORDER BY seq DESC LIMIT 1)`,
+        [id],
+      );
+      if (!rows.length) {
+        throw AppException.conflict(ErrorCode.InventoryNothingToUndo);
+      }
+      const lines = await movements.findBy({ id: In(rows.map((r) => r.id)) });
+      const lots = manager.getRepository(InventoryLot);
+      for (const line of lines) {
+        if (!line.lotId) continue;
+        const lot = await lots.findOneBy({ id: line.lotId });
+        if (!lot) continue;
+        lot.quantity -= line.change;
+        const elsewhere = await movements.exists({
+          where: { lotId: lot.id, id: Not(In(lines.map((l) => l.id))) },
+        });
+        if (lot.quantity === 0 && !elsewhere) await lots.delete(lot.id);
+        else await lots.save(lot);
+      }
+      await movements.delete(lines.map((l) => l.id));
+      const after = await loadLots(manager, id);
+      await manager.getRepository(InventoryItem).update(id, {
+        quantity: after.reduce((n, l) => n + l.quantity, 0),
+        ...nearestExpiry(after),
+        version: () => '"version" + 1',
+      });
+      await this.audit.recordRequired(
+        {
+          userId,
+          action: 'update',
+          entity: 'inventory_item',
+          entityId: id,
+          changes: {
+            undone: lines.map((l) => ({
+              kind: l.kind,
+              change: l.change,
+              lotId: l.lotId,
+            })),
+          },
+        },
+        manager,
+      );
     });
     return this.findOne(id);
   }

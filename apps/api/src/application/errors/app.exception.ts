@@ -87,6 +87,7 @@ const DOMAIN_ERROR_STATUS: Partial<Record<ErrorCode, HttpStatus>> = {
   [ErrorCode.InventoryInsufficientStock]: HttpStatus.CONFLICT,
   [ErrorCode.InventoryLotNotFound]: HttpStatus.NOT_FOUND,
   [ErrorCode.InventoryLotExists]: HttpStatus.CONFLICT,
+  [ErrorCode.InventoryNothingToUndo]: HttpStatus.CONFLICT,
   [ErrorCode.UsernameTaken]: HttpStatus.CONFLICT,
   [ErrorCode.RateLimited]: HttpStatus.TOO_MANY_REQUESTS,
 };

@@ -119,6 +119,10 @@ export class ApiErrorTranslator {
         return this.t('error.inventoryLotNotFound');
       case 'ERR_INVENTORY_LOT_EXISTS':
         return this.t('error.inventoryLotExists');
+      case 'ERR_INVENTORY_LOT_REQUIRED':
+        return this.t('error.inventoryLotRequired');
+      case 'ERR_INVENTORY_NOTHING_TO_UNDO':
+        return this.t('error.inventoryNothingToUndo');
       case 'ERR_NOT_FOUND':
         return this.t('error.notFound');
 

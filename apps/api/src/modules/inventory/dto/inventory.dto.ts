@@ -304,3 +304,12 @@ export class UpdateInventoryLotDto {
   @IsOptional()
   expiry?: string | null;
 }
+
+/** Take back the last movement — offered right after it, for the wrong button or number. */
+export class UndoInventoryMovementDto {
+  /** The item's `version` the movement left; anything since and the undo is refused. */
+  @ApiProperty()
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+}

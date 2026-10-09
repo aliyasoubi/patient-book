@@ -26,6 +26,7 @@ import {
   inventoryUnitLabel,
 } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
+import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import {
   PbBanner,
   PbButton,
@@ -48,7 +49,12 @@ export interface InventoryItemDialogData {
 }
 
 /** What closing tells the list: the saved item, or that someone else got there first. */
-export type InventoryItemDialogResult = InventoryItemDetail | 'conflict' | undefined;
+export type InventoryItemDialogResult =
+  | InventoryItemDetail
+  | 'conflict'
+  /** The item already exists: record a delivery on it instead. */
+  | { receiveInto: InventoryItem }
+  | undefined;
 
 /** A product already on the shelves, offered as the name is typed. */
 interface Known {
@@ -77,6 +83,12 @@ const fold = (s: string): string =>
     .replace(/\u0643/g, String.fromCharCode(0x06a9)) // Arabic kaf → keheh
     .trim()
     .toLowerCase();
+
+/** A size compared as the API stores it: `4.1 x 10`, `4.1-10` and `4.1x10` alike. */
+const sizeKey = (s: string): string =>
+  fold(s)
+    .replace(/\s+/g, '')
+    .replace(/(\d)[x×*-](?=\d)/g, '$1x');
 
 /** The fewest suggestions that still find a product in a long list. */
 const MAX_SUGGESTIONS = 8;
@@ -113,6 +125,32 @@ const MAX_SUGGESTIONS = 8;
       <mat-dialog-content class="form">
         @if (formError(); as message) {
           <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
+        }
+        <!-- Said while typing, not after saving: one product, one row. -->
+        @if (duplicate(); as existing) {
+          <div class="form__duplicate">
+            <pb-banner tone="warning" size="compact" icon="content_copy" role="status">
+              {{
+                'inventoryForm.duplicate'
+                  | translate
+                    : {
+                        name: describe(existing),
+                        count: faNum(existing.quantity),
+                        unit: (unitLabel(existing.unit) | translate),
+                      }
+              }}
+            </pb-banner>
+            @if (!item) {
+              <pb-button
+                variant="stroked"
+                icon="move_to_inbox"
+                type="button"
+                (click)="ref.close({ receiveInto: existing })"
+              >
+                {{ 'inventoryForm.receiveExisting' | translate }}
+              </pb-button>
+            }
+          </div>
         }
         <pb-field-grid>
           <pb-text-field
@@ -215,6 +253,12 @@ const MAX_SUGGESTIONS = 8;
       gap: var(--pb-space-3);
       width: min(680px, 88vw);
     }
+    .form__duplicate {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--pb-space-2);
+    }
     .form__note {
       margin: 0;
       font: var(--mat-sys-body-small);
@@ -312,6 +356,42 @@ export class InventoryItemDialog {
    * The sizes or shades this product already comes in — what a new one is
    * written like, and which are taken.
    */
+  protected readonly faNum = formatPersianNumber;
+  protected readonly unitLabel = inventoryUnitLabel;
+
+  /** The brand as the catalogue spells it — what the API will store. */
+  private canonical(brand: string): string {
+    const typed = fold(brand);
+    const known = this.brands().find((b) =>
+      [b.name, ...b.spellings].some((x) => fold(x) === typed),
+    );
+    return known ? fold(known.name) : typed;
+  }
+
+  /**
+   * An item already on the shelves with this name, brand and size — told
+   * before saving, with the way to add to it instead of making a second row.
+   */
+  protected readonly duplicate = computed<InventoryItem | null>(() => {
+    const name = fold(this.nameTyped());
+    if (!name) return null;
+    const brand = this.canonical(this.brandTyped());
+    const spec = sizeKey(this.specTyped());
+    return (
+      this.stock().find(
+        (i) =>
+          i.id !== this.item?.id &&
+          fold(i.name) === name &&
+          this.canonical(i.brand ?? '') === brand &&
+          sizeKey(i.spec ?? '') === spec,
+      ) ?? null
+    );
+  });
+
+  protected describe(i: InventoryItem): string {
+    return [i.name, i.brand, i.spec].filter(Boolean).join(' · ');
+  }
+
   protected readonly specOptions = computed<TextFieldOption[]>(() => {
     const name = fold(this.nameTyped());
     const brand = fold(this.brandTyped());

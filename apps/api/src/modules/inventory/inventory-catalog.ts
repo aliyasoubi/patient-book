@@ -109,3 +109,13 @@ export function normalizeSpec(
   }
   return s.replace(/ +/g, ' ').trim();
 }
+
+/**
+ * Where every delivery names its lot and expiry, and a use can name the
+ * patient: implants, and the grafts and membranes placed with them — what a
+ * recall is traced through.
+ */
+export const TRACEABLE: ReadonlySet<InventoryCategory> = new Set([
+  InventoryCategory.Implant,
+  InventoryCategory.Regenerative,
+]);

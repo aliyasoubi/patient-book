@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { InventoryItem } from '../../core/models/common.model';
-import { changedLines, suggestedOrder } from './stock-sheets';
+import { changedLines, expiryEnd, isPast, suggestedOrder } from './stock-sheets';
 
 const item = (id: string, quantity: number, minQuantity: number | null): InventoryItem =>
   ({ id, quantity, minQuantity }) as InventoryItem;
@@ -38,5 +38,22 @@ describe('suggestedOrder', () => {
     expect(suggestedOrder({ quantity: 1, minQuantity: 3 })).toBe(5);
     expect(suggestedOrder({ quantity: 3, minQuantity: 3 })).toBe(3);
     expect(suggestedOrder({ quantity: 0, minQuantity: 0 })).toBe(1);
+  });
+});
+
+describe('expiryEnd', () => {
+  it('reads an expiry as the API does, to the end of the month it names', () => {
+    expect(expiryEnd('2028/07')).toEqual(new Date(2028, 6, 31));
+    expect(expiryEnd('07/2028')).toEqual(new Date(2028, 6, 31));
+    expect(expiryEnd('2028/05/16')).toEqual(new Date(2028, 4, 16));
+    expect(expiryEnd('۱۴۰۷/۰۵')?.getFullYear()).toBe(2028);
+    expect(expiryEnd('soon')).toBeNull();
+  });
+
+  it('tells a date already behind us', () => {
+    const now = new Date(2026, 9, 9);
+    expect(isPast('2026/09', now)).toBe(true);
+    expect(isPast('2026/10', now)).toBe(false);
+    expect(isPast('', now)).toBe(false);
   });
 });

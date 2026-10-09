@@ -82,6 +82,13 @@ export enum ErrorCode {
   InventoryLotNotFound = 'ERR_INVENTORY_LOT_NOT_FOUND',
   /** A batch corrected to the lot and expiry of another batch of the same item. */
   InventoryLotExists = 'ERR_INVENTORY_LOT_EXISTS',
+  /**
+   * A delivery of an implant, graft or membrane without the lot and expiry
+   * printed on it — what a recall is traced by.
+   */
+  InventoryLotRequired = 'ERR_INVENTORY_LOT_REQUIRED',
+  /** Undo on an item with no stock card line to take back. */
+  InventoryNothingToUndo = 'ERR_INVENTORY_NOTHING_TO_UNDO',
 
   // -- Value objects ----------------------------------------------------
   NationalIdLength = 'ERR_NATIONAL_ID_LENGTH',

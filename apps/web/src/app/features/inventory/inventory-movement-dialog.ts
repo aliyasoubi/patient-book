@@ -21,8 +21,14 @@ import type {
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
+import { expiryEnd, isPast } from './stock-sheets';
+
 import { PbBanner, PbButton, PbSelectField, PbTextField, type SelectOption } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
+
+/** An expiry the API will read — said on the field, before it is sent. */
+const readableExpiry = (control: AbstractControl<string>): ValidationErrors | null =>
+  !control.value?.trim() || expiryEnd(control.value) ? null : { expiry: true };
 
 export interface InventoryMovementDialogData {
   item: InventoryItem;
@@ -99,6 +105,17 @@ const COPY: Record<
         @if (formError(); as message) {
           <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
         }
+        <!-- Not refused, but rarely meant: said before it is saved. -->
+        @if (expiredBatch()) {
+          <pb-banner tone="warning" size="compact" icon="event_busy" role="note">
+            {{ 'inventoryMove.expiredBatch' | translate }}
+          </pb-banner>
+        }
+        @if (pastExpiry()) {
+          <pb-banner tone="warning" size="compact" icon="event_busy" role="note">
+            {{ 'inventoryMove.pastExpiry' | translate }}
+          </pb-banner>
+        }
         <!-- Which batch, when there is a choice to make. -->
         @if (takesOut && lotOptions().length > 1) {
           <pb-select-field
@@ -119,6 +136,7 @@ const COPY: Record<
           <pb-text-field
             [control]="form.controls.lotNumber"
             [label]="'inventoryMove.lotNumber' | translate"
+            [errorMessages]="traceableErrors"
             [hint]="
               (traceable ? 'inventoryMove.lotNumberTraced' : 'inventoryMove.lotNumberHint')
                 | translate
@@ -130,6 +148,7 @@ const COPY: Record<
             [control]="form.controls.expiry"
             [label]="'inventoryMove.expiry' | translate"
             [hint]="'inventoryForm.expiryHint' | translate"
+            [errorMessages]="traceableErrors"
             [maxlength]="20"
             [ltr]="true"
           />
@@ -204,6 +223,7 @@ export class InventoryMovementDialog {
   protected readonly copy = COPY[this.kind];
   protected readonly takesOut = this.kind === 'use' || this.kind === 'discard';
   protected readonly traceable = TRACEABLE_CATEGORIES.includes(this.item.category);
+  private readonly mustTrace = this.kind === 'receive' && this.traceable;
   protected readonly faNum = formatPersianNumber;
   protected readonly itemLabel = [this.item.name, this.item.brand, this.item.spec]
     .filter(Boolean)
@@ -235,14 +255,47 @@ export class InventoryMovementDialog {
       this.kind === 'count' ? String(this.item.quantity) : '1',
       [Validators.required, this.quantityValid, this.withinStock],
     ],
-    lotNumber: ['', Validators.maxLength(60)],
-    expiry: ['', Validators.maxLength(20)],
+    // An implant's or a graft's lot and expiry are what a recall traces.
+    lotNumber: [
+      '',
+      this.mustTrace ? [Validators.required, Validators.maxLength(60)] : Validators.maxLength(60),
+    ],
+    expiry: [
+      '',
+      this.mustTrace
+        ? [Validators.required, Validators.maxLength(20), readableExpiry]
+        : [Validators.maxLength(20), readableExpiry],
+    ],
     patientFileNo: ['', Validators.pattern(/^[0-9۰-۹٠-٩]{1,18}$/)],
     note: ['', Validators.maxLength(300)],
   });
 
   private readonly quantity = toSignal(this.form.controls.quantity.valueChanges, {
     initialValue: this.form.controls.quantity.value,
+  });
+  private readonly expiryTyped = toSignal(this.form.controls.expiry.valueChanges, {
+    initialValue: '',
+  });
+  private readonly lotPicked = toSignal(this.form.controls.lotId.valueChanges, {
+    initialValue: '',
+  });
+
+  protected readonly traceableErrors = {
+    required: this.i18n.instant('inventoryMove.lotRequired'),
+    expiry: this.i18n.instant('validation.expiry'),
+  };
+
+  /** A delivery whose packs say they have already expired: almost always a typo. */
+  protected readonly pastExpiry = computed(
+    () => this.kind === 'receive' && isPast(this.expiryTyped()),
+  );
+
+  /** A use out of a batch past its date — the one picked, or the first to go out. */
+  protected readonly expiredBatch = computed(() => {
+    if (this.kind !== 'use') return false;
+    const lots = this.lots();
+    const lot = this.lotPicked() ? lots.find((l) => l.id === this.lotPicked()) : lots[0];
+    return lot?.expiryState === 'expired';
   });
 
   /** «A-100 · انقضا ۲۰۲۷/۰۱ · ۵ مانده», first-expiring first, after «first-expiring». */
