@@ -118,6 +118,12 @@ describeIfWritable('lab flows (e2e)', () => {
     return body;
   }
 
+  /** A booking for today: the step between coming back and being fitted. */
+  const bookToday = (id: string) =>
+    asStaff(http().post(`/api/lab-cases/${id}/book`))
+      .send({ date: daysAgo(0) })
+      .expect(200);
+
   const board = async (q: string): Promise<BoardBody> =>
     (await asStaff(http().get('/api/lab-cases/board')).query({ q }).expect(200))
       .body as BoardBody;
@@ -253,6 +259,7 @@ describeIfWritable('lab flows (e2e)', () => {
       await asStaff(http().post(`/api/lab-cases/${opened.id}/receive`))
         .send({})
         .expect(200);
+      await bookToday(opened.id);
       const delivered = await asStaff(
         http().post(`/api/lab-cases/${opened.id}/deliver`),
       )
@@ -310,7 +317,7 @@ describeIfWritable('lab flows (e2e)', () => {
         params: { stage: 'at_clinic' },
       });
 
-      // Delivered only from the clinic — what is at the lab is received first.
+      // Delivered only once booked — what is at the lab is received first.
       await asStaff(http().post(`/api/lab-cases/${opened.id}/send`))
         .send({ kind: 'correction', waitDays: 3 })
         .expect(200);
@@ -378,6 +385,7 @@ describeIfWritable('lab flows (e2e)', () => {
       await asStaff(http().post(`/api/lab-cases/${opened.id}/receive`))
         .send({})
         .expect(200);
+      await bookToday(opened.id);
       await asStaff(http().post(`/api/lab-cases/${opened.id}/deliver`))
         .send({ date: daysAgo(40) })
         .expect(200);
@@ -491,6 +499,25 @@ describeIfWritable('lab flows (e2e)', () => {
           .expect(200)
       ).body as LabCaseBody;
       expect(undone.stage).toBe('booked');
+    });
+
+    it('is delivered a step at a time: not from the clinic column, without a booking', async () => {
+      const back = await received(`آزمون تحویل بدون نوبت ${runId}`);
+      const refused = await asStaff(
+        http().post(`/api/lab-cases/${back.id}/deliver`),
+      )
+        .send({})
+        .expect(409);
+      expect(refused.body).toMatchObject({
+        code: ErrorCode.LabCaseMoved,
+        params: { stage: 'at_clinic' },
+      });
+
+      // Booked for today, a walk-in can then be fitted.
+      await book(back.id, daysAgo(0)).expect(200);
+      await asStaff(http().post(`/api/lab-cases/${back.id}/deliver`))
+        .send({})
+        .expect(200);
     });
 
     it('refuses a booking for work still at the lab, and a bad date', async () => {
