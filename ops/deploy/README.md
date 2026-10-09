@@ -100,6 +100,20 @@ already exist by file number and corrects fields on them; it never creates
 records, so a workbook fed into an empty register reports every row as
 unmatched. The importer above is the answer.
 
+### Loading the stock workbook
+
+The inventory (انبار) is loaded the same way, from the practice's stock
+workbook, after a deploy has run the inventory migrations:
+
+```bash
+./ops/deploy/import-inventory.sh ~/stock.xlsx           # preview: every renamed item, every unreadable cell
+./ops/deploy/import-inventory.sh ~/stock.xlsx --apply   # write it, once
+```
+
+The preview writes nothing; read it before `--apply`. `--apply` refuses an
+inventory that already has items. Each item's opening count is a line on its
+stock card naming the sheet and cell it came from.
+
 ### Export and reconcile
 
 The other half of the Excel round-trip, also run inside the API image:
