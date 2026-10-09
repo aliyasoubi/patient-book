@@ -6,6 +6,7 @@ import {
   fefo,
   identityKey,
   inventorySearchKey,
+  itemSearchText,
   LotLevel,
   nearestExpiry,
   normalizeLot,
@@ -233,6 +234,30 @@ describe('inventorySearchKey', () => {
 
   it('leaves letters and words alone', () => {
     expect(inventorySearchKey('SLA-BLT-RC')).toBe('sla-blt-rc');
+  });
+});
+
+describe('itemSearchText', () => {
+  it('finds a Latin implant brand by the Persian name staff type', () => {
+    const text = itemSearchText({
+      name: 'SLA Active_BL',
+      brand: 'Straumann',
+      spec: '4.1-10',
+      notes: null,
+    });
+    expect(text).toContain(inventorySearchKey('اشترومن'));
+    expect(text).toContain('4.1x10');
+  });
+
+  it('adds nothing for a brand it does not know', () => {
+    expect(
+      itemSearchText({
+        name: 'پودر استخوان',
+        brand: 'regen',
+        spec: null,
+        notes: null,
+      }),
+    ).toBe(inventorySearchKey('پودر استخوان regen'));
   });
 });
 

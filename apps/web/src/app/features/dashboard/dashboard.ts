@@ -133,14 +133,14 @@ export class Dashboard {
       });
     }
     // The stock's two questions, counted exactly as the inventory list's
-    // own filters answer them.
+    // own filters answer them. What to order opens the order list — the
+    // same items, with the quantity to ask the supplier for.
     if (s.inventoryReorder > 0) {
       tiles.push({
         label: 'tile.inventoryReorder',
         value: s.inventoryReorder,
         icon: 'shopping_cart',
-        link: '/inventory',
-        queryParams: { filter: 'reorder' },
+        link: '/inventory/order',
         tone: 'warn',
       });
     }

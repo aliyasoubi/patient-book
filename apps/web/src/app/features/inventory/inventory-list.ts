@@ -309,7 +309,8 @@ export class InventoryList {
         this.snackBar.open(
           this.i18n.instant('inventoryMove.recorded', {
             kind: this.i18n.instant(inventoryMovementLabel(kind)),
-            name: saved.name,
+            // «Supe Line 4x12», not «Supe Line»: a line's sizes share its name.
+            name: [saved.name, saved.spec].filter(Boolean).join(' '),
             count: formatPersianCount(saved.quantity),
             unit: this.i18n.instant(inventoryUnitLabel(saved.unit)),
           }),

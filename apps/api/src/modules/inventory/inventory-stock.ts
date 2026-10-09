@@ -9,6 +9,7 @@ import {
 import {
   ConflictError,
   ErrorCode,
+  extractImplantBrand,
   JalaliDate,
   searchKey,
   storedDate,
@@ -312,15 +313,22 @@ export function inventorySearchKey(text: string | null | undefined): string {
     .replace(/(\d)[/٫](?=\d)/g, '$1.');
 }
 
-/** What a search reaches: everything written on the item. */
+/**
+ * What a search reaches: everything written on the item, and the Persian name
+ * of an implant system written in Latin — boxes say «Straumann», staff say
+ * and type «اشترومن», as the surgery list and lab cases record it.
+ */
 export function itemSearchText(item: {
   name: string;
   brand: string | null;
   spec: string | null;
   notes: string | null;
 }): string {
+  const aliases = [item.brand, item.name].map((s) => extractImplantBrand(s));
   return inventorySearchKey(
-    [item.name, item.brand, item.spec, item.notes].filter(Boolean).join(' '),
+    [item.name, item.brand, ...aliases, item.spec, item.notes]
+      .filter(Boolean)
+      .join(' '),
   );
 }
 
