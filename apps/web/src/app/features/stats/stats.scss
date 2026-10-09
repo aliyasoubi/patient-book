@@ -1,3 +1,4 @@
+@use '../../../styles/surface';
 @use '../../../styles/type';
 
 .stats {
@@ -251,5 +252,38 @@
   &__count {
     font-weight: 600;
     font-feature-settings: var(--pb-font-numeric);
+  }
+}
+
+/* ── Treatment catalogue ───────────────────────────────────────────── */
+.catalogue {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--pb-space-2);
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    padding: var(--pb-space-2) var(--pb-space-3);
+    @include surface.tonal(medium);
+    font: var(--mat-sys-body-medium);
+
+    > .material-symbols-rounded {
+      font-size: var(--pb-icon-sm);
+      color: var(--mat-sys-on-surface-variant);
+      flex: 0 0 auto;
+    }
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
