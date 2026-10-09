@@ -122,8 +122,17 @@ npm run import:inventory -- path/to/workbook.xlsx            # preview: nothing 
 npm run import:inventory -- path/to/workbook.xlsx --apply    # write it
 ```
 
-The preview needs no database. It lists every item it found and everything it
-had to interpret, to check on the shelf: a hand-typed sheet total that
+Items arrive in the standard shape every item takes: `name` the product,
+`brand` its maker as the brand list in `inventory-catalog.ts` spells it, and
+`spec` the size or shade — «کامپوزیت · 3M · A1 Z250» becomes «کامپوزیت
+Filtek Z250 · 3M · A1», «کا فایل 25» becomes «کا فایل · #25», `Supe Line`
+becomes SuperLine (`import/standardize.ts`). The app applies the same brand
+list and size format to every item saved, so «دنتیوم» is stored as Dentium
+and `4.1 - 10` as `4.1x10`, and the form suggests brands in any spelling and
+the sizes a product already comes in.
+
+The preview needs no database. It lists every rename, every item it found and
+everything it had to interpret, to check on the shelf: a hand-typed sheet total that
 disagrees with its rows, a diameter Excel had turned into a date («6/5» → 6.5),
 an expiry with only a year, a row with no quantity, a product listed on two
 rows (merged, the counts added). An unreadable quantity or date goes into the

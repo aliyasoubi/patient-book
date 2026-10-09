@@ -7,6 +7,7 @@ import { InventoryItem } from './inventory-item.entity';
 import { InventoryLot } from './inventory-lot.entity';
 import { InventoryMovement } from './inventory-movement.entity';
 import { loadLots, writeMovement } from './inventory-ledger';
+import { BRANDS, canonicalBrand, normalizeSpec } from './inventory-catalog';
 import { Patient } from '../patients/patient.entity';
 import {
   CreateInventoryItemDto,
@@ -109,6 +110,26 @@ export class InventoryService {
 
     const now = new Date();
     return (await qb.getMany()).map((i) => this.toResponse(i, now));
+  }
+
+  /**
+   * Brands to offer as a brand is typed: the catalogue's, as it spells them
+   * with the other ways each is written — «دنت» finds Dentium — and any other
+   * brand already on the shelves.
+   */
+  async brands(): Promise<Array<{ name: string; spellings: string[] }>> {
+    const rows = await this.items
+      .createQueryBuilder('i')
+      .select('DISTINCT i.brand', 'brand')
+      .where('i.brand IS NOT NULL')
+      .getRawMany<{ brand: string }>();
+    const listed = new Set(BRANDS.map((b) => b.name));
+    return [
+      ...BRANDS.map((b) => ({ name: b.name, spellings: [...b.aliases] })),
+      ...rows
+        .filter((r) => !listed.has(r.brand))
+        .map((r) => ({ name: r.brand, spellings: [] })),
+    ].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
   }
 
   /** One item, its batches on the shelf first-expiring first, and its stock card newest first. */
@@ -474,6 +495,9 @@ export class InventoryService {
       item.minQuantity = dto.minQuantity ?? null;
     }
     if (dto.notes !== undefined) item.notes = dto.notes ?? null;
+    // One spelling for a brand and one form for a size, however typed.
+    item.brand = canonicalBrand(item.brand);
+    item.spec = normalizeSpec(item.category, item.spec);
     item.identityKey = identityKey(item);
     item.searchText = itemSearchText(item);
   }

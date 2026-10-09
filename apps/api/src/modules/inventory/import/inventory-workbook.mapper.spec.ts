@@ -55,7 +55,9 @@ const IMPLANT_HEADER = [
 
 /** Notes about one sheet; every other sheet is simply absent here. */
 const about = (notes: ImportNote[], sheetName: string) =>
-  notes.filter((n) => n.source.startsWith(`${sheetName}!`));
+  notes.filter(
+    (n) => n.source.startsWith(`${sheetName}!`) && n.level !== 'renamed',
+  );
 
 describe('mapInventoryWorkbook', () => {
   it('reads an implant sheet, skipping the brand copied down empty rows', () => {
@@ -77,13 +79,21 @@ describe('mapInventoryWorkbook', () => {
       expect.objectContaining({
         source: 'Dentium!D2',
         category: InventoryCategory.Implant,
-        name: 'Supe Line',
+        name: 'SuperLine',
         brand: 'Dentium',
         spec: '3.6x8',
         quantity: 4,
       }),
       expect.objectContaining({ spec: '4x10', quantity: 0 }),
     ]);
+    // The line's name is put right, and the preview says so.
+    expect(notes).toContainEqual(
+      expect.objectContaining({
+        source: 'Dentium!D2',
+        level: 'renamed',
+        message: 'Supe Line ‹Dentium› (3.6x8)  →  SuperLine ‹Dentium› (3.6x8)',
+      }),
+    );
     expect(about(notes, 'Dentium')).toEqual([
       expect.objectContaining({ source: 'Dentium!B4', level: 'info' }),
       expect.objectContaining({
@@ -131,7 +141,7 @@ describe('mapInventoryWorkbook', () => {
     expect(items[0]).toMatchObject({
       name: 'ایمپلنت',
       brand: 'TRI',
-      spec: '4.1 x 8',
+      spec: '4.1x8',
     });
   });
 
@@ -155,7 +165,7 @@ describe('mapInventoryWorkbook', () => {
     );
     expect(items[0]).toMatchObject({
       name: 'هیلینگ',
-      spec: 'Rc · D 6.5 · G/H 4',
+      spec: 'RC · D 6.5 · G/H 4',
     });
     expect(about(notes, 'هیلینگ')).toEqual([
       expect.objectContaining({ source: 'هیلینگ!C2', level: 'review' }),
@@ -202,7 +212,7 @@ describe('mapInventoryWorkbook', () => {
         spec: 'D 4.5 · G/H 1.5',
       }),
       expect.objectContaining({
-        name: 'Analog',
+        name: 'آنالوگ',
         brand: null,
         spec: null,
         quantity: 10,
@@ -227,8 +237,8 @@ describe('mapInventoryWorkbook', () => {
     expect(
       items.map((i) => [i.category, i.name, i.brand, i.spec, i.quantity]),
     ).toEqual([
-      [InventoryCategory.Anesthesia, 'لیدوکایین', null, null, 5],
-      [InventoryCategory.Restorative, 'کامپوزیت', '3M', 'A2 Z250', 2],
+      [InventoryCategory.Anesthesia, 'لیدوکائین', null, null, 5],
+      [InventoryCategory.Restorative, 'کامپوزیت Filtek Z250', '3M', 'A2', 2],
       [InventoryCategory.Impression, 'واش', null, null, 9],
       [InventoryCategory.Impression, 'اکتیواتور', null, null, 9],
     ]);

@@ -6,6 +6,13 @@ import {
   toLatinDigits,
 } from '../../../domain';
 import { Expiry, identityKey, parseExpiry } from '../inventory-stock';
+import { Named, standardize } from './standardize';
+
+/** «name ‹brand› (spec)», for the preview's list of renames. */
+const describe = (n: Named): string =>
+  [n.name, n.brand && `‹${n.brand}›`, n.spec && `(${n.spec})`]
+    .filter(Boolean)
+    .join(' ');
 
 /**
  * The practice's stock workbook («موجودی انبار.xlsx») read into items.
@@ -56,8 +63,12 @@ export interface ImportedItem {
 
 export interface ImportNote {
   source: string;
-  /** `error` stops the import; `review` is worth a look on the shelf; `info` is for the record. */
-  level: 'error' | 'review' | 'info';
+  /**
+   * `error` stops the import; `review` is worth a look on the shelf;
+   * `renamed` is a name, brand or size put into the standard form; `info` is
+   * for the record.
+   */
+  level: 'error' | 'review' | 'renamed' | 'info';
   message: string;
 }
 
@@ -381,12 +392,23 @@ export function mapInventoryWorkbook(workbook: RawWorkbook): WorkbookImport {
       }
 
       sum += quantity;
-      items.push({
-        source: at,
+      const read = {
         category: section.category,
         name: name || section.defaultName || '',
         brand,
         spec: spec.join(' · ') || null,
+      };
+      const { item: standard, changed } = standardize(read);
+      if (changed) {
+        notes.push({
+          source: at,
+          level: 'renamed',
+          message: `${describe(read)}  →  ${describe(standard)}`,
+        });
+      }
+      items.push({
+        source: at,
+        ...standard,
         unit,
         quantity,
         expiry,

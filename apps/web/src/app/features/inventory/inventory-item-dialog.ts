@@ -70,7 +70,13 @@ const countValue = (raw: string): number | null => {
   return value ? Number(value) : null;
 };
 const blank = (raw: string): string | null => raw.trim() || null;
-const fold = (s: string): string => toLatinDigits(s).trim().toLowerCase();
+/** Typed text as compared: digits, Arabic letters and case all one way. */
+const fold = (s: string): string =>
+  toLatinDigits(s)
+    .replace(/\u064a/g, String.fromCharCode(0x06cc)) // Arabic yeh → Persian yeh
+    .replace(/\u0643/g, String.fromCharCode(0x06a9)) // Arabic kaf → keheh
+    .trim()
+    .toLowerCase();
 
 /** The fewest suggestions that still find a product in a long list. */
 const MAX_SUGGESTIONS = 8;
@@ -128,6 +134,7 @@ const MAX_SUGGESTIONS = 8;
             [control]="form.controls.spec"
             [label]="'inventoryForm.spec' | translate"
             [hint]="'inventoryForm.specHint' | translate"
+            [options]="specOptions()"
             [maxlength]="120"
           />
           <pb-select-field
@@ -257,14 +264,21 @@ export class InventoryItemDialog {
     notes: [this.item?.notes ?? '', Validators.maxLength(2000)],
   });
 
-  /** One of each product the clinic stocks, for the name and brand suggestions. */
-  private readonly known = signal<Known[]>([]);
+  /** Everything on the shelves, for the suggestions. */
+  private readonly stock = signal<InventoryItem[]>([]);
+  /** One of each product the clinic stocks, for the name suggestions. */
+  private readonly known = computed(() => distinctProducts(this.stock()));
+  /** The catalogue's brands, as it spells them, and those already in stock. */
+  private readonly brands = signal<{ name: string; spellings: string[] }[]>([]);
 
   private readonly nameTyped = toSignal(this.form.controls.name.valueChanges, {
     initialValue: this.form.controls.name.value,
   });
   private readonly brandTyped = toSignal(this.form.controls.brand.valueChanges, {
     initialValue: this.form.controls.brand.value,
+  });
+  private readonly specTyped = toSignal(this.form.controls.spec.valueChanges, {
+    initialValue: this.form.controls.spec.value,
   });
 
   /** «Supe Line (Dentium)»: picking one fills in the rest of what is known about it. */
@@ -282,21 +296,45 @@ export class InventoryItemDialog {
       }));
   });
 
-  /** Brands already written, so a new item spells one the same way as the rest. */
+  /**
+   * Brands as the catalogue spells them, so a new item names its maker the
+   * way every other item does — the API stores that spelling anyway.
+   */
   protected readonly brandOptions = computed<TextFieldOption[]>(() => {
     const typed = fold(this.brandTyped());
-    const brands = [...new Set(this.known().flatMap((k) => (k.brand ? [k.brand] : [])))];
-    return brands
-      .filter((b) => !typed || fold(b).includes(typed))
+    return this.brands()
+      .filter((b) => !typed || [b.name, ...b.spellings].some((x) => fold(x).includes(typed)))
       .slice(0, MAX_SUGGESTIONS)
-      .map((b) => ({ value: b, label: b }));
+      .map((b) => ({ value: b.name, label: b.name }));
+  });
+
+  /**
+   * The sizes or shades this product already comes in — what a new one is
+   * written like, and which are taken.
+   */
+  protected readonly specOptions = computed<TextFieldOption[]>(() => {
+    const name = fold(this.nameTyped());
+    const brand = fold(this.brandTyped());
+    const typed = fold(this.specTyped());
+    if (!name) return [];
+    const specs = this.stock()
+      .filter((i) => fold(i.name) === name && fold(i.brand ?? '') === brand && i.spec)
+      .map((i) => i.spec!);
+    return [...new Set(specs)]
+      .filter((spec) => !typed || fold(spec).includes(typed))
+      .slice(0, MAX_SUGGESTIONS)
+      .map((spec) => ({ value: spec, label: spec }));
   });
 
   constructor() {
+    // Suggestions are a convenience: without them the form still works.
     this.inventory.list({}).subscribe({
-      next: (items) => this.known.set(distinctProducts(items)),
-      // Suggestions are a convenience: without them the form still works.
-      error: () => this.known.set([]),
+      next: (items) => this.stock.set(items),
+      error: () => this.stock.set([]),
+    });
+    this.inventory.brands().subscribe({
+      next: (brands) => this.brands.set(brands),
+      error: () => this.brands.set([]),
     });
   }
 

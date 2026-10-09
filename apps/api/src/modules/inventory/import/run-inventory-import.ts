@@ -145,6 +145,7 @@ function printReport({ items, notes }: WorkbookImport): void {
   };
   section('error', 'Errors');
   section('review', 'To check on the shelf');
+  section('renamed', 'Standardized names (as read  →  as stored)');
   section('info', 'For the record');
 }
 

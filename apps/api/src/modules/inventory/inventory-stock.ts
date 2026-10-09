@@ -9,12 +9,12 @@ import {
 import {
   ConflictError,
   ErrorCode,
-  extractImplantBrand,
   JalaliDate,
   searchKey,
   storedDate,
   toLatinDigits,
 } from '../../domain';
+import { brandSpellings } from './inventory-catalog';
 
 /**
  * The rules of the clinic's stock, with no database and no framework: what an
@@ -314,9 +314,9 @@ export function inventorySearchKey(text: string | null | undefined): string {
 }
 
 /**
- * What a search reaches: everything written on the item, and the Persian name
- * of an implant system written in Latin — boxes say «Straumann», staff say
- * and type «اشترومن», as the surgery list and lab cases record it.
+ * What a search reaches: everything written on the item, and every way its
+ * brand is written — boxes say «Straumann», staff type «اشترومن», as the
+ * surgery list and lab cases record it.
  */
 export function itemSearchText(item: {
   name: string;
@@ -324,9 +324,14 @@ export function itemSearchText(item: {
   spec: string | null;
   notes: string | null;
 }): string {
-  const aliases = [item.brand, item.name].map((s) => extractImplantBrand(s));
   return inventorySearchKey(
-    [item.name, item.brand, ...aliases, item.spec, item.notes]
+    [
+      item.name,
+      ...brandSpellings(item.brand),
+      item.brand,
+      item.spec,
+      item.notes,
+    ]
       .filter(Boolean)
       .join(' '),
   );

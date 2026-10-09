@@ -42,6 +42,14 @@ export class InventoryController {
     return this.inventory.list(query);
   }
 
+  @Get('brands')
+  @ApiOperation({
+    summary: 'Brands to suggest: the standard list and those in stock',
+  })
+  brands() {
+    return this.inventory.brands();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'One item and its stock card, newest first' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {

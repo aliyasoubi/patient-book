@@ -73,6 +73,11 @@ export class InventoryService {
     return this.http.get<InventoryItem[]>(this.items, { params: toParams(query) });
   }
 
+  /** Brands to suggest: the standard list, as it spells them, and those in stock. */
+  brands(): Observable<{ name: string; spellings: string[] }[]> {
+    return this.http.get<{ name: string; spellings: string[] }[]>(`${this.items}/brands`);
+  }
+
   /** One item with its stock card, newest first. */
   get(id: string): Observable<InventoryItemDetail> {
     return this.http.get<InventoryItemDetail>(`${this.items}/${id}`);

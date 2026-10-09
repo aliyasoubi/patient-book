@@ -373,6 +373,25 @@ describeIfWritable('inventory flows (e2e)', () => {
     expect((await list({ q: shelf, filter: 'reorder' }))[0].quantity).toBe(3);
   });
 
+  it('stores a brand and a size the standard way, however typed', async () => {
+    const item = (await addItem({
+      name: `std-${runId}`,
+      brand: 'دنتیوم',
+      spec: '۴/۵ - ۱۰',
+    })) as ItemBody & { brand: string; spec: string };
+    expect(item).toMatchObject({ brand: 'Dentium', spec: '4.5x10' });
+
+    const brands = (
+      await asStaff(http().get('/api/inventory/items/brands')).expect(200)
+    ).body as Array<{ name: string; spellings: string[] }>;
+    expect(brands).toContainEqual(
+      expect.objectContaining({
+        name: 'Straumann',
+        spellings: expect.arrayContaining(['اشترومن']),
+      }),
+    );
+  });
+
   it('refuses an expiry it cannot read, on the field', async () => {
     const res = await asStaff(http().post('/api/inventory/items'))
       .send({ category: 'other', name: `x-${runId}`, expiry: 'soon' })

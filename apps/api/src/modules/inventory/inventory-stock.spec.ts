@@ -253,11 +253,11 @@ describe('itemSearchText', () => {
     expect(
       itemSearchText({
         name: 'پودر استخوان',
-        brand: 'regen',
+        brand: 'Acme',
         spec: null,
         notes: null,
       }),
-    ).toBe(inventorySearchKey('پودر استخوان regen'));
+    ).toBe(inventorySearchKey('پودر استخوان Acme'));
   });
 });
 
