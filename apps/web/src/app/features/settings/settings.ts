@@ -1,13 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { LabService } from '../../core/services/lab.service';
-import { PatientsService } from '../patients/data/patients.service';
 import { roleLabel } from '../../shared/labels';
 import {
   PbButton,
@@ -20,13 +18,11 @@ import {
 } from '../../shared/ui';
 import type { SegmentOption } from '../../shared/ui';
 import type { Lab } from '../../core/models/common.model';
-import type { TreatmentType } from '../patients/data/patient.model';
 import { LabNameDialog } from './lab-name-dialog';
 
 /**
- * Appearance, account, the labs the practice works with, and the treatment
- * catalogue. Backups and the Excel
- * export/reconcile tools are deliberately not here: they are operated from
+ * Appearance, account and the labs the practice works with. Backups and the
+ * Excel export/reconcile tools are deliberately not here: they are operated from
  * the server's terminal (see the README), not from the clinic's screens.
  */
 @Component({
@@ -39,7 +35,6 @@ import { LabNameDialog } from './lab-name-dialog';
     PbSwitch,
     PbSurface,
     PbPageHeader,
-    MatIconModule,
     TranslatePipe,
     PbPage,
   ],
@@ -49,7 +44,6 @@ import { LabNameDialog } from './lab-name-dialog';
 export class Settings {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
-  private readonly patients = inject(PatientsService);
   private readonly labService = inject(LabService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -63,13 +57,11 @@ export class Settings {
     { value: 'dark', label: 'settings.dark', icon: 'dark_mode', translate: true },
   ];
 
-  protected readonly treatments = signal<TreatmentType[]>([]);
   protected readonly labs = signal<Lab[]>([]);
   /** The lab whose switch is mid-flight. */
   protected readonly labBusy = signal<string | null>(null);
 
   constructor() {
-    this.patients.treatmentTypes().subscribe((t) => this.treatments.set(t));
     this.loadLabs();
   }
 

@@ -65,19 +65,4 @@
       </pb-button>
     }
   </pb-surface>
-
-  <pb-surface
-    icon="dentistry"
-    [title]="'settings.treatments' | translate"
-    [description]="'settings.treatmentsHint' | translate"
-  >
-    <ul class="catalogue">
-      @for (t of treatments(); track t.id) {
-        <li class="catalogue__item">
-          <mat-icon aria-hidden="true">{{ t.icon }}</mat-icon>
-          <span class="catalogue__name">{{ t.nameFa }}</span>
-        </li>
-      }
-    </ul>
-  </pb-surface>
 </pb-page>

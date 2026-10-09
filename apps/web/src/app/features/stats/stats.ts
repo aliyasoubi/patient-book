@@ -6,6 +6,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { addMonths, format, startOfMonth } from 'date-fns-jalali';
 
 import { RegistryService } from '../../core/services/registry.service';
+import { PatientsService } from '../patients/data/patients.service';
 import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import {
   ageBandLabel,
@@ -17,6 +18,7 @@ import {
 import { LoadError } from '../../shared/components/load-error';
 import { PbPage, PbPageHeader, PbStatTile, PbSurface } from '../../shared/ui';
 import type { PracticeStats } from '../../core/models/common.model';
+import type { TreatmentType } from '../patients/data/patient.model';
 
 interface TotalTile {
   label: string;
@@ -51,6 +53,7 @@ interface TotalTile {
 })
 export class Stats {
   private readonly registry = inject(RegistryService);
+  private readonly patients = inject(PatientsService);
   private readonly i18n = inject(TranslateService);
 
   protected readonly genderLabel = genderLabel;
@@ -63,6 +66,8 @@ export class Stats {
   protected readonly loading = signal(true);
   protected readonly failed = signal(false);
   protected readonly stats = signal<PracticeStats | null>(null);
+  /** The treatment catalogue, shown whole beneath the figures. */
+  protected readonly catalogue = signal<TreatmentType[]>([]);
 
   /** Each total opens its register; "seen lately" has no list of its own. */
   protected readonly tiles = computed<TotalTile[]>(() => {
@@ -144,6 +149,10 @@ export class Stats {
 
   constructor() {
     this.load();
+    this.patients.treatmentTypes().subscribe({
+      next: (t) => this.catalogue.set(t),
+      error: () => undefined,
+    });
   }
 
   /** Also the retry handler — a failed load must be recoverable without a reload. */

@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RegistryService } from '../../core/services/registry.service';
+import { PatientsService } from '../patients/data/patients.service';
 import type { PracticeStats } from '../../core/models/common.model';
 import { Stats } from './stats';
 
@@ -36,13 +37,14 @@ describe('Stats', () => {
 
   afterEach(() => vi.useRealTimers());
 
-  function render() {
+  function render(types: unknown[] = []) {
     TestBed.configureTestingModule({
       imports: [Stats],
       providers: [
         provideRouter([]),
         provideTranslateService(),
         { provide: RegistryService, useValue: { practiceStats: () => stats$ } },
+        { provide: PatientsService, useValue: { treatmentTypes: () => of(types) } },
       ],
     });
     const fixture = TestBed.createComponent(Stats);
@@ -99,5 +101,16 @@ describe('Stats', () => {
       expect(el.querySelector(`.stats__panel--${panel}`)?.textContent).toContain('stats.noData');
     }
     expect(el.querySelector('.stats__panel--growth')?.textContent).toContain('stats.noChartData');
+  });
+
+  it('lists the treatment catalogue even before any figures arrive', () => {
+    const { fixture, el } = render([
+      { id: 't1', icon: 'dentistry', nameFa: 'ایمپلنت' },
+      { id: 't2', icon: 'straighten', nameFa: 'ارتودنسی' },
+    ]);
+    fixture.detectChanges();
+
+    const names = [...el.querySelectorAll('.catalogue__name')].map((n) => n.textContent);
+    expect(names).toEqual(['ایمپلنت', 'ارتودنسی']);
   });
 });
