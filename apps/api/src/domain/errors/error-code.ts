@@ -64,6 +64,43 @@ export enum ErrorCode {
   /** Undo on a case that has only its first trip: archive it instead. */
   LabCaseNothingToUndo = 'ERR_LAB_CASE_NOTHING_TO_UNDO',
 
+  // -- Inventory --------------------------------------------------------
+  InventoryItemNotFound = 'ERR_INVENTORY_ITEM_NOT_FOUND',
+  /**
+   * An active item with the same category, name, brand and specification
+   * already exists; stock of one thing must not be split across two rows.
+   * `params.id` is the existing item.
+   */
+  InventoryItemExists = 'ERR_INVENTORY_ITEM_EXISTS',
+  /** As {@link ErrorCode.PatientModified}, for an inventory item. */
+  InventoryItemModified = 'ERR_INVENTORY_ITEM_MODIFIED',
+  /**
+   * More taken out than is on the shelf — or in the batch named.
+   * `params.available` is what there is.
+   */
+  InventoryInsufficientStock = 'ERR_INVENTORY_INSUFFICIENT_STOCK',
+  InventoryLotNotFound = 'ERR_INVENTORY_LOT_NOT_FOUND',
+  /** A batch corrected to the lot and expiry of another batch of the same item. */
+  InventoryLotExists = 'ERR_INVENTORY_LOT_EXISTS',
+  /**
+   * A delivery of an implant, graft or membrane without the lot and expiry
+   * printed on it — what a recall is traced by.
+   */
+  InventoryLotRequired = 'ERR_INVENTORY_LOT_REQUIRED',
+  /** Undo on an item with no stock card line to take back. */
+  InventoryNothingToUndo = 'ERR_INVENTORY_NOTHING_TO_UNDO',
+  /**
+   * An implant, graft or membrane whose first-expiring batch is past its
+   * date, used without naming the batch: the box has to be picked on purpose.
+   */
+  InventoryLotExpired = 'ERR_INVENTORY_LOT_EXPIRED',
+  /**
+   * A count finding more implants, grafts or membranes than recorded, with
+   * no lot to put them in: they come in as a delivery, with the lot printed
+   * on the box.
+   */
+  InventoryCountUntraced = 'ERR_INVENTORY_COUNT_UNTRACED',
+
   // -- Value objects ----------------------------------------------------
   NationalIdLength = 'ERR_NATIONAL_ID_LENGTH',
   NationalIdChecksum = 'ERR_NATIONAL_ID_CHECKSUM',

@@ -1,0 +1,186 @@
+@use '../../../styles/surface';
+
+.stock {
+  &__toolbar {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--pb-space-2) var(--pb-space-4);
+    flex-wrap: wrap;
+  }
+
+  &__search {
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+
+  &__category {
+    flex: 0 1 240px;
+    min-width: 180px;
+  }
+}
+
+/** One category: its heading, then its items in one outlined panel. */
+.shelf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    margin: var(--pb-space-2) 0 0;
+    font: var(--mat-sys-title-small);
+    color: var(--mat-sys-on-surface-variant);
+
+    .material-symbols-rounded {
+      font-size: var(--pb-icon-sm);
+      color: var(--mat-sys-primary);
+    }
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow: hidden;
+    @include surface.outlined;
+  }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3) var(--pb-space-4);
+  padding: var(--pb-space-2) var(--pb-space-4);
+  min-height: 56px;
+  border-inline-start: 3px solid transparent;
+
+  & + & {
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  /* An empty or low shelf reads differently down the list, before any chip is read. */
+  &[data-stock='out'] {
+    border-inline-start-color: var(--mat-sys-error);
+  }
+
+  &[data-stock='low'] {
+    border-inline-start-color: var(--pb-on-warning-container);
+  }
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    gap: var(--pb-space-2) var(--pb-space-3);
+    padding-block: var(--pb-space-3);
+  }
+
+  &__what {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    @media (max-width: 640px) {
+      flex-basis: 100%;
+    }
+  }
+
+  &__name {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 var(--pb-space-2);
+
+    strong {
+      font: var(--mat-sys-title-small);
+    }
+  }
+
+  &__brand {
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  /* The size is what tells one row of a line from the next: give it weight. */
+  &__spec {
+    font: var(--mat-sys-body-medium);
+    font-weight: 600;
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--pb-space-3);
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+    min-width: 0;
+  }
+
+  &__notes {
+    max-width: 32ch;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__alerts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--pb-space-2);
+
+    &:empty {
+      display: none;
+    }
+
+    /* A line of its own on a phone, so the balance and its buttons share one. */
+    @media (max-width: 640px) {
+      flex-basis: 100%;
+      justify-content: flex-start;
+    }
+  }
+
+  /** A fixed-width column, so balances line up down the panel. */
+  &__stock {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: var(--pb-space-1);
+    min-width: 64px;
+
+    @media (max-width: 640px) {
+      min-width: 0;
+      margin-inline-end: auto;
+    }
+  }
+
+  &__quantity {
+    font: var(--mat-sys-title-medium);
+    font-weight: 700;
+    font-feature-settings: var(--pb-font-numeric);
+
+    [data-stock='out'] & {
+      color: var(--mat-sys-error);
+    }
+
+    [data-stock='low'] & {
+      color: var(--pb-on-warning-container);
+    }
+  }
+
+  &__unit {
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-1);
+  }
+}

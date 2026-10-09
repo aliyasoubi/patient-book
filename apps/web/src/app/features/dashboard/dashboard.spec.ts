@@ -15,6 +15,8 @@ const summary = (over: Partial<DashboardSummary> = {}): DashboardSummary => ({
   followUpsThisWeek: 0,
   followUpsOverdue: 0,
   labsOverdue: 0,
+  inventoryReorder: 0,
+  inventoryExpiring: 0,
   inactiveOverYear: 0,
   ...over,
 });

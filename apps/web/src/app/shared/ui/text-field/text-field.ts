@@ -46,11 +46,13 @@ export interface TextFieldOption {
   ],
   template: `
     <!--
-      Always 'fixed': it reserves a line of space for the hint/error slot
+      'fixed' by default: it reserves a line of space for the hint/error slot
       whether or not one is showing, so a validation message appearing on
-      blur doesn't push everything below the field down.
+      blur doesn't push everything below the field down. A field repeated
+      down a list row — a stocktake's counts — takes 'dynamic' instead, so a
+      row is only as tall as its fields until one has something to say.
     -->
-    <mat-form-field appearance="outline" subscriptSizing="fixed">
+    <mat-form-field appearance="outline" [subscriptSizing]="subscript()">
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -157,6 +159,8 @@ export class PbTextField {
   readonly inputmode = input<'text' | 'tel' | 'numeric' | 'email' | 'search' | null>(null);
   /** The native `autocomplete` attribute (browser autofill), not the option panel. */
   readonly nativeAutocomplete = input<string>('off');
+  /** Space for the hint/error line: always (`fixed`), or only while there is one. */
+  readonly subscript = input<'fixed' | 'dynamic'>('fixed');
   /** Right-align as LTR — for phone numbers, file numbers, ids inside RTL text. */
   readonly ltr = input(false);
   /** Suggestions shown in a Material autocomplete panel as the user types. */

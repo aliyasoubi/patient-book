@@ -132,6 +132,28 @@ export class Dashboard {
         tone: 'warn',
       });
     }
+    // The stock's two questions, counted exactly as the inventory list's
+    // own filters answer them. What to order opens the order list — the
+    // same items, with the quantity to ask the supplier for.
+    if (s.inventoryReorder > 0) {
+      tiles.push({
+        label: 'tile.inventoryReorder',
+        value: s.inventoryReorder,
+        icon: 'shopping_cart',
+        link: '/inventory/order',
+        tone: 'warn',
+      });
+    }
+    if (s.inventoryExpiring > 0) {
+      tiles.push({
+        label: 'tile.inventoryExpiring',
+        value: s.inventoryExpiring,
+        icon: 'hourglass_bottom',
+        link: '/inventory',
+        queryParams: { filter: 'expiry' },
+        tone: 'warn',
+      });
+    }
     // Who to call this week: the operational number a receptionist opens
     // the dashboard for.
     tiles.push({

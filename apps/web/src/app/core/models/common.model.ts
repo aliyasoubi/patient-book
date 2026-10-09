@@ -197,12 +197,94 @@ export interface LabBoard {
   delivered: LabCase[];
 }
 
+/** The store's shelves, as the API's `InventoryCategory`. */
+export type InventoryCategory =
+  | 'implant'
+  | 'prosthetic'
+  | 'regenerative'
+  | 'anesthesia'
+  | 'restorative'
+  | 'endo'
+  | 'impression'
+  | 'surgery'
+  | 'orthodontic'
+  | 'consumable'
+  | 'hygiene'
+  | 'other';
+export type InventoryUnit =
+  'piece' | 'pack' | 'box' | 'bottle' | 'syringe' | 'cartridge' | 'tube' | 'kit' | 'roll';
+/** Why a balance changed; quantity changes only through one of these. */
+export type InventoryMovementKind = 'receive' | 'use' | 'discard' | 'count';
+/** The list's questions: what to order, what has run out, what expires soon. */
+export type InventoryFilter = 'reorder' | 'out' | 'expiry';
+/** Judged by the API: nothing left, or at or under the reorder level. */
+export type StockState = 'ok' | 'low' | 'out';
+/** Of what is on the shelf; null when the shelf is empty or undated. */
+export type ExpiryState = 'ok' | 'expiring' | 'expired';
+
+export interface InventoryItem {
+  id: string;
+  category: InventoryCategory;
+  name: string;
+  brand: string | null;
+  /** Model, size or shade, as written. */
+  spec: string | null;
+  unit: InventoryUnit;
+  quantity: number;
+  minQuantity: number | null;
+  stockState: StockState;
+  /** As printed on the pack, in its own calendar: `2028/07`, `1407/05`. */
+  expiry: string | null;
+  expiryState: ExpiryState | null;
+  notes: string | null;
+  isArchived: boolean;
+  /** Bumped by every edit and every movement; sent back on an edit. */
+  version: number;
+}
+
+/** One batch of an item on the shelf. */
+export interface InventoryLot {
+  id: string;
+  lotNumber: string | null;
+  /** As printed on the pack. */
+  expiry: string | null;
+  expiryState: ExpiryState | null;
+  quantity: number;
+}
+
+/** One line of an item's stock card — one batch's change. */
+export interface InventoryMovement {
+  id: string;
+  kind: InventoryMovementKind;
+  /** Signed; for a count, the difference it found. */
+  change: number;
+  quantityAfter: number;
+  lotNumber: string | null;
+  expiry: string | null;
+  /** The patient a use went into. */
+  patient: { id: string; fileNo: string } | null;
+  note: string | null;
+  /** Who recorded it, by the name staff know them by. */
+  by: string | null;
+  /** Jalali `yyyy/MM/dd HH:mm`. */
+  at: string;
+}
+
+export interface InventoryItemDetail extends InventoryItem {
+  /** The batches on the shelf, first-expiring first. */
+  lots: InventoryLot[];
+  /** Newest first. */
+  movements: InventoryMovement[];
+}
+
 /** The front desk's work: each count is a list the dashboard links to. */
 export interface DashboardSummary {
   needsReview: number;
   followUpsThisWeek: number;
   followUpsOverdue: number;
   labsOverdue: number;
+  inventoryReorder: number;
+  inventoryExpiring: number;
   /** The recall list: no visit on file in over a year. */
   inactiveOverYear: number;
 }

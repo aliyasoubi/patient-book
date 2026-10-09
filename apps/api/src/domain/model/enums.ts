@@ -131,3 +131,64 @@ export enum LabTripKind {
   /** تکرار */
   Remake = 'remake',
 }
+
+/**
+ * The shelves of a dental store, as supply catalogues group them. A fixed
+ * list rather than a catalogue managed in Settings: the groups are the
+ * trade's own and rarely change, and a fixed list is what lets every screen
+ * filter, and the dashboard count, the same way.
+ */
+export enum InventoryCategory {
+  /** ایمپلنت — a fixture, by system, line and size. */
+  Implant = 'implant',
+  /** قطعات پروتزی ایمپلنت — healing caps, abutments, analogs, screws. */
+  Prosthetic = 'prosthetic',
+  /** پیوند استخوان و ممبران */
+  Regenerative = 'regenerative',
+  /** بی‌حسی — cartridges, needles, topical gel. */
+  Anesthesia = 'anesthesia',
+  /** ترمیمی و زیبایی — composites, bonding, etch, cements, veneer materials. */
+  Restorative = 'restorative',
+  Endo = 'endo',
+  /** قالب‌گیری */
+  Impression = 'impression',
+  /** جراحی — sutures, blades, surgical disposables. */
+  Surgery = 'surgery',
+  Orthodontic = 'orthodontic',
+  /** مصرفی و ضدعفونی — gloves, gauze, masks, disinfectants. */
+  Consumable = 'consumable',
+  /** بهداشت دهان — toothbrushes and pastes handed or sold to patients. */
+  Hygiene = 'hygiene',
+  Other = 'other',
+}
+
+/** What one of an item's quantity counts. */
+export enum InventoryUnit {
+  Piece = 'piece',
+  Pack = 'pack',
+  Box = 'box',
+  Bottle = 'bottle',
+  Syringe = 'syringe',
+  Cartridge = 'cartridge',
+  Tube = 'tube',
+  Kit = 'kit',
+  Roll = 'roll',
+}
+
+/**
+ * Why a stock level changed. Quantity is never edited directly: every change
+ * is one of these, so the balance always equals the sum of its history.
+ */
+export enum InventoryMovementKind {
+  /** ورود — a delivery from a supplier. */
+  Receive = 'receive',
+  /** مصرف — used on a patient or in the clinic. */
+  Use = 'use',
+  /** دورریز — expired, damaged or lost. */
+  Discard = 'discard',
+  /**
+   * شمارش — a stocktake: the quantity counted on the shelf replaces the
+   * balance. An item's opening balance, and the workbook import, are counts.
+   */
+  Count = 'count',
+}

@@ -107,6 +107,26 @@ export class ApiErrorTranslator {
         return this.t('error.labCaseMoved');
       case 'ERR_LAB_CASE_NOTHING_TO_UNDO':
         return this.t('error.labCaseNothingToUndo');
+      case 'ERR_INVENTORY_ITEM_NOT_FOUND':
+        return this.t('error.inventoryItemNotFound');
+      case 'ERR_INVENTORY_ITEM_EXISTS':
+        return this.t('error.inventoryItemExists');
+      case 'ERR_INVENTORY_ITEM_MODIFIED':
+        return this.t('error.inventoryItemModified');
+      case 'ERR_INVENTORY_INSUFFICIENT_STOCK':
+        return this.t('error.inventoryInsufficientStock', params);
+      case 'ERR_INVENTORY_LOT_NOT_FOUND':
+        return this.t('error.inventoryLotNotFound');
+      case 'ERR_INVENTORY_LOT_EXISTS':
+        return this.t('error.inventoryLotExists');
+      case 'ERR_INVENTORY_LOT_REQUIRED':
+        return this.t('error.inventoryLotRequired');
+      case 'ERR_INVENTORY_NOTHING_TO_UNDO':
+        return this.t('error.inventoryNothingToUndo');
+      case 'ERR_INVENTORY_LOT_EXPIRED':
+        return this.t('error.inventoryLotExpired');
+      case 'ERR_INVENTORY_COUNT_UNTRACED':
+        return this.t('error.inventoryCountUntraced', params);
       case 'ERR_NOT_FOUND':
         return this.t('error.notFound');
 
@@ -179,6 +199,8 @@ export class ApiErrorTranslator {
         return this.t('validation.jalaliDate');
       case 'nationalId':
         return this.t('validation.nationalId');
+      case 'expiry':
+        return this.t('validation.expiry');
       default:
         // An unmapped constraint still deserves a usable sentence.
         return this.t('validation.generic');

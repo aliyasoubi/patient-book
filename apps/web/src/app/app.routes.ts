@@ -119,6 +119,26 @@ export const routes: Routes = [
         title: translatedTitle('route.labEdit'),
       },
       {
+        path: 'inventory',
+        loadComponent: () =>
+          import('./features/inventory/inventory-list').then((m) => m.InventoryList),
+        title: translatedTitle('route.inventory'),
+      },
+      {
+        path: 'inventory/count',
+        canActivate: [permissionGuard('editInventory')],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./features/inventory/inventory-count').then((m) => m.InventoryCount),
+        title: translatedTitle('route.inventoryCount'),
+      },
+      {
+        path: 'inventory/order',
+        loadComponent: () =>
+          import('./features/inventory/inventory-order').then((m) => m.InventoryOrder),
+        title: translatedTitle('route.inventoryOrder'),
+      },
+      {
         path: 'stats',
         loadComponent: () => import('./features/stats/stats').then((m) => m.Stats),
         title: translatedTitle('route.stats'),

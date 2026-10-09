@@ -115,53 +115,62 @@ export class RegistryService<T extends RegistryCase> {
    * one and a missing name is the linked patient's.
    */
   async create(dto: UpsertRegistryCaseDto, userId: string | null): Promise<T> {
-    return this.repo.manager.transaction(async (manager) => {
-      const repository = manager.getRepository(this.repo.target);
-      const registryNo =
-        dto.registryNo ?? (await this.nextRegistryNo(manager, repository));
-      if (dto.registryNo) {
-        const clash = await repository.findOne({
-          where: { registryNo } as never,
-        });
-        if (clash) {
-          throw AppException.conflict(ErrorCode.RegistryNumberTaken, {
-            registryNo,
-          });
-        }
-      }
-      let recordedName = dto.recordedName;
-      if (!recordedName && dto.patientId) {
-        const patient = await manager.findOne(Patient, {
-          where: { id: dto.patientId },
-          select: { id: true, firstName: true, lastName: true },
-        });
-        if (!patient) throw AppException.notFound(ErrorCode.PatientNotFound);
-        recordedName = `${patient.firstName} ${patient.lastName}`.trim();
-      }
-      const entity = repository.create({
-        ...dto,
-        registryNo,
-        recordedName: recordedName ?? '',
-      } as never) as unknown as T;
-      entity.matchMethod = dto.patientId ? 'manual' : 'unmatched';
-      entity.searchText = this.buildSearch(entity);
+    return this.repo.manager.transaction((manager) =>
+      this.createIn(manager, dto, userId),
+    );
+  }
 
-      const saved = (await repository.save(entity as never)) as unknown as T;
-      await this.audit.recordRequired(
-        {
-          userId,
-          action: 'create',
-          entity: this.entityName,
-          entityId: saved.id,
-          changes: {
-            registryNo: saved.registryNo,
-            recordedName: saved.recordedName,
-          },
+  /** {@link create}, inside a transaction someone else runs. */
+  async createIn(
+    manager: EntityManager,
+    dto: UpsertRegistryCaseDto,
+    userId: string | null,
+  ): Promise<T> {
+    const repository = manager.getRepository(this.repo.target);
+    const registryNo =
+      dto.registryNo ?? (await this.nextRegistryNo(manager, repository));
+    if (dto.registryNo) {
+      const clash = await repository.findOne({
+        where: { registryNo } as never,
+      });
+      if (clash) {
+        throw AppException.conflict(ErrorCode.RegistryNumberTaken, {
+          registryNo,
+        });
+      }
+    }
+    let recordedName = dto.recordedName;
+    if (!recordedName && dto.patientId) {
+      const patient = await manager.findOne(Patient, {
+        where: { id: dto.patientId },
+        select: { id: true, firstName: true, lastName: true },
+      });
+      if (!patient) throw AppException.notFound(ErrorCode.PatientNotFound);
+      recordedName = `${patient.firstName} ${patient.lastName}`.trim();
+    }
+    const entity = repository.create({
+      ...dto,
+      registryNo,
+      recordedName: recordedName ?? '',
+    } as never) as unknown as T;
+    entity.matchMethod = dto.patientId ? 'manual' : 'unmatched';
+    entity.searchText = this.buildSearch(entity);
+
+    const saved = (await repository.save(entity as never)) as unknown as T;
+    await this.audit.recordRequired(
+      {
+        userId,
+        action: 'create',
+        entity: this.entityName,
+        entityId: saved.id,
+        changes: {
+          registryNo: saved.registryNo,
+          recordedName: saved.recordedName,
         },
-        manager,
-      );
-      return saved;
-    });
+      },
+      manager,
+    );
+    return saved;
   }
 
   async update(

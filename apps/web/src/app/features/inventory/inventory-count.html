@@ -1,0 +1,97 @@
+<pb-page class="count" width="wide">
+  <pb-page-header
+    [title]="'inventoryCount.title' | translate"
+    [subtitle]="'inventoryCount.subtitle' | translate"
+    [backLabel]="'common.back' | translate"
+    (back)="back()"
+  />
+
+  <div class="count__toolbar">
+    <pb-select-field
+      class="count__category"
+      [control]="categoryControl"
+      [options]="categoryOptions"
+      [label]="'inventoryCount.shelf' | translate"
+    />
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @if (failed()) {
+    <pb-load-error [message]="'inventory.loadFailed' | translate" (retry)="load()" />
+  }
+
+  @if (!loading() && !failed() && items().length === 0) {
+    <pb-empty-state icon="inventory" [title]="'inventoryCount.empty' | translate" />
+  } @else if (items().length) {
+    <section class="shelf">
+      <h2 class="shelf__title">
+        <mat-icon aria-hidden="true">{{ categoryIcons[category()] }}</mat-icon>
+        {{ categoryLabel(category()) | translate }}
+      </h2>
+      <ul class="sheet">
+        @for (item of items(); track item.id) {
+          <li class="sheet__row" [class.sheet__row--changed]="changedIds().has(item.id)">
+            <div class="sheet__what">
+              <div class="sheet__name">
+                <strong dir="auto">{{ item.name }}</strong>
+                @if (item.brand) {
+                  <span class="sheet__brand" dir="auto">{{ item.brand }}</span>
+                }
+                @if (item.spec) {
+                  <span class="sheet__spec" dir="auto">{{ item.spec }}</span>
+                }
+              </div>
+              <span class="sheet__recorded">
+                {{
+                  'inventoryCount.recorded'
+                    | translate
+                      : { count: (item.quantity | faNum), unit: (unitLabel(item.unit) | translate) }
+                }}
+              </span>
+            </div>
+            <div class="sheet__fields">
+              <pb-text-field
+                class="sheet__field"
+                [control]="row(item.id).controls.counted"
+                [label]="'inventoryCount.counted' | translate"
+                subscript="dynamic"
+                inputmode="numeric"
+                [ltr]="true"
+              />
+              <pb-text-field
+                class="sheet__field"
+                [control]="row(item.id).controls.min"
+                [label]="'inventoryCount.min' | translate"
+                subscript="dynamic"
+                inputmode="numeric"
+                [ltr]="true"
+              />
+              <span class="sheet__diff" dir="ltr">
+                @if (difference(item); as diff) {
+                  <pb-status-chip [tone]="diff.startsWith('+') ? 'primary' : 'warning'">
+                    {{ diff | faNum }}
+                  </pb-status-chip>
+                }
+              </span>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <!-- Always in reach at the foot of a long shelf. -->
+    <div class="count__bar">
+      <pb-button
+        icon="fact_check"
+        [disabled]="!changes().length"
+        [loading]="saving()"
+        [loadingText]="'common.saving' | translate"
+        (click)="save()"
+      >
+        {{ saveLabel() }}
+      </pb-button>
+    </div>
+  }
+</pb-page>

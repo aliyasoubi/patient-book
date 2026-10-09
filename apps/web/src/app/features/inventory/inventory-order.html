@@ -1,0 +1,75 @@
+<pb-page class="order" width="wide">
+  <pb-page-header
+    [title]="'inventoryOrder.title' | translate"
+    [subtitle]="'inventoryOrder.subtitle' | translate"
+    [backLabel]="'common.back' | translate"
+    (back)="back()"
+  >
+    @if (items().length) {
+      <pb-button icon="content_copy" (click)="copy()" [collapseBelow]="560">
+        {{ 'inventoryOrder.copy' | translate }}
+      </pb-button>
+    }
+  </pb-page-header>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @if (failed()) {
+    <pb-load-error [message]="'inventory.loadFailed' | translate" (retry)="load()" />
+  }
+
+  @if (!loading() && !failed() && items().length === 0) {
+    <pb-empty-state
+      icon="shopping_cart"
+      [title]="'inventoryOrder.empty' | translate"
+      [hint]="'inventoryOrder.emptyHint' | translate"
+    >
+      <pb-button variant="stroked" icon="fact_check" link="/inventory/count">
+        {{ 'inventoryCount.title' | translate }}
+      </pb-button>
+    </pb-empty-state>
+  }
+
+  @for (group of groups(); track group.brand) {
+    <section class="supplier">
+      <h2 class="supplier__title" dir="auto">
+        <mat-icon aria-hidden="true">local_shipping</mat-icon>
+        {{ group.brand ?? ('inventoryOrder.noBrand' | translate) }}
+      </h2>
+      <ul class="supplier__items">
+        @for (item of group.items; track item.id) {
+          <li class="line">
+            <div class="line__what">
+              <div class="line__name">
+                <strong dir="auto">{{ item.name }}</strong>
+                @if (item.spec) {
+                  <span class="line__spec" dir="auto">{{ item.spec }}</span>
+                }
+              </div>
+              <span class="line__meta">
+                {{
+                  'inventoryOrder.levels'
+                    | translate
+                      : {
+                          count: (item.quantity | faNum),
+                          min: (item.minQuantity ?? 0 | faNum),
+                          unit: (unitLabel(item.unit) | translate),
+                        }
+                }}
+              </span>
+            </div>
+            <pb-text-field
+              class="line__amount"
+              [control]="amount(item.id)"
+              [label]="'inventoryOrder.amount' | translate"
+              subscript="dynamic"
+              inputmode="numeric"
+              [ltr]="true"
+            />
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</pb-page>
