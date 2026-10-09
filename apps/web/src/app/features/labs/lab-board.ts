@@ -100,14 +100,17 @@ const COLUMNS: readonly Omit<Column, 'cases'>[] = [
 ];
 
 /**
- * Where a card may be dropped from where it is: exactly the moves its buttons
- * make. A delivered case goes nowhere by dragging — taking a delivery back is
- * "undo", a deliberate menu item.
+ * Where a card may be dropped from where it is: one column at a time. Between
+ * the lab and the clinic a card goes both ways — work comes back and goes out
+ * again — and from there it only goes forward, never skipping one: no
+ * delivery without a booking. Backing out of a booking or a delivery is
+ * "undo", and sending booked work back to the lab is its button; both are
+ * deliberate menu items, not something a drop should do by accident.
  */
 const MOVES: Record<LabStage, readonly LabStage[]> = {
   at_lab: ['at_clinic'],
-  at_clinic: ['at_lab', 'booked', 'delivered'],
-  booked: ['at_clinic', 'at_lab', 'delivered'],
+  at_clinic: ['at_lab', 'booked'],
+  booked: ['delivered'],
   delivered: [],
 };
 
@@ -517,10 +520,7 @@ export class LabBoard {
     if (c.stage === 'at_lab' && to === 'at_clinic') this.receive(c, () => this.reload());
     else if (c.stage === 'at_clinic' && to === 'at_lab') this.sendAgain(c, () => this.reload());
     else if (c.stage === 'at_clinic' && to === 'booked') this.book(c, () => this.reload());
-    else if (c.stage === 'booked' && to === 'at_clinic') this.undo(c);
-    else if (c.stage === 'booked' && to === 'at_lab') this.sendAgain(c, () => this.reload());
-    else if ((c.stage === 'at_clinic' || c.stage === 'booked') && to === 'delivered')
-      this.deliver(c);
+    else if (c.stage === 'booked' && to === 'delivered') this.deliver(c);
     else this.reload();
   }
 

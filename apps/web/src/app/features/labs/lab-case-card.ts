@@ -248,7 +248,6 @@ import type { StatusTone } from '../../shared/ui';
                 >
                   {{ 'labs.sendAgain' | translate }}
                 </pb-button>
-                <ng-container *ngTemplateOutlet="deliverButton" />
               }
               @case ('booked') {
                 <ng-container *ngTemplateOutlet="deliverButton" />

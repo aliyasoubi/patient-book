@@ -405,22 +405,21 @@ export class LabCasesService {
     );
   }
 
-  /** Fitted for the patient. Only from the clinic: what is at the lab is received first. */
+  /**
+   * Fitted for the patient. Only once booked: the board moves a case one step
+   * at a time, so every delivery has the day the patient was booked for — a
+   * patient who walks in is booked for today first.
+   */
   deliver(
     id: string,
     dto: LabCaseDateDto,
     userId: string | null,
   ): Promise<unknown> {
-    return this.move(
-      id,
-      userId,
-      ['at_clinic', 'booked'],
-      async (c, manager) => {
-        const deliveredAt = dayOrToday(dto.date);
-        await manager.getRepository(LabCase).update(c.id, { deliveredAt });
-        return { event: 'deliver', date: jalali(deliveredAt) };
-      },
-    );
+    return this.move(id, userId, ['booked'], async (c, manager) => {
+      const deliveredAt = dayOrToday(dto.date);
+      await manager.getRepository(LabCase).update(c.id, { deliveredAt });
+      return { event: 'deliver', date: jalali(deliveredAt) };
+    });
   }
 
   /**
