@@ -21,8 +21,7 @@ export interface LabCaseInput {
   labId?: string;
   workTypes?: LabWorkType[];
   jaw?: LabJaw | null;
-  toothCount?: number | null;
-  teeth?: string | null;
+  teethFdi?: number[];
   implantBrand?: string | null;
   impressionCount?: number | null;
   analogCount?: number | null;
@@ -33,6 +32,10 @@ export interface LabCaseInput {
   waitDays?: number;
   tripNote?: string | null;
 }
+
+/** What came back with the work: the parts too, or only the work and the days the lab has for them. */
+export type LabReceiveParts =
+  { partsReturned: true } | { partsReturned: false; partsWaitDays: number };
 
 /** Back to the lab for the next step. */
 export interface LabSendInput {
@@ -93,8 +96,14 @@ export class LabService {
     return this.http.patch<LabCase>(`${this.cases}/${id}`, body);
   }
 
-  receive(id: string): Observable<LabCase> {
-    return this.http.post<LabCase>(`${this.cases}/${id}/receive`, {});
+  /** How the work came back: with its implant parts, or without them and when they are due. */
+  receive(id: string, parts?: LabReceiveParts): Observable<LabCase> {
+    return this.http.post<LabCase>(`${this.cases}/${id}/receive`, parts ?? {});
+  }
+
+  /** The patient is booked for the fitting on this Jalali day, or the booking moves to it. */
+  book(id: string, date: string): Observable<LabCase> {
+    return this.http.post<LabCase>(`${this.cases}/${id}/book`, { date });
   }
 
   send(id: string, body: LabSendInput): Observable<LabCase> {

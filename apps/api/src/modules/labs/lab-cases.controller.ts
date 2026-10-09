@@ -16,8 +16,10 @@ import { LabCasesService } from './lab-cases.service';
 import {
   CreateLabCaseDto,
   LabBoardQueryDto,
+  BookLabCaseDto,
   LabCaseDateDto,
   PartsReturnedDto,
+  ReceiveLabCaseDto,
   QueryLabCasesDto,
   SendLabCaseDto,
   UndoLabCaseDto,
@@ -80,10 +82,22 @@ export class LabCasesController {
   @ApiOperation({ summary: 'Back from the lab' })
   receive(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: LabCaseDateDto,
+    @Body() dto: ReceiveLabCaseDto,
     @CurrentUser('id') userId: string,
   ) {
     return this.cases.receive(id, dto, userId);
+  }
+
+  @Post(':id/book')
+  @HttpCode(200)
+  @Roles(...STAFF)
+  @ApiOperation({ summary: 'The patient is booked for the fitting' })
+  book(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: BookLabCaseDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.cases.book(id, dto, userId);
   }
 
   @Post(':id/send')

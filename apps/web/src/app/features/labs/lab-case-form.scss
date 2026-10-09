@@ -30,6 +30,10 @@
     @include type.supporting-text(small);
   }
 
+  &__hint {
+    @include type.supporting-text(small);
+  }
+
   &__error {
     font: var(--mat-sys-body-small);
     color: var(--mat-sys-error);

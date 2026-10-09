@@ -86,8 +86,9 @@ export enum CaseStatus {
 }
 
 /**
- * What a lab case makes. A case can be more than one at once — the book has
- * «لمینیت و روکش ایمپلنت» on a single row — so a case holds a set of these.
+ * What a lab case makes. A case is one kind of work; older ones, written when
+ * the book's "laminate and implant crown" rows were kept as one case, may still
+ * hold several, which is why the case stores a list.
  */
 export enum LabWorkType {
   /** روکش دندان — the book's «روکش زیرکونیا» rows are this. */
@@ -109,6 +110,22 @@ export enum LabJaw {
   Lower = 'lower',
   Both = 'both',
 }
+
+/** Work made per jaw, not per tooth: it carries a jaw instead of tooth numbers. */
+export const JAW_WORK_TYPES: readonly LabWorkType[] = [
+  LabWorkType.NightGuard,
+  LabWorkType.Sx,
+];
+
+/**
+ * The teeth a lab case can name, in FDI notation (ISO 3950): the quadrant —
+ * 1 upper right, 2 upper left, 3 lower left, 4 lower right, as the patient's
+ * own sides — then the tooth from the midline, 1 to 7. Wisdom teeth are not
+ * offered: the practice does not send them to the lab.
+ */
+export const LAB_TOOTH_NUMBERS: readonly number[] = [1, 2, 3, 4].flatMap((q) =>
+  [1, 2, 3, 4, 5, 6, 7].map((n) => q * 10 + n),
+);
 
 /**
  * Why a case went to the lab this time. A crown or a laminate makes several

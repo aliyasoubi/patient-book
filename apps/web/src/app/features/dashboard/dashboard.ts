@@ -121,6 +121,18 @@ export class Dashboard {
         tone: 'warn',
       });
     }
+    // The front desk's lab list: work that is back and has no booking yet.
+    if (s.labsToBook > 0) {
+      tiles.push({
+        label: 'tile.labsToBook',
+        value: s.labsToBook,
+        icon: 'event_busy',
+        link: '/labs',
+        // The board, narrowed to exactly the cases the tile counts.
+        queryParams: { toBook: 'true' },
+        tone: 'warn',
+      });
+    }
     if (s.labsOverdue > 0) {
       tiles.push({
         label: 'tile.labsOverdue',
