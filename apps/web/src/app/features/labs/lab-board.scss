@@ -23,14 +23,14 @@
   }
 }
 
-/** Three columns side by side; one at a time below the width drag needs. */
+/** Four columns side by side; one at a time below the width drag needs. */
 .board {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--pb-space-4);
   align-items: start;
 
-  @media (max-width: 1199.98px) {
+  @media (max-width: 1359.98px) {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -46,6 +46,23 @@
     flex-direction: column;
     gap: var(--pb-space-3);
     min-height: 96px;
+  }
+
+  /** Work that is back, parts still with the lab: listed under the lab's own cards. */
+  &__chase {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-space-3);
+    margin-top: var(--pb-space-5);
+    padding-top: var(--pb-space-4);
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  &__chase-title {
+    @include type.supporting-text;
+
+    margin: 0;
+    font-weight: 500;
   }
 
   &__empty {

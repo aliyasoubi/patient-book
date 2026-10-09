@@ -45,6 +45,7 @@ details
 diamond
 done
 edit
+edit_calendar
 edit_note
 error
 escalator_warning

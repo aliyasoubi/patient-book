@@ -9,7 +9,7 @@ import {
   followUpWindow,
   openFollowUpSql,
 } from '../surgery/follow-up';
-import { overdueSql, todayIso } from '../labs/lab-stage';
+import { overdueSql, todayIso, toBookSql } from '../labs/lab-stage';
 import {
   expiryHorizon,
   expirySoonSql,
@@ -35,6 +35,8 @@ export interface DashboardSummary {
   followUpsOverdue: number;
   /** Lab work past the day the lab said it would be back — whose lab to call. */
   labsOverdue: number;
+  /** Lab work that is back with no booking for the patient yet — the front desk's list. */
+  labsToBook: number;
   /** Stock at or under the reorder level staff set — what to order. */
   inventoryReorder: number;
   /** Stock on the shelf past or within 90 days of its expiry — what to use first. */
@@ -117,6 +119,8 @@ export class StatsService {
             AND s."followUpDate" <= $3)                                                AS "followUpsOverdue",
         (SELECT count(*) FROM lab_cases c
           WHERE c."deletedAt" IS NULL AND ${overdueSql('c', '$4')})                   AS "labsOverdue",
+        (SELECT count(*) FROM lab_cases c
+          WHERE c."deletedAt" IS NULL AND ${toBookSql('c')})                           AS "labsToBook",
         -- The inventory list's own filters, from inventory-stock.ts.
         (SELECT count(*) FROM inventory_items i
           WHERE i."deletedAt" IS NULL AND ${reorderSql('i')})                         AS "inventoryReorder",
@@ -138,6 +142,7 @@ export class StatsService {
       followUpsThisWeek: n('followUpsThisWeek'),
       followUpsOverdue: n('followUpsOverdue'),
       labsOverdue: n('labsOverdue'),
+      labsToBook: n('labsToBook'),
       inventoryReorder: n('inventoryReorder'),
       inventoryExpiring: n('inventoryExpiring'),
       inactiveOverYear: n('inactiveOverYear'),

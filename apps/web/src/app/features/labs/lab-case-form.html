@@ -49,7 +49,6 @@
             'labForm.workTypes' | translate
           }}</span>
           <pb-filter-chips
-            multiple
             [options]="workTypeOptions"
             [selected]="form.controls.workTypes.value"
             (selectedChange)="setWorkTypes($event)"
@@ -62,8 +61,8 @@
           }
         </div>
 
-        @if (isNightGuardOnly()) {
-          <!-- Made per jaw: no tooth count, no tooth numbers. -->
+        @if (isJawWork()) {
+          <!-- Made per jaw: no teeth to pick. -->
           <div class="pb-field-grid__full form__work">
             <span class="form__label">{{ 'labForm.jaw' | translate }}</span>
             <pb-segmented-button
@@ -74,18 +73,25 @@
             />
           </div>
         } @else {
-          <pb-text-field
-            [control]="form.controls.toothCount"
-            [label]="'labForm.toothCount' | translate"
-            inputmode="numeric"
-            [ltr]="true"
-          />
-          <pb-text-field
-            [control]="form.controls.teeth"
-            [label]="'labForm.teeth' | translate"
-            [hint]="'labForm.teethHint' | translate"
-            [maxlength]="200"
-          />
+          <div class="pb-field-grid__full form__work">
+            <span class="form__label">{{ 'labForm.teeth' | translate }}</span>
+            <pb-lab-tooth-picker
+              [selected]="form.controls.teeth.value"
+              (selectedChange)="setTeeth($event)"
+              [invalid]="form.controls.teeth.touched && form.controls.teeth.invalid"
+              [ariaLabel]="'labForm.teeth' | translate"
+            />
+            @if (legacyTeeth(); as written) {
+              <span class="form__hint">{{
+                'labForm.teethWritten' | translate: { text: written }
+              }}</span>
+            }
+            @if (form.controls.teeth.touched && form.controls.teeth.invalid) {
+              <span class="form__error" role="alert">{{
+                'labForm.teethRequired' | translate
+              }}</span>
+            }
+          </div>
         }
 
         <!-- The parts the clinic lends the lab for an implant crown, and owes back. -->

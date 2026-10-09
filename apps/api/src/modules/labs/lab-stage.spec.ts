@@ -39,6 +39,30 @@ describe('labStage', () => {
     ).toBe('at_clinic');
   });
 
+  it('is booked once back with a day for the patient, and at the clinic until then', () => {
+    const back = [trip(1, d('1405/07/01'))];
+    expect(
+      labStage({ deliveredAt: null, appointmentAt: null, trips: back }),
+    ).toBe('at_clinic');
+    expect(
+      labStage({
+        deliveredAt: null,
+        appointmentAt: d('1405/07/24'),
+        trips: back,
+      }),
+    ).toBe('booked');
+  });
+
+  it('is at the lab, not booked, while a trip is out — whatever day was set', () => {
+    expect(
+      labStage({
+        deliveredAt: null,
+        appointmentAt: d('1405/07/24'),
+        trips: [trip(1)],
+      }),
+    ).toBe('at_lab');
+  });
+
   it('is delivered once fitted, and nothing else then matters', () => {
     expect(labStage({ deliveredAt: d('1405/07/09'), trips: [trip(1)] })).toBe(
       'delivered',

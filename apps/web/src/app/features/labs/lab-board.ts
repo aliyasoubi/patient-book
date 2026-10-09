@@ -54,8 +54,10 @@ import {
 } from '../../shared/ui';
 import type { FilterChipOption, SegmentOption, SelectOption } from '../../shared/ui';
 import { LabCaseCard } from './lab-case-card';
+import { LabBookDialog, LabBookDialogData } from './lab-book-dialog';
+import { LabReceiveDialog, LabReceiveDialogData } from './lab-receive-dialog';
 import { LabSendDialog, LabSendDialogData } from './lab-send-dialog';
-import type { LabSendInput } from '../../core/services/lab.service';
+import type { LabReceiveParts, LabSendInput } from '../../core/services/lab.service';
 
 interface Column {
   stage: LabStage;
@@ -82,6 +84,13 @@ const COLUMNS: readonly Omit<Column, 'cases'>[] = [
     empty: 'labs.atClinicEmpty',
   },
   {
+    stage: 'booked',
+    title: 'labs.booked',
+    hint: 'labs.bookedHint',
+    icon: 'event_available',
+    empty: 'labs.bookedEmpty',
+  },
+  {
     stage: 'delivered',
     title: 'labs.delivered',
     hint: 'labs.deliveredHint',
@@ -97,14 +106,21 @@ const COLUMNS: readonly Omit<Column, 'cases'>[] = [
  */
 const MOVES: Record<LabStage, readonly LabStage[]> = {
   at_lab: ['at_clinic'],
-  at_clinic: ['at_lab', 'delivered'],
+  at_clinic: ['at_lab', 'booked', 'delivered'],
+  booked: ['at_clinic', 'at_lab', 'delivered'],
   delivered: [],
 };
 
-const EMPTY_BOARD: LabBoardData = { atLab: [], atClinic: [], delivered: [] };
+const EMPTY_BOARD: LabBoardData = {
+  atLab: [],
+  atClinic: [],
+  booked: [],
+  delivered: [],
+  partsChase: [],
+};
 
-/** Three columns need this much window beside the navigation rail; below it the board shows one at a time. */
-const WIDE_BOARD = '(min-width: 1200px)';
+/** Four columns need this much window beside the navigation rail; below it the board shows one at a time. */
+const WIDE_BOARD = '(min-width: 1360px)';
 
 /**
  * The lab board: every case by where its work is now — at the lab, back at
@@ -172,14 +188,24 @@ export class LabBoard {
     { initialValue: this.search.value },
   );
   protected readonly labId = signal('');
-  /** The dashboard's tile lands here with `?overdue=true`. */
-  protected readonly overdueOnly = signal(
-    this.route.snapshot.queryParamMap.get('overdue') === 'true',
+  /**
+   * The board narrowed to one question: the late work at the lab, or the work
+   * back with no booking. The dashboard's tiles land here with `?overdue=true`
+   * and `?toBook=true`.
+   */
+  protected readonly focus = signal<'overdue' | 'toBook' | null>(
+    this.route.snapshot.queryParamMap.get('toBook') === 'true'
+      ? 'toBook'
+      : this.route.snapshot.queryParamMap.get('overdue') === 'true'
+        ? 'overdue'
+        : null,
   );
+  protected readonly overdueOnly = computed(() => this.focus() === 'overdue');
   protected readonly archivedOnly = signal(false);
 
-  protected readonly overdueFilter: FilterChipOption[] = [
+  protected readonly focusFilter: FilterChipOption[] = [
     { value: 'overdue', label: 'labs.filterOverdue', icon: 'schedule', translate: true },
+    { value: 'toBook', label: 'labs.filterToBook', icon: 'event_busy', translate: true },
   ];
   protected readonly archiveFilter: FilterChipOption[] = [
     { value: 'archived', label: 'labs.archivedOnly', icon: 'inventory_2', translate: true },
@@ -200,15 +226,32 @@ export class LabBoard {
 
   protected readonly columns = computed<Column[]>(() => {
     const board = this.data();
-    // Overdue is a question about the lab's column only; the others empty out
-    // rather than disappear, so the board keeps its shape.
-    const overdue = this.overdueOnly();
+    // Each question is about one column; the others empty out rather than
+    // disappear, so the board keeps its shape.
+    const focus = this.focus();
     const cases: Record<LabStage, LabCase[]> = {
-      at_lab: overdue ? board.atLab.filter((c) => c.timeliness === 'overdue') : board.atLab,
-      at_clinic: overdue ? [] : board.atClinic,
-      delivered: overdue ? [] : board.delivered,
+      at_lab:
+        focus === 'overdue'
+          ? board.atLab.filter((c) => c.timeliness === 'overdue')
+          : focus === 'toBook'
+            ? []
+            : board.atLab,
+      at_clinic: focus === 'overdue' ? [] : board.atClinic,
+      booked: focus ? [] : board.booked,
+      delivered: focus ? [] : board.delivered,
     };
     return COLUMNS.map((column) => ({ ...column, cases: [...cases[column.stage]] }));
+  });
+
+  /**
+   * Work that is back whose parts the lab still owes, in the lab's column: the
+   * lab is who has to be called. Under the overdue filter, only the late ones.
+   */
+  protected readonly partsChase = computed(() => {
+    const chase = this.data().partsChase;
+    const focus = this.focus();
+    if (focus === 'toBook') return [];
+    return focus === 'overdue' ? chase.filter((c) => c.partsTimeliness === 'overdue') : chase;
   });
 
   protected readonly isEmpty = computed(() =>
@@ -216,11 +259,14 @@ export class LabBoard {
   );
 
   /** On a narrow screen one column shows at a time; this picks which. */
-  protected readonly shownColumn = signal<LabStage>('at_lab');
+  protected readonly shownColumn = signal<LabStage>(
+    this.focus() === 'toBook' ? 'at_clinic' : 'at_lab',
+  );
   /** Short labels, no icons: three segments have to fit a phone's width. */
   protected readonly columnOptions: SegmentOption[] = [
     { value: 'at_lab', label: 'labs.atLabShort', translate: true },
     { value: 'at_clinic', label: 'labs.atClinicShort', translate: true },
+    { value: 'booked', label: 'labs.bookedShort', translate: true },
     { value: 'delivered', label: 'labs.deliveredShort', translate: true },
   ];
 
@@ -294,9 +340,9 @@ export class LabBoard {
     this.labId.set(id);
   }
 
-  protected setOverdue(on: boolean): void {
-    this.overdueOnly.set(on);
-    if (on) this.shownColumn.set('at_lab');
+  protected setFocus(focus: 'overdue' | 'toBook' | null): void {
+    this.focus.set(focus);
+    if (focus) this.shownColumn.set(focus === 'toBook' ? 'at_clinic' : 'at_lab');
   }
 
   protected setArchived(on: boolean): void {
@@ -311,8 +357,48 @@ export class LabBoard {
 
   // -- Moving a card ------------------------------------------------------------
 
-  protected receive(c: LabCase): void {
-    this.run(c, this.labs.receive(c.id), 'labs.received');
+  /**
+   * Work that went with implant parts is received by asking about them: the
+   * lab sends the parts apart from the work, and "received" alone would hide
+   * which of the two is still owed.
+   */
+  protected receive(c: LabCase, onCancel?: () => void): void {
+    if (!c.partsOutstanding) {
+      this.run(c, this.labs.receive(c.id), 'labs.received');
+      return;
+    }
+    this.dialog
+      .open<LabReceiveDialog, LabReceiveDialogData, LabReceiveParts | undefined>(LabReceiveDialog, {
+        data: { labCase: c },
+        width: '480px',
+        maxWidth: '92vw',
+      })
+      .afterClosed()
+      .subscribe((parts) => {
+        if (!parts) {
+          onCancel?.();
+          return;
+        }
+        this.run(c, this.labs.receive(c.id, parts), 'labs.received');
+      });
+  }
+
+  /** The patient is given a day for the fitting — or the day is changed. */
+  protected book(c: LabCase, onCancel?: () => void): void {
+    this.dialog
+      .open<LabBookDialog, LabBookDialogData, string | undefined>(LabBookDialog, {
+        data: { labCase: c },
+        width: '420px',
+        maxWidth: '92vw',
+      })
+      .afterClosed()
+      .subscribe((date) => {
+        if (!date) {
+          onCancel?.();
+          return;
+        }
+        this.run(c, this.labs.book(c.id, date), 'labs.bookedDone');
+      });
   }
 
   protected deliver(c: LabCase): void {
@@ -428,9 +514,13 @@ export class LabBoard {
       event.previousIndex,
       event.currentIndex,
     );
-    if (c.stage === 'at_lab' && to === 'at_clinic') this.receive(c);
+    if (c.stage === 'at_lab' && to === 'at_clinic') this.receive(c, () => this.reload());
     else if (c.stage === 'at_clinic' && to === 'at_lab') this.sendAgain(c, () => this.reload());
-    else if (c.stage === 'at_clinic' && to === 'delivered') this.deliver(c);
+    else if (c.stage === 'at_clinic' && to === 'booked') this.book(c, () => this.reload());
+    else if (c.stage === 'booked' && to === 'at_clinic') this.undo(c);
+    else if (c.stage === 'booked' && to === 'at_lab') this.sendAgain(c, () => this.reload());
+    else if ((c.stage === 'at_clinic' || c.stage === 'booked') && to === 'delivered')
+      this.deliver(c);
     else this.reload();
   }
 

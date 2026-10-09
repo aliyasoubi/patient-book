@@ -36,11 +36,18 @@ interface LabCaseBody {
   version: number;
   stage: 'at_lab' | 'at_clinic' | 'delivered';
   jaw: 'upper' | 'lower' | 'both' | null;
+  teethFdi: number[];
   toothCount: number | null;
   teeth: string;
   timeliness: 'on_time' | 'due_today' | 'overdue' | null;
   daysLate: number;
+  appointmentAt: string | null;
+  appointmentTimeliness: 'on_time' | 'due_today' | 'overdue' | null;
+  appointmentDays: number | null;
   partsOutstanding: boolean;
+  partsDueAt: string | null;
+  partsTimeliness: 'on_time' | 'due_today' | 'overdue' | null;
+  partsDaysLate: number;
   deliveredAt: string | null;
   lab: { id: string; name: string };
   trips: Array<{
@@ -54,7 +61,9 @@ interface LabCaseBody {
 interface BoardBody {
   atLab: LabCaseBody[];
   atClinic: LabCaseBody[];
+  booked: LabCaseBody[];
   delivered: LabCaseBody[];
+  partsChase: LabCaseBody[];
 }
 
 describeIfWritable('lab flows (e2e)', () => {
@@ -388,35 +397,273 @@ describeIfWritable('lab flows (e2e)', () => {
     });
   });
 
+  describe('booking the patient', () => {
+    const received = async (name: string): Promise<LabCaseBody> => {
+      const opened = await openCase(name);
+      return (
+        await asStaff(http().post(`/api/lab-cases/${opened.id}/receive`))
+          .send({})
+          .expect(200)
+      ).body as LabCaseBody;
+    };
+    const book = (id: string, date: string) =>
+      asStaff(http().post(`/api/lab-cases/${id}/book`)).send({ date });
+    const toBook = async () =>
+      (
+        (await asStaff(http().get('/api/stats/dashboard')).expect(200))
+          .body as { labsToBook: number }
+      ).labsToBook;
+
+    it('keeps «needs a booking» to exactly the work with none, and counts it for the front desk', async () => {
+      const before = await toBook();
+      const back = await received(`آزمون نوبت ${runId}`);
+      expect(back).toMatchObject({ stage: 'at_clinic', appointmentAt: null });
+      expect(await toBook()).toBe(before + 1);
+
+      const booked = (await book(back.id, daysAgo(-3)).expect(200))
+        .body as LabCaseBody;
+      expect(booked).toMatchObject({
+        stage: 'booked',
+        appointmentAt: daysAgo(-3),
+        appointmentTimeliness: 'on_time',
+        appointmentDays: 3,
+      });
+      // Off the front desk's list, into the booked column.
+      expect(await toBook()).toBe(before);
+      const columns = await board(`آزمون نوبت ${runId}`);
+      expect(columns.atClinic).toHaveLength(0);
+      expect(columns.booked.map((c) => c.id)).toEqual([back.id]);
+    });
+
+    it('lets the day be changed, and flags a booking whose day has passed', async () => {
+      const back = await received(`آزمون تغییر نوبت ${runId}`);
+      await book(back.id, daysAgo(-5)).expect(200);
+
+      const changed = (await book(back.id, daysAgo(2)).expect(200))
+        .body as LabCaseBody;
+      expect(changed).toMatchObject({
+        stage: 'booked',
+        appointmentTimeliness: 'overdue',
+        appointmentDays: -2,
+      });
+      const today = (await book(back.id, daysAgo(0)).expect(200))
+        .body as LabCaseBody;
+      expect(today.appointmentTimeliness).toBe('due_today');
+    });
+
+    it('takes the booking back with an undo, and drops it when sent back to the lab', async () => {
+      const back = await received(`آزمون لغو نوبت ${runId}`);
+      const booked = (await book(back.id, daysAgo(-2)).expect(200))
+        .body as LabCaseBody;
+
+      const undone = (
+        await asStaff(http().post(`/api/lab-cases/${back.id}/undo`))
+          .send({ expectedVersion: booked.version })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(undone).toMatchObject({ stage: 'at_clinic', appointmentAt: null });
+
+      await book(back.id, daysAgo(-2)).expect(200);
+      const sent = (
+        await asStaff(http().post(`/api/lab-cases/${back.id}/send`))
+          .send({ kind: 'correction', waitDays: 3 })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(sent).toMatchObject({ stage: 'at_lab', appointmentAt: null });
+    });
+
+    it('delivers straight from a booking, and an undone delivery returns to it', async () => {
+      const back = await received(`آزمون تحویل نوبت ${runId}`);
+      await book(back.id, daysAgo(-1)).expect(200);
+      const delivered = (
+        await asStaff(http().post(`/api/lab-cases/${back.id}/deliver`))
+          .send({})
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(delivered).toMatchObject({
+        stage: 'delivered',
+        appointmentTimeliness: null,
+      });
+
+      const undone = (
+        await asStaff(http().post(`/api/lab-cases/${back.id}/undo`))
+          .send({ expectedVersion: delivered.version })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(undone.stage).toBe('booked');
+    });
+
+    it('refuses a booking for work still at the lab, and a bad date', async () => {
+      const atLab = await openCase(`آزمون نوبت در لابراتوار ${runId}`);
+      await book(atLab.id, daysAgo(-1)).expect(409);
+      const back = await received(`آزمون تاریخ بد ${runId}`);
+      await book(back.id, 'فردا').expect(400);
+    });
+  });
+
+  describe('implant parts at the receipt', () => {
+    const implantCase = (name: string) =>
+      openCase(name, 0, 7, {
+        workTypes: ['implant_crown'],
+        implantBrand: 'دنتیوم',
+        impressionCount: 2,
+        analogCount: 2,
+      });
+    const receive = async (id: string, body: object) =>
+      (
+        await asStaff(http().post(`/api/lab-cases/${id}/receive`))
+          .send(body)
+          .expect(200)
+      ).body as LabCaseBody;
+
+    it('counts the parts back when they came with the work, and takes them back with an undo', async () => {
+      const opened = await implantCase(`آزمون قطعات همراه ${runId}`);
+      const received = await receive(opened.id, { partsReturned: true });
+      expect(received).toMatchObject({
+        stage: 'at_clinic',
+        partsOutstanding: false,
+      });
+
+      const undone = (
+        await asStaff(http().post(`/api/lab-cases/${opened.id}/undo`))
+          .send({ expectedVersion: received.version })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(undone).toMatchObject({
+        stage: 'at_lab',
+        partsOutstanding: true,
+      });
+    });
+
+    it('keeps the parts owed when only the work came, until they are marked', async () => {
+      const opened = await implantCase(`آزمون فقط کار ${runId}`);
+      const received = await receive(opened.id, { partsReturned: false });
+      expect(received).toMatchObject({
+        stage: 'at_clinic',
+        partsOutstanding: true,
+      });
+
+      // Marked from the clinic column, without waiting for the delivery.
+      const returned = await asStaff(
+        http().post(`/api/lab-cases/${opened.id}/parts-returned`),
+      )
+        .send({ returned: true })
+        .expect(200);
+      expect(returned.body as LabCaseBody).toMatchObject({
+        stage: 'at_clinic',
+        partsOutstanding: false,
+      });
+    });
+
+    it('chases parts that did not come on their own clock, apart from the work', async () => {
+      const opened = await implantCase(`آزمون پیگیری قطعات ${runId}`);
+      const received = await receive(opened.id, {
+        partsReturned: false,
+        partsWaitDays: 3,
+      });
+      // The work is at the clinic and can be fitted; the parts are due in three days.
+      expect(received).toMatchObject({
+        stage: 'at_clinic',
+        partsOutstanding: true,
+        partsDueAt: jalali(addDays(new Date(), 3)),
+        partsTimeliness: 'on_time',
+        partsDaysLate: 0,
+      });
+      let columns = await board('');
+      expect(columns.partsChase.map((c) => c.id)).toContain(opened.id);
+
+      // Marked back: off the chase list.
+      await asStaff(http().post(`/api/lab-cases/${opened.id}/parts-returned`))
+        .send({ returned: true })
+        .expect(200);
+      columns = await board('');
+      expect(columns.partsChase.map((c) => c.id)).not.toContain(opened.id);
+    });
+
+    it('drops the chase when the receipt is undone', async () => {
+      const opened = await implantCase(`آزمون برگشت پیگیری ${runId}`);
+      const received = await receive(opened.id, { partsReturned: false });
+      // Seven days unless told otherwise.
+      expect(received.partsDueAt).toBe(jalali(addDays(new Date(), 7)));
+
+      const undone = (
+        await asStaff(http().post(`/api/lab-cases/${opened.id}/undo`))
+          .send({ expectedVersion: received.version })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(undone).toMatchObject({ stage: 'at_lab', partsDueAt: null });
+      expect((await board('')).partsChase.map((c) => c.id)).not.toContain(
+        opened.id,
+      );
+    });
+
+    it('ignores the flag on work that sent no parts', async () => {
+      const opened = await openCase(`آزمون بدون قطعات ${runId}`);
+      const received = await receive(opened.id, { partsReturned: true });
+      expect(received.partsOutstanding).toBe(false);
+      expect(received).toMatchObject({ stage: 'at_clinic' });
+    });
+  });
+
   describe('editing a case', () => {
-    it('records a night guard by jaw, and moves it to teeth when it becomes other work', async () => {
-      const opened = await openCase(`آزمون نایت گارد ${runId}`, 0, 7, {
+    it('takes one kind of work per case', async () => {
+      const body = {
+        recordedName: `آزمون یک نوع کار ${runId}`,
+        labId,
+        tripKind: 'impression',
+        sentAt: daysAgo(0),
+        waitDays: 7,
+      };
+      for (const workTypes of [[], ['crown', 'laminate']]) {
+        await asStaff(http().post('/api/lab-cases'))
+          .send({ ...body, workTypes })
+          .expect(400);
+      }
+    });
+
+    it('records per-jaw work by jaw, and per-tooth work by teeth', async () => {
+      for (const workType of ['night_guard', 'sx']) {
+        const opened = await openCase(`آزمون فک ${workType} ${runId}`, 0, 7, {
+          workTypes: [workType],
+          jaw: 'upper',
+          // Teeth make no sense on per-jaw work: dropped, not stored.
+          teethFdi: [16],
+        });
+        expect(opened).toMatchObject({
+          jaw: 'upper',
+          teethFdi: [],
+          toothCount: null,
+          teeth: '',
+        });
+      }
+
+      const opened = await openCase(`آزمون دندان ${runId}`, 0, 7, {
         workTypes: ['night_guard'],
         jaw: 'upper',
       });
-      expect(opened).toMatchObject({
-        jaw: 'upper',
-        toothCount: null,
-        teeth: '',
-      });
-
       const edited = (
         await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
           .send({
             workTypes: ['crown'],
-            jaw: null,
-            toothCount: 1,
-            teeth: '۶ بالا راست',
+            teethFdi: [17, 16, 21],
             expectedVersion: opened.version,
           })
           .expect(200)
       ).body as LabCaseBody;
+      // Sorted, counted from the chart, and the jaw is gone.
       expect(edited).toMatchObject({
         jaw: null,
-        toothCount: 1,
-        teeth: '۶ بالا راست',
+        teethFdi: [16, 17, 21],
+        toothCount: 3,
+        teeth: '',
       });
 
+      // Not teeth the chart offers: a wisdom tooth, a primary tooth, a repeat.
+      for (const teethFdi of [[18], [51], [0], [16, 16]]) {
+        await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
+          .send({ teethFdi, expectedVersion: edited.version })
+          .expect(400);
+      }
       // Not a jaw the form offers.
       await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
         .send({ jaw: 'left', expectedVersion: edited.version })
@@ -429,7 +676,7 @@ describeIfWritable('lab flows (e2e)', () => {
       const edited = (
         await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
           .send({
-            teeth: '۶ بالا راست',
+            teethFdi: [16],
             sentAt: daysAgo(3),
             waitDays: 21,
             expectedVersion: opened.version,
@@ -446,7 +693,7 @@ describeIfWritable('lab flows (e2e)', () => {
         .send({})
         .expect(200);
       const stale = await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
-        .send({ teeth: '۷', expectedVersion: edited.version })
+        .send({ teethFdi: [17], expectedVersion: edited.version })
         .expect(409);
       expect((stale.body as { code: string }).code).toBe(
         ErrorCode.LabCaseModified,

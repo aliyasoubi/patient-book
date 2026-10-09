@@ -22,6 +22,7 @@ import {
 import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
 import {
   IMPLANT_BRAND_NAMES,
+  LAB_TOOTH_NUMBERS,
   LabJaw,
   LabTripKind,
   LabWorkType,
@@ -110,33 +111,29 @@ export class CreateLabCaseDto {
   @IsUUID()
   labId!: string;
 
-  @ApiProperty({ enum: LabWorkType, isArray: true })
+  // One kind of work per case. The column stays a list so cases opened before
+  // that rule keep what they were written with.
+  @ApiProperty({ enum: LabWorkType, isArray: true, minItems: 1, maxItems: 1 })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(6)
-  @ArrayUnique()
+  @ArrayMaxSize(1)
   @IsEnum(LabWorkType, { each: true })
   workTypes!: LabWorkType[];
 
-  /** For a night guard, instead of the tooth count and numbers. */
+  /** For per-jaw work (a night guard, SX), instead of tooth numbers. */
   @ApiPropertyOptional({ enum: LabJaw })
   @IsEnum(LabJaw)
   @IsOptional()
   jaw?: LabJaw | null;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: 32 })
-  @IsInt()
-  @Min(1)
-  @Max(32)
+  /** For per-tooth work: FDI numbers, `16` being the upper right first molar. */
+  @ApiPropertyOptional({ type: [Number], example: [16, 17] })
+  @IsArray()
+  @ArrayMaxSize(LAB_TOOTH_NUMBERS.length)
+  @ArrayUnique()
+  @IsIn(LAB_TOOTH_NUMBERS, { each: true })
   @IsOptional()
-  toothCount?: number | null;
-
-  @ApiPropertyOptional({ example: '۶ بالا راست' })
-  @Transform(clean)
-  @IsString()
-  @MaxLength(200)
-  @IsOptional()
-  teeth?: string | null;
+  teethFdi?: number[];
 
   @ApiPropertyOptional({ enum: IMPLANT_BRAND_NAMES })
   @IsIn(IMPLANT_BRAND_NAMES)
@@ -208,6 +205,37 @@ export class LabCaseDateDto {
   @IsString()
   @IsOptional()
   date?: string;
+}
+
+/** The patient is booked to have the work fitted on this day. */
+export class BookLabCaseDto {
+  @ApiProperty({ example: '1405/07/24' })
+  @Validate(IsJalaliDateConstraint)
+  @IsString()
+  date!: string;
+}
+
+/** Back from the lab, and whether the implant parts came back with the work. */
+export class ReceiveLabCaseDto extends LabCaseDateDto {
+  @ApiPropertyOptional({
+    description:
+      'The impression copings and analogs came back with the work; omitted or false leaves them owed',
+  })
+  @IsBoolean()
+  @IsOptional()
+  partsReturned?: boolean;
+
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: MAX_WAIT_DAYS,
+    description:
+      'With partsReturned false: days the lab has to send the parts, counted from the receipt',
+  })
+  @IsInt()
+  @Min(1)
+  @Max(MAX_WAIT_DAYS)
+  @IsOptional()
+  partsWaitDays?: number;
 }
 
 /** Back to the lab, for the reason given. */

@@ -8,10 +8,12 @@ import { LabTrip } from './lab-trip.entity';
 import { Lab } from './lab.entity';
 import { Patient } from '../patients/patient.entity';
 import {
+  BookLabCaseDto,
   CreateLabCaseDto,
   LabBoardQueryDto,
   LabCaseDateDto,
   QueryLabCasesDto,
+  ReceiveLabCaseDto,
   SendLabCaseDto,
   UpdateLabCaseDto,
 } from './dto/lab.dto';
@@ -27,7 +29,13 @@ import {
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
-import { ErrorCode, JalaliDate, searchKey, storedDate } from '../../domain';
+import {
+  ErrorCode,
+  JAW_WORK_TYPES,
+  JalaliDate,
+  searchKey,
+  storedDate,
+} from '../../domain';
 
 /** How far back the board's delivered column reaches without a search. */
 const DELIVERED_DAYS = 30;
@@ -37,8 +45,13 @@ const DELIVERED_LIMIT = 50;
 /** The board: every open case, and the recent deliveries. */
 export interface LabBoard {
   atLab: unknown[];
+  /** Back at the clinic, the patient not yet booked. */
   atClinic: unknown[];
+  /** Back at the clinic, the patient booked for a day. */
+  booked: unknown[];
   delivered: unknown[];
+  /** Back at the clinic or delivered, with parts the lab still owes and a day for them. */
+  partsChase: unknown[];
 }
 
 const jalali = (value: Date | string | null): string | null =>
@@ -47,6 +60,9 @@ const jalali = (value: Date | string | null): string | null =>
 /** A Jalali date from a request, or today when none was sent. */
 const dayOrToday = (value: string | undefined): Date =>
   value ? JalaliDate.parse(value).date : storedDate(todayIso());
+
+/** How long the lab has to send parts that did not come with the work, unless told otherwise. */
+const DEFAULT_PARTS_DAYS = 7;
 
 const partsOwed = (c: LabCase): boolean =>
   (c.impressionCount ?? 0) + (c.analogCount ?? 0) > 0 && !c.partsReturnedAt;
@@ -116,6 +132,7 @@ export class LabCasesService {
     const now = new Date();
     const atLab = open.filter((c) => labStage(c) === 'at_lab');
     const atClinic = open.filter((c) => labStage(c) === 'at_clinic');
+    const booked = open.filter((c) => labStage(c) === 'booked');
 
     // Most urgent first in each column: the lab furthest past its day, the
     // patient waiting longest to be called, the parts still owed.
@@ -125,11 +142,29 @@ export class LabCasesService {
       storedDate(latestTrip(c.trips)?.receivedAt ?? c.createdAt).getTime();
     atLab.sort((a, b) => due(a) - due(b));
     atClinic.sort((a, b) => back(a) - back(b));
+    // The soonest booking first; one already past is the oldest, so it leads.
+    booked.sort(
+      (a, b) =>
+        storedDate(a.appointmentAt!).getTime() -
+        storedDate(b.appointmentAt!).getTime(),
+    );
+
+    // Work that is back but whose parts the lab was given a day to send: the
+    // lab's column lists them too, soonest due first, so someone can call.
+    const chase = [...atClinic, ...booked, ...owing]
+      .filter((c) => partsOwed(c) && c.partsDueAt)
+      .sort(
+        (a, b) =>
+          storedDate(a.partsDueAt!).getTime() -
+          storedDate(b.partsDueAt!).getTime(),
+      );
 
     return {
       atLab: atLab.map((c) => this.toResponse(c, now)),
       atClinic: atClinic.map((c) => this.toResponse(c, now)),
+      booked: booked.map((c) => this.toResponse(c, now)),
       delivered: [...owing, ...recent].map((c) => this.toResponse(c, now)),
+      partsChase: chase.map((c) => this.toResponse(c, now)),
     };
   }
 
@@ -164,7 +199,12 @@ export class LabCasesService {
   async create(dto: CreateLabCaseDto, userId: string | null): Promise<unknown> {
     const id = await this.cases.manager.transaction(async (manager) => {
       const cases = manager.getRepository(LabCase);
-      const c = cases.create({ workTypes: [], teeth: '', searchText: '' });
+      const c = cases.create({
+        workTypes: [],
+        teethFdi: [],
+        teeth: '',
+        searchText: '',
+      });
       await this.assign(c, dto, manager);
       const saved = await cases.save(c);
       const sentAt = JalaliDate.parse(dto.sentAt).date;
@@ -256,20 +296,43 @@ export class LabCasesService {
     return this.findOne(id);
   }
 
-  /** Back from the lab: the trip out is closed and the patient can be booked. */
+  /**
+   * Back from the lab: the trip out is closed and the patient can be booked.
+   * The work and the impression parts that went with it travel separately, so
+   * the parts are only counted back when the receipt says they came too.
+   */
   receive(
     id: string,
-    dto: LabCaseDateDto,
+    dto: ReceiveLabCaseDto,
     userId: string | null,
   ): Promise<unknown> {
     return this.move(id, userId, ['at_lab'], async (c, manager) => {
       const trip = openTrip(c.trips)!;
       trip.receivedAt = dayOrToday(dto.date);
       await manager.getRepository(LabTrip).save(trip);
+      const owed = partsOwed(c);
+      const partsCame = owed && dto.partsReturned === true;
+      // Only the work came: the lab is given until the day named to send the parts.
+      const partsDueAt =
+        owed && dto.partsReturned === false
+          ? expectedReturn(
+              trip.receivedAt,
+              dto.partsWaitDays ?? DEFAULT_PARTS_DAYS,
+            )
+          : null;
+      if (partsCame) {
+        await manager
+          .getRepository(LabCase)
+          .update(c.id, { partsReturnedAt: trip.receivedAt });
+      } else if (partsDueAt) {
+        await manager.getRepository(LabCase).update(c.id, { partsDueAt });
+      }
       return {
         event: 'receive',
         sequence: trip.sequence,
         date: jalali(trip.receivedAt),
+        ...(partsCame ? { partsReturned: true } : {}),
+        ...(partsDueAt ? { partsDueAt: jalali(partsDueAt) } : {}),
       };
     });
   }
@@ -280,29 +343,66 @@ export class LabCasesService {
     dto: SendLabCaseDto,
     userId: string | null,
   ): Promise<unknown> {
-    return this.move(id, userId, ['at_clinic'], async (c, manager) => {
-      const sentAt = dayOrToday(dto.sentAt);
-      const trips = manager.getRepository(LabTrip);
-      const trip = await trips.save(
-        trips.create({
-          labCaseId: c.id,
-          sequence: (latestTrip(c.trips)?.sequence ?? 0) + 1,
-          kind: dto.kind,
-          sentAt,
-          waitDays: dto.waitDays,
-          expectedAt: expectedReturn(sentAt, dto.waitDays),
-          receivedAt: null,
-          note: dto.note ?? null,
-        }),
-      );
-      return {
-        event: 'send',
-        sequence: trip.sequence,
-        kind: trip.kind,
-        date: jalali(trip.sentAt),
-        waitDays: trip.waitDays,
-      };
-    });
+    return this.move(
+      id,
+      userId,
+      ['at_clinic', 'booked'],
+      async (c, manager) => {
+        const sentAt = dayOrToday(dto.sentAt);
+        // Back to the lab, the booking no longer holds: it is made again on the way back.
+        if (c.appointmentAt) {
+          await manager
+            .getRepository(LabCase)
+            .update(c.id, { appointmentAt: null });
+        }
+        const trips = manager.getRepository(LabTrip);
+        const trip = await trips.save(
+          trips.create({
+            labCaseId: c.id,
+            sequence: (latestTrip(c.trips)?.sequence ?? 0) + 1,
+            kind: dto.kind,
+            sentAt,
+            waitDays: dto.waitDays,
+            expectedAt: expectedReturn(sentAt, dto.waitDays),
+            receivedAt: null,
+            note: dto.note ?? null,
+          }),
+        );
+        return {
+          event: 'send',
+          sequence: trip.sequence,
+          kind: trip.kind,
+          date: jalali(trip.sentAt),
+          waitDays: trip.waitDays,
+        };
+      },
+    );
+  }
+
+  /**
+   * The front desk gave the patient a day for the fitting — or changed it. The
+   * day is what the case waits for, so a booking from the clinic column moves
+   * it to the booked one, and a new day on a booked case moves it nowhere.
+   */
+  book(
+    id: string,
+    dto: BookLabCaseDto,
+    userId: string | null,
+  ): Promise<unknown> {
+    return this.move(
+      id,
+      userId,
+      ['at_clinic', 'booked'],
+      async (c, manager) => {
+        const appointmentAt = JalaliDate.parse(dto.date).date;
+        await manager.getRepository(LabCase).update(c.id, { appointmentAt });
+        return {
+          event: 'book',
+          date: jalali(appointmentAt),
+          ...(c.appointmentAt ? { changedFrom: jalali(c.appointmentAt) } : {}),
+        };
+      },
+    );
   }
 
   /** Fitted for the patient. Only from the clinic: what is at the lab is received first. */
@@ -311,11 +411,16 @@ export class LabCasesService {
     dto: LabCaseDateDto,
     userId: string | null,
   ): Promise<unknown> {
-    return this.move(id, userId, ['at_clinic'], async (c, manager) => {
-      const deliveredAt = dayOrToday(dto.date);
-      await manager.getRepository(LabCase).update(c.id, { deliveredAt });
-      return { event: 'deliver', date: jalali(deliveredAt) };
-    });
+    return this.move(
+      id,
+      userId,
+      ['at_clinic', 'booked'],
+      async (c, manager) => {
+        const deliveredAt = dayOrToday(dto.date);
+        await manager.getRepository(LabCase).update(c.id, { deliveredAt });
+        return { event: 'deliver', date: jalali(deliveredAt) };
+      },
+    );
   }
 
   /**
@@ -332,7 +437,7 @@ export class LabCasesService {
     return this.move(
       id,
       userId,
-      ['at_lab', 'at_clinic', 'delivered'],
+      ['at_lab', 'at_clinic', 'booked', 'delivered'],
       async (c, manager, stage) => {
         if (c.version !== expectedVersion) {
           throw AppException.conflict(ErrorCode.LabCaseModified);
@@ -347,10 +452,32 @@ export class LabCasesService {
             date: jalali(c.deliveredAt),
           };
         }
+        if (stage === 'booked') {
+          await manager
+            .getRepository(LabCase)
+            .update(c.id, { appointmentAt: null });
+          return {
+            event: 'undo',
+            undone: 'book',
+            date: jalali(c.appointmentAt),
+          };
+        }
         const trips = manager.getRepository(LabTrip);
         const latest = latestTrip(c.trips)!;
         if (stage === 'at_clinic') {
           const date = jalali(latest.receivedAt);
+          // Back at the lab, the work and its parts are together again: parts
+          // counted back with this receipt go back with it, and a chase is moot.
+          if (c.partsReturnedAt && jalali(c.partsReturnedAt) === date) {
+            await manager
+              .getRepository(LabCase)
+              .update(c.id, { partsReturnedAt: null });
+          }
+          if (c.partsDueAt) {
+            await manager
+              .getRepository(LabCase)
+              .update(c.id, { partsDueAt: null });
+          }
           latest.receivedAt = null;
           await trips.save(latest);
           return {
@@ -512,8 +639,20 @@ export class LabCasesService {
     if (dto.recordedName !== undefined) c.recordedName = dto.recordedName;
     if (dto.workTypes !== undefined) c.workTypes = dto.workTypes;
     if (dto.jaw !== undefined) c.jaw = dto.jaw ?? null;
-    if (dto.toothCount !== undefined) c.toothCount = dto.toothCount ?? null;
-    if (dto.teeth !== undefined) c.teeth = dto.teeth ?? '';
+    if (dto.teethFdi !== undefined) {
+      c.teethFdi = [...dto.teethFdi].sort((a, b) => a - b);
+    }
+    // Per-jaw work has a jaw and no teeth; everything else has teeth and no jaw.
+    if (c.workTypes.some((t) => JAW_WORK_TYPES.includes(t))) {
+      c.teethFdi = [];
+    } else {
+      c.jaw = null;
+    }
+    // Teeth picked from the chart replace what a case was first written with.
+    if (c.teethFdi.length || c.jaw) {
+      c.toothCount = null;
+      c.teeth = '';
+    }
     if (dto.implantBrand !== undefined)
       c.implantBrand = dto.implantBrand ?? null;
     if (dto.impressionCount !== undefined)
@@ -529,7 +668,7 @@ export class LabCasesService {
         )?.fileNo
       : null;
     c.searchText = searchKey(
-      [c.recordedName, fileNo, c.teeth, c.implantBrand]
+      [c.recordedName, fileNo, c.teeth, c.teethFdi.join(' '), c.implantBrand]
         .filter(Boolean)
         .join(' '),
     );
@@ -537,16 +676,30 @@ export class LabCasesService {
 
   private toResponse(c: LabCase, now: Date): Record<string, unknown> {
     const trips = [...(c.trips ?? [])].sort((a, b) => a.sequence - b.sequence);
-    const stage = labStage({ deliveredAt: c.deliveredAt, trips });
+    const stage = labStage({
+      deliveredAt: c.deliveredAt,
+      appointmentAt: c.appointmentAt,
+      trips,
+    });
     const latest = latestTrip(trips);
     const open = stage === 'at_lab' ? openTrip(trips) : null;
     const due = open ? timeliness(open.expectedAt, now) : null;
+    // A booked case is judged against its day: how far off, or how long past.
+    const booking =
+      stage === 'booked' && c.appointmentAt
+        ? timeliness(c.appointmentAt, now)
+        : null;
+    // The parts are on their own clock once the work is back without them.
+    const parts =
+      stage !== 'at_lab' && partsOwed(c) && c.partsDueAt
+        ? timeliness(c.partsDueAt, now)
+        : null;
     // When the case entered the column it is in: the trip out left, the trip
     // back arrived, or the patient was fitted.
     const since =
       stage === 'at_lab'
         ? open!.sentAt
-        : stage === 'at_clinic'
+        : stage === 'at_clinic' || stage === 'booked'
           ? (latest?.receivedAt ?? null)
           : c.deliveredAt;
     return {
@@ -566,13 +719,24 @@ export class LabCasesService {
         : null,
       workTypes: c.workTypes,
       jaw: c.jaw,
-      toothCount: c.toothCount,
+      teethFdi: c.teethFdi,
+      // Counted from the chart; the typed count only for cases that predate it.
+      toothCount: c.teethFdi.length || c.toothCount,
       teeth: c.teeth,
       implantBrand: c.implantBrand,
       impressionCount: c.impressionCount,
       analogCount: c.analogCount,
       partsReturnedAt: jalali(c.partsReturnedAt),
+      appointmentAt: jalali(c.appointmentAt),
+      appointmentTimeliness: booking?.state ?? null,
+      appointmentDays:
+        stage === 'booked' && c.appointmentAt
+          ? differenceInCalendarDays(storedDate(c.appointmentAt), now)
+          : null,
       partsOutstanding: partsOwed(c),
+      partsDueAt: partsOwed(c) ? jalali(c.partsDueAt) : null,
+      partsTimeliness: parts?.state ?? null,
+      partsDaysLate: parts?.daysLate ?? 0,
       deliveredAt: jalali(c.deliveredAt),
       stage,
       since: jalali(since),

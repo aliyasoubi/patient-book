@@ -65,11 +65,19 @@ export class LabCase {
   @Column({ type: 'enum', enum: LabJaw, nullable: true })
   jaw!: LabJaw | null;
 
-  /** تعداد دندان‌ها */
+  /**
+   * The teeth the work is for, in FDI notation (`16` is the upper right first
+   * molar), sorted. Empty for per-jaw work, and for cases written before the
+   * tooth chart, which keep what staff typed in `toothCount` and `teeth`.
+   */
+  @Column({ type: 'smallint', array: true, default: [] })
+  teethFdi!: number[];
+
+  /** Legacy: the count staff typed, before teeth were picked from the chart. */
   @Column({ type: 'smallint', nullable: true })
   toothCount!: number | null;
 
-  /** شماره دندان‌ها, as written: «۶ بالا راست»، «فک بالا». */
+  /** Legacy: the tooth text as written ("6 upper right") before the chart. */
   @Column({ type: 'varchar', length: 200, default: '' })
   teeth!: string;
 
@@ -89,6 +97,21 @@ export class LabCase {
 
   @Column({ type: 'date', nullable: true })
   partsReturnedAt!: Date | null;
+
+  /**
+   * When the lab said the parts would follow, set when the work came back
+   * without them. Only meaningful while the parts are still owed.
+   */
+  @Column({ type: 'date', nullable: true })
+  partsDueAt!: Date | null;
+
+  /**
+   * The day the patient is booked to be fitted, once the front desk has given
+   * one. Kept after the delivery as part of the case's history; it is the
+   * board's booked column only while the work is undelivered.
+   */
+  @Column({ type: 'date', nullable: true })
+  appointmentAt!: Date | null;
 
   /** Fitted for the patient. The case is done; the parts may still be owed. */
   @Index()

@@ -294,6 +294,7 @@ export function treatmentColor(key: string): { bg: string; fg: string } {
 const LAB_STAGE_LABELS: Record<LabStage, string> = {
   at_lab: 'labs.atLab',
   at_clinic: 'labs.atClinic',
+  booked: 'labs.booked',
   delivered: 'labs.delivered',
 };
 
@@ -321,6 +322,11 @@ const LAB_WORK_TYPE_LABELS: Record<LabWorkType, string> = {
   night_guard: 'labWorkType.night_guard',
   sx: 'labWorkType.sx',
 };
+
+/** Made per jaw, not per tooth: the form asks for a jaw instead of teeth. */
+export function isJawWork(type: LabWorkType | undefined): boolean {
+  return type === 'night_guard' || type === 'sx';
+}
 
 export function labWorkTypeLabel(type: LabWorkType): string {
   return LAB_WORK_TYPE_LABELS[type];

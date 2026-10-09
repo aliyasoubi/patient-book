@@ -25,10 +25,10 @@
         [label]="'labs.lab' | translate"
       />
       <pb-filter-chips
-        [options]="overdueFilter"
-        [selected]="overdueOnly() ? ['overdue'] : []"
-        (selectedChange)="setOverdue($event.length > 0)"
-        [ariaLabel]="'labs.filterOverdue' | translate"
+        [options]="focusFilter"
+        [selected]="focus() ? [focus()!] : []"
+        (selectedChange)="setFocus($any($event[0] ?? null))"
+        [ariaLabel]="'labs.focusAria' | translate"
       />
     }
     <!-- Separate from the board's question: it changes which cases are shown at all. -->
@@ -78,7 +78,7 @@
         />
       }
     }
-  } @else if (!loading() && !failed() && isEmpty() && !search.value && !labId() && !overdueOnly()) {
+  } @else if (!loading() && !failed() && isEmpty() && !search.value && !labId() && !focus()) {
     <pb-empty-state
       icon="science"
       [title]="'labs.emptyTitle' | translate"
@@ -123,6 +123,7 @@
                 [canEdit]="canEdit"
                 [busy]="busy() === c.id"
                 (receive)="receive(c)"
+                (book)="book(c)"
                 (sendAgain)="sendAgain(c)"
                 (deliver)="deliver(c)"
                 (partsReturned)="partsReturned(c)"
@@ -133,14 +134,32 @@
               <!-- Under the overdue filter the other columns are not empty, only not asked about. -->
               <p class="column__empty">
                 {{
-                  (overdueOnly() && column.stage !== 'at_lab'
+                  (focus() === 'overdue' && column.stage !== 'at_lab'
                     ? 'labs.overdueOnlyHint'
-                    : column.empty
+                    : focus() === 'toBook' && column.stage !== 'at_clinic'
+                      ? 'labs.toBookOnlyHint'
+                      : column.empty
                   ) | translate
                 }}
               </p>
             }
           </div>
+
+          <!-- The work is back; the lab still owes the parts and has a day to send them. -->
+          @if (column.stage === 'at_lab' && partsChase().length) {
+            <section class="column__chase" [attr.aria-label]="'labs.partsChase' | translate">
+              <h3 class="column__chase-title">{{ 'labs.partsChase' | translate }}</h3>
+              @for (c of partsChase(); track c.id) {
+                <pb-lab-case-card
+                  [labCase]="c"
+                  [canEdit]="canEdit"
+                  [busy]="busy() === c.id"
+                  [partsOnly]="true"
+                  (partsReturned)="partsReturned(c)"
+                />
+              }
+            </section>
+          }
         </pb-surface>
       }
     </div>

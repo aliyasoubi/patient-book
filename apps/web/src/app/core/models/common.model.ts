@@ -128,7 +128,7 @@ export interface FollowUpDue {
 }
 
 /** Where a lab case's work is now — the lab board's three columns. */
-export type LabStage = 'at_lab' | 'at_clinic' | 'delivered';
+export type LabStage = 'at_lab' | 'at_clinic' | 'booked' | 'delivered';
 /** A night guard is made per jaw, so it records this instead of teeth. */
 export type LabJaw = 'upper' | 'lower' | 'both';
 export type LabWorkType = 'crown' | 'implant_crown' | 'laminate' | 'post' | 'night_guard' | 'sx';
@@ -166,14 +166,28 @@ export interface LabCase {
   lab: Lab | null;
   workTypes: LabWorkType[];
   jaw: LabJaw | null;
+  /** FDI numbers picked on the chart, sorted. Empty for per-jaw work and for older cases. */
+  teethFdi: number[];
+  /** The chart's count; for a case written before the chart, the count staff typed. */
   toothCount: number | null;
+  /** Older cases only: the tooth text as typed. */
   teeth: string;
   implantBrand: string | null;
   impressionCount: number | null;
   analogCount: number | null;
   partsReturnedAt: string | null;
   /** Impression copings or analogs went with the case and have not come back. */
+  /** The day the patient is booked for the fitting, once the front desk has given one. */
+  appointmentAt: string | null;
+  /** Only while booked: the day still ahead, today, or already past. */
+  appointmentTimeliness: LabTimeliness | null;
+  /** Only while booked: days until the booking, negative once it has passed. */
+  appointmentDays: number | null;
   partsOutstanding: boolean;
+  /** The day the lab was given to send the parts, once the work came back without them. */
+  partsDueAt: string | null;
+  partsTimeliness: LabTimeliness | null;
+  partsDaysLate: number;
   deliveredAt: string | null;
   stage: LabStage;
   /** When the case entered its current column. */
@@ -193,8 +207,13 @@ export interface LabCase {
 /** Every open case by column, most urgent first, and the recent deliveries. */
 export interface LabBoard {
   atLab: LabCase[];
+  /** Back at the clinic, the patient not yet booked. */
   atClinic: LabCase[];
+  /** Back at the clinic, the patient booked for a day. */
+  booked: LabCase[];
   delivered: LabCase[];
+  /** Back at the clinic or delivered, parts still owed and a day set for them. */
+  partsChase: LabCase[];
 }
 
 /** The store's shelves, as the API's `InventoryCategory`. */
@@ -283,6 +302,8 @@ export interface DashboardSummary {
   followUpsThisWeek: number;
   followUpsOverdue: number;
   labsOverdue: number;
+  /** Lab work that is back with no booking for the patient yet. */
+  labsToBook: number;
   inventoryReorder: number;
   inventoryExpiring: number;
   /** The recall list: no visit on file in over a year. */
