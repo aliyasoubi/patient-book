@@ -73,6 +73,8 @@ describeIfWritable('inventory flows (e2e)', () => {
   const userIds: string[] = [];
   const itemIds: string[] = [];
   const patientIds: string[] = [];
+  /** Patients whose implant file a test had the stock open. */
+  const implantCasePatients: string[] = [];
 
   const http = () => request(app.getHttpServer());
   const asStaff = (req: request.Test) =>
@@ -88,13 +90,17 @@ describeIfWritable('inventory flows (e2e)', () => {
     return (res.body as { accessToken: string }).accessToken;
   }
 
-  /** An implant of this run's own line, so its rows never mix with anything else. */
+  /**
+   * An item of this run's own line, so its rows never mix with anything
+   * else: a prosthetic part by default — measured like an implant, but not
+   * traced by lot — and an implant where the test is about tracing.
+   */
   async function addItem(
     body: Record<string, unknown> = {},
   ): Promise<ItemBody> {
     const res = await asStaff(http().post('/api/inventory/items'))
       .send({
-        category: 'implant',
+        category: 'prosthetic',
         name: `line-${runId}`,
         brand: 'Dentium',
         spec: '4x10',
@@ -105,6 +111,10 @@ describeIfWritable('inventory flows (e2e)', () => {
     itemIds.push(item.id);
     return item;
   }
+
+  /** Out of the list, so the list's own test sees only its items. */
+  const archive = (id: string) =>
+    asStaff(http().delete(`/api/inventory/items/${id}`)).expect(204);
 
   const move = (id: string, body: Record<string, unknown>) =>
     asStaff(http().post(`/api/inventory/items/${id}/movements`)).send(body);
@@ -153,6 +163,16 @@ describeIfWritable('inventory flows (e2e)', () => {
         itemIds,
       ]);
     }
+    if (implantCasePatients.length) {
+      await db.query(
+        `DELETE FROM surgery_queue WHERE "implantCaseId" IN
+           (SELECT id FROM implant_cases WHERE "patientId" = ANY($1))`,
+        [implantCasePatients],
+      );
+      await db.query(`DELETE FROM implant_cases WHERE "patientId" = ANY($1)`, [
+        implantCasePatients,
+      ]);
+    }
     if (patientIds.length) {
       await db.query(`DELETE FROM patients WHERE id = ANY($1)`, [patientIds]);
     }
@@ -181,7 +201,7 @@ describeIfWritable('inventory flows (e2e)', () => {
   it('refuses a second item for the same product, however it is spelled', async () => {
     const res = await asStaff(http().post('/api/inventory/items'))
       .send({
-        category: 'implant',
+        category: 'prosthetic',
         name: `LINE-${runId}`,
         brand: 'dentium',
         spec: '4 x 10',
@@ -260,6 +280,7 @@ describeIfWritable('inventory flows (e2e)', () => {
 
     const item = await addItem({
       name: `traced-${runId}`,
+      category: 'implant',
       quantity: 2,
       lotNumber: 'a-100',
       expiry: printed(30),
@@ -377,6 +398,7 @@ describeIfWritable('inventory flows (e2e)', () => {
   it('stores a brand and a size the standard way, however typed', async () => {
     const item = (await addItem({
       name: `std-${runId}`,
+      category: 'implant',
       brand: 'دنتیوم',
       spec: '۴/۵ - ۱۰',
     })) as ItemBody & { brand: string; spec: string };
@@ -429,8 +451,121 @@ describeIfWritable('inventory flows (e2e)', () => {
     );
   });
 
+  it('writes implants handed to a patient into their implant file, and takes them back on undo', async () => {
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({ fileNo: `8${Date.now()}`, firstName: 'آزمون', lastName: 'کاشت' })
+      .expect(201);
+    const patientId = (patient.body as { id: string }).id;
+    patientIds.push(patientId);
+    implantCasePatients.push(patientId);
+    const item = await addItem({
+      name: `placed-${runId}`,
+      category: 'implant',
+      quantity: 3,
+      lotNumber: 'P-1',
+      expiry: printed(30),
+    });
+
+    const used = (
+      await move(item.id, {
+        kind: 'use',
+        quantity: 2,
+        patientId,
+        tooth: '۳۶ 37',
+      }).expect(200)
+    ).body as ItemBody;
+    expect(used.movements[0]).toMatchObject({ kind: 'use', change: -2 });
+
+    const rows = await db.query<
+      Array<{
+        toothPosition: string;
+        implantBrand: string;
+        followUpMonths: number;
+        notes: string;
+        patientId: string;
+        deletedAt: Date | null;
+      }>
+    >(
+      `SELECT s."toothPosition", s."implantBrand", s."followUpMonths", s.notes,
+              c."patientId", s."deletedAt"
+         FROM surgery_queue s
+         JOIN implant_cases c ON c.id = s."implantCaseId"
+         JOIN inventory_movements m ON m.id = s."inventoryMovementId"
+        WHERE m."itemId" = $1
+        ORDER BY s."toothPosition"`,
+      [item.id],
+    );
+    // One row per implant, each its own tooth, prosthesis due in three months.
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.toothPosition)).toEqual(['36', '37']);
+    expect(rows[0]).toMatchObject({
+      implantBrand: 'دنتیوم',
+      followUpMonths: 3,
+      notes: `placed-${runId} · 4x10 · LOT P-1`,
+      patientId,
+      deletedAt: null,
+    });
+
+    await asStaff(http().post(`/api/inventory/items/${item.id}/movements/undo`))
+      .send({ expectedVersion: used.version })
+      .expect(200);
+    const left = await db.query<Array<{ n: number }>>(
+      `SELECT count(*)::int AS n FROM surgery_queue s
+         JOIN implant_cases c ON c.id = s."implantCaseId"
+        WHERE c."patientId" = $1 AND s."deletedAt" IS NULL`,
+      [patientId],
+    );
+    expect(left[0].n).toBe(0);
+    await archive(item.id);
+  });
+
+  it('will not hand out an expired implant unless its batch is picked', async () => {
+    const item = await addItem({
+      name: `expired-${runId}`,
+      category: 'implant',
+      quantity: 1,
+      lotNumber: 'OLD-1',
+      expiry: printed(-2),
+    });
+    const res = await move(item.id, { kind: 'use', quantity: 1 }).expect(409);
+    expect((res.body as { code: string }).code).toBe(
+      ErrorCode.InventoryLotExpired,
+    );
+    await move(item.id, {
+      kind: 'use',
+      quantity: 1,
+      lotId: item.lots[0].id,
+    }).expect(200);
+    await archive(item.id);
+  });
+
+  it('will not count implants up into a batch with no lot', async () => {
+    const item = await addItem({
+      name: `uncounted-${runId}`,
+      category: 'implant',
+    });
+    const res = await move(item.id, { kind: 'count', quantity: 2 }).expect(400);
+    expect(res.body).toMatchObject({
+      code: ErrorCode.InventoryCountUntraced,
+      params: { id: item.id },
+    });
+    const opened = await asStaff(http().post('/api/inventory/items'))
+      .send({
+        category: 'implant',
+        name: `unopened-${runId}`,
+        brand: 'Dentium',
+        spec: '4x10',
+        quantity: 1,
+      })
+      .expect(400);
+    expect((opened.body as { code: string }).code).toBe(
+      ErrorCode.InventoryLotRequired,
+    );
+    await archive(item.id);
+  });
+
   it('will not receive an implant without its lot and expiry', async () => {
-    const item = await addItem({ name: `lot-${runId}` });
+    const item = await addItem({ name: `lot-${runId}`, category: 'implant' });
     const res = await move(item.id, { kind: 'receive', quantity: 1 }).expect(
       400,
     );

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { addMonths } from 'date-fns-jalali';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 
 import { SurgeryQueueItem } from './surgery-queue-item.entity';
 import { ImplantCase } from '../implants/implant-case.entity';
@@ -129,32 +129,81 @@ export class SurgeryService {
     role?: string,
   ): Promise<unknown> {
     assertMayWriteClinicalNotes(role, [[dto.notes, null]]);
-    const id = await this.queue.manager.transaction(async (manager) => {
-      const queue = manager.getRepository(SurgeryQueueItem);
-      const item = queue.create();
-      const registered = await this.assign(
-        item,
-        dto,
-        manager.getRepository(ImplantCase),
-      );
-      const saved = await queue.save(item);
-      if (registered) await this.auditRegistered(registered, userId, manager);
+    const id = await this.queue.manager.transaction(
+      async (manager) => (await this.createIn(manager, dto, userId)).id,
+    );
+    return this.findOne(id);
+  }
+
+  /**
+   * A new row inside a transaction someone else runs — the stock writes one
+   * for each implant it hands out, in the same transaction as the use, and
+   * names the stock card line it came from.
+   */
+  async createIn(
+    manager: EntityManager,
+    dto: UpsertSurgeryDto,
+    userId: string | null,
+    inventoryMovementId: string | null = null,
+  ): Promise<SurgeryQueueItem> {
+    const queue = manager.getRepository(SurgeryQueueItem);
+    const item = queue.create({ inventoryMovementId });
+    const registered = await this.assign(
+      item,
+      dto,
+      manager.getRepository(ImplantCase),
+    );
+    const saved = await queue.save(item);
+    if (registered) await this.auditRegistered(registered, userId, manager);
+    await this.audit.recordRequired(
+      {
+        userId,
+        action: 'create',
+        entity: 'surgery_queue',
+        entityId: saved.id,
+        changes: {
+          recordedName: saved.recordedName,
+          registryNo: saved.implantRegistryNo,
+          ...(inventoryMovementId ? { inventoryMovementId } : {}),
+        },
+      },
+      manager,
+    );
+    return saved;
+  }
+
+  /**
+   * The rows a use of the stock wrote, archived when that use is taken back:
+   * the implant did not go in after all. Archived, not erased, so a row
+   * someone has since filled in can still be restored.
+   */
+  async withdrawStockRows(
+    manager: EntityManager,
+    inventoryMovementIds: string[],
+    userId: string | null,
+  ): Promise<number> {
+    if (!inventoryMovementIds.length) return 0;
+    const queue = manager.getRepository(SurgeryQueueItem);
+    const rows = await queue.find({
+      where: { inventoryMovementId: In(inventoryMovementIds) },
+    });
+    for (const row of rows) {
+      await queue.softDelete(row.id);
       await this.audit.recordRequired(
         {
           userId,
-          action: 'create',
+          action: 'delete',
           entity: 'surgery_queue',
-          entityId: saved.id,
+          entityId: row.id,
           changes: {
-            recordedName: saved.recordedName,
-            registryNo: saved.implantRegistryNo,
+            recordedName: row.recordedName,
+            inventoryMovementId: row.inventoryMovementId,
           },
         },
         manager,
       );
-      return saved.id;
-    });
-    return this.findOne(id);
+    }
+    return rows.length;
   }
 
   /** The implant register entry a surgery row opened on its own behalf. */

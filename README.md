@@ -175,12 +175,12 @@ register's current holder. Such rows are flagged `hasNameMismatch`, and the app
 asks staff to confirm identity before operating rather than silently attaching
 the row to whoever holds the number today.
 
-A row is written *after* the surgery — it is a log, not a booking list — and
+A row is written _after_ the surgery — it is a log, not a booking list — and
 is one of two **kinds**: an implant placement, which carries the register
 number, the brand and the cover; or an extraction, which carries only the tooth.
 What both owe the patient is a **follow-up**: the check at which an implant is
 planned (two months after an extraction), or the prosthesis (three after an
-implant). It is chosen as *months after the surgery* and resolved by the API to
+implant). It is chosen as _months after the surgery_ and resolved by the API to
 a date on the Jalali calendar; the status the screens show is the follow-up's,
 and a switch on the card marks it done. One pure module
 (`apps/api/src/modules/surgery/follow-up.ts`) defines the windows the list
@@ -201,7 +201,7 @@ numbers — exactly the mix-up this prevents).
 
 A crown or a set of laminates goes to the lab and back several times — the
 impression, a resin or frame try-in, now and then a correction or a remake.
-The practice's sheet folded *why* it went and *where it is* into one status
+The practice's sheet folded _why_ it went and _where it is_ into one status
 column; here they are apart. A `lab_cases` row is the work, and each
 `lab_case_trips` row is one trip with its reason (`ارسال قالب`, `ارسال رزین`,
 `ارسال فریم`, `اصلاح`, `تکرار`, …), the day it left, the lab's turnaround and
@@ -240,11 +240,16 @@ shelf is corrected by counting it, not by going negative.
   date runs to the end of that month, as GS1 labels define it.
 - **A use or a discard** comes out of the first-expiring batch, across as
   many as it takes, unless the batch is named. For implants, grafts and
-  membranes the form names it, and a use can name the patient's file: the
-  line then links the batch to the patient, which is what a recall is traced
-  through.
+  membranes the form names it — never an expired one unless picked by hand —
+  and a use names the patient, picked by name: the line then links the batch
+  to the patient, which is what a recall is traced through. An implant used
+  for a patient also goes into their implant file (a new one if they have
+  none) as one surgery row per implant, with the tooth, the system, the box
+  and the prosthesis due in three months; undoing the use archives those
+  rows.
 - **A count** takes what is missing from the first-expiring batches and adds
-  what is found to the last to arrive. The count sheet (`/inventory/count`)
+  what is found to the last to arrive — except for implants, grafts and
+  membranes, whose extra comes in as a delivery with its lot. The count sheet (`/inventory/count`)
   counts a whole shelf at once and sets each item's reorder level beside its
   count; it is saved whole or not at all.
 
@@ -297,7 +302,7 @@ partial Persian name search work.
 **Identifiers are stored in one digit script.** A Persian keyboard emits
 `۰۹۱۲…` for what the receptionist reads as `0912…`. File numbers, register
 numbers, national ids and phone numbers are folded to ASCII digits at the API
-boundary (`identifier` / `optionalIdentifier` in `patient.dto.ts`) *before*
+boundary (`identifier` / `optionalIdentifier` in `patient.dto.ts`) _before_
 validation, so the same number can never exist in the database in two
 spellings. The Angular forms fold as well so what a field accepts is exactly
 what the API accepts, but the API is the side that decides.

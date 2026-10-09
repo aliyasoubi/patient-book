@@ -41,7 +41,7 @@ export async function writeMovement(
   kind: InventoryMovementKind,
   changes: LotChange<InventoryLot | LotLevel>[],
   meta: LineMeta,
-): Promise<void> {
+): Promise<InventoryMovement[]> {
   const lots = manager.getRepository(InventoryLot);
   const movements = manager.getRepository(InventoryMovement);
   const line = (change: number, after: number, lot: InventoryLot | null) =>
@@ -75,7 +75,7 @@ export async function writeMovement(
     lines.push(line(change, balance, saved));
   }
   if (!lines.length) lines.push(line(0, balance, null));
-  await movements.save(lines);
+  const saved = await movements.save(lines);
 
   const after = await loadLots(manager, item.id);
   await manager.getRepository(InventoryItem).update(item.id, {
@@ -83,4 +83,5 @@ export async function writeMovement(
     ...nearestExpiry(after),
     version: () => '"version" + 1',
   });
+  return saved;
 }

@@ -82,7 +82,7 @@ type Column = readonly [letter: string, header: string | null];
 
 interface SpecColumn {
   column: Column;
-  /** Shown before the value: «D 4.5», «پلتفرم 4.8». */
+  /** Shown before the value: «D 4.5», «PF 4.8». */
   label?: string;
   /** A measurement: a date here is a decimal Excel misread («6/5» → 6.5). */
   decimal?: boolean;
@@ -145,7 +145,7 @@ export const SECTIONS: readonly Section[] = [
     name: ['B', 'نوع ایمپلنت'],
     spec: [
       { column: ['D', 'سایز ایمپلنت'] },
-      { column: ['C', 'پلتفرم'], label: 'پلتفرم' },
+      { column: ['C', 'پلتفرم'], label: 'PF' },
     ],
     quantity: ['E', 'تعداد'],
   }),

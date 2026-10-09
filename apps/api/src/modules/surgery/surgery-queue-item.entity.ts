@@ -132,6 +132,14 @@ export class SurgeryQueueItem {
   @Column({ type: 'text', nullable: true })
   notes!: string | null;
 
+  /**
+   * The stock card line an implant came out of, when the row was written by
+   * using it from the stock: taking that use back takes this row with it.
+   */
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  inventoryMovementId!: string | null;
+
   @Column({ type: 'text', default: '' })
   searchText!: string;
 

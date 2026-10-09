@@ -1,5 +1,7 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, type Signal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
+import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import {
   type AbstractControl,
   FormBuilder,
@@ -18,12 +20,22 @@ import type {
   InventoryLot,
   InventoryMovementKind,
 } from '../../core/models/common.model';
+import { PatientsService } from '../patients/data/patients.service';
+import type { PatientSuggestion } from '../patients/data/patient.model';
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
 
-import { PbBanner, PbButton, PbSelectField, PbTextField, type SelectOption } from '../../shared/ui';
+import {
+  PbBanner,
+  PbButton,
+  PbIconButton,
+  PbSelectField,
+  PbTextField,
+  type SelectOption,
+  type TextFieldOption,
+} from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
 
 /** An expiry the API will read — said on the field, before it is sent. */
@@ -86,9 +98,11 @@ const COPY: Record<
   imports: [
     ReactiveFormsModule,
     MatDialogModule,
+    MatIconModule,
     TranslatePipe,
     PbBanner,
     PbButton,
+    PbIconButton,
     PbSelectField,
     PbTextField,
   ],
@@ -117,11 +131,12 @@ const COPY: Record<
           </pb-banner>
         }
         <!-- Which batch, when there is a choice to make. -->
-        @if (takesOut && lotOptions().length > 1) {
+        @if (takesOut && lotOptions().length) {
           <pb-select-field
             [control]="form.controls.lotId"
             [options]="lotOptions()"
             [label]="'inventoryMove.lot' | translate"
+            [errorMessages]="lotErrors"
           />
         }
         <pb-text-field
@@ -154,14 +169,39 @@ const COPY: Record<
           />
         }
         @if (kind === 'use' && traceable) {
+          <!-- Typing searches the patient book by name, mobile or file; the
+               use is linked only to a patient picked from the list. -->
           <pb-text-field
-            [control]="form.controls.patientFileNo"
-            [label]="'inventoryMove.patientFileNo' | translate"
-            [hint]="'inventoryMove.patientFileNoHint' | translate"
-            inputmode="numeric"
-            [maxlength]="18"
-            [ltr]="true"
+            [control]="form.controls.patient"
+            [label]="'inventoryMove.patient' | translate"
+            [hint]="patientHint()"
+            [errorMessages]="patientErrors"
+            prefixIcon="person_search"
+            [maxlength]="160"
+            [options]="patientOptions()"
+            (optionSelected)="onPatientSelected($event)"
           />
+          @if (linkedPatient()) {
+            <div class="form__linked">
+              <mat-icon aria-hidden="true">link</mat-icon>
+              <span dir="auto">{{ linkedPatient()!.fullName }}</span>
+              <pb-icon-button
+                icon="close"
+                size="compact"
+                (click)="unlinkPatient()"
+                [ariaLabel]="'inventoryMove.unlinkPatient' | translate"
+              />
+            </div>
+          }
+          @if (isImplant) {
+            <pb-text-field
+              [control]="form.controls.tooth"
+              [label]="'inventoryMove.tooth' | translate"
+              [hint]="'inventoryMove.toothHint' | translate"
+              [maxlength]="60"
+              [ltr]="true"
+            />
+          }
         }
         <pb-text-field
           [control]="form.controls.note"
@@ -193,6 +233,14 @@ const COPY: Record<
       gap: var(--pb-space-1);
       width: min(440px, 80vw);
     }
+    .form__linked {
+      display: flex;
+      align-items: center;
+      gap: var(--pb-space-1);
+      margin-block-end: var(--pb-space-2);
+      color: var(--mat-sys-primary);
+      font: var(--mat-sys-body-medium);
+    }
     .form__item {
       display: flex;
       flex-direction: column;
@@ -215,6 +263,7 @@ export class InventoryMovementDialog {
   private readonly errors = inject(ApiErrorTranslator);
   private readonly i18n = inject(TranslateService);
   private readonly fb = inject(FormBuilder);
+  private readonly patients = inject(PatientsService);
 
   private readonly destroyRef = inject(DestroyRef);
 
@@ -224,6 +273,8 @@ export class InventoryMovementDialog {
   protected readonly takesOut = this.kind === 'use' || this.kind === 'discard';
   protected readonly traceable = TRACEABLE_CATEGORIES.includes(this.item.category);
   private readonly mustTrace = this.kind === 'receive' && this.traceable;
+  /** An implant handed to a patient also goes into their implant file. */
+  protected readonly isImplant = this.item.category === 'implant';
   protected readonly faNum = formatPersianNumber;
   protected readonly itemLabel = [this.item.name, this.item.brand, this.item.spec]
     .filter(Boolean)
@@ -266,7 +317,11 @@ export class InventoryMovementDialog {
         ? [Validators.required, Validators.maxLength(20), readableExpiry]
         : [Validators.maxLength(20), readableExpiry],
     ],
-    patientFileNo: ['', Validators.pattern(/^[0-9۰-۹٠-٩]{1,18}$/)],
+    patient: [
+      '',
+      [Validators.maxLength(160), (c: AbstractControl<string>) => this.pickedPatient(c)],
+    ],
+    tooth: ['', Validators.maxLength(60)],
     note: ['', Validators.maxLength(300)],
   });
 
@@ -279,6 +334,63 @@ export class InventoryMovementDialog {
   private readonly lotPicked = toSignal(this.form.controls.lotId.valueChanges, {
     initialValue: '',
   });
+
+  /** The patient picked from the book; a name typed and not picked links nothing. */
+  protected readonly linkedPatient = signal<PatientSuggestion | null>(null);
+
+  private pickedPatient(control: AbstractControl<string>): ValidationErrors | null {
+    const typed = control.value?.trim();
+    return typed && !this.linkedPatient() ? { pick: true } : null;
+  }
+
+  protected readonly patientErrors = { pick: this.i18n.instant('inventoryMove.patientPick') };
+  protected readonly lotErrors = { required: this.i18n.instant('inventoryMove.lotPick') };
+
+  private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
+    this.form.controls.patient.valueChanges.pipe(
+      debounceTime(250),
+      map((v) => v.trim()),
+      distinctUntilChanged(),
+      switchMap((q) => {
+        // Picking an option writes its value — the id — before the name replaces it.
+        const current = this.patientMatches();
+        if (current.some((p) => p.id === q)) return of(current);
+        if (q.length < 2) return of<PatientSuggestion[]>([]);
+        return this.patients.suggest(q).pipe(catchError(() => of<PatientSuggestion[]>([])));
+      }),
+    ),
+    { initialValue: [] as PatientSuggestion[] },
+  );
+
+  protected readonly patientOptions = computed<TextFieldOption[]>(() =>
+    this.patientMatches().map((p) => ({
+      value: p.id,
+      label: p.fullName || this.i18n.instant('patient.unnamed'),
+      meta: this.i18n.instant('labs.patientFile', { fileNo: formatPersianNumber(p.fileNo) }),
+    })),
+  );
+
+  protected readonly patientHint = computed(() => {
+    const linked = this.linkedPatient();
+    if (!linked) return this.i18n.instant('inventoryMove.patientHint');
+    return this.i18n.instant(
+      this.isImplant ? 'inventoryMove.patientImplantFile' : 'inventoryMove.patientLinked',
+      { fileNo: formatPersianNumber(linked.fileNo) },
+    );
+  });
+
+  protected onPatientSelected(option: TextFieldOption): void {
+    const match = this.patientMatches().find((p) => p.id === option.value);
+    if (!match) return;
+    this.linkedPatient.set(match);
+    this.form.controls.patient.setValue(match.fullName, { emitEvent: false });
+    this.form.controls.patient.updateValueAndValidity({ emitEvent: false });
+  }
+
+  protected unlinkPatient(): void {
+    this.linkedPatient.set(null);
+    this.form.controls.patient.setValue('');
+  }
 
   protected readonly traceableErrors = {
     required: this.i18n.instant('inventoryMove.lotRequired'),
@@ -298,9 +410,16 @@ export class InventoryMovementDialog {
     return lot?.expiryState === 'expired';
   });
 
-  /** «A-100 · انقضا ۲۰۲۷/۰۱ · ۵ مانده», first-expiring first, after «first-expiring». */
+  /**
+   * «A-100 · انقضا ۲۰۲۷/۰۱ · ۵ مانده», first-expiring first. An implant or a
+   * graft always names its box, so it lists even a single batch and has no
+   * «first-expiring» choice; anything else offers that first.
+   */
   protected readonly lotOptions = computed<SelectOption[]>(() => {
     const lots = this.lots();
+    if (this.traceable && lots.length) {
+      return lots.map((lot) => ({ value: lot.id, label: this.lotLabel(lot) }));
+    }
     if (lots.length < 2) return [];
     return [
       { value: '', label: 'inventoryMove.lotAuto', translate: true },
@@ -316,10 +435,17 @@ export class InventoryMovementDialog {
     this.inventory.get(this.item.id).subscribe({
       next: (detail) => {
         this.lots.set(detail.lots);
-        // An implant or a graft names its batch — the first to expire, unless
-        // the box opened was another.
-        if (this.traceable && detail.lots.length > 1) {
-          this.form.controls.lotId.setValue(detail.lots[0].id);
+        // An implant or a graft names its batch: for a use, the first to
+        // expire that has not — an expired box is only ever picked by hand;
+        // for a discard, the first to expire, expired or not.
+        if (this.traceable && detail.lots.length) {
+          const first =
+            this.kind === 'use'
+              ? detail.lots.find((l) => l.expiryState !== 'expired')
+              : detail.lots[0];
+          this.form.controls.lotId.setValue(first?.id ?? '');
+          this.form.controls.lotId.setValidators(Validators.required);
+          this.form.controls.lotId.markAsTouched();
         }
         this.recheckStock();
       },
@@ -397,7 +523,10 @@ export class InventoryMovementDialog {
           : {}),
         ...(this.takesOut ? { lotId: raw.lotId || null } : {}),
         ...(this.kind === 'use' && this.traceable
-          ? { patientFileNo: toLatinDigits(raw.patientFileNo).trim() || null }
+          ? {
+              patientId: this.linkedPatient()?.id ?? null,
+              tooth: (this.isImplant && toLatinDigits(raw.tooth).trim()) || null,
+            }
           : {}),
         note: raw.note.trim() || null,
       })
@@ -408,7 +537,8 @@ export class InventoryMovementDialog {
           this.formError.set(
             showOnFields(error, this.errors, this.form.controls, {
               ERR_INVENTORY_INSUFFICIENT_STOCK: 'quantity',
-              ERR_PATIENT_NOT_FOUND: 'patientFileNo',
+              ERR_PATIENT_NOT_FOUND: 'patient',
+              ERR_INVENTORY_LOT_EXPIRED: 'lotId',
             }),
           );
         },

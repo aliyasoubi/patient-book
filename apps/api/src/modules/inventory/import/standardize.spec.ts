@@ -16,15 +16,33 @@ describe('standardize', () => {
     expect(
       as(C.Implant, 'Titanium-BLT-RC', 'Straumann', '4.1-10').item,
     ).toMatchObject({
-      name: 'BLT Titanium',
+      name: 'BLT Ti SLA',
       spec: 'RC 4.1x10',
     });
     expect(
       as(C.Implant, 'SLA Active_BL', 'Straumann', '3.3-12').item,
     ).toMatchObject({
       name: 'BL SLActive',
-      spec: '3.3x12',
+      spec: 'NC 3.3x12',
     });
+  });
+
+  it("writes a Straumann platform from the diameter, over the sheet's slip", () => {
+    expect(as(C.Implant, 'SLA-BLT-RC', 'Straumann', '3.3-10').item.spec).toBe(
+      'NC 3.3x10',
+    );
+    expect(
+      as(C.Implant, 'SLA Active_BLT', 'Straumann', '4.8-8').item.spec,
+    ).toBe('RC 4.8x8');
+  });
+
+  it("names Zimmer's lines by product", () => {
+    expect(as(C.Implant, 'Bone Level', 'Zimmer', '3.7x10').item.name).toBe(
+      'Tapered Screw-Vent',
+    );
+    expect(as(C.Implant, 'Tissue Level', 'Zimmer', '3.7x10').item.name).toBe(
+      'Tapered SwissPlus',
+    );
   });
 
   it('moves a product out of the brand column and its maker in', () => {

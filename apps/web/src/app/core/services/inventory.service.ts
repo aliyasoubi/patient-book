@@ -38,8 +38,10 @@ export interface InventoryMovementInput {
   lotNumber?: string | null;
   /** A use's or discard's batch; first-expiring first when absent. */
   lotId?: string | null;
-  /** The patient a use went into. */
-  patientFileNo?: string | null;
+  /** The patient a use went into, picked by name; an implant also goes into their implant file. */
+  patientId?: string | null;
+  /** An implant's tooth, or one tooth per implant («36 37»). */
+  tooth?: string | null;
   note?: string | null;
 }
 

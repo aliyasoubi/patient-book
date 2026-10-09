@@ -14,6 +14,9 @@ import {
   TRACEABLE,
 } from './inventory-catalog';
 import { Patient } from '../patients/patient.entity';
+import { ImplantCase } from '../implants/implant-case.entity';
+import { ImplantRegistryService } from '../implants/implant-registry.service';
+import { SurgeryService } from '../surgery/surgery.service';
 import {
   CreateInventoryItemDto,
   InventoryCountDto,
@@ -43,7 +46,22 @@ import {
 } from './inventory-stock';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
-import { ErrorCode, InventoryMovementKind, InventoryUnit } from '../../domain';
+import {
+  ErrorCode,
+  extractImplantBrand,
+  InventoryCategory,
+  InventoryMovementKind,
+  InventoryUnit,
+  JalaliDate,
+  SurgeryKind,
+  toLatinDigits,
+} from '../../domain';
+
+/**
+ * Months from an implant to its prosthesis — the surgery list's own default
+ * for an implant, so a row written from the stock is due like one typed there.
+ */
+const PROSTHESIS_AFTER_MONTHS = 3;
 
 /** Enough of an item's stock card for the screen; older lines stay in the table. */
 const HISTORY_LIMIT = 100;
@@ -77,6 +95,8 @@ export class InventoryService {
     @InjectRepository(InventoryItem)
     private readonly items: Repository<InventoryItem>,
     private readonly audit: AuditService,
+    private readonly surgery: SurgeryService,
+    private readonly implantRegistry: ImplantRegistryService,
   ) {}
 
   async list(dto: QueryInventoryDto): Promise<unknown[]> {
@@ -206,6 +226,13 @@ export class InventoryService {
         expiryText: null,
       });
       this.assign(item, dto);
+      if (
+        dto.quantity &&
+        TRACEABLE.has(item.category) &&
+        (!normalizeLot(dto.lotNumber) || !parseExpiry(dto.expiry))
+      ) {
+        throw AppException.badRequest(ErrorCode.InventoryLotRequired);
+      }
       await this.refuseDuplicate(manager, item);
       const saved = await items.save(item);
       // What is on the shelf opens the first batch, as the item's first
@@ -302,20 +329,38 @@ export class InventoryService {
         case InventoryMovementKind.Use:
         case InventoryMovementKind.Discard:
           changes = take(lots, dto.quantity, dto.lotId);
+          if (dto.kind === InventoryMovementKind.Use && !dto.lotId) {
+            this.refuseExpiredUse(item, changes);
+          }
           break;
         case InventoryMovementKind.Count:
           changes = count(lots, dto.quantity);
+          this.refuseUntracedCount(item, changes);
           break;
       }
       const patientId =
-        dto.kind === InventoryMovementKind.Use && dto.patientFileNo
-          ? await this.patientByFile(manager, dto.patientFileNo)
-          : null;
-      await writeMovement(manager, item, dto.kind, changes, {
+        dto.kind !== InventoryMovementKind.Use
+          ? null
+          : dto.patientId
+            ? await this.patientById(manager, dto.patientId)
+            : dto.patientFileNo
+              ? await this.patientByFile(manager, dto.patientFileNo)
+              : null;
+      const lines = await writeMovement(manager, item, dto.kind, changes, {
         userId,
         note: dto.note,
         patientId,
       });
+      if (patientId && item.category === InventoryCategory.Implant) {
+        await this.placeImplants(
+          manager,
+          item,
+          lines,
+          patientId,
+          dto.tooth,
+          userId,
+        );
+      }
     });
     return this.findOne(id);
   }
@@ -365,6 +410,12 @@ export class InventoryService {
         if (lot.quantity === 0 && !elsewhere) await lots.delete(lot.id);
         else await lots.save(lot);
       }
+      // An implant handed to a patient wrote its surgery rows: they go too.
+      const withdrawn = await this.surgery.withdrawStockRows(
+        manager,
+        lines.map((l) => l.id),
+        userId,
+      );
       await movements.delete(lines.map((l) => l.id));
       const after = await loadLots(manager, id);
       await manager.getRepository(InventoryItem).update(id, {
@@ -384,6 +435,7 @@ export class InventoryService {
               change: l.change,
               lotId: l.lotId,
             })),
+            ...(withdrawn ? { surgeryRowsWithdrawn: withdrawn } : {}),
           },
         },
         manager,
@@ -411,11 +463,13 @@ export class InventoryService {
         const item = await this.lock(manager, line.id);
         if (line.quantity !== undefined && line.quantity !== item.quantity) {
           const lots = await loadLots(manager, item.id);
+          const changes = count(lots, line.quantity);
+          this.refuseUntracedCount(item, changes);
           await writeMovement(
             manager,
             item,
             InventoryMovementKind.Count,
-            count(lots, line.quantity),
+            changes,
             { userId },
           );
           counted++;
@@ -548,6 +602,108 @@ export class InventoryService {
     });
     if (!item) throw AppException.notFound(ErrorCode.InventoryItemNotFound);
     return item;
+  }
+
+  /**
+   * A use of an implant, graft or membrane left to go first-expiring first
+   * would take a box past its date: refused, so an expired one only goes in
+   * when someone picked that batch on purpose.
+   */
+  private refuseExpiredUse(
+    item: InventoryItem,
+    changes: LotChange<InventoryLot | LotLevel>[],
+  ): void {
+    if (!TRACEABLE.has(item.category)) return;
+    const now = new Date();
+    if (
+      changes.some((c) => expiryState(c.lot.expiresOn, 1, now) === 'expired')
+    ) {
+      throw AppException.conflict(ErrorCode.InventoryLotExpired);
+    }
+  }
+
+  /**
+   * A count of implants, grafts or membranes that finds more than recorded
+   * would put the extra in a batch with no lot — a box nobody could trace.
+   * The extra comes in as a delivery instead, with the lot on its box.
+   */
+  private refuseUntracedCount(
+    item: InventoryItem,
+    changes: LotChange<InventoryLot | LotLevel>[],
+  ): void {
+    if (!TRACEABLE.has(item.category)) return;
+    if (changes.some((c) => c.change > 0 && !c.lot.lotNumber)) {
+      throw AppException.badRequest(ErrorCode.InventoryCountUntraced, {
+        id: item.id,
+        name: [item.name, item.brand, item.spec].filter(Boolean).join(' · '),
+      });
+    }
+  }
+
+  /**
+   * Implants handed to a patient go into the patient's implant file — the
+   * file they already have, or a new one under the book's next number — as
+   * one surgery row per implant, dated today with the prosthesis due, naming
+   * the system, the tooth and the box. Each row keeps the stock card line it
+   * came from, so an undo takes it back.
+   */
+  private async placeImplants(
+    manager: EntityManager,
+    item: InventoryItem,
+    lines: InventoryMovement[],
+    patientId: string,
+    tooth: string | null | undefined,
+    userId: string | null,
+  ): Promise<void> {
+    const implantCase =
+      (await manager.getRepository(ImplantCase).findOne({
+        where: { patientId },
+        order: { createdAt: 'DESC' },
+      })) ??
+      (await this.implantRegistry.createIn(manager, { patientId }, userId));
+    const lotNumbers = new Map(
+      (await loadLots(manager, item.id)).map((l) => [l.id, l.lotNumber]),
+    );
+    // One row per implant: a line that took two out stands for two.
+    const units = lines.flatMap((line) =>
+      Array.from({ length: Math.max(-line.change, 0) }, () => line),
+    );
+    // «36 37» for two implants is one tooth each; anything else goes on every row.
+    const written = toLatinDigits(tooth ?? '').trim();
+    const teeth = written.split(/[\s,،;؛]+/).filter(Boolean);
+    const today = JalaliDate.today().format();
+    for (const [i, line] of units.entries()) {
+      const lot = line.lotId ? lotNumbers.get(line.lotId) : null;
+      await this.surgery.createIn(
+        manager,
+        {
+          kind: SurgeryKind.Implant,
+          implantCaseId: implantCase.id,
+          recordedName: implantCase.recordedName,
+          surgeryDate: today,
+          toothPosition: teeth.length === units.length ? teeth[i] : written,
+          implantBrand: extractImplantBrand(item.brand) ?? item.brand,
+          followUpMonths: PROSTHESIS_AFTER_MONTHS,
+          notes: [item.name, item.spec, lot ? `LOT ${lot}` : null]
+            .filter(Boolean)
+            .join(' · '),
+        },
+        userId,
+        line.id,
+      );
+    }
+  }
+
+  /** The patient a use went into, picked by name. */
+  private async patientById(
+    manager: EntityManager,
+    id: string,
+  ): Promise<string> {
+    const patient = await manager
+      .getRepository(Patient)
+      .findOne({ where: { id }, select: { id: true } });
+    if (!patient) throw AppException.notFound(ErrorCode.PatientNotFound);
+    return patient.id;
   }
 
   /** The patient a use went into, by the file number staff read off the chart. */

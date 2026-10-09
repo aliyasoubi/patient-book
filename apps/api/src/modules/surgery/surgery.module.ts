@@ -9,5 +9,6 @@ import { SurgeryService } from './surgery.service';
   imports: [TypeOrmModule.forFeature([SurgeryQueueItem, ImplantCase])],
   controllers: [SurgeryController],
   providers: [SurgeryService],
+  exports: [SurgeryService],
 })
 export class SurgeryModule {}

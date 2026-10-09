@@ -89,6 +89,17 @@ export enum ErrorCode {
   InventoryLotRequired = 'ERR_INVENTORY_LOT_REQUIRED',
   /** Undo on an item with no stock card line to take back. */
   InventoryNothingToUndo = 'ERR_INVENTORY_NOTHING_TO_UNDO',
+  /**
+   * An implant, graft or membrane whose first-expiring batch is past its
+   * date, used without naming the batch: the box has to be picked on purpose.
+   */
+  InventoryLotExpired = 'ERR_INVENTORY_LOT_EXPIRED',
+  /**
+   * A count finding more implants, grafts or membranes than recorded, with
+   * no lot to put them in: they come in as a delivery, with the lot printed
+   * on the box.
+   */
+  InventoryCountUntraced = 'ERR_INVENTORY_COUNT_UNTRACED',
 
   // -- Value objects ----------------------------------------------------
   NationalIdLength = 'ERR_NATIONAL_ID_LENGTH',

@@ -471,6 +471,7 @@ export class InventoryItemDialog {
         this.formError.set(
           showOnFields(error, this.errors, this.form.controls, {
             ERR_INVENTORY_ITEM_EXISTS: 'spec',
+            ERR_INVENTORY_LOT_REQUIRED: 'lotNumber',
           }),
         );
       },

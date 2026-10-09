@@ -45,6 +45,14 @@ const PRODUCTS: ReadonlyArray<
   // Implants: one spelling per line, platform with the size.
   [{ category: C.Implant, name: 'Supe Line' }, { name: 'SuperLine' }],
   [{ category: C.Implant, name: 'Slim Line' }, { name: 'SlimLine' }],
+  // Zimmer's sheet named its lines by where they sit: bone level with a 3.5
+  // or 4.5 platform is the Tapered Screw-Vent; tissue level with a 3.8 or 4.8
+  // collar is the Tapered SwissPlus.
+  [{ category: C.Implant, name: 'Bone Level' }, { name: 'Tapered Screw-Vent' }],
+  [
+    { category: C.Implant, name: 'Tissue Level' },
+    { name: 'Tapered SwissPlus' },
+  ],
 
   // Prosthetic parts named in Latin shorthand.
   [
@@ -347,10 +355,26 @@ const PRODUCTS: ReadonlyArray<
 const STRAUMANN =
   /^(titanium|sla active|sla)[\s_-]*(blt|bl)(?:[\s_-]*(rc|nc))?$/i;
 const SURFACES: Readonly<Record<string, string>> = {
-  titanium: 'Titanium',
+  titanium: 'Ti SLA',
   sla: 'SLA',
   'sla active': 'SLActive',
 };
+
+/**
+ * A Straumann bone level implant's platform follows from its diameter — 2.9
+ * is SC, 3.3 NC, 4.1 and 4.8 RC — so it is written even where the sheet left
+ * it off, and a sheet's «RC» on a 3.3 (which only comes as NC) is put right.
+ */
+function straumannPlatform(
+  size: string | null,
+  written: string | undefined,
+): string | null {
+  const diameter = /^(\d+(?:\.\d+)?)x/.exec(size ?? '')?.[1];
+  const platform = { '2.9': 'SC', '3.3': 'NC', '4.1': 'RC', '4.8': 'RC' }[
+    diameter ?? ''
+  ];
+  return platform ?? written?.toUpperCase() ?? null;
+}
 
 /** Endodontic names with their size on the end: «کا فایل 25», «گوتا 30چهار درصد». */
 const GUTTA = /^گوتا\s*(\d+)\s*(دو|چهار|شش)\s*درصد$/;
@@ -383,11 +407,14 @@ export function standardize(item: Named): { item: Named; changed: boolean } {
 
   const straumann = STRAUMANN.exec(f.name);
   if (item.category === C.Implant && straumann) {
-    const [, surface, line, platform] = straumann;
+    const [, surface, line] = straumann;
+    const size = normalizeSpec(C.Implant, f.spec);
     f = {
       ...f,
       name: `${line.toUpperCase()} ${SURFACES[surface.toLowerCase()]}`,
-      spec: [platform?.toUpperCase(), f.spec].filter(Boolean).join(' ') || null,
+      spec: [straumannPlatform(size, straumann[3]), size]
+        .filter(Boolean)
+        .join(' '),
     };
   }
 

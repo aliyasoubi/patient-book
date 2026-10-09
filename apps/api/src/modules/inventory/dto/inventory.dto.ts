@@ -247,6 +247,23 @@ export class InventoryMovementDto {
   @IsOptional()
   patientFileNo?: string | null;
 
+  /**
+   * On a use: the patient it went into, picked by name. An implant used for
+   * a patient is also written into their implant file, one surgery row each.
+   */
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  patientId?: string | null;
+
+  /** On an implant's use: the tooth — or teeth, one per implant («36 37»). */
+  @ApiPropertyOptional({ example: '36' })
+  @Transform(clean)
+  @IsString()
+  @MaxLength(60)
+  @IsOptional()
+  tooth?: string | null;
+
   @ApiPropertyOptional({ description: 'Supplier, invoice, reason' })
   @Transform(clean)
   @IsString()
