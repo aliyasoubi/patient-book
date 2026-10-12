@@ -160,7 +160,7 @@
   },
   "surgery": {
     "title": "لیست انتظار",
-    "subtitle": "شماره‌های این فهرست به پرونده ایمپلنت اشاره دارند، نه به شماره پرونده اصلی بیمار.",
+    "subtitle": "کارهایی که بیمار برای ادامه‌شان باید پیگیری شود؛ نزدیک‌ترین تاریخ پیگیری اول می‌آید.",
     "new": "افزودن به لیست",
     "searchPlaceholder": "جستجوی نام، شماره یا دندان…",
     "searchAria": "جستجو در لیست انتظار",
@@ -170,21 +170,38 @@
     "filterThisMonth": "ماه جاری",
     "filterNextMonth": "ماه بعد",
     "filterOverdue": "عقب‌افتاده",
+    "filterBooked": "نوبت داده‌شده",
+    "filterDeclined": "لغو توسط بیمار",
     "archivedOnly": "فقط حذف‌شده‌ها",
     "restore": "بازگردانی به لیست",
     "cancelled": "جراحی لغو شد — بدون پیگیری",
-    "followUpDoneSwitch": "انجام شد",
-    "followUpOn": "پیگیری: {{date}}",
-    "followUpMissed": "پیگیری عقب‌افتاده از {{date}}",
-    "followUpDoneOn": "پیگیری انجام شد ({{date}})",
-    "followUpMarkedDone": "پیگیری انجام‌شده ثبت شد.",
-    "followUpReopened": "پیگیری دوباره در انتظار قرار گرفت.",
+    "followUpStatus": "وضعیت پیگیری",
+    "stepCreated": "پیگیری ایجاد شد",
+    "waitProgress": "پیشرفت زمان انتظار",
+    "cancelByPatient": "لغو توسط بیمار",
+    "statusOpen": "نیاز به پیگیری",
+    "statusBooked": "نوبت داده شد",
+    "statusDeclined": "لغو توسط بیمار",
+    "bookedOn": "نوبت: {{date}}",
+    "bookedNoDate": "نوبت داده شد",
+    "declinedLabel": "لغو شد",
+    "setAppointment": "ثبت تاریخ نوبت",
+    "changeAppointment": "تغییر تاریخ نوبت",
+    "relToday": "امروز",
+    "relDaysAhead": "{{count}} روز دیگر",
+    "relWeeksAhead": "{{count}} هفته دیگر",
+    "relMonthsAhead": "{{count}} ماه دیگر",
+    "relDaysAgo": "{{count}} روز پیش",
+    "relWeeksAgo": "{{count}} هفته پیش",
+    "relMonthsAgo": "{{count}} ماه پیش",
+    "teeth": "دندان‌ها",
+    "statusSaved": "وضعیت پیگیری ثبت شد.",
+    "undo": "بازگرداندن",
     "rowActions": "عملیات ردیف",
     "noDate": "بدون تاریخ",
     "implantRegistry": "پرونده ایمپلنت {{number}}",
     "patientFile": "پرونده {{fileNo}}",
     "identityWarning": "شماره {{number}} در پرونده ایمپلنت به «{{name}}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.",
-    "prosthesis": "پروتز: {{date}}",
     "emptyTitle": "ردیفی در لیست انتظار نیست",
     "loadFailed": "لیست انتظار بارگذاری نشد.",
     "loadFailedStale": "لیست به‌روزرسانی نشد؛ نتایج قبلی نمایش داده می‌شود."
@@ -201,7 +218,8 @@
     "implantRegistryNoNext": "شمارهٔ بعدی دفتر ایمپلنت",
     "surgeryDate": "تاریخ جراحی",
     "surgeryDatePlaceholder": "۱۴۰۴/۰۶/۱۱",
-    "toothPosition": "موقعیت دندان",
+    "teeth": "دندان‌ها",
+    "teethWritten": "ثبت قبلی: {{text}}. دندان‌ها را روی چارت انتخاب کنید.",
     "implantBrand": "برند ایمپلنت",
     "brandUnspecified": "نامشخص",
     "abutmentType": "نوع پوشش",
@@ -338,6 +356,13 @@
     "saved": "تغییرات ذخیره شد.",
     "conflict": "در همین حین، کاربر دیگری این کار را تغییر داده یا جابه‌جا کرده است. تغییرات شما حفظ شده ولی ذخیره نشده است؛ بررسی کنید و دوباره ذخیره کنید."
   },
+  "surgeryBook": {
+    "title": "نوبت بیمار",
+    "changeTitle": "تغییر نوبت بیمار",
+    "date": "تاریخ نوبت",
+    "hint": "تاریخ را می‌توانید بعداً هم ثبت کنید.",
+    "confirm": "ثبت نوبت"
+  },
   "labBook": {
     "title": "نوبت بیمار",
     "changeTitle": "تغییر نوبت بیمار",
@@ -365,7 +390,7 @@
     "night_guard": "نایت گارد",
     "sx": "SX"
   },
-  "labTooth": {
+  "tooth": {
     "q1": "بالا راست",
     "q2": "بالا چپ",
     "q3": "پایین چپ",
@@ -1096,6 +1121,16 @@
   },
   "surgeryKind": {
     "implant": "پروتز ایمپلنت",
-    "extraction": "کاشت ایمپلنت"
+    "extraction": "کاشت ایمپلنت",
+    "bone_graft": "کاشت ایمپلنت پس از پیوند استخوان",
+    "sinus_lift": "کاشت ایمپلنت پس از سینوس لیفت",
+    "prosthesis": "چکاپ ایمپلنت پس از پروتز"
+  },
+  "surgeryDone": {
+    "implant": "کاشت ایمپلنت: {{date}}",
+    "extraction": "کشیدن دندان: {{date}}",
+    "bone_graft": "پیوند استخوان: {{date}}",
+    "sinus_lift": "سینوس لیفت: {{date}}",
+    "prosthesis": "تحویل پروتز: {{date}}"
   }
 }

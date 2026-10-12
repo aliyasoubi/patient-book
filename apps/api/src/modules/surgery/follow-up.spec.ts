@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { followUpState, followUpWindow } from './follow-up';
-import { JalaliDate, SurgeryStatus } from '../../domain';
+import { followUpState, followUpWindow, settledStatusOf } from './follow-up';
+import { FollowUpStatus, JalaliDate, SurgeryStatus } from '../../domain';
 
 // "Now" is 27 Shahrivar 1405 (18 September 2026) for every case here.
 const now = new Date(2026, 8, 18);
@@ -36,10 +36,19 @@ describe('followUpWindow', () => {
   });
 });
 
+describe('settledStatusOf', () => {
+  it('names the status a settled-follow-up filter lists, and nothing for the open windows', () => {
+    expect(settledStatusOf('booked')).toBe(FollowUpStatus.Booked);
+    expect(settledStatusOf('declined')).toBe(FollowUpStatus.Declined);
+    expect(settledStatusOf('overdue')).toBeNull();
+    expect(followUpWindow('booked', now)).toEqual({});
+  });
+});
+
 describe('followUpState', () => {
   const at = (jalaliDate: string) => ({
     followUpDate: JalaliDate.parse(jalaliDate).date,
-    followUpDoneAt: null,
+    followUpStatus: FollowUpStatus.Open,
   });
 
   it('judges due, overdue and pending against the current Jalali month', () => {
@@ -49,15 +58,27 @@ describe('followUpState', () => {
     expect(followUpState(at('1405/07/01'), now)).toBe('pending');
   });
 
-  it('is done once a date is recorded, whatever the calendar says', () => {
+  it('is booked or declined once the patient has said, whatever the calendar says', () => {
     expect(
-      followUpState({ ...at('1405/05/01'), followUpDoneAt: new Date() }, now),
-    ).toBe('done');
+      followUpState(
+        { ...at('1405/05/01'), followUpStatus: FollowUpStatus.Booked },
+        now,
+      ),
+    ).toBe('booked');
+    expect(
+      followUpState(
+        { ...at('1405/05/01'), followUpStatus: FollowUpStatus.Declined },
+        now,
+      ),
+    ).toBe('declined');
   });
 
   it('is none without a follow-up date', () => {
     expect(
-      followUpState({ followUpDate: null, followUpDoneAt: null }, now),
+      followUpState(
+        { followUpDate: null, followUpStatus: FollowUpStatus.Open },
+        now,
+      ),
     ).toBe('none');
   });
 

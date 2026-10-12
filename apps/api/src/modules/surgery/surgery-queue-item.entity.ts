@@ -13,6 +13,7 @@ import {
 import {
   AbutmentType,
   DatePrecisionEnum,
+  FollowUpStatus,
   SurgeryKind,
   SurgeryStatus,
 } from '../../domain';
@@ -73,9 +74,18 @@ export class SurgeryQueueItem {
   surgeryDateRaw!: string | null;
 
   /**
-   * شماره دندان — in practice the practice writes brand, tooth number and
-   * quadrant in one phrase ("دنتیوم، ۶ و ۷ راست پایین"). Kept as written; the
-   * brand is additionally split out below where it is recognisable.
+   * The teeth the surgery was on, in FDI notation (`16` is the upper right
+   * first molar), sorted — picked on the same chart the lab form uses. Empty
+   * on rows written before the chart, which keep `toothPosition`.
+   */
+  @Column({ type: 'smallint', array: true, default: [] })
+  teethFdi!: number[];
+
+  /**
+   * Legacy: شماره دندان as it used to be typed — brand, tooth number and
+   * quadrant in one phrase ("دنتیوم، ۶ و ۷ راست پایین"). Kept as written and
+   * shown for rows with no `teethFdi`; the brand is additionally split out
+   * below where it is recognisable.
    */
   @Column({ type: 'varchar', length: 200, default: '' })
   toothPosition!: string;
@@ -113,9 +123,21 @@ export class SurgeryQueueItem {
   @Column({ type: 'date', nullable: true })
   followUpDate!: Date | null;
 
-  /** Set when the patient came in for it; a due follow-up stays due until then. */
+  /**
+   * Where the follow-up stands with the patient. It stays `open` — due, then
+   * overdue — until the patient is booked or cancels.
+   */
+  @Column({
+    type: 'enum',
+    enum: FollowUpStatus,
+    enumName: 'surgery_queue_follow_up_status_enum',
+    default: FollowUpStatus.Open,
+  })
+  followUpStatus!: FollowUpStatus;
+
+  /** The day the patient was booked for, when `followUpStatus` is `booked` and it was written down. */
   @Column({ type: 'date', nullable: true })
-  followUpDoneAt!: Date | null;
+  followUpAppointmentAt!: Date | null;
 
   /**
    * Rows are written after the surgery, so a new one is `completed`; the

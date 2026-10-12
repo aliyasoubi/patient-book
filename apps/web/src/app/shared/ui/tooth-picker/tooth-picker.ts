@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
-import { PbButton } from '../../shared/ui';
+import { PersianNumberPipe } from '../../pipes/persian-number.pipe';
+import { PbButton } from '../button/button';
 import {
   QUADRANT_LABELS,
   type Quadrant,
@@ -10,7 +10,7 @@ import {
   jawTeeth,
   positionOf,
   quadrantOf,
-} from './lab-teeth';
+} from './teeth';
 
 interface QuadrantView {
   id: Quadrant;
@@ -20,7 +20,7 @@ interface QuadrantView {
 }
 
 /**
- * The teeth a piece of lab work is for, picked on a chart.
+ * The teeth a piece of work is for, picked on a chart — lab work, a surgery.
  *
  * Laid out as the dentist sees the mouth: the patient's right is on the
  * viewer's left, the upper jaw above the lower, each quadrant counting out
@@ -29,7 +29,7 @@ interface QuadrantView {
  * Selected teeth travel as FDI numbers, sorted.
  */
 @Component({
-  selector: 'pb-lab-tooth-picker',
+  selector: 'pb-tooth-picker',
   standalone: true,
   imports: [TranslatePipe, PersianNumberPipe, PbButton],
   template: `
@@ -63,20 +63,20 @@ interface QuadrantView {
 
       <div class="chart__shortcuts">
         <pb-button variant="text" (click)="toggleJaw('upper')">{{
-          'labTooth.wholeUpper' | translate
+          'tooth.wholeUpper' | translate
         }}</pb-button>
         <pb-button variant="text" (click)="toggleJaw('lower')">{{
-          'labTooth.wholeLower' | translate
+          'tooth.wholeLower' | translate
         }}</pb-button>
         <pb-button variant="text" [disabled]="!selected().length" (click)="clear()">{{
-          'labTooth.clear' | translate
+          'tooth.clear' | translate
         }}</pb-button>
       </div>
     </div>
   `,
-  styleUrl: './lab-tooth-picker.scss',
+  styleUrl: './tooth-picker.scss',
 })
-export class LabToothPicker {
+export class PbToothPicker {
   private readonly i18n = inject(TranslateService);
 
   readonly selected = input<readonly number[]>([]);

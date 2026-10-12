@@ -14,6 +14,13 @@
   }
 }
 
+/*
+ * A card is three rows on one left edge: who and when, what was done, and
+ * where the follow-up stands. Every item on a row is the same height and sits
+ * on the row's centre line, so the rows read as lines of a table, not as
+ * pieces dropped on a card. Colour is kept for the one thing that changes
+ * what staff do — the state of the follow-up.
+ */
 .queue {
   margin: 0;
   padding: 0;
@@ -23,114 +30,202 @@
   gap: var(--pb-space-3);
 
   &__item {
+    --_row: 32px;
+
     position: relative;
+    overflow: hidden;
     display: flex;
-    align-items: flex-start;
-    gap: var(--pb-space-4);
+    flex-direction: column;
+    gap: var(--pb-space-3);
     padding: var(--pb-space-4);
+    padding-block-start: calc(var(--pb-space-4) + 2px);
     @include surface.outlined;
-
-    @media (max-width: 640px) {
-      flex-direction: column;
-      gap: var(--pb-space-3);
-    }
-
-    /** Reserve the corner only on rows that actually carry the menu trigger. */
-    &:has(.queue__menu) {
-      padding-inline-end: calc(var(--pb-control-height) + var(--pb-space-2));
-    }
 
     &--mismatch {
       border-color: color-mix(in srgb, var(--mat-sys-error) 45%, transparent);
     }
+
+    /* A follow-up that has been settled is no longer work to do. */
+    &--settled {
+      background: var(--mat-sys-surface-container-lowest);
+    }
   }
 
-  &__date {
+  /* M3's determinate linear indicator along the card's top edge. */
+  &__wait {
+    --_color: var(--mat-sys-outline);
+
+    --mat-progress-bar-active-indicator-color: var(--_color);
+    --mat-progress-bar-track-color: color-mix(in srgb, var(--_color) 18%, transparent);
+    --mat-progress-bar-active-indicator-height: 4px;
+    --mat-progress-bar-track-height: 4px;
+
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+
+    &[data-state='due'] {
+      --_color: var(--mat-sys-tertiary);
+    }
+
+    &[data-state='overdue'] {
+      --_color: var(--mat-sys-error);
+    }
+
+    &[data-state='booked'] {
+      --_color: var(--pb-on-success-container);
+    }
+  }
+
+  /* Row 1: the patient on one side, the follow-up date on the other. */
+  &__head {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: var(--pb-space-1);
-    flex: 0 0 auto;
-    min-width: 104px;
-    padding: var(--pb-space-2) var(--pb-space-3);
-    @include surface.tonal(medium);
+    gap: var(--pb-space-3);
+  }
 
-    @media (max-width: 640px) {
-      flex-direction: row;
-      align-self: flex-start;
+  /* On a phone the name needs the width: the date drops to a line of its own. */
+  @media (max-width: 640px) {
+    &__head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'who menu'
+        'when when';
+    }
+
+    &__who {
+      grid-area: who;
+    }
+
+    &__when {
+      grid-area: when;
+      justify-content: flex-start;
+    }
+
+    &__menu {
+      grid-area: menu;
+      align-self: start;
     }
   }
 
-  &__date-value {
-    font-size: var(--mat-sys-body-medium-size);
-    font-weight: 600;
-    font-feature-settings: var(--pb-font-numeric);
-    white-space: nowrap;
-
-    &--none {
-      font-weight: 400;
-      color: var(--mat-sys-on-surface-variant);
-    }
-  }
-
-  &__body {
+  &__who {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--pb-space-2);
+    gap: var(--pb-space-1);
   }
 
   &__identity {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     flex-wrap: wrap;
-    gap: var(--pb-space-3);
+    gap: var(--pb-space-2) var(--pb-space-3);
+    min-height: var(--_row);
 
     strong {
       font: var(--mat-sys-title-medium);
     }
   }
 
-  /**
-   * Static case attributes read as supporting text, not chips — M3 reserves
-   * chips for interactive things, so pills here would compete with the two
-   * that are (the patient link and the status).
-   */
-  &__follow-up {
+  &__done {
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
+  &__when {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--pb-space-2) var(--pb-space-3);
+  }
+
+  &__when-date {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    font: var(--mat-sys-title-medium);
+    font-feature-settings: var(--pb-font-numeric);
+    white-space: nowrap;
+
+    mat-icon {
+      font-size: var(--pb-icon-sm);
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  /* Row 2: the work — kind, teeth, brand, cover — all one height. */
+  &__meta {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: var(--pb-space-2) var(--pb-space-4);
-    margin-top: var(--pb-space-2);
   }
 
-  /* The switch's label is the action; keep it the size of the chip beside it. */
-  &__done {
-    --mat-slide-toggle-label-text-size: var(--mat-sys-label-large-size);
-  }
-
-  &__details {
-    display: flex;
+  &__teeth {
+    display: inline-flex;
     flex-wrap: wrap;
-    gap: var(--pb-space-2) var(--pb-space-4);
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
+    gap: var(--pb-space-1);
+  }
+
+  /* The number as it sits on the chart it was picked from, without the chart. */
+  &__tooth {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-inline-size: var(--_row);
+    block-size: var(--_row);
+    padding-inline: var(--pb-space-2);
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: var(--mat-sys-corner-small);
+    color: var(--mat-sys-on-surface);
+    font: var(--mat-sys-label-large);
+    font-feature-settings: var(--pb-font-numeric);
   }
 
   &__detail {
     display: inline-flex;
     align-items: center;
     gap: var(--pb-space-1);
+    min-block-size: var(--_row);
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
 
-    .material-symbols-rounded {
-      font-size: var(--pb-icon-xs);
+    mat-icon {
+      font-size: var(--pb-icon-sm);
     }
   }
 
+  /* Row 3: where the follow-up stands, under a hairline instead of in a panel of its own. */
+  &__track {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--pb-space-2) var(--pb-space-4);
+    padding-block-start: var(--pb-space-3);
+    border-block-start: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  &__steps {
+    flex: 1 1 260px;
+    max-width: 360px;
+    min-width: 0;
+  }
+
+  &__track-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-inline-start: auto;
+  }
+
   &__menu {
-    position: absolute;
-    inset-inline-end: var(--pb-space-2);
-    top: var(--pb-space-2);
+    flex: 0 0 auto;
+    margin-inline-end: calc(var(--pb-space-2) * -1);
   }
 }

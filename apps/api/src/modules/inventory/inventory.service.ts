@@ -53,6 +53,7 @@ import {
   InventoryMovementKind,
   InventoryUnit,
   JalaliDate,
+  LAB_TOOTH_NUMBERS,
   SurgeryKind,
   toLatinDigits,
 } from '../../domain';
@@ -62,6 +63,17 @@ import {
  * for an implant, so a row written from the stock is due like one typed there.
  */
 const PROSTHESIS_AFTER_MONTHS = 3;
+
+/**
+ * The FDI tooth numbers in what the stock was told ("36", "36 37"). Anything
+ * else typed there is not a tooth the chart can hold, and stays only as the
+ * written phrase on the row.
+ */
+function toothNumbers(written: string): number[] {
+  return (written.match(/\d+/g) ?? [])
+    .map(Number)
+    .filter((n) => LAB_TOOTH_NUMBERS.includes(n));
+}
 
 /** Enough of an item's stock card for the screen; older lines stay in the table. */
 const HISTORY_LIMIT = 100;
@@ -681,6 +693,9 @@ export class InventoryService {
           implantCaseId: implantCase.id,
           recordedName: implantCase.recordedName,
           surgeryDate: today,
+          teethFdi: toothNumbers(
+            teeth.length === units.length ? teeth[i] : written,
+          ),
           toothPosition: teeth.length === units.length ? teeth[i] : written,
           implantBrand: extractImplantBrand(item.brand) ?? item.brand,
           followUpMonths: PROSTHESIS_AFTER_MONTHS,

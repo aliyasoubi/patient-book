@@ -851,7 +851,7 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(await followUpsThisWeek()).toBe(weekBefore + 1);
     });
 
-    it('leaves every window once the follow-up is marked done, and comes back when reopened', async () => {
+    it('leaves every open window once the patient is booked, lists under booked, and comes back when reopened', async () => {
       const created = await asAdmin(http().post('/api/surgery-queue'))
         .send({
           recordedName: 'نرگس یوسفی',
@@ -861,22 +861,74 @@ describeIfWritable('clinic flows (e2e)', () => {
         .expect(201);
       const { id } = created.body as { id: string };
       surgeryIds.push(id);
+      expect(created.body).toMatchObject({ followUpStatus: 'open' });
 
-      const done = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
-        .send({ followUpDoneAt: today })
+      // The appointment day is optional: booking without one is a booking.
+      const booked = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ followUpStatus: 'booked' })
         .expect(200);
-      expect(done.body).toMatchObject({
-        followUpState: 'done',
-        followUpDoneAt: today,
+      expect(booked.body).toMatchObject({
+        followUpState: 'booked',
+        followUpStatus: 'booked',
+        followUpAppointmentAt: null,
       });
       expect(await listFollowUps('pending')).not.toContain(id);
       expect(await listFollowUps('week')).not.toContain(id);
+      expect(await listFollowUps('booked')).toContain(id);
+      expect(await listFollowUps('declined')).not.toContain(id);
 
-      // The switch went the wrong way: reopening puts it straight back.
+      // Then the day, once it is known.
+      const dated = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ followUpAppointmentAt: today })
+        .expect(200);
+      expect(dated.body).toMatchObject({ followUpAppointmentAt: today });
+
+      // The patient cancels: closed the other way, and the day is gone.
+      const declined = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ followUpStatus: 'declined' })
+        .expect(200);
+      expect(declined.body).toMatchObject({
+        followUpState: 'declined',
+        followUpAppointmentAt: null,
+      });
+      expect(await listFollowUps('booked')).not.toContain(id);
+      expect(await listFollowUps('declined')).toContain(id);
+
+      // The status went the wrong way: reopening puts it straight back.
       await asAdmin(http().patch(`/api/surgery-queue/${id}`))
-        .send({ followUpDoneAt: null })
+        .send({ followUpStatus: 'open' })
         .expect(200);
       expect(await listFollowUps('week')).toContain(id);
+      expect(await listFollowUps('declined')).not.toContain(id);
+    });
+
+    it('lists open follow-ups first, soonest first, whatever the surgery order', async () => {
+      const add = async (months: number): Promise<string> => {
+        const res = await asAdmin(http().post('/api/surgery-queue'))
+          .send({
+            recordedName: 'ترتیب پیگیری',
+            surgeryDate: monthsAgo(months),
+            followUpMonths: 1,
+          })
+          .expect(201);
+        const { id } = res.body as { id: string };
+        surgeryIds.push(id);
+        return id;
+      };
+      const later = await add(0);
+      const sooner = await add(2);
+      const settled = await add(3);
+      await asAdmin(http().patch(`/api/surgery-queue/${settled}`))
+        .send({ followUpStatus: 'booked' })
+        .expect(200);
+
+      const res = await asAdmin(http().get('/api/surgery-queue'))
+        .query({ q: 'ترتیب پیگیری', limit: 100, sortDir: 'DESC' })
+        .expect(200);
+      const order = (res.body as { items: Array<{ id: string }> }).items.map(
+        (i) => i.id,
+      );
+      expect(order).toEqual([sooner, later, settled]);
     });
 
     it('is overdue once its month has passed, and moves when the surgery date moves', async () => {
@@ -1078,11 +1130,10 @@ describeIfWritable('clinic flows (e2e)', () => {
   // ── Stale edits on surgery rows and register cases ───────────────
 
   describe('stale edits', () => {
-    const today = formatJalali(new Date(), 'yyyy/MM/dd');
     const monthsAgo = (n: number): string =>
       formatJalali(addMonths(new Date(), -n), 'yyyy/MM/dd');
 
-    it('refuses a surgery edit made from a stale copy, but not the follow-up switch', async () => {
+    it('refuses a surgery edit made from a stale copy, but not the follow-up status', async () => {
       const created = await asAdmin(http().post('/api/surgery-queue'))
         .send({
           recordedName: 'نسرین صادقی',
@@ -1112,14 +1163,15 @@ describeIfWritable('clinic flows (e2e)', () => {
         .send({ toothPosition: '۷ پایین چپ' })
         .expect(409);
 
-      // The switch on the list says only that the visit happened: it goes
-      // through on a row someone has edited since the list was loaded.
-      const done = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
-        .send({ followUpDoneAt: today })
+      // The status on the card says only where the follow-up stands with the
+      // patient: it goes through on a row someone has edited since the list
+      // was loaded.
+      const booked = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ followUpStatus: 'booked' })
         .expect(200);
-      expect(done.body).toMatchObject({
+      expect(booked.body).toMatchObject({
         toothPosition: '۶ بالا راست',
-        followUpState: 'done',
+        followUpState: 'booked',
       });
     });
 

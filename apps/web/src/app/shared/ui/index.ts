@@ -39,3 +39,6 @@ export type { SegmentOption } from './segmented-button/segmented-button';
 export { PbFieldGrid } from './field-grid/field-grid';
 export { PbFormActions } from './form-actions/form-actions';
 export { PbSwitch } from './switch/switch';
+export { PbToothPicker } from './tooth-picker/tooth-picker';
+export { PbProgressSteps } from './progress-steps/progress-steps';
+export type { ProgressStep, ProgressStepState } from './progress-steps/progress-steps';

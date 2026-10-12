@@ -1,18 +1,18 @@
 import type { TranslateService } from '@ngx-translate/core';
 import { describe, expect, it } from 'vitest';
 
-import { jawTeeth, labTeethSummary, teethByQuadrant, toothRuns } from './lab-teeth';
+import { jawTeeth, teethSummary, teethByQuadrant, toothRuns } from './teeth';
 
 /** Stands in for the translations the app loads, so the summary reads as it will. */
 const TEXT: Record<string, string> = {
   'list.separator': ', ',
-  'labTooth.q1': 'upper right',
-  'labTooth.q2': 'upper left',
-  'labTooth.q3': 'lower left',
-  'labTooth.q4': 'lower right',
-  'labTooth.range': '{{from}} to {{to}}',
-  'labTooth.group': '{{quadrant}}: {{numbers}}',
-  'labTooth.groupSeparator': '; ',
+  'tooth.q1': 'upper right',
+  'tooth.q2': 'upper left',
+  'tooth.q3': 'lower left',
+  'tooth.q4': 'lower right',
+  'tooth.range': '{{from}} to {{to}}',
+  'tooth.group': '{{quadrant}}: {{numbers}}',
+  'tooth.groupSeparator': '; ',
 };
 const i18n = {
   instant: (key: string, params?: Record<string, string>) =>
@@ -48,14 +48,12 @@ describe('jawTeeth', () => {
   });
 });
 
-describe('labTeethSummary', () => {
+describe('teethSummary', () => {
   it('names each quadrant and folds a run of three or more into a range', () => {
-    expect(labTeethSummary([16, 17, 21, 22, 23], i18n)).toBe(
-      'upper right: ۶, ۷; upper left: ۱ to ۳',
-    );
+    expect(teethSummary([16, 17, 21, 22, 23], i18n)).toBe('upper right: ۶, ۷; upper left: ۱ to ۳');
   });
 
   it('is empty for no teeth', () => {
-    expect(labTeethSummary([], i18n)).toBe('');
+    expect(teethSummary([], i18n)).toBe('');
   });
 });

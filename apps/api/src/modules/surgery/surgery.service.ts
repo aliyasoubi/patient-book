@@ -18,19 +18,30 @@ import { DatePrecisionEnum } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { assertMayWriteClinicalNotes } from '../../application/policies/clinical-notes.policy';
-import { ErrorCode } from '../../domain';
-import { followUpState, followUpWindow, openFollowUpSql } from './follow-up';
+import { ErrorCode, FollowUpStatus, SurgeryStatus } from '../../domain';
+import {
+  followUpState,
+  followUpWindow,
+  openFollowUpSql,
+  settledStatusOf,
+} from './follow-up';
 
 /**
- * The list's follow-up switch: an edit that says whether the visit happened
- * and nothing else. It is the one write exempt from the version check — it
- * cannot overwrite another field, so a concurrent edit is no reason to fail.
+ * The card's follow-up status: an edit that says where the follow-up stands
+ * with the patient — and, when booked, which day — and nothing else. It is
+ * the one write exempt from the version check: it cannot overwrite another
+ * field, so a concurrent edit is no reason to fail.
  */
-function isFollowUpToggle(dto: Partial<UpsertSurgeryDto>): boolean {
+function isFollowUpChange(dto: Partial<UpsertSurgeryDto>): boolean {
   const sent = Object.keys(dto).filter(
     (key) => dto[key as keyof UpsertSurgeryDto] !== undefined,
   );
-  return sent.length === 1 && sent[0] === 'followUpDoneAt';
+  return (
+    sent.length > 0 &&
+    sent.every((key) =>
+      ['followUpStatus', 'followUpAppointmentAt'].includes(key),
+    )
+  );
 }
 
 @Injectable()
@@ -63,10 +74,19 @@ export class SurgeryService {
       qb.withDeleted().andWhere('s."deletedAt" IS NOT NULL');
     }
     if (dto.followUp) {
-      const { from, to } = followUpWindow(dto.followUp);
-      qb.andWhere(openFollowUpSql('s'));
-      if (from) qb.andWhere('s."followUpDate" >= :from', { from });
-      if (to) qb.andWhere('s."followUpDate" <= :to', { to });
+      const settled = settledStatusOf(dto.followUp);
+      if (settled) {
+        qb.andWhere('s."followUpDate" IS NOT NULL')
+          .andWhere('s."followUpStatus" = :settled', { settled })
+          .andWhere('s.status <> :cancelled', {
+            cancelled: SurgeryStatus.Cancelled,
+          });
+      } else {
+        const { from, to } = followUpWindow(dto.followUp);
+        qb.andWhere(openFollowUpSql('s'));
+        if (from) qb.andWhere('s."followUpDate" >= :from', { from });
+        if (to) qb.andWhere('s."followUpDate" <= :to', { to });
+      }
     }
     if (dto.from) {
       const from = JalaliDate.tryParse(dto.from);
@@ -83,16 +103,17 @@ export class SurgeryService {
 
     // Property path, not raw SQL: combining take/skip with a join makes
     // TypeORM wrap the query, and it mangles a quoted identifier when it does.
-    // A follow-up list is read soonest-first whichever way the queue is sorted.
-    if (dto.followUp) {
-      qb.orderBy('s.followUpDate', 'ASC');
-    } else {
-      qb.orderBy(
+    // The list is the work to do: follow-ups still open come first, soonest
+    // first (the enum sorts open, booked, declined, so the status does it),
+    // then the settled ones. Rows with no follow-up date, and the settled
+    // ones among themselves, fall back to the surgery date.
+    qb.orderBy('s.followUpStatus', 'ASC')
+      .addOrderBy('s.followUpDate', 'ASC', 'NULLS LAST')
+      .addOrderBy(
         's.surgeryDate',
         dto.sortDir === 'DESC' ? 'DESC' : 'ASC',
         'NULLS LAST',
       );
-    }
     qb.addOrderBy('s.id', 'ASC');
     const [items, total] = await qb.getManyAndCount();
     return PageResult.of(
@@ -243,7 +264,7 @@ export class SurgeryService {
         lock: { mode: 'pessimistic_write' },
       });
       if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
-      if (!isFollowUpToggle(dto) && item.version !== expectedVersion) {
+      if (!isFollowUpChange(dto) && item.version !== expectedVersion) {
         throw AppException.conflict(ErrorCode.SurgeryItemModified);
       }
       assertMayWriteClinicalNotes(role, [[dto.notes, item.notes]]);
@@ -324,6 +345,9 @@ export class SurgeryService {
     if (dto.kind !== undefined) item.kind = dto.kind;
     if (dto.recordedName !== undefined)
       item.recordedName = dto.recordedName ?? '';
+    if (dto.teethFdi !== undefined) {
+      item.teethFdi = [...dto.teethFdi].sort((a, b) => a - b);
+    }
     if (dto.toothPosition !== undefined) {
       item.toothPosition = dto.toothPosition ?? '';
       // Legacy rows only ever had a brand baked into this phrase; once a row
@@ -337,10 +361,19 @@ export class SurgeryService {
     if (dto.abutmentType !== undefined) item.abutmentType = dto.abutmentType;
     if (dto.followUpMonths !== undefined)
       item.followUpMonths = dto.followUpMonths ?? null;
-    if (dto.followUpDoneAt !== undefined) {
-      item.followUpDoneAt = dto.followUpDoneAt
-        ? JalaliDate.parse(dto.followUpDoneAt).date
+    // A row not yet saved has none of the column defaults.
+    item.followUpStatus ??= FollowUpStatus.Open;
+    if (dto.followUpStatus !== undefined) {
+      item.followUpStatus = dto.followUpStatus;
+    }
+    if (dto.followUpAppointmentAt !== undefined) {
+      item.followUpAppointmentAt = dto.followUpAppointmentAt
+        ? JalaliDate.parse(dto.followUpAppointmentAt).date
         : null;
+    }
+    // A day means something only while the patient is booked.
+    if (item.followUpStatus !== FollowUpStatus.Booked) {
+      item.followUpAppointmentAt = null;
     }
     if (dto.status !== undefined) item.status = dto.status;
     if (dto.notes !== undefined) item.notes = dto.notes ?? null;
@@ -445,6 +478,7 @@ export class SurgeryService {
         item.implantRegistryNo,
         item.recordedName,
         item.toothPosition,
+        (item.teethFdi ?? []).join(' '),
         item.implantBrand,
       ]
         .filter(Boolean)
@@ -491,6 +525,7 @@ export class SurgeryService {
             raw: item.surgeryDateRaw,
           }
         : null,
+      teethFdi: item.teethFdi ?? [],
       toothPosition: item.toothPosition,
       implantBrand: item.implantBrand,
       abutmentType: item.abutmentType,
@@ -503,8 +538,9 @@ export class SurgeryService {
             iso: JalaliDate.fromStored(item.followUpDate)?.toIsoDate() ?? '',
           }
         : null,
-      followUpDoneAt: item.followUpDoneAt
-        ? this.formatDate(item.followUpDoneAt, null)
+      followUpStatus: item.followUpStatus,
+      followUpAppointmentAt: item.followUpAppointmentAt
+        ? this.formatDate(item.followUpAppointmentAt, null)
         : null,
       followUpState: followUpState(item),
       status: item.status,

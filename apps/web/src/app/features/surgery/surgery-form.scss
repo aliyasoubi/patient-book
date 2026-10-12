@@ -1,11 +1,12 @@
+@use '../../../styles/type';
+
 .form {
   display: flex;
   flex-direction: column;
   gap: var(--pb-space-4);
 }
 
-/* The kind selector leads the form; the segmented button is M3's control for
-   two or three mutually exclusive choices that shape what follows. */
+/* The kind selector leads the form: it shapes what follows. */
 .form__kind-fixed {
   display: flex;
   flex-wrap: wrap;
@@ -19,7 +20,14 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-.form__kind {
-  justify-self: start;
-  margin-bottom: var(--pb-space-1);
+.form__teeth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+  margin-bottom: var(--pb-space-3);
+}
+
+.form__label,
+.form__hint {
+  @include type.supporting-text(small);
 }

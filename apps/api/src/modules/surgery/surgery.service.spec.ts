@@ -10,6 +10,7 @@ import type { AuditService } from '../../application/services/audit.service';
 import {
   AbutmentType,
   ErrorCode,
+  FollowUpStatus,
   JalaliDate,
   SurgeryStatus,
 } from '../../domain';
@@ -34,6 +35,9 @@ const row = (): SurgeryQueueItem =>
     abutmentType: AbutmentType.Unknown,
     abutmentRaw: null,
     prosthesisDue: null,
+    teethFdi: [],
+    followUpStatus: FollowUpStatus.Open,
+    followUpAppointmentAt: null,
     status: SurgeryStatus.Scheduled,
     notes: null,
   });
@@ -132,19 +136,56 @@ describe('SurgeryService.assign — follow-up date', () => {
     expect(item.followUpDate).toBeNull();
   });
 
-  it('records when the follow-up happened, and can reopen it', async () => {
+  it('settles the follow-up as booked, with the day when it was written down, and can reopen it', async () => {
     const item = row();
     await helpers.assign(item, {
       surgeryDate: '1405/06/27',
       followUpMonths: 3,
     });
 
-    await helpers.assign(item, { followUpDoneAt: '1405/09/29' });
-    expect(jalali(item.followUpDoneAt)).toBe('1405/09/29');
-    expect(followUpState(item)).toBe('done');
+    await helpers.assign(item, {
+      followUpStatus: FollowUpStatus.Booked,
+      followUpAppointmentAt: '1405/09/29',
+    });
+    expect(jalali(item.followUpAppointmentAt)).toBe('1405/09/29');
+    expect(followUpState(item)).toBe('booked');
 
-    await helpers.assign(item, { followUpDoneAt: null });
-    expect(item.followUpDoneAt).toBeNull();
+    await helpers.assign(item, { followUpStatus: FollowUpStatus.Open });
+    expect(item.followUpAppointmentAt).toBeNull();
+    expect(followUpState(item)).not.toBe('booked');
+  });
+
+  it('books without a day: the day is optional', async () => {
+    const item = row();
+    await helpers.assign(item, { followUpStatus: FollowUpStatus.Booked });
+    expect(item.followUpStatus).toBe(FollowUpStatus.Booked);
+    expect(item.followUpAppointmentAt).toBeNull();
+  });
+
+  it('drops the appointment day when the patient cancels', async () => {
+    const item = row();
+    await helpers.assign(item, {
+      followUpStatus: FollowUpStatus.Booked,
+      followUpAppointmentAt: '1405/09/29',
+    });
+    await helpers.assign(item, { followUpStatus: FollowUpStatus.Declined });
+    expect(item.followUpAppointmentAt).toBeNull();
+  });
+});
+
+describe('SurgeryService.assign — teeth', () => {
+  const service = new SurgeryService(
+    {} as Repository<SurgeryQueueItem>,
+    {} as Repository<ImplantCase>,
+    {} as AuditService,
+  );
+  const helpers = service as unknown as SurgeryWriteHelpers;
+
+  it('keeps the chosen teeth sorted, and finds the row by their numbers', async () => {
+    const item = row();
+    await helpers.assign(item, { teethFdi: [37, 36] });
+    expect(item.teethFdi).toEqual([36, 37]);
+    expect(item.searchText).toContain('36');
   });
 });
 
@@ -195,20 +236,31 @@ describe('SurgeryService.update concurrency', () => {
     ).rejects.toMatchObject(refused);
   });
 
-  it('lets the follow-up switch through without a version: it overwrites nothing else', async () => {
-    await expect(
-      makeService(4).update('row-1', { followUpDoneAt: '1405/07/09' }, 'u'),
-    ).rejects.toMatchObject(passedGate);
-    await expect(
-      makeService(4).update('row-1', { followUpDoneAt: null }, 'u'),
-    ).rejects.toMatchObject(passedGate);
-  });
-
-  it('does not stretch that exemption to a switch that carries other fields', async () => {
+  it('lets the follow-up status through without a version: it overwrites nothing else', async () => {
     await expect(
       makeService(4).update(
         'row-1',
-        { followUpDoneAt: '1405/07/09', notes: 'x' },
+        { followUpStatus: FollowUpStatus.Booked },
+        'u',
+      ),
+    ).rejects.toMatchObject(passedGate);
+    await expect(
+      makeService(4).update(
+        'row-1',
+        {
+          followUpStatus: FollowUpStatus.Booked,
+          followUpAppointmentAt: '1405/07/09',
+        },
+        'u',
+      ),
+    ).rejects.toMatchObject(passedGate);
+  });
+
+  it('does not stretch that exemption to a change that carries other fields', async () => {
+    await expect(
+      makeService(4).update(
+        'row-1',
+        { followUpStatus: FollowUpStatus.Declined, notes: 'x' },
         'u',
       ),
     ).rejects.toMatchObject(refused);
