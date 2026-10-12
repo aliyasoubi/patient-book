@@ -111,22 +111,33 @@
             <span class="bottom-nav__label">{{ item.label | translate }}</span>
           </a>
         }
+        <!-- Selected, like the others, while a section behind it is on screen. -->
         <button
           class="bottom-nav__item"
+          [class.is-active]="moreActive()"
           type="button"
           [matMenuTriggerFor]="moreMenu"
           [attr.aria-label]="'app.more' | translate"
         >
           <span class="bottom-nav__pill">
-            <mat-icon aria-hidden="true">more_horiz</mat-icon>
+            <mat-icon [class.is-filled]="moreActive()" aria-hidden="true">more_horiz</mat-icon>
           </span>
           <span class="bottom-nav__label">{{ 'app.more' | translate }}</span>
         </button>
         <mat-menu #moreMenu="matMenu">
           @for (item of navItems(); track item.path) {
             @if (!item.primary) {
-              <a mat-menu-item [routerLink]="item.path">
-                <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+              <a
+                mat-menu-item
+                class="more-menu__item"
+                [routerLink]="item.path"
+                routerLinkActive="is-active"
+                ariaCurrentWhenActive="page"
+                #rla="routerLinkActive"
+              >
+                <mat-icon [class.is-filled]="rla.isActive" aria-hidden="true">{{
+                  item.icon
+                }}</mat-icon>
                 <span>{{ item.label | translate }}</span>
               </a>
             }

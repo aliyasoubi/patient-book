@@ -265,6 +265,21 @@ export class SurgeryList {
     return !!item.followUpDate && item.status !== 'cancelled';
   }
 
+  /**
+   * The linked patient's mobile, while there is someone to call: not once
+   * they have declined, nor from the archive.
+   */
+  protected callable(item: SurgeryQueueItem): string | null {
+    if (this.archivedOnly() || item.followUpStatus === 'declined') return null;
+    return item.patient?.mobile ?? null;
+  }
+
+  protected callLabel(item: SurgeryQueueItem): string {
+    return this.i18n.instant('action.callPerson', {
+      name: item.patient?.fullName || item.recordedName,
+    });
+  }
+
   /** The status can be changed from the card, as opposed to only shown. */
   protected canChangeStatus(): boolean {
     return this.auth.can('editSurgery') && !this.archivedOnly();

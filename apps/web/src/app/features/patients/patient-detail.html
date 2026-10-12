@@ -319,7 +319,14 @@
         </ng-template>
         <div class="tab">
           <pb-surface [title]="'patientDetail.labWork' | translate">
-            @if (labCases().length) {
+            @if (labState() === 'failed') {
+              <pb-load-error
+                [message]="'patientDetail.labWorkFailed' | translate"
+                (retry)="loadLabCases()"
+              />
+            } @else if (labState() === 'loading') {
+              <p class="card__empty">{{ 'patientDetail.labWorkLoading' | translate }}</p>
+            } @else if (labCases().length) {
               <ul class="registry">
                 @for (c of labCases(); track c.id) {
                   <li>

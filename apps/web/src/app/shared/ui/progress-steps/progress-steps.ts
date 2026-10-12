@@ -188,20 +188,8 @@ export interface ProgressStep {
         0 0 0 6px var(--mat-sys-primary);
     }
 
-    /* Where things stand breathes a little, so it reads as live. */
-    .pb-steps__step[data-state='current'] mat-icon {
-      animation: pb-steps-pulse 2.4s ease-in-out infinite;
-    }
-
-    @keyframes pb-steps-pulse {
-      0%,
-      100% {
-        box-shadow: 0 0 0 0 color-mix(in srgb, var(--_border) 35%, transparent);
-      }
-      50% {
-        box-shadow: 0 0 0 6px color-mix(in srgb, var(--_border) 0%, transparent);
-      }
-    }
+    /* Where things stand is told by its fill, border and label, standing
+       still: a list of cards each pulsing at once reads as noise, not news. */
 
     .pb-steps__label {
       max-width: 100%;

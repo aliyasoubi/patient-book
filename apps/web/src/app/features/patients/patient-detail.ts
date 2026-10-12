@@ -126,6 +126,11 @@ export class PatientDetail {
 
   /** The patient's lab work, newest first. */
   protected readonly labCases = signal<LabCase[]>([]);
+  /**
+   * As with the history: "nothing sent to a lab" is a fact only once the
+   * list has come back, not while it loads or after it failed.
+   */
+  protected readonly labState = signal<'loading' | 'loaded' | 'failed'>('loading');
   protected readonly labStageLabel = labStageLabel;
 
   protected labWorkTypes(c: LabCase): string {
@@ -225,14 +230,16 @@ export class PatientDetail {
       .pipe(
         switchMap((id) =>
           this.labService.list({ patientId: id, limit: 50 }).pipe(
-            map((result) => ({ id, cases: result.items })),
-            catchError(() => of({ id, cases: [] as LabCase[] })),
+            map((result) => ({ id, cases: result.items, failed: false })),
+            catchError(() => of({ id, cases: [] as LabCase[], failed: true })),
           ),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe(({ id, cases }) => {
-        if (id === this.id()) this.labCases.set(cases);
+      .subscribe(({ id, cases, failed }) => {
+        if (id !== this.id()) return;
+        this.labCases.set(cases);
+        this.labState.set(failed ? 'failed' : 'loaded');
       });
 
     // Route inputs are bound after construction, so the id can only be read
@@ -252,9 +259,14 @@ export class PatientDetail {
     if (this.patient()?.id !== id) this.patient.set(null);
     this.history.set([]);
     this.historyState.set('idle');
-    this.labCases.set([]);
     this.load$.next(id);
-    this.labCases$.next(id);
+    this.loadLabCases();
+  }
+
+  protected loadLabCases(): void {
+    this.labCases.set([]);
+    this.labState.set('loading');
+    this.labCases$.next(this.id());
   }
 
   /**

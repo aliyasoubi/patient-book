@@ -27,11 +27,6 @@ export interface NavItem {
   roles?: UserRole[];
 }
 
-/** The list itself, at any query — not a patient's page beneath it. */
-function isPatientList(url: string): boolean {
-  return url.split('?')[0] === '/patients';
-}
-
 /**
  * Stable translation keys are resolved by the template at runtime.
  */
@@ -141,20 +136,24 @@ export class Shell {
 
   protected readonly drawerOpen = signal(false);
 
+  /** The page on screen, without its query. */
+  private readonly path = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map(() => this.router.url.split(/[?#]/)[0]),
+      startWith(this.router.url.split(/[?#]/)[0]),
+    ),
+    { initialValue: '' },
+  );
+
   /**
    * The patient register carries a search of its own that does everything
    * the top bar's does and more, so there the top bar's folds to a button.
    * The registry and surgery lists search their own books, not patients, and
-   * keep the full field.
+   * keep the full field. The list itself, at any query — not a patient's page
+   * beneath it.
    */
-  protected readonly onPatientList = toSignal(
-    this.router.events.pipe(
-      filter((event) => event instanceof NavigationEnd),
-      map(() => isPatientList(this.router.url)),
-      startWith(isPatientList(this.router.url)),
-    ),
-    { initialValue: false },
-  );
+  protected readonly onPatientList = computed(() => this.path() === '/patients');
 
   private readonly page = viewChild<ElementRef<HTMLElement>>('page');
 
@@ -171,6 +170,18 @@ export class Shell {
   );
 
   protected readonly primaryNav = computed(() => this.navItems().filter((i) => i.primary));
+
+  /**
+   * On a phone, whether the page on screen is one of the sections behind
+   * «more» — so the bar still marks where you are on the lab board, in the
+   * stock or in settings, rather than nothing at all.
+   */
+  protected readonly moreActive = computed(() => {
+    const path = this.path();
+    return this.navItems().some(
+      (item) => !item.primary && (path === item.path || path.startsWith(`${item.path}/`)),
+    );
+  });
 
   protected readonly roleLabel = computed(() => roleLabel(this.auth.role()));
 
