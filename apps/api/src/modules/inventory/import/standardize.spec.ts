@@ -36,6 +36,30 @@ describe('standardize', () => {
     ).toBe('RC 4.8x8');
   });
 
+  it('reads the October sheet, products moved between its columns', () => {
+    expect(as(C.Restorative, 'کامپوزیت', 'فایبرپست', '1').item).toEqual({
+      category: C.Restorative,
+      name: 'فایبرپست',
+      brand: null,
+      spec: '#1',
+    });
+    expect(as(C.Impression, 'سمان ketac', null, null).item).toEqual({
+      category: C.Impression,
+      name: 'سمان Ketac',
+      brand: '3M',
+      spec: null,
+    });
+    expect(as(C.Restorative, 'توربین 2 سوراخه mdk', null, null).item).toEqual({
+      category: C.Other,
+      name: 'توربین',
+      brand: 'MDK',
+      spec: '2 سوراخه',
+    });
+    expect(
+      as(C.Consumable, 'توربین 4 سوراخه COXO', null, null).item,
+    ).toMatchObject({ name: 'توربین', brand: 'COXO', spec: '4 سوراخه' });
+  });
+
   it("names Zimmer's lines by product", () => {
     expect(as(C.Implant, 'Bone Level', 'Zimmer', '3.7x10').item.name).toBe(
       'Tapered Screw-Vent',

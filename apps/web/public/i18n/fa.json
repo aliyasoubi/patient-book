@@ -551,12 +551,12 @@
     "anesthesia": "بی‌حسی",
     "restorative": "ترمیمی و زیبایی",
     "endo": "اندو",
-    "impression": "قالب‌گیری",
+    "impression": "قالب‌گیری و تحویل روکش",
     "surgery": "جراحی",
     "orthodontic": "ارتودنسی",
     "consumable": "مصرفی و ضدعفونی",
     "hygiene": "بهداشت دهان",
-    "other": "سایر"
+    "other": "تجهیزات و سایر"
   },
   "inventoryUnit": {
     "piece": "عدد",

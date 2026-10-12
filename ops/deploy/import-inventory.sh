@@ -2,14 +2,18 @@
 #
 # Load the practice's stock workbook into the inventory of a deployed server.
 #
-#   ./ops/deploy/import-inventory.sh /path/to/stock.xlsx            # preview
-#   ./ops/deploy/import-inventory.sh /path/to/stock.xlsx --apply    # write
+#   ./ops/deploy/import-inventory.sh /path/to/stock.xlsx                      # preview
+#   ./ops/deploy/import-inventory.sh /path/to/stock.xlsx --apply              # write
+#   ./ops/deploy/import-inventory.sh /path/to/stock.xlsx --replace            # preview a replacement
+#   ./ops/deploy/import-inventory.sh /path/to/stock.xlsx --replace --apply    # replace the inventory
 #
 # The inventory importer (apps/api/src/modules/inventory/import) run inside
 # the API image, like import.sh. Without --apply it only prints the report —
 # every standardized name, every row it could not read — and writes nothing.
-# With --apply it refuses an inventory that already has items, so it can only
-# ever load the shelf once. Run it after deploy.sh, which runs the migrations.
+# With --apply it refuses an inventory that already has items, unless
+# --replace says this workbook is the new source of truth: then the current
+# items and their stock cards are deleted and the workbook loaded in one
+# transaction. Run it after deploy.sh, which runs the migrations.
 
 set -euo pipefail
 
@@ -17,13 +21,13 @@ readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly COMPOSE_FILE="$REPO_ROOT/compose.prod.yml"
 readonly IN_CONTAINER=/tmp/import/stock.xlsx
 
-usage() { echo "usage: $0 <stock.xlsx> [--apply]" >&2; exit 2; }
+usage() { echo "usage: $0 <stock.xlsx> [--replace] [--apply]" >&2; exit 2; }
 
 workbook=""
-apply=()
+flags=()
 for arg in "$@"; do
   case "$arg" in
-    --apply) apply=(--apply) ;;
+    --apply | --replace) flags+=("$arg") ;;
     --*) usage ;;
     *) [[ -z "$workbook" ]] && workbook="$arg" || usage ;;
   esac
@@ -44,8 +48,8 @@ cp "$workbook" "$staging/stock.xlsx"
 chmod 755 "$staging"
 chmod 644 "$staging/stock.xlsx"
 
-echo "→ ${apply[*]:+importing}${apply[*]:-previewing} $(basename "$workbook")"
+echo "→ $(basename "$workbook") ${flags[*]:-(preview)}"
 compose run --rm \
   -v "$staging:/tmp/import:ro" \
   api node apps/api/dist/modules/inventory/import/run-inventory-import.js \
-  "$IN_CONTAINER" "${apply[@]}"
+  "$IN_CONTAINER" "${flags[@]}"

@@ -17,25 +17,32 @@ import {
 } from './inventory-workbook.mapper';
 
 /**
- * Load the practice's stock workbook into an empty inventory, once.
+ * Load the practice's stock workbook into the inventory.
  *
- *   npm run import:inventory -- path/to/workbook.xlsx            # preview only
- *   npm run import:inventory -- path/to/workbook.xlsx --apply    # write it
+ *   npm run import:inventory -- path/to/workbook.xlsx                      # preview only
+ *   npm run import:inventory -- path/to/workbook.xlsx --apply              # write it
+ *   npm run import:inventory -- path/to/workbook.xlsx --replace            # preview, and what it replaces
+ *   npm run import:inventory -- path/to/workbook.xlsx --replace --apply    # replace the inventory with it
  *
- * The preview reads the workbook without touching the database and prints
- * every item it found and everything it had to interpret. `--apply` writes
- * them in one transaction, each with its stock as one batch and an opening
- * count on its stock card that names the cell it came from, and refuses an inventory that already holds
- * items: after the first run the app is where stock is kept, and a second
- * load would double it.
+ * The preview reads the workbook and prints every item it found and
+ * everything it had to interpret. `--apply` writes them in one transaction,
+ * each with its stock as one batch and an opening count on its stock card
+ * that names the cell it came from. It refuses an inventory that already
+ * holds items — a second load would double it — unless `--replace` says the
+ * workbook is the new source of truth: then the items, their batches and
+ * their stock cards are deleted and the workbook loaded in that same
+ * transaction, so the inventory is never half one and half the other.
+ * Surgery rows written from a use keep their place in the implant file; only
+ * their link to the deleted stock card line is cleared.
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
+  const replace = args.includes('--replace');
   const fileArg = args.find((a) => !a.startsWith('--'));
   if (!fileArg) {
     console.error(
-      'usage: npm run import:inventory -- <workbook.xlsx> [--apply]',
+      'usage: npm run import:inventory -- <workbook.xlsx> [--replace] [--apply]',
     );
     process.exit(2);
   }
@@ -52,7 +59,7 @@ async function main(): Promise<void> {
     console.error('\n✗  Nothing written: fix the errors above first.');
     process.exit(1);
   }
-  if (!apply) {
+  if (!apply && !replace) {
     console.log(
       `\nPreview only. Re-run with --apply to write these ${result.items.length} items.`,
     );
@@ -61,13 +68,23 @@ async function main(): Promise<void> {
 
   await dataSource.initialize();
   try {
-    const [{ count }] = await dataSource.query<Array<{ count: string }>>(
-      'SELECT count(*)::text AS count FROM inventory_items',
-    );
-    if (Number(count) > 0) {
+    const held = await current();
+    if (replace) {
+      console.log(
+        `\nReplaces the current inventory: ${held.items} items, ${held.lines} stock card lines ` +
+          `(${held.appLines} of them recorded in the app since loading), ` +
+          `${held.surgeryRows} surgery rows linked to a use (kept, unlinked).`,
+      );
+      if (!apply) {
+        console.log(
+          `\nPreview only. Re-run with --replace --apply to replace it with these ${result.items.length} items.`,
+        );
+        return;
+      }
+    } else if (held.items > 0) {
       console.error(
-        `✗  The inventory already holds ${count} items. This import is for the ` +
-          `first load only; after it, stock is kept in the app.`,
+        `✗  The inventory already holds ${held.items} items. A second load would ` +
+          `double it; pass --replace to replace it with this workbook.`,
       );
       process.exit(1);
     }
@@ -78,6 +95,11 @@ async function main(): Promise<void> {
     // round in a right-to-left line, and the stock card reads it there.
     const source = basename(filePath, extname(filePath));
     await dataSource.transaction(async (manager) => {
+      if (replace) {
+        await manager.query('DELETE FROM inventory_movements');
+        await manager.query('DELETE FROM inventory_lots');
+        await manager.query('DELETE FROM inventory_items');
+      }
       const items = manager.getRepository(InventoryItem);
       for (const row of result.items) {
         const item = items.create({
@@ -118,13 +140,44 @@ async function main(): Promise<void> {
         username: actor,
         action: 'create',
         entity: 'inventory_item',
-        changes: { import: { workbook: filePath, items: result.items.length } },
+        changes: {
+          import: { workbook: filePath, items: result.items.length },
+          ...(replace ? { replaced: held } : {}),
+        },
       });
     });
-    console.log(`\n✓  Imported ${result.items.length} items from ${workbook}.`);
+    console.log(
+      `\n✓  ${replace ? 'Replaced the inventory with' : 'Imported'} ` +
+        `${result.items.length} items from ${workbook}.`,
+    );
   } finally {
     await dataSource.destroy();
   }
+}
+
+/** What the inventory holds now, and what in it was recorded in the app. */
+async function current(): Promise<{
+  items: number;
+  lines: number;
+  appLines: number;
+  surgeryRows: number;
+}> {
+  const [row] = await dataSource.query<
+    Array<{
+      items: number;
+      lines: number;
+      appLines: number;
+      surgeryRows: number;
+    }>
+  >(
+    `SELECT (SELECT count(*) FROM inventory_items)::int AS items,
+            (SELECT count(*) FROM inventory_movements)::int AS lines,
+            (SELECT count(*) FROM inventory_movements
+              WHERE username IS NULL OR username NOT LIKE 'cli:%')::int AS "appLines",
+            (SELECT count(*) FROM surgery_queue
+              WHERE "inventoryMovementId" IS NOT NULL)::int AS "surgeryRows"`,
+  );
+  return row;
 }
 
 function printReport({ items, notes }: WorkbookImport): void {
