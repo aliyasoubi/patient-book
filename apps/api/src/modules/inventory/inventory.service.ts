@@ -512,6 +512,12 @@ export class InventoryService {
   /**
    * Put right what a batch's packs say — a lot number or an expiry typed
    * wrong on delivery. Its quantity is not touched: that moves by a movement.
+   *
+   * On an implant, graft or membrane, what the packs say can be corrected but
+   * not wiped: a batch with no lot cannot be recalled, and one with no expiry
+   * drops out of the expiry warnings while it is still on the shelf. A batch
+   * the workbook brought in without one can still be filled in a field at a
+   * time.
    */
   async updateLot(
     itemId: string,
@@ -524,12 +530,19 @@ export class InventoryService {
       const lots = await loadLots(manager, itemId);
       const lot = lots.find((l) => l.id === lotId);
       if (!lot) throw AppException.notFound(ErrorCode.InventoryLotNotFound);
+      const had = { lotNumber: lot.lotNumber, expiry: lot.expiryText };
       if (dto.lotNumber !== undefined)
         lot.lotNumber = normalizeLot(dto.lotNumber);
       if (dto.expiry !== undefined) {
         const expiry = parseExpiry(dto.expiry);
         lot.expiresOn = expiry?.date ?? null;
         lot.expiryText = expiry?.text ?? null;
+      }
+      if (
+        TRACEABLE.has(item.category) &&
+        ((had.lotNumber && !lot.lotNumber) || (had.expiry && !lot.expiryText))
+      ) {
+        throw AppException.badRequest(ErrorCode.InventoryLotRequired);
       }
       const clash = lots.some(
         (l) =>

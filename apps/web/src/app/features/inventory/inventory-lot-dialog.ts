@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { InventoryService } from '../../core/services/inventory.service';
@@ -13,11 +13,14 @@ import { showOnFields } from './inventory-errors';
 export interface InventoryLotDialogData {
   itemId: string;
   lot: InventoryLot;
+  /** An implant, graft or membrane: what a recall is traced through. */
+  traceable: boolean;
 }
 
 /**
  * Put right what a batch's packs say — a lot number or an expiry typed wrong
- * on delivery. How many are left is not here: that moves by a movement.
+ * on delivery. How many are left is not here: that moves by a movement. On a
+ * traceable item what the batch already says can be corrected, not cleared.
  */
 @Component({
   selector: 'pb-inventory-lot-dialog',
@@ -33,6 +36,7 @@ export interface InventoryLotDialogData {
         <pb-text-field
           [control]="form.controls.lotNumber"
           [label]="'inventoryMove.lotNumber' | translate"
+          [errorMessages]="requiredErrors"
           [maxlength]="60"
           [ltr]="true"
         />
@@ -40,6 +44,7 @@ export interface InventoryLotDialogData {
           [control]="form.controls.expiry"
           [label]="'inventoryForm.expiry' | translate"
           [hint]="'inventoryForm.expiryHint' | translate"
+          [errorMessages]="requiredErrors"
           [maxlength]="20"
           [ltr]="true"
         />
@@ -75,13 +80,28 @@ export class InventoryLotDialog {
   private readonly data = inject<InventoryLotDialogData>(MAT_DIALOG_DATA);
   private readonly inventory = inject(InventoryService);
   private readonly errors = inject(ApiErrorTranslator);
+  private readonly i18n = inject(TranslateService);
 
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    lotNumber: [this.data.lot.lotNumber ?? '', Validators.maxLength(60)],
-    expiry: [this.data.lot.expiry ?? '', Validators.maxLength(20)],
+    lotNumber: [
+      this.data.lot.lotNumber ?? '',
+      this.keeps(this.data.lot.lotNumber, Validators.maxLength(60)),
+    ],
+    expiry: [
+      this.data.lot.expiry ?? '',
+      this.keeps(this.data.lot.expiry, Validators.maxLength(20)),
+    ],
   });
+  protected readonly requiredErrors = {
+    required: this.i18n.instant('inventoryMove.lotRequired'),
+  };
+
+  /** Required once set, on a traceable batch; one still blank may stay so. */
+  private keeps(value: string | null, max: ValidatorFn): ValidatorFn[] {
+    return this.data.traceable && value ? [Validators.required, max] : [max];
+  }
 
   protected submit(): void {
     if (this.saving() || this.form.invalid) return;

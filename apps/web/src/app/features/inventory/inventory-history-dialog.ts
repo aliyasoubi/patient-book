@@ -24,6 +24,7 @@ import {
   INVENTORY_MOVEMENT_ICONS,
   inventoryMovementLabel,
   inventoryUnitLabel,
+  TRACEABLE_CATEGORIES,
 } from '../../shared/labels';
 import { PbButton, PbIconButton, PbStatusChip } from '../../shared/ui';
 import type { StatusTone } from '../../shared/ui';
@@ -305,7 +306,11 @@ export class InventoryHistoryDialog {
   }
 
   protected editLot(lot: InventoryLot): void {
-    const data: InventoryLotDialogData = { itemId: this.item.id, lot };
+    const data: InventoryLotDialogData = {
+      itemId: this.item.id,
+      lot,
+      traceable: TRACEABLE_CATEGORIES.includes(this.item.category),
+    };
     this.dialog
       .open(InventoryLotDialog, { data, autoFocus: 'first-tabbable' })
       .afterClosed()

@@ -361,6 +361,60 @@ describeIfWritable('inventory flows (e2e)', () => {
     expect((clash.body as { code: string }).code).toBe(
       ErrorCode.InventoryLotExists,
     );
+
+    // Corrected, never wiped: a batch with no lot or expiry cannot be traced.
+    for (const wipe of [{ lotNumber: null }, { expiry: '' }]) {
+      const refused = await asStaff(
+        http().patch(`/api/inventory/items/${item.id}/lots/${later.id}`),
+      )
+        .send(wipe)
+        .expect(400);
+      expect((refused.body as { code: string }).code).toBe(
+        ErrorCode.InventoryLotRequired,
+      );
+    }
+    const kept = (
+      await asStaff(http().get(`/api/inventory/items/${item.id}`)).expect(200)
+    ).body as ItemBody;
+    expect(kept.lots[1]).toMatchObject({
+      lotNumber: 'B-201',
+      expiry: printed(40),
+    });
+  });
+
+  it('lets a batch on a plain item lose its lot, and an untraced implant batch gain one', async () => {
+    const plain = await addItem({
+      name: `plain-${runId}`,
+      quantity: 2,
+      lotNumber: 'P-1',
+      expiry: printed(30),
+    });
+    const [plainLot] = plain.lots;
+    const cleared = (
+      await asStaff(
+        http().patch(`/api/inventory/items/${plain.id}/lots/${plainLot.id}`),
+      )
+        .send({ lotNumber: null, expiry: null })
+        .expect(200)
+    ).body as ItemBody;
+    expect(cleared.lots[0]).toMatchObject({ lotNumber: null, expiry: null });
+
+    // As the workbook import can leave one: an implant batch with neither.
+    // Opened as a plain item, since the app itself will not open it so.
+    const implant = await addItem({ name: `untraced-${runId}`, quantity: 1 });
+    await db.query(
+      `UPDATE inventory_items SET category = 'implant' WHERE id = $1`,
+      [implant.id],
+    );
+    const [bare] = implant.lots;
+    const traced = (
+      await asStaff(
+        http().patch(`/api/inventory/items/${implant.id}/lots/${bare.id}`),
+      )
+        .send({ lotNumber: 'L-9' })
+        .expect(200)
+    ).body as ItemBody;
+    expect(traced.lots[0]).toMatchObject({ lotNumber: 'L-9', expiry: null });
   });
 
   it('counts a shelf at once, setting reorder levels alongside', async () => {
