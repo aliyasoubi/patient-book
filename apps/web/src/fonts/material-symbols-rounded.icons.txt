@@ -55,6 +55,7 @@ event_busy
 event_repeat
 event_upcoming
 expand
+expand_more
 fact_check
 female
 filter
