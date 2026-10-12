@@ -1,6 +1,9 @@
 import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayUnique,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsIn,
@@ -16,7 +19,13 @@ import {
 } from 'class-validator';
 
 import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
-import { AbutmentType, SurgeryKind, SurgeryStatus } from '../../../domain';
+import {
+  AbutmentType,
+  FollowUpStatus,
+  LAB_TOOTH_NUMBERS,
+  SurgeryKind,
+  SurgeryStatus,
+} from '../../../domain';
 import { FOLLOW_UP_FILTERS, FollowUpFilter } from '../follow-up';
 import { normalizeForDisplay, IMPLANT_BRAND_NAMES } from '../../../domain';
 import {
@@ -52,7 +61,10 @@ export class QuerySurgeryDto extends PaginationDto {
   @IsOptional()
   mismatchedOnly?: boolean;
 
-  /** Open follow-ups within the named window (see `followUpWindow`), soonest first. */
+  /**
+   * Open follow-ups within the named window (see `followUpWindow`), soonest
+   * first; or, for `booked` and `declined`, the ones settled that way.
+   */
   @ApiPropertyOptional({ enum: FOLLOW_UP_FILTERS })
   @IsIn(FOLLOW_UP_FILTERS)
   @IsOptional()
@@ -104,6 +116,16 @@ export class UpsertSurgeryDto {
   @IsOptional()
   surgeryDate?: string | null;
 
+  /** The teeth, as FDI numbers: `16` is the upper right first molar. */
+  @ApiPropertyOptional({ type: [Number], example: [36, 37] })
+  @IsArray()
+  @ArrayMaxSize(LAB_TOOTH_NUMBERS.length)
+  @ArrayUnique()
+  @IsIn(LAB_TOOTH_NUMBERS, { each: true })
+  @IsOptional()
+  teethFdi?: number[];
+
+  /** Legacy free text; the web form no longer writes it, imports and old clients may. */
   @ApiPropertyOptional({ example: 'دنتیوم، ۶ و ۷ راست پایین' })
   @Transform(clean)
   @IsString()
@@ -129,11 +151,20 @@ export class UpsertSurgeryDto {
   @IsOptional()
   followUpMonths?: number | null;
 
-  /** When the follow-up happened, as a Jalali date; `null` reopens it. */
+  /** Where the follow-up stands with the patient; `open` reopens it. */
+  @ApiPropertyOptional({ enum: FollowUpStatus })
+  @IsEnum(FollowUpStatus)
+  @IsOptional()
+  followUpStatus?: FollowUpStatus;
+
+  /**
+   * The day the patient was booked for, as a Jalali date. Kept only while the
+   * follow-up is `booked`; any other status clears it.
+   */
   @ApiPropertyOptional({ example: '1405/09/27' })
   @Validate(IsJalaliDateConstraint)
   @IsOptional()
-  followUpDoneAt?: string | null;
+  followUpAppointmentAt?: string | null;
 
   @ApiPropertyOptional({ enum: SurgeryStatus })
   @IsEnum(SurgeryStatus)
@@ -160,13 +191,14 @@ export class UpdateSurgeryDto extends PartialType(
   /**
    * The row's `version` as the client loaded it; the update is refused with
    * `ERR_SURGERY_ITEM_MODIFIED` if it has been saved since. Required for any
-   * edit but one: the list's follow-up switch, which sends `followUpDoneAt`
-   * alone — one deliberate fact about a visit, which overwrites nothing else
-   * and must not fail because someone corrected the tooth meanwhile.
+   * edit but one: the card's follow-up status, which sends `followUpStatus`
+   * and its appointment day alone — one deliberate fact about the patient,
+   * which overwrites nothing else and must not fail because someone
+   * corrected the tooth meanwhile.
    */
   @ApiPropertyOptional({
     description:
-      'Version the client loaded; refused if stale. Required unless only followUpDoneAt is sent',
+      'Version the client loaded; refused if stale. Required unless only followUpStatus / followUpAppointmentAt are sent',
   })
   @IsInt()
   @Min(1)

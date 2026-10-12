@@ -11,7 +11,7 @@ import {
   formatPersianNumber,
   PersianNumberPipe,
 } from '../../shared/pipes/persian-number.pipe';
-import { labTeethSummary } from './lab-teeth';
+import { teethSummary } from '../../shared/ui/tooth-picker/teeth';
 import { labJawLabel, labTripKindLabel, labWorkTypeLabel } from '../../shared/labels';
 import { PbButton, PbIconButton, PbStatusChip } from '../../shared/ui';
 import type { StatusTone } from '../../shared/ui';
@@ -331,7 +331,7 @@ export class LabCaseCard {
     if (teethFdi.length) {
       return [
         this.i18n.instant('labs.toothCount', { count: formatPersianCount(teethFdi.length) }),
-        labTeethSummary(teethFdi, this.i18n),
+        teethSummary(teethFdi, this.i18n),
       ].join(' · ');
     }
     const count = toothCount

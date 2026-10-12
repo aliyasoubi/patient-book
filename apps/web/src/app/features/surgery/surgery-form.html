@@ -13,9 +13,10 @@
     <pb-surface icon="event" [title]="'surgeryForm.section' | translate">
       <pb-field-grid>
         <!-- What was done decides the rest of the form: an implant has a
-             register number, a brand and a cover; an extraction has a tooth.
-             Chosen once, when the row is added; an edit shows it and no more —
-             a row under the wrong kind is deleted and added again. -->
+             register number, a brand and a cover; the other kinds have teeth
+             and a date. Chosen once, when the row is added; an edit shows it
+             and no more — a row under the wrong kind is deleted and added
+             again. -->
         @if (isEdit()) {
           <div class="pb-field-grid__full form__kind-fixed">
             <pb-status-chip [icon]="kindIcon(form.controls.kind.value)">
@@ -24,12 +25,12 @@
             <span class="form__kind-hint">{{ 'surgeryForm.kindFixedHint' | translate }}</span>
           </div>
         } @else {
-          <pb-segmented-button
-            class="pb-field-grid__full form__kind"
+          <pb-select-field
+            class="pb-field-grid__full"
             [options]="kindOptions"
             [value]="form.controls.kind.value"
             (valueChange)="onKindChange($any($event))"
-            [ariaLabel]="'surgeryForm.kind' | translate"
+            [label]="'surgeryForm.kind' | translate"
           />
         }
 
@@ -48,10 +49,20 @@
           [placeholder]="'surgeryForm.surgeryDatePlaceholder' | translate"
         />
 
-        <pb-text-field
-          [control]="form.controls.toothPosition"
-          [label]="'surgeryForm.toothPosition' | translate"
-        />
+        <!-- The teeth, picked on the chart the lab form uses. -->
+        <div class="pb-field-grid__full form__teeth">
+          <span class="form__label">{{ 'surgeryForm.teeth' | translate }}</span>
+          <pb-tooth-picker
+            [selected]="form.controls.teeth.value"
+            (selectedChange)="setTeeth($event)"
+            [ariaLabel]="'surgeryForm.teeth' | translate"
+          />
+          @if (legacyTeeth(); as written) {
+            <span class="form__hint">{{
+              'surgeryForm.teethWritten' | translate: { text: written }
+            }}</span>
+          }
+        </div>
 
         @if (isImplant()) {
           <pb-text-field

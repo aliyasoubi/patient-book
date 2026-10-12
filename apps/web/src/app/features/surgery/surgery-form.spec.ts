@@ -15,14 +15,16 @@ const row = (over: Partial<SurgeryQueueItem> = {}): SurgeryQueueItem => ({
   registeredName: null,
   patient: null,
   surgeryDate: { jalali: '1405/04/01', iso: '2026-06-22', precision: 'day' },
-  toothPosition: '۶ بالا',
+  teethFdi: [16],
+  toothPosition: '',
   implantBrand: null,
   abutmentType: 'unknown',
   abutmentRaw: null,
   prosthesisDue: null,
   followUpMonths: 3,
   followUpDate: { jalali: '1405/07/01', iso: '2026-09-23' },
-  followUpDoneAt: null,
+  followUpStatus: 'open',
+  followUpAppointmentAt: null,
   followUpState: 'due',
   status: 'completed',
   notes: null,
@@ -32,15 +34,17 @@ const row = (over: Partial<SurgeryQueueItem> = {}): SurgeryQueueItem => ({
 
 describe('changedSurgeryFields', () => {
   it('names only the fields someone else changed', () => {
-    const after = row({ toothPosition: '۷ پایین', notes: 'درد', version: 2 });
-    expect(changedSurgeryFields(row(), after)).toEqual([
-      'surgeryForm.toothPosition',
-      'surgeryForm.notes',
-    ]);
+    const after = row({ teethFdi: [16, 17], notes: 'درد', version: 2 });
+    expect(changedSurgeryFields(row(), after)).toEqual(['surgeryForm.teeth', 'surgeryForm.notes']);
   });
 
-  it('counts the follow-up switch as a change to the follow-up', () => {
-    const after = row({ followUpDoneAt: '1405/07/05', followUpState: 'done', version: 2 });
+  it('counts the patient being booked as a change to the follow-up', () => {
+    const after = row({
+      followUpStatus: 'booked',
+      followUpAppointmentAt: '1405/07/05',
+      followUpState: 'booked',
+      version: 2,
+    });
     expect(changedSurgeryFields(row(), after)).toEqual(['surgeryForm.followUp']);
   });
 

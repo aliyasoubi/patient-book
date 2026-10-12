@@ -1,18 +1,25 @@
 import { addDays, addMonths, endOfMonth, startOfMonth } from 'date-fns-jalali';
 
-import { JalaliDate, storedDate, SurgeryStatus } from '../../domain';
+import {
+  FollowUpStatus,
+  JalaliDate,
+  storedDate,
+  SurgeryStatus,
+} from '../../domain';
 
 /**
  * Where a row's follow-up stands, judged against today on the Jalali
  * calendar: `due` this month, `overdue` before it, `pending` after it,
- * `done` once it has happened, `none` when no follow-up was set or the
- * surgery was cancelled.
+ * `booked` once the patient has an appointment, `declined` once they cancel,
+ * `none` when no follow-up was set or the surgery was cancelled.
  */
-export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'done';
+export type FollowUpState =
+  'none' | 'pending' | 'due' | 'overdue' | 'booked' | 'declined';
 
 /**
- * The questions staff ask of the list, each a window over the *open*
- * follow-ups. `pending` is every open one whatever its date.
+ * The questions staff ask of the list. Most are a window over the *open*
+ * follow-ups, `pending` being every open one whatever its date; `booked` and
+ * `declined` instead list the ones that have been settled either way.
  */
 export const FOLLOW_UP_FILTERS = [
   'pending',
@@ -20,8 +27,17 @@ export const FOLLOW_UP_FILTERS = [
   'thisMonth',
   'nextMonth',
   'overdue',
+  'booked',
+  'declined',
 ] as const;
 export type FollowUpFilter = (typeof FOLLOW_UP_FILTERS)[number];
+
+/** The filters that list settled follow-ups instead of open ones. */
+export function settledStatusOf(filter: FollowUpFilter): FollowUpStatus | null {
+  if (filter === 'booked') return FollowUpStatus.Booked;
+  if (filter === 'declined') return FollowUpStatus.Declined;
+  return null;
+}
 
 /**
  * SQL for "this row has an open follow-up", over `surgery_queue` aliased as
@@ -29,7 +45,7 @@ export type FollowUpFilter = (typeof FOLLOW_UP_FILTERS)[number];
  * Shared so the list, the dashboard counts and its panel select alike.
  */
 export function openFollowUpSql(alias: string): string {
-  return `${alias}."followUpDate" IS NOT NULL AND ${alias}."followUpDoneAt" IS NULL AND ${alias}.status <> '${SurgeryStatus.Cancelled}'`;
+  return `${alias}."followUpDate" IS NOT NULL AND ${alias}."followUpStatus" = '${FollowUpStatus.Open}' AND ${alias}.status <> '${SurgeryStatus.Cancelled}'`;
 }
 
 /** ISO `yyyy-MM-dd` bounds, inclusive, for a `date` column comparison. */
@@ -55,6 +71,8 @@ export function followUpWindow(
 ): DateWindow {
   switch (filter) {
     case 'pending':
+    case 'booked':
+    case 'declined':
       return {};
     case 'week':
       return { from: iso(now), to: iso(addDays(now, 6)) };
@@ -72,7 +90,7 @@ export function followUpWindow(
 export function followUpState(
   item: {
     followUpDate: Date | null;
-    followUpDoneAt: Date | null;
+    followUpStatus: FollowUpStatus;
     status?: SurgeryStatus;
   },
   now = new Date(),
@@ -80,7 +98,8 @@ export function followUpState(
   if (!item.followUpDate || item.status === SurgeryStatus.Cancelled) {
     return 'none';
   }
-  if (item.followUpDoneAt) return 'done';
+  if (item.followUpStatus === FollowUpStatus.Booked) return 'booked';
+  if (item.followUpStatus === FollowUpStatus.Declined) return 'declined';
   const due = iso(storedDate(item.followUpDate));
   const { from, to } = followUpWindow('thisMonth', now);
   if (due < from!) return 'overdue';

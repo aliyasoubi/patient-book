@@ -65,12 +65,32 @@ export enum AbutmentType {
 
 /**
  * What was done. An implant placement carries a register number, a brand and
- * a cover; an extraction carries none of those — its follow-up is the check
- * at which an implant gets planned.
+ * a cover; the others carry none of those. Each one owes the patient a
+ * follow-up: an extraction the check at which an implant gets planned, a bone
+ * graft or sinus lift the implant it prepares for, an implant its prosthesis,
+ * and a delivered prosthesis the yearly check of the implant under it.
  */
 export enum SurgeryKind {
   Implant = 'implant',
   Extraction = 'extraction',
+  /** پیوند استخوان */
+  BoneGraft = 'bone_graft',
+  /** سینوس لیفت */
+  SinusLift = 'sinus_lift',
+  /** تحویل پروتز */
+  Prosthesis = 'prosthesis',
+}
+
+/**
+ * Where a row's follow-up stands with the patient. `open` is the one to call
+ * (again); the other two close it: the patient was given an appointment, or
+ * cancelled the treatment. Whether a call was made is not a state of its own —
+ * a call that settles nothing leaves the follow-up open.
+ */
+export enum FollowUpStatus {
+  Open = 'open',
+  Booked = 'booked',
+  Declined = 'declined',
 }
 
 export enum SurgeryStatus {

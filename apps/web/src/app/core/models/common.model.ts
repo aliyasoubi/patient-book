@@ -79,7 +79,10 @@ export interface RegistryCase {
   version: number;
 }
 
-export type SurgeryKind = 'implant' | 'extraction';
+export type SurgeryKind = 'implant' | 'extraction' | 'bone_graft' | 'sinus_lift' | 'prosthesis';
+
+/** Where a row's follow-up stands with the patient. */
+export type FollowUpStatus = 'open' | 'booked' | 'declined';
 
 export interface SurgeryQueueItem {
   id: string;
@@ -92,6 +95,9 @@ export interface SurgeryQueueItem {
   registeredName: string | null;
   patient: { id: string; fileNo: string; fullName: string; mobile: string | null } | null;
   surgeryDate: { jalali: string; iso: string; precision: string; raw?: string | null } | null;
+  /** FDI numbers picked on the chart; empty on rows written before it. */
+  teethFdi: number[];
+  /** Legacy phrase, shown only when there are no `teethFdi`. */
   toothPosition: string;
   implantBrand: string | null;
   abutmentType: 'cover' | 'healing' | 'both' | 'other' | 'unknown';
@@ -101,7 +107,9 @@ export interface SurgeryQueueItem {
   /** Months after the surgery the follow-up is due; the API derives the date. */
   followUpMonths: number | null;
   followUpDate: { jalali: string; iso: string } | null;
-  followUpDoneAt: string | null;
+  followUpStatus: FollowUpStatus;
+  /** Jalali day the patient was booked for; only while `booked`, and optional even then. */
+  followUpAppointmentAt: string | null;
   followUpState: FollowUpState;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string | null;
@@ -110,10 +118,11 @@ export interface SurgeryQueueItem {
 }
 
 /** Judged by the API against the current Jalali month. */
-export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'done';
+export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'booked' | 'declined';
 
 /** The list's follow-up windows; the API owns what each means in dates. */
-export type FollowUpFilter = 'pending' | 'week' | 'thisMonth' | 'nextMonth' | 'overdue';
+export type FollowUpFilter =
+  'pending' | 'week' | 'thisMonth' | 'nextMonth' | 'overdue' | 'booked' | 'declined';
 
 /** A row for the dashboard's follow-up panel — already formatted, not the full queue record. */
 export interface FollowUpDue {

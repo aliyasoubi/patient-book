@@ -152,11 +152,76 @@ export function roleLabel(role: UserRole | string | null): string {
   }
 }
 
-export const SURGERY_KINDS = ['implant', 'extraction'] as const;
+export const SURGERY_KINDS = [
+  'implant',
+  'extraction',
+  'bone_graft',
+  'sinus_lift',
+  'prosthesis',
+] as const;
 
+/**
+ * Named for what the patient is waiting for, as the practice's list always
+ * was: after an extraction it is the implant, after an implant the prosthesis.
+ */
 export function surgeryKindLabel(kind: string): string {
-  return kind === 'extraction' ? 'surgeryKind.extraction' : 'surgeryKind.implant';
+  switch (kind) {
+    case 'extraction':
+      return 'surgeryKind.extraction';
+    case 'bone_graft':
+      return 'surgeryKind.bone_graft';
+    case 'sinus_lift':
+      return 'surgeryKind.sinus_lift';
+    case 'prosthesis':
+      return 'surgeryKind.prosthesis';
+    default:
+      return 'surgeryKind.implant';
+  }
 }
+
+export function surgeryKindIcon(kind: string): string {
+  switch (kind) {
+    case 'implant':
+      return 'deployed_code';
+    case 'bone_graft':
+      return 'healing';
+    case 'sinus_lift':
+      return 'air';
+    default:
+      return 'dentistry';
+  }
+}
+
+/** What was done on the surgery date, for the small line under the follow-up. Takes `{{date}}`. */
+export function surgeryDoneLabel(kind: string): string {
+  switch (kind) {
+    case 'extraction':
+      return 'surgeryDone.extraction';
+    case 'bone_graft':
+      return 'surgeryDone.bone_graft';
+    case 'sinus_lift':
+      return 'surgeryDone.sinus_lift';
+    case 'prosthesis':
+      return 'surgeryDone.prosthesis';
+    default:
+      return 'surgeryDone.implant';
+  }
+}
+
+/**
+ * Months after the surgery at which each kind's follow-up usually falls: the
+ * healing windows. An extraction heals enough for an implant to be planned in
+ * about two months, an implant carries its prosthesis after three, bone
+ * after a graft needs four to six, a sinus lift six, and a delivered
+ * prosthesis is checked twice a year.
+ */
+export const KIND_FOLLOW_UP_MONTHS: Record<(typeof SURGERY_KINDS)[number], number> = {
+  implant: 3,
+  extraction: 2,
+  bone_graft: 5,
+  sinus_lift: 6,
+  prosthesis: 6,
+};
 
 export function abutmentLabel(type: string): string {
   switch (type) {

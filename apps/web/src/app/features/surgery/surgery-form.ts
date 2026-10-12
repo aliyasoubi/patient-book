@@ -15,8 +15,10 @@ import {
   ABUTMENT_TYPES,
   FOLLOW_UP_MONTHS,
   IMPLANT_BRAND_KEYS,
+  KIND_FOLLOW_UP_MONTHS,
   SURGERY_KINDS,
   abutmentLabel,
+  surgeryKindIcon,
   surgeryKindLabel,
 } from '../../shared/labels';
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
@@ -32,25 +34,28 @@ import {
   PbFormActions,
   PbPage,
   PbPageHeader,
-  PbSegmentedButton,
   PbSelectField,
   PbStatusChip,
   PbSurface,
   PbTextField,
   PbTextareaField,
+  PbToothPicker,
 } from '../../shared/ui';
-import type { SegmentOption, SelectOption, TextFieldOption } from '../../shared/ui';
+import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
 
 const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
   ['surgeryForm.recordedName', (s) => s.recordedName],
   ['surgeryForm.surgeryDate', (s) => s.surgeryDate?.jalali ?? null],
-  ['surgeryForm.toothPosition', (s) => s.toothPosition],
+  ['surgeryForm.teeth', (s) => `${s.teethFdi.join(' ')}|${s.toothPosition}`],
   ['surgeryForm.implantRegistryNo', (s) => s.implantRegistryNo],
   ['surgeryForm.implantBrand', (s) => s.implantBrand],
   ['surgeryForm.abutmentType', (s) => s.abutmentType],
-  // Months and whether it happened are both "the follow-up" to the user.
-  ['surgeryForm.followUp', (s) => `${s.followUpMonths}|${s.followUpDoneAt}`],
+  // Months and where it stands with the patient are both "the follow-up" to the user.
+  [
+    'surgeryForm.followUp',
+    (s) => `${s.followUpMonths}|${s.followUpStatus}|${s.followUpAppointmentAt}`,
+  ],
   ['surgeryForm.notes', (s) => s.notes],
 ];
 
@@ -79,7 +84,6 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    PbSegmentedButton,
     MatProgressBarModule,
     PbTextField,
     PbTextareaField,
@@ -93,6 +97,7 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
     PbPage,
     PbFieldGrid,
     PbFormActions,
+    PbToothPicker,
   ],
   templateUrl: './surgery-form.html',
   styleUrl: './surgery-form.scss',
@@ -119,13 +124,10 @@ export class SurgeryForm implements HasUnsavedChanges {
   );
 
   protected readonly kindLabel = surgeryKindLabel;
-  protected kindIcon(kind: SurgeryKind): string {
-    return kind === 'implant' ? 'deployed_code' : 'dentistry';
-  }
-  protected readonly kindOptions: SegmentOption[] = SURGERY_KINDS.map((kind) => ({
+  protected readonly kindIcon = surgeryKindIcon;
+  protected readonly kindOptions: SelectOption[] = SURGERY_KINDS.map((kind) => ({
     value: kind,
     label: surgeryKindLabel(kind),
-    icon: this.kindIcon(kind),
     translate: true,
   }));
   protected readonly abutmentOptions: SelectOption[] = ABUTMENT_TYPES.map((a) => ({
@@ -155,8 +157,9 @@ export class SurgeryForm implements HasUnsavedChanges {
   /**
    * How long after the surgery the follow-up falls. The defaults are the
    * healing windows: two months after an extraction before an implant can
-   * be planned, three after an implant before its prosthesis. The API turns
-   * the choice into a date.
+   * be planned, three after an implant before its prosthesis; see
+   * {@link KIND_FOLLOW_UP_MONTHS} for the rest. The API turns the choice into
+   * a date.
    */
   protected readonly followUpOptions = computed<SelectOption[]>(() => {
     this.i18n.currentLang();
@@ -171,14 +174,14 @@ export class SurgeryForm implements HasUnsavedChanges {
     recordedName: ['', [Validators.required, Validators.maxLength(160)]],
     implantRegistryNo: ['', [digitString(1, 18)]],
     surgeryDate: [null as Date | null],
-    toothPosition: ['', [Validators.maxLength(200)]],
+    teeth: [[] as number[]],
     implantBrand: [''],
     abutmentType: ['unknown'],
     followUpMonths: ['3'],
     notes: ['', [Validators.maxLength(2000)]],
   });
 
-  /** Register number, brand and cover belong to an implant; an extraction has a tooth and a date. */
+  /** Register number, brand and cover belong to an implant; the other kinds have teeth and a date. */
   protected readonly isImplant = toSignal(
     this.form.controls.kind.valueChanges.pipe(map((kind) => kind === 'implant')),
     { initialValue: true },
@@ -196,6 +199,15 @@ export class SurgeryForm implements HasUnsavedChanges {
    * apps/api/src/modules/surgery/legacy-prosthesis-due.ts.
    */
   private readonly legacyProsthesisDue = signal<string | null>(null);
+
+  /**
+   * The phrase an older row was written with, shown while it has no teeth
+   * picked: the chart cannot read it, and saving without picking leaves it be.
+   */
+  protected readonly legacyTeeth = computed(() => {
+    const loaded = this.loaded();
+    return loaded && !loaded.teethFdi.length ? loaded.toothPosition || null : null;
+  });
 
   /**
    * The copy of the row an edit is saved against. Set on load; after a
@@ -269,11 +281,11 @@ export class SurgeryForm implements HasUnsavedChanges {
    */
   protected onKindChange(kind: SurgeryKind): void {
     this.form.controls.kind.setValue(kind);
-    this.form.controls.followUpMonths.setValue(kind === 'implant' ? '3' : '2');
-    if (kind === 'extraction') {
-      this.form.patchValue({ implantRegistryNo: '', implantBrand: '', abutmentType: 'unknown' });
-    } else {
+    this.form.controls.followUpMonths.setValue(String(KIND_FOLLOW_UP_MONTHS[kind]));
+    if (kind === 'implant') {
       this.prefillNew();
+    } else {
+      this.form.patchValue({ implantRegistryNo: '', implantBrand: '', abutmentType: 'unknown' });
     }
   }
 
@@ -321,7 +333,7 @@ export class SurgeryForm implements HasUnsavedChanges {
       recordedName: item.recordedName,
       implantRegistryNo: item.implantRegistryNo ?? '',
       surgeryDate: this.toDate(item.surgeryDate?.jalali),
-      toothPosition: item.toothPosition,
+      teeth: item.teethFdi,
       implantBrand: item.implantBrand ?? '',
       abutmentType: item.abutmentType,
       followUpMonths: item.followUpMonths ? String(item.followUpMonths) : '',
@@ -348,6 +360,12 @@ export class SurgeryForm implements HasUnsavedChanges {
     pickRegistryNo(this.form.controls.implantRegistryNo, option);
   }
 
+  protected setTeeth(teeth: number[]): void {
+    const control = this.form.controls.teeth;
+    control.setValue(teeth);
+    control.markAsDirty();
+  }
+
   protected submit(): void {
     // Never save while a load is in flight: the form would be a mix of the
     // previous record and whatever has been patched in so far.
@@ -372,8 +390,10 @@ export class SurgeryForm implements HasUnsavedChanges {
     const implant = raw.kind === 'implant';
     const payload: Record<string, unknown> = {
       recordedName: raw.recordedName.trim(),
-      toothPosition: blank(raw.toothPosition) ?? '',
-      // An extraction carries none of the implant fields; clear them so a new
+      // The legacy phrase is not sent: the chart replaces it, and an older
+      // row that is saved without picking keeps what it was written with.
+      teethFdi: raw.teeth,
+      // Only an implant carries the implant fields; clear them so a new
       // row whose kind was switched before saving does not keep a stale
       // number or brand typed under the other one.
       implantBrand: implant ? raw.implantBrand || null : null,

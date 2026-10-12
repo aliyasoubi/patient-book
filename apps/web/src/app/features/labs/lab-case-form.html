@@ -75,7 +75,7 @@
         } @else {
           <div class="pb-field-grid__full form__work">
             <span class="form__label">{{ 'labForm.teeth' | translate }}</span>
-            <pb-lab-tooth-picker
+            <pb-tooth-picker
               [selected]="form.controls.teeth.value"
               (selectedChange)="setTeeth($event)"
               [invalid]="form.controls.teeth.touched && form.controls.teeth.invalid"

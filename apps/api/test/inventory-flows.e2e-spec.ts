@@ -479,6 +479,7 @@ describeIfWritable('inventory flows (e2e)', () => {
     const rows = await db.query<
       Array<{
         toothPosition: string;
+        teethFdi: number[];
         implantBrand: string;
         followUpMonths: number;
         notes: string;
@@ -486,7 +487,7 @@ describeIfWritable('inventory flows (e2e)', () => {
         deletedAt: Date | null;
       }>
     >(
-      `SELECT s."toothPosition", s."implantBrand", s."followUpMonths", s.notes,
+      `SELECT s."toothPosition", s."teethFdi", s."implantBrand", s."followUpMonths", s.notes,
               c."patientId", s."deletedAt"
          FROM surgery_queue s
          JOIN implant_cases c ON c.id = s."implantCaseId"
@@ -498,6 +499,7 @@ describeIfWritable('inventory flows (e2e)', () => {
     // One row per implant, each its own tooth, prosthesis due in three months.
     expect(rows).toHaveLength(2);
     expect(rows.map((r) => r.toothPosition)).toEqual(['36', '37']);
+    expect(rows.map((r) => r.teethFdi)).toEqual([[36], [37]]);
     expect(rows[0]).toMatchObject({
       implantBrand: 'دنتیوم',
       followUpMonths: 3,

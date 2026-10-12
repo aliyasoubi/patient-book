@@ -64,10 +64,10 @@ import {
   PbSurface,
   PbTextField,
   PbTextareaField,
+  PbToothPicker,
 } from '../../shared/ui';
 import type { SegmentOption, SelectOption, TextFieldOption } from '../../shared/ui';
 import { labTripKindOptions, labWaitOptions, labWorkTypeOptions } from './lab-options';
-import { LabToothPicker } from './lab-tooth-picker';
 
 interface LinkedPatient {
   id: string;
@@ -128,7 +128,7 @@ const teethUnlessJawWork = (control: AbstractControl<number[]>): ValidationError
     PbSurface,
     PbTextField,
     PbTextareaField,
-    LabToothPicker,
+    PbToothPicker,
   ],
   templateUrl: './lab-case-form.html',
   styleUrl: './lab-case-form.scss',
