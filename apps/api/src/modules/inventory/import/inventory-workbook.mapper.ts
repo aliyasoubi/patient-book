@@ -59,6 +59,10 @@ export interface ImportedItem {
   quantity: number;
   expiry: Expiry | null;
   notes: string | null;
+  /** The reorder level, where the workbook sets one. */
+  minQuantity?: number | null;
+  /** The opening batch's LOT, where the workbook records it. */
+  lotNumber?: string | null;
 }
 
 export interface ImportNote {

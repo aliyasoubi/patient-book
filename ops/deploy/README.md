@@ -110,6 +110,11 @@ workbook, after a deploy has run the inventory migrations:
 ./ops/deploy/import-inventory.sh ~/stock.xlsx --apply   # write it, once
 ```
 
+The same script loads the normalized stock list (`inventory-normalized.xlsx`:
+one «Inventory» table with codes, reorder levels and lots) — it tells the two
+apart by that sheet. Add `--replace` to swap the whole inventory for the
+workbook in one transaction; its preview says what it replaces.
+
 The preview writes nothing; read it before `--apply`. `--apply` refuses an
 inventory that already has items. Each item's opening count is a line on its
 stock card naming the sheet and cell it came from.

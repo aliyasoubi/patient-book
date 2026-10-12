@@ -10,6 +10,7 @@ import { InventoryItem } from '../inventory-item.entity';
 import { writeMovement } from '../inventory-ledger';
 import { identityKey, itemSearchText, receive } from '../inventory-stock';
 import { readInventoryWorkbook } from './exceljs-inventory.reader';
+import { isInventoryTable, mapInventoryTable } from './inventory-table.mapper';
 import {
   ImportNote,
   mapInventoryWorkbook,
@@ -17,7 +18,9 @@ import {
 } from './inventory-workbook.mapper';
 
 /**
- * Load the practice's stock workbook into the inventory.
+ * Load a stock workbook into the inventory: the practice's own sheets, or the
+ * normalized list made from them (one «Inventory» table, with codes, reorder
+ * levels and lots) — told apart by that sheet.
  *
  *   npm run import:inventory -- path/to/workbook.xlsx                      # preview only
  *   npm run import:inventory -- path/to/workbook.xlsx --apply              # write it
@@ -52,7 +55,15 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const result = mapInventoryWorkbook(await readInventoryWorkbook(filePath));
+  // The normalized list (one «Inventory» table) or the practice's own sheets.
+  const raw = await readInventoryWorkbook(filePath);
+  const table = isInventoryTable(raw);
+  console.log(
+    table
+      ? 'Normalized stock list (Inventory sheet)'
+      : "The practice's stock workbook",
+  );
+  const result = table ? mapInventoryTable(raw) : mapInventoryWorkbook(raw);
   printReport(result);
 
   if (result.notes.some((n) => n.level === 'error')) {
@@ -109,7 +120,7 @@ async function main(): Promise<void> {
           spec: row.spec,
           unit: row.unit,
           quantity: 0,
-          minQuantity: null,
+          minQuantity: row.minQuantity ?? null,
           expiresOn: null,
           expiryText: null,
           notes: row.notes,
@@ -124,7 +135,13 @@ async function main(): Promise<void> {
           saved,
           InventoryMovementKind.Count,
           row.quantity
-            ? [receive([], { quantity: row.quantity, expiry: row.expiry })]
+            ? [
+                receive([], {
+                  quantity: row.quantity,
+                  expiry: row.expiry,
+                  lotNumber: row.lotNumber,
+                }),
+              ]
             : [],
           {
             userId: null,
