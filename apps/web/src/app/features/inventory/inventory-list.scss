@@ -19,6 +19,46 @@
   }
 }
 
+/** The three questions about the stock, as tiles that are also the filters. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--pb-space-3);
+
+  /* Three narrow tiles side by side on a phone, so the shelves stay in view. */
+  @media (max-width: 640px) {
+    gap: var(--pb-space-2);
+  }
+
+  &__tile {
+    all: unset;
+    display: block;
+    box-sizing: border-box;
+    cursor: pointer;
+    border-radius: var(--mat-sys-corner-medium);
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 2px;
+    }
+
+    &:hover pb-stat-tile {
+      transform: translateY(-2px);
+    }
+
+    /* The list on screen: a ring, so it reads as chosen without changing the tile. */
+    &--on {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  pb-stat-tile {
+    height: 100%;
+    transition: transform 160ms ease;
+  }
+}
+
 /** One category: its heading, then its items in one outlined panel. */
 .shelf {
   display: flex;
@@ -32,10 +72,65 @@
     margin: var(--pb-space-2) 0 0;
     font: var(--mat-sys-title-small);
     color: var(--mat-sys-on-surface-variant);
+  }
 
-    .material-symbols-rounded {
-      font-size: var(--pb-icon-sm);
-      color: var(--mat-sys-primary);
+  &__icon {
+    font-size: var(--pb-icon-sm);
+    color: var(--mat-sys-primary);
+  }
+
+  /* A closed shelf is one row: name, how many, and only what needs a look. */
+  &__toggle {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--pb-space-1) var(--pb-space-3);
+    width: 100%;
+    min-height: 52px;
+    padding: var(--pb-space-2) var(--pb-space-4);
+    cursor: pointer;
+    color: var(--mat-sys-on-surface);
+    @include surface.outlined;
+
+    &:hover {
+      border-color: var(--mat-sys-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 2px;
+    }
+
+    /* The app reads right to left: a closed shelf points left, along the reading direction. */
+    &[aria-expanded='false'] .shelf__chevron {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__chevron {
+    transition: transform 160ms ease;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__name {
+    font: var(--mat-sys-title-medium);
+  }
+
+  &__count {
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pb-space-2);
+    margin-inline-start: auto;
+
+    &:empty {
+      display: none;
     }
   }
 

@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -32,7 +32,11 @@ import type {
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import { EmptyState } from '../../shared/components/empty-state';
 import { LoadError } from '../../shared/components/load-error';
-import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import {
+  formatPersianCount,
+  PersianCountPipe,
+  PersianNumberPipe,
+} from '../../shared/pipes/persian-number.pipe';
 import {
   expiryLabel,
   INVENTORY_CATEGORIES,
@@ -50,9 +54,11 @@ import {
   PbPageHeader,
   PbSearchField,
   PbSelectField,
+  PbStatTile,
   PbStatusChip,
 } from '../../shared/ui';
 import type { FilterChipOption, SelectOption, StatusTone } from '../../shared/ui';
+import { filterCounts, shelfFlags, type ShelfFlags } from './inventory-overview';
 import {
   InventoryItemDialog,
   type InventoryItemDialogData,
@@ -87,6 +93,27 @@ const MENU_MOVES: readonly InventoryMovementKind[] = ['discard', 'count'];
 interface Shelf {
   category: InventoryCategory | null;
   items: InventoryItem[];
+  flags: ShelfFlags;
+}
+
+/** The shelves left open, for the rest of the visit: nothing about a patient. */
+const OPEN_KEY = 'pb.inventory.open';
+
+function readOpen(): Set<InventoryCategory> {
+  try {
+    const stored: unknown = JSON.parse(sessionStorage.getItem(OPEN_KEY) ?? '[]');
+    return new Set(Array.isArray(stored) ? stored.filter(isCategory) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeOpen(open: ReadonlySet<InventoryCategory>): void {
+  try {
+    sessionStorage.setItem(OPEN_KEY, JSON.stringify([...open]));
+  } catch {
+    // Private mode or a full store: the shelves simply close on the next visit.
+  }
 }
 
 function isFilter(value: unknown): value is InventoryFilter {
@@ -128,6 +155,7 @@ function readUrlFilters(params: ParamMap): {
     TranslatePipe,
     EmptyState,
     LoadError,
+    PersianCountPipe,
     PersianNumberPipe,
     PbButton,
     PbFilterChips,
@@ -136,6 +164,7 @@ function readUrlFilters(params: ParamMap): {
     PbPageHeader,
     PbSearchField,
     PbSelectField,
+    PbStatTile,
     PbStatusChip,
   ],
   templateUrl: './inventory-list.html',
@@ -189,20 +218,44 @@ export class InventoryList {
   });
 
   /**
+   * Every active item, whatever the search and filters say: what the tiles
+   * count, so they stay the same while one of them is the list on screen.
+   * `null` until the first answer.
+   */
+  protected readonly all = signal<InventoryItem[] | null>(null);
+  protected readonly tiles = computed(() => {
+    const all = this.all();
+    return all ? filterCounts(all) : null;
+  });
+
+  /**
    * Shelf by shelf, in the order the API sends them. Expiring stock is listed
    * soonest first instead, across categories, so it is one run with no heading.
    */
   protected readonly shelves = computed<Shelf[]>(() => {
     const items = this.items();
-    if (this.filter() === 'expiry') return items.length ? [{ category: null, items }] : [];
+    if (this.filter() === 'expiry') {
+      return items.length ? [{ category: null, items, flags: shelfFlags(items) }] : [];
+    }
     const shelves: Shelf[] = [];
     for (const item of items) {
       const last = shelves.at(-1);
       if (last?.category === item.category) last.items.push(item);
-      else shelves.push({ category: item.category, items: [item] });
+      else shelves.push({ category: item.category, items: [item], flags: shelfFlags([]) });
     }
+    for (const shelf of shelves) shelf.flags = shelfFlags(shelf.items);
     return shelves;
   });
+
+  /**
+   * With nothing narrowed, the shelves are closed headings to open one at a
+   * time. A search, a filter, a category or the archive is a question about
+   * what is inside them, so their answers are shown open.
+   */
+  protected readonly collapsible = computed(
+    () => !this.query() && !this.filter() && !this.category() && !this.archivedOnly(),
+  );
+  private readonly open = signal(readOpen());
 
   private readonly query = toSignal(
     this.search.valueChanges.pipe(
@@ -218,6 +271,14 @@ export class InventoryList {
   private readonly reloadTick = signal(0);
 
   constructor() {
+    // The tiles' own request: all the active items, on arrival and after every change.
+    toObservable(this.reloadTick)
+      .pipe(
+        switchMap(() => this.inventory.list({}).pipe(catchError(() => EMPTY))),
+        takeUntilDestroyed(),
+      )
+      .subscribe((items) => this.all.set(items));
+
     this.fetchTrigger$
       .pipe(
         switchMap((query) =>
@@ -264,6 +325,24 @@ export class InventoryList {
     this.filter.set(isFilter(value) ? value : '');
   }
 
+  /** A tile is a filter: tapping the one on screen shows everything again. */
+  protected toggleFilter(value: InventoryFilter): void {
+    this.filter.update((current) => (current === value ? '' : value));
+  }
+
+  protected isOpen(category: InventoryCategory): boolean {
+    return !this.collapsible() || this.open().has(category);
+  }
+
+  protected toggleShelf(category: InventoryCategory): void {
+    this.open.update((open) => {
+      const next = new Set(open);
+      if (!next.delete(category)) next.add(category);
+      writeOpen(next);
+      return next;
+    });
+  }
+
   protected setCategory(value: string): void {
     this.category.set(isCategory(value) ? value : '');
   }
@@ -305,7 +384,7 @@ export class InventoryList {
         if (!saved) return;
         // In place, not reloaded: a row that just left the filter stays until
         // the next search, rather than vanishing under the hand that moved it.
-        this.items.update((rows) => rows.map((r) => (r.id === saved.id ? saved : r)));
+        this.replace(saved);
         // The wrong button or a mistyped number is put right from here, while
         // nothing else has touched the item.
         this.snackBar
@@ -325,11 +404,18 @@ export class InventoryList {
       });
   }
 
+  /** One item as the API now has it, on the list and in the tiles' count. */
+  private replace(item: InventoryItem): void {
+    const swap = (rows: InventoryItem[]) => rows.map((r) => (r.id === item.id ? item : r));
+    this.items.update(swap);
+    this.all.update((rows) => (rows ? swap(rows) : rows));
+  }
+
   /** Take back the movement just recorded. */
   private undo(item: InventoryItem): void {
     this.inventory.undo(item.id, item.version).subscribe({
       next: (restored) => {
-        this.items.update((rows) => rows.map((r) => (r.id === restored.id ? restored : r)));
+        this.replace(restored);
         this.snackBar.open(
           this.i18n.instant('inventory.undone', { count: formatPersianCount(restored.quantity) }),
           this.i18n.instant('action.dismiss'),
