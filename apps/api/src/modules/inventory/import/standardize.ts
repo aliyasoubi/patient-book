@@ -194,6 +194,47 @@ const PRODUCTS: ReadonlyArray<
     { name: 'مولت پروانه‌ای' },
   ],
 
+  // The October sheet's «composite and restorative» column: products written
+  // in its brand column, under the composites' name.
+  [
+    { category: C.Restorative, name: 'کامپوزیت', brand: 'فایبرپست' },
+    (f) => ({
+      name: 'فایبرپست',
+      brand: null,
+      spec: f.spec ? `#${f.spec}` : null,
+    }),
+  ],
+  [
+    { category: C.Restorative, name: 'کامپوزیت', brand: 'گلس کف بندی GC' },
+    { name: 'گلس آینومر کف‌بندی', brand: 'GC' },
+  ],
+  [
+    { category: C.Restorative, name: 'کامپوزیت', brand: 'وج چوبی' },
+    { name: 'وج چوبی', brand: null },
+  ],
+  // …and its miscellaneous column, with the amalgam strips.
+  [
+    { category: C.Restorative, name: 'نوار پرداخت امالگام' },
+    { name: 'نوار پرداخت آمالگام' },
+  ],
+  // …and «impression and crown delivery», now holding the luting cements.
+  [
+    { category: C.Impression, name: 'سمان ketac' },
+    { name: 'سمان Ketac', brand: '3M' },
+  ],
+  [
+    { category: C.Impression, name: 'سمان GC' },
+    { name: 'سمان', brand: 'GC' },
+  ],
+  [
+    { category: C.Impression, name: 'سمان موقت Kerr' },
+    { name: 'سمان موقت', brand: 'Kerr' },
+  ],
+  [
+    { category: C.Consumable, name: 'دستکش لاتکس xs ایرانی' },
+    { name: 'دستکش لاتکس ایرانی', spec: 'XS' },
+  ],
+
   // Anaesthesia: one spelling, needles as one product by length.
   [{ category: C.Anesthesia, name: 'لیدوکایین' }, { name: 'لیدوکائین' }],
   [{ category: C.Anesthesia, name: 'ارتی کائین' }, { name: 'آرتیکائین' }],
@@ -376,6 +417,13 @@ function straumannPlatform(
   return platform ?? written?.toUpperCase() ?? null;
 }
 
+/**
+ * A turbine written with its holes and maker, wherever the sheet keeps it:
+ * «توربین 4 سوراخه NSK». A handpiece is equipment, not a consumable or a
+ * restorative material, so it is shelved under «other».
+ */
+const TURBINE = /^توربین\s*(\d)\s*سوراخه\s*(.*)$/;
+
 /** Endodontic names with their size on the end: «کا فایل 25», «گوتا 30چهار درصد». */
 const GUTTA = /^گوتا\s*(\d+)\s*(دو|چهار|شش)\s*درصد$/;
 const TAPERS: Readonly<Record<string, string>> = {
@@ -396,6 +444,7 @@ const ENDO_NAMES: Readonly<Record<string, string>> = {
  */
 export function standardize(item: Named): { item: Named; changed: boolean } {
   let f: Fields = { name: item.name, brand: item.brand, spec: item.spec };
+  let category = item.category;
 
   for (const [match, to] of PRODUCTS) {
     if (match.category !== item.category || !same(match.name, f.name)) continue;
@@ -403,6 +452,17 @@ export function standardize(item: Named): { item: Named; changed: boolean } {
     if (match.spec !== undefined && !same(match.spec, f.spec)) continue;
     f = { ...f, ...(typeof to === 'function' ? to(f) : to) };
     break;
+  }
+
+  const turbine = TURBINE.exec(f.name);
+  if (turbine) {
+    const maker = turbine[2].trim();
+    category = C.Other;
+    f = {
+      name: 'توربین',
+      brand: /^[a-z]+$/i.test(maker) ? maker.toUpperCase() : maker || f.brand,
+      spec: `${turbine[1]} سوراخه`,
+    };
   }
 
   const straumann = STRAUMANN.exec(f.name);
@@ -434,12 +494,13 @@ export function standardize(item: Named): { item: Named; changed: boolean } {
   }
 
   const next: Named = {
-    category: item.category,
+    category,
     name: f.name,
     brand: canonicalBrand(f.brand),
-    spec: normalizeSpec(item.category, f.spec),
+    spec: normalizeSpec(category, f.spec),
   };
   const changed =
+    next.category !== item.category ||
     next.name !== item.name ||
     next.brand !== item.brand ||
     next.spec !== item.spec;

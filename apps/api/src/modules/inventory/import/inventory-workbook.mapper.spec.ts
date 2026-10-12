@@ -60,6 +60,25 @@ const about = (notes: ImportNote[], sheetName: string) =>
   );
 
 describe('mapInventoryWorkbook', () => {
+  it('takes a dropped sheet as stock no longer kept, but refuses the wrong file', () => {
+    const only = mapInventoryWorkbook(
+      new Map([
+        [
+          'Dentium',
+          sheet([IMPLANT_HEADER, ['Dentium', 'Supe Line', '4x10', 2]]),
+        ],
+      ]),
+    );
+    expect(only.items).toHaveLength(1);
+    expect(only.notes.find((n) => n.source === 'هیلینگ')).toMatchObject({
+      level: 'review',
+    });
+    expect(only.notes.some((n) => n.level === 'error')).toBe(false);
+
+    const wrong = mapInventoryWorkbook(new Map([['Sheet1', sheet([])]]));
+    expect(wrong.notes.some((n) => n.level === 'error')).toBe(true);
+  });
+
   it('reads an implant sheet, skipping the brand copied down empty rows', () => {
     const { items, notes } = mapInventoryWorkbook(
       new Map([

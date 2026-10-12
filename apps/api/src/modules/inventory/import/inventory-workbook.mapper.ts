@@ -300,14 +300,23 @@ export function mapInventoryWorkbook(workbook: RawWorkbook): WorkbookImport {
   const items: ImportedItem[] = [];
   const notes: ImportNote[] = [];
 
+  // A sheet the practice has dropped is stock it no longer keeps; a workbook
+  // with none of the known sheets is the wrong file.
+  const known = SECTIONS.some((s) => workbook.has(s.sheet));
+  const reported = new Set<string>();
   for (const section of SECTIONS) {
     const sheet = workbook.get(section.sheet);
     if (!sheet) {
-      notes.push({
-        source: section.sheet,
-        level: 'error',
-        message: 'sheet not found in the workbook',
-      });
+      if (!reported.has(section.sheet)) {
+        reported.add(section.sheet);
+        notes.push({
+          source: section.sheet,
+          level: known ? 'review' : 'error',
+          message: known
+            ? 'sheet not in this workbook — nothing imported from it'
+            : 'sheet not found in the workbook',
+        });
+      }
       continue;
     }
     if (!headersMatch(section, sheet, notes)) continue;
