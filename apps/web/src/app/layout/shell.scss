@@ -257,3 +257,13 @@
     white-space: nowrap;
   }
 }
+
+/* The section on screen, inside «more»: M3's selected menu item. */
+.more-menu__item.is-active {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+
+  mat-icon {
+    color: inherit;
+  }
+}

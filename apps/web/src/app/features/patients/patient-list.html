@@ -113,9 +113,9 @@
           </pb-checkbox-field>
 
           @if (activeFilterCount() > 0) {
+            <!-- Clearing filters loses nothing: a plain action, not a warning. -->
             <pb-button
               variant="text"
-              tone="danger"
               type="button"
               (click)="clearFilters()"
               icon="filter_alt_off"

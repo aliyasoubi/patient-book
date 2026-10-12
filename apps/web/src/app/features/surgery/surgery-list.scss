@@ -64,8 +64,9 @@
     inset-inline: 0;
     inset-block-start: 0;
 
+    /* The chip's own hue for each state; tertiary is a category colour here. */
     &[data-state='due'] {
-      --_color: var(--mat-sys-tertiary);
+      --_color: var(--pb-on-warning-container);
     }
 
     &[data-state='overdue'] {

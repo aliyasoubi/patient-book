@@ -27,6 +27,7 @@ import {
   Observable,
   Subject,
   switchMap,
+  tap,
 } from 'rxjs';
 
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
@@ -187,6 +188,9 @@ export class LabBoard {
       debounceTime(300),
       map((v) => v.trim()),
       distinctUntilChanged(),
+      // A new search starts at its first page: page 3 of the old one may be
+      // past the end of the new one, and would read as "nothing found".
+      tap(() => this.page.set(1)),
     ),
     { initialValue: this.search.value },
   );
@@ -341,6 +345,7 @@ export class LabBoard {
 
   protected setLab(id: string): void {
     this.labId.set(id);
+    this.page.set(1);
   }
 
   protected setFocus(focus: 'overdue' | 'toBook' | null): void {
