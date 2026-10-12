@@ -225,22 +225,9 @@
                 (stepSelected)="setStatus(item, $any($event))"
                 [ariaLabel]="'surgery.followUpStatus' | translate"
               />
-              @let mobile = callable(item);
-              @if (mobile || canChangeStatus()) {
+              @if (canChangeStatus()) {
                 <div class="queue__track-actions">
-                  <!-- The follow-up is a phone call: the number is on the card,
-                       not a page away in the patient's file. -->
-                  @if (mobile) {
-                    <pb-button
-                      variant="text"
-                      icon="call"
-                      [href]="'tel:' + mobile"
-                      [ariaLabel]="callLabel(item)"
-                    >
-                      <span class="ltr-nums">{{ mobile }}</span>
-                    </pb-button>
-                  }
-                  @if (canChangeStatus() && item.followUpStatus === 'booked') {
+                  @if (item.followUpStatus === 'booked') {
                     <pb-button
                       variant="text"
                       icon="edit_calendar"
@@ -255,7 +242,7 @@
                       }}
                     </pb-button>
                   }
-                  @if (canChangeStatus() && item.followUpStatus !== 'declined') {
+                  @if (item.followUpStatus !== 'declined') {
                     <pb-button
                       variant="text"
                       tone="danger"
