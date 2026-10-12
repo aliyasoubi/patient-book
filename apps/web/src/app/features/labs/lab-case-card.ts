@@ -239,7 +239,6 @@ import type { StatusTone } from '../../shared/ui';
                 >
                   {{ 'labs.book' | translate }}
                 </pb-button>
-                <ng-container *ngTemplateOutlet="callButton" />
                 <ng-container *ngTemplateOutlet="partsButton" />
                 <ng-container *ngTemplateOutlet="sendAgainButton" />
               }
@@ -261,15 +260,6 @@ import type { StatusTone } from '../../shared/ui';
       <pb-button variant="stroked" icon="how_to_reg" [disabled]="busy()" (click)="deliver.emit()">
         {{ 'labs.deliver' | translate }}
       </pb-button>
-    </ng-template>
-
-    <!-- Booking it is a call to the patient: the number is on the card. -->
-    <ng-template #callButton>
-      @if (labCase().patient?.mobile; as mobile) {
-        <pb-button variant="text" icon="call" [href]="'tel:' + mobile" [ariaLabel]="callLabel()">
-          <span class="ltr-nums">{{ mobile }}</span>
-        </pb-button>
-      }
     </ng-template>
 
     <!-- Work back for a remake: there when needed, quieter than the next move. -->
@@ -318,14 +308,6 @@ export class LabCaseCard {
 
   /** The trip the card is about: the one out at the lab, or the last one back. */
   protected readonly trip = computed(() => this.labCase().trips.at(-1) ?? null);
-
-  protected readonly callLabel = computed(() => {
-    this.i18n.currentLang();
-    const c = this.labCase();
-    return this.i18n.instant('action.callPerson', {
-      name: c.patient?.fullName || c.recordedName,
-    });
-  });
 
   protected readonly workTypes = computed(() => {
     this.i18n.currentLang();
