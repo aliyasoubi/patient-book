@@ -12,9 +12,8 @@
     }
   </pb-page-header>
 
-  <div class="surgery__toolbar">
+  <pb-list-toolbar>
     <pb-search-field
-      class="surgery__search"
       [control]="search"
       [placeholder]="'surgery.searchPlaceholder' | translate"
       [ariaLabel]="'surgery.searchAria' | translate"
@@ -23,7 +22,6 @@
     <!-- The questions staff ask of the list, one at a time: clicking the
          selected chip clears it and shows everything again. -->
     <pb-filter-chips
-      class="surgery__filters"
       [options]="followUpFilters"
       [selected]="followUpSelected()"
       (selectedChange)="setFollowUp($event[0])"
@@ -34,7 +32,6 @@
          listed at all, and combines with any of them. -->
     @if (auth.can('archiveSurgery')) {
       <pb-filter-chips
-        class="surgery__filters"
         multiple
         [options]="archiveFilter"
         [selected]="archivedOnly() ? ['archived'] : []"
@@ -42,7 +39,7 @@
         [ariaLabel]="'common.filters' | translate"
       />
     }
-  </div>
+  </pb-list-toolbar>
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />

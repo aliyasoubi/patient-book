@@ -33,6 +33,7 @@ import {
   PbPage,
   PbPageHeader,
   PbPaginator,
+  PbListToolbar,
   PbSearchField,
 } from '../../shared/ui';
 import type { FilterChipOption } from '../../shared/ui';
@@ -76,6 +77,7 @@ const KINDS: Record<
     MatProgressBarModule,
     RegistryTable,
     LoadError,
+    PbListToolbar,
     PbSearchField,
     PbPageHeader,
     PbButton,
@@ -85,7 +87,6 @@ const KINDS: Record<
     TranslatePipe,
   ],
   templateUrl: './registry-list.html',
-  styleUrl: './registry-list.scss',
 })
 export class RegistryList {
   private readonly registry = inject(RegistryService);

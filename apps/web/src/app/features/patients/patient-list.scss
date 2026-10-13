@@ -42,23 +42,9 @@
     flex: 0 0 auto;
   }
 
-  &__toolbar {
-    display: flex;
-    gap: var(--pb-space-3);
-    align-items: center;
-  }
-
-  &__search {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  // As tall as the search pill beside it. While any filter is on, the
-  // outline and label take the primary colour, so the button reads as "set".
+  // While any filter is on, the outline and label take the primary colour,
+  // so the button reads as "set". Its height comes from pb-list-toolbar.
   &__filter-btn {
-    flex: 0 0 auto;
-    --mat-button-outlined-container-height: var(--pb-search-height);
-
     &.is-active {
       --mat-button-outlined-outline-color: var(--mat-sys-primary);
       --mat-button-outlined-label-text-color: var(--mat-sys-primary);

@@ -48,6 +48,7 @@ import {
   PbPageHeader,
   PbPaginator,
   PbProgressSteps,
+  PbListToolbar,
   PbSearchField,
   PbStatusChip,
 } from '../../shared/ui';
@@ -121,6 +122,7 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
     EmptyState,
     LoadError,
     PersianNumberPipe,
+    PbListToolbar,
     PbSearchField,
     PbPageHeader,
     PbPage,

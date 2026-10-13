@@ -8,22 +8,25 @@
     }
   </pb-page-header>
 
-  <div class="labs__toolbar">
+  <pb-list-toolbar>
     <pb-search-field
-      class="labs__search"
       [control]="search"
       [placeholder]="'labs.searchPlaceholder' | translate"
       [ariaLabel]="'labs.searchAria' | translate"
     />
     @if (!archivedOnly()) {
       <pb-select-field
-        class="labs__lab"
+        subscript="dynamic"
         [value]="labId()"
         (valueChange)="setLab($event)"
         [options]="labOptions()"
         [anyLabel]="'labs.allLabs' | translate"
         [label]="'labs.lab' | translate"
       />
+    }
+    <!-- A block of its own, not the dropdown's: the toolbar sends each to
+         its row, and a block with two roots can only go to one. -->
+    @if (!archivedOnly()) {
       <pb-filter-chips
         [options]="focusFilter"
         [selected]="focus() ? [focus()!] : []"
@@ -41,7 +44,7 @@
         [ariaLabel]="'common.filters' | translate"
       />
     }
-  </div>
+  </pb-list-toolbar>
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />

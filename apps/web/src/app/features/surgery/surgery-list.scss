@@ -1,19 +1,5 @@
 @use '../../../styles/surface';
 
-.surgery {
-  &__toolbar {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-4);
-    flex-wrap: wrap;
-  }
-
-  &__search {
-    flex: 1 1 260px;
-    min-width: 0;
-  }
-}
-
 /*
  * A card is three rows on one left edge: who and when, what was done, and
  * where the follow-up stands. Every item on a row is the same height and sits

@@ -10,9 +10,8 @@
   </pb-page-header>
 
   <!-- ── Search + filter bar ───────────────────────────────────── -->
-  <div class="list__toolbar">
+  <pb-list-toolbar>
     <pb-search-field
-      class="list__search"
       [control]="searchControl"
       [placeholder]="'patients.searchPlaceholder' | translate"
       [ariaLabel]="'patients.searchAria' | translate"
@@ -30,20 +29,20 @@
     >
       {{ 'common.filters' | translate }}
     </pb-button>
-  </div>
 
-  <!-- ── Linked-in referral filter ─────────────────────────────── -->
-  <!-- Only a dashboard link can set this; nothing in the panel would otherwise
-       show why the register is suddenly short, so it gets its own chip. -->
-  @if (filters().referralSourceId) {
-    <pb-filter-chips
-      multiple
-      [options]="referralFilterOption()"
-      [selected]="referralSelected"
-      (selectedChange)="updateFilter('referralSourceId', null)"
-      [ariaLabel]="'common.filters' | translate"
-    />
-  }
+    <!-- Only a dashboard link can set this; nothing in the panel would
+         otherwise show why the register is suddenly short, so it gets its
+         own chip. -->
+    @if (filters().referralSourceId) {
+      <pb-filter-chips
+        multiple
+        [options]="referralFilterOption()"
+        [selected]="referralSelected"
+        (selectedChange)="updateFilter('referralSourceId', null)"
+        [ariaLabel]="'common.filters' | translate"
+      />
+    }
+  </pb-list-toolbar>
 
   <!-- ── Filter panel ──────────────────────────────────────────── -->
   @if (filtersOpen()) {
