@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -24,6 +24,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { isHandledByCaller } from '../../core/interceptors/error.interceptor';
 import { AuthService } from '../../core/services/auth.service';
+import { ListReturn } from '../../core/services/list-return.service';
 import { RegistryService, SurgeryQuery } from '../../core/services/registry.service';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import { EmptyState } from '../../shared/components/empty-state';
@@ -103,11 +104,28 @@ function isFollowUpFilter(value: unknown): value is FollowUpFilter {
  * The filters the dashboard links into. Read once from the URL on arrival;
  * the rest of the toolbar is session-only.
  */
-function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter | '' } {
+interface UrlFilters {
+  q: string;
+  followUp: FollowUpFilter | '';
+  archived: boolean;
+  page: number;
+  limit: number;
+}
+
+/** A whole number from 1 to `max`, or `fallback` for anything else. */
+function countParam(value: string | null, fallback: number, max: number): number {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 && n <= max ? n : fallback;
+}
+
+function readUrlFilters(params: ParamMap): UrlFilters {
   const followUp = params.get('followUp');
   return {
     q: params.get('q')?.trim() ?? '',
     followUp: isFollowUpFilter(followUp) ? followUp : '',
+    archived: params.get('archived') === 'true',
+    page: countParam(params.get('page'), 1, 10_000),
+    limit: countParam(params.get('limit'), 25, 100),
   };
 }
 
@@ -142,6 +160,8 @@ function readUrlFilters(params: ParamMap): { q: string; followUp: FollowUpFilter
 export class SurgeryList {
   private readonly registry = inject(RegistryService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly listReturn = inject(ListReturn);
   private readonly i18n = inject(TranslateService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -156,18 +176,19 @@ export class SurgeryList {
     { value: 'archived', label: 'surgery.archivedOnly', icon: 'inventory_2', translate: true },
   ];
 
-  // Seeded from the URL so a dashboard tile lands on the list it promised.
+  // Seeded from the URL so a dashboard tile lands on the list it promised,
+  // and a form opened from the list comes back to the same one.
   private readonly urlFilters = readUrlFilters(this.route.snapshot.queryParamMap);
   protected readonly search = new FormControl(this.urlFilters.q, { nonNullable: true });
   protected readonly followUp = signal<FollowUpFilter | ''>(this.urlFilters.followUp);
   /** Deleted rows are only archived; this shows them so one can be brought back. */
-  protected readonly archivedOnly = signal(false);
+  protected readonly archivedOnly = signal(this.urlFilters.archived);
   protected readonly followUpSelected = computed(() => {
     const value = this.followUp();
     return value ? [value] : [];
   });
-  protected readonly page = signal(1);
-  protected readonly limit = signal(25);
+  protected readonly page = signal(this.urlFilters.page);
+  protected readonly limit = signal(this.urlFilters.limit);
 
   protected readonly loading = signal(false);
   /** The most recent request failed; whatever rows are shown are stale. */
@@ -250,6 +271,24 @@ export class SurgeryList {
         this.loading.set(true);
         this.failed.set(false);
         this.fetchTrigger$.next(query);
+      });
+    });
+
+    // State → URL, as the patient register does: the search and filters
+    // survive a reload, and a form opened from here returns to this list.
+    // `replaceUrl`: one history entry, not one per keystroke or page.
+    effect(() => {
+      const queryParams = {
+        q: this.query() || null,
+        followUp: this.followUp() || null,
+        archived: this.archivedOnly() ? 'true' : null,
+        page: this.page() > 1 ? this.page() : null,
+        limit: this.limit() !== 25 ? this.limit() : null,
+      };
+      untracked(() => {
+        const tree = this.router.createUrlTree([], { relativeTo: this.route, queryParams });
+        this.listReturn.remember('/surgery', this.router.serializeUrl(tree));
+        void this.router.navigateByUrl(tree, { replaceUrl: true });
       });
     });
   }

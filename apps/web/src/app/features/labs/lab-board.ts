@@ -10,7 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -33,6 +33,7 @@ import {
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { AuthService } from '../../core/services/auth.service';
 import { LabService } from '../../core/services/lab.service';
+import { ListReturn } from '../../core/services/list-return.service';
 import type {
   Lab,
   LabBoard as LabBoardData,
@@ -101,6 +102,17 @@ const COLUMNS: readonly Omit<Column, 'cases'>[] = [
   },
 ];
 
+/** A column named in the URL, if it is one. */
+function columnParam(value: string | null): LabStage | null {
+  return COLUMNS.find((c) => c.stage === value)?.stage ?? null;
+}
+
+/** A whole number from 1 to `max`, or `fallback` for anything else. */
+function countParam(value: string | null, fallback: number, max: number): number {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 && n <= max ? n : fallback;
+}
+
 /**
  * Where a card may be dropped from where it is: one column at a time. Between
  * the lab and the clinic a card goes both ways — work comes back and goes out
@@ -164,6 +176,14 @@ const WIDE_BOARD = '(min-width: 1360px)';
 export class LabBoard {
   private readonly labs = inject(LabService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly listReturn = inject(ListReturn);
+  /**
+   * The board's state as the URL left it: a dashboard tile's question, or the
+   * board as it was before a form opened from it — the same search, lab,
+   * question, column and archive page.
+   */
+  private readonly params = this.route.snapshot.queryParamMap;
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly i18n = inject(TranslateService);
@@ -181,10 +201,9 @@ export class LabBoard {
 
   // -- Filters --------------------------------------------------------------
 
-  protected readonly search = new FormControl(
-    this.route.snapshot.queryParamMap.get('q')?.trim() ?? '',
-    { nonNullable: true },
-  );
+  protected readonly search = new FormControl(this.params.get('q')?.trim() ?? '', {
+    nonNullable: true,
+  });
   private readonly query = toSignal(
     this.search.valueChanges.pipe(
       debounceTime(300),
@@ -196,21 +215,21 @@ export class LabBoard {
     ),
     { initialValue: this.search.value },
   );
-  protected readonly labId = signal('');
+  protected readonly labId = signal(this.params.get('lab') ?? '');
   /**
    * The board narrowed to one question: the late work at the lab, or the work
    * back with no booking. The dashboard's tiles land here with `?overdue=true`
    * and `?toBook=true`.
    */
   protected readonly focus = signal<'overdue' | 'toBook' | null>(
-    this.route.snapshot.queryParamMap.get('toBook') === 'true'
+    this.params.get('toBook') === 'true'
       ? 'toBook'
-      : this.route.snapshot.queryParamMap.get('overdue') === 'true'
+      : this.params.get('overdue') === 'true'
         ? 'overdue'
         : null,
   );
   protected readonly overdueOnly = computed(() => this.focus() === 'overdue');
-  protected readonly archivedOnly = signal(false);
+  protected readonly archivedOnly = signal(this.params.get('archived') === 'true');
 
   protected readonly focusFilter: FilterChipOption[] = [
     { value: 'overdue', label: 'labs.filterOverdue', icon: 'schedule', translate: true },
@@ -269,7 +288,7 @@ export class LabBoard {
 
   /** On a narrow screen one column shows at a time; this picks which. */
   protected readonly shownColumn = signal<LabStage>(
-    this.focus() === 'toBook' ? 'at_clinic' : 'at_lab',
+    columnParam(this.params.get('column')) ?? (this.focus() === 'toBook' ? 'at_clinic' : 'at_lab'),
   );
   /** Short labels, no icons: three segments have to fit a phone's width. */
   protected readonly columnOptions: SegmentOption[] = [
@@ -283,8 +302,8 @@ export class LabBoard {
 
   protected readonly archived = signal<LabCase[]>([]);
   protected readonly archivedTotal = signal(0);
-  protected readonly page = signal(1);
-  protected readonly limit = signal(25);
+  protected readonly page = signal(countParam(this.params.get('page'), 1, 10_000));
+  protected readonly limit = signal(countParam(this.params.get('limit'), 25, 100));
 
   private readonly fetch$ = new Subject<{
     q: string;
@@ -337,6 +356,29 @@ export class LabBoard {
         this.loading.set(true);
         this.failed.set(false);
         this.fetch$.next(next);
+      });
+    });
+
+    // State → URL, as the patient register does: the board survives a reload,
+    // and a form opened from it comes back to the same board. `replaceUrl`:
+    // one history entry, not one per keystroke or column.
+    effect(() => {
+      const focus = this.focus();
+      const archived = this.archivedOnly();
+      const queryParams = {
+        q: this.query() || null,
+        lab: this.labId() || null,
+        overdue: focus === 'overdue' ? 'true' : null,
+        toBook: focus === 'toBook' ? 'true' : null,
+        archived: archived ? 'true' : null,
+        column: this.shownColumn() !== 'at_lab' ? this.shownColumn() : null,
+        page: archived && this.page() > 1 ? this.page() : null,
+        limit: archived && this.limit() !== 25 ? this.limit() : null,
+      };
+      untracked(() => {
+        const tree = this.router.createUrlTree([], { relativeTo: this.route, queryParams });
+        this.listReturn.remember('/labs', this.router.serializeUrl(tree));
+        void this.router.navigateByUrl(tree, { replaceUrl: true });
       });
     });
   }

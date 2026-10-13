@@ -59,14 +59,13 @@ import type { StatusTone } from '../../shared/ui';
           <pb-icon-button
             class="card__menu"
             icon="more_vert"
-            size="compact"
             [menu]="menu"
             [ariaLabel]="'labs.cardActions' | translate"
           />
           <mat-menu #menu="matMenu">
             @if (archived()) {
               <button mat-menu-item type="button" (click)="restore.emit()">
-                <mat-icon aria-hidden="true">restore_from_trash</mat-icon>
+                <mat-icon aria-hidden="true">unarchive</mat-icon>
                 <span>{{ 'labs.restore' | translate }}</span>
               </button>
             } @else {
@@ -89,8 +88,8 @@ import type { StatusTone } from '../../shared/ui';
                 </button>
               }
               <button mat-menu-item type="button" (click)="archive.emit()">
-                <mat-icon aria-hidden="true">delete</mat-icon>
-                <span>{{ 'common.delete' | translate }}</span>
+                <mat-icon aria-hidden="true">archive</mat-icon>
+                <span>{{ 'common.archive' | translate }}</span>
               </button>
             }
           </mat-menu>

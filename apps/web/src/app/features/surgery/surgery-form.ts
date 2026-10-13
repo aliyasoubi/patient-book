@@ -43,6 +43,7 @@ import {
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
+import { ListReturn } from '../../core/services/list-return.service';
 
 const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
   ['surgeryForm.recordedName', (s) => s.recordedName],
@@ -108,6 +109,8 @@ export class SurgeryForm implements HasUnsavedChanges {
   protected readonly canEditClinicalNotes = this.auth.can('editClinicalNotes');
   private readonly registry = inject(RegistryService);
   private readonly router = inject(Router);
+  /** The list this form was opened from, with its search and filters. */
+  private readonly listReturn = inject(ListReturn);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dateAdapter = inject<DateAdapter<Date>>(DateAdapter);
   private readonly errors = inject(ApiErrorTranslator);
@@ -315,7 +318,7 @@ export class SurgeryForm implements HasUnsavedChanges {
       },
       error: () => {
         this.loading.set(false);
-        void this.router.navigate(['/surgery']);
+        void this.router.navigateByUrl(this.listReturn.urlFor('/surgery'));
       },
     });
   }
@@ -447,7 +450,7 @@ export class SurgeryForm implements HasUnsavedChanges {
           this.i18n.instant('action.dismiss'),
         );
         this.saved = true;
-        void this.router.navigate(['/surgery']);
+        void this.router.navigateByUrl(this.listReturn.urlFor('/surgery'));
       },
       error: (error: unknown) => {
         this.saving.set(false);
@@ -521,6 +524,6 @@ export class SurgeryForm implements HasUnsavedChanges {
   }
 
   protected cancel(): void {
-    void this.router.navigate(['/surgery']);
+    void this.router.navigateByUrl(this.listReturn.urlFor('/surgery'));
   }
 }

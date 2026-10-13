@@ -37,6 +37,7 @@ import type {
   LabWorkType,
 } from '../../core/models/common.model';
 import { LabCaseInput, LabService } from '../../core/services/lab.service';
+import { ListReturn } from '../../core/services/list-return.service';
 import { PatientsService } from '../patients/data/patients.service';
 import type { PatientSuggestion } from '../patients/data/patient.model';
 import { adoptUntouched } from '../../shared/form-sync';
@@ -138,6 +139,8 @@ export class LabCaseForm implements HasUnsavedChanges {
   private readonly labs = inject(LabService);
   private readonly patients = inject(PatientsService);
   private readonly router = inject(Router);
+  /** The list this form was opened from, with its search and filters. */
+  private readonly listReturn = inject(ListReturn);
   private readonly route = inject(ActivatedRoute);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dateAdapter = inject<DateAdapter<Date>>(DateAdapter);
@@ -377,7 +380,7 @@ export class LabCaseForm implements HasUnsavedChanges {
       },
       error: () => {
         this.loading.set(false);
-        void this.router.navigate(['/labs']);
+        void this.router.navigateByUrl(this.listReturn.urlFor('/labs'));
       },
     });
   }
@@ -466,7 +469,7 @@ export class LabCaseForm implements HasUnsavedChanges {
           this.i18n.instant(loaded ? 'labForm.saved' : 'labForm.created'),
           this.i18n.instant('action.dismiss'),
         );
-        void this.router.navigate(['/labs']);
+        void this.router.navigateByUrl(this.listReturn.urlFor('/labs'));
       },
       error: (error: unknown) => {
         this.saving.set(false);
@@ -525,6 +528,6 @@ export class LabCaseForm implements HasUnsavedChanges {
   }
 
   protected cancel(): void {
-    void this.router.navigate(['/labs']);
+    void this.router.navigateByUrl(this.listReturn.urlFor('/labs'));
   }
 }
