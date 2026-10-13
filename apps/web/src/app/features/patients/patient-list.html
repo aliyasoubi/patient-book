@@ -21,14 +21,24 @@
       variant="stroked"
       icon="tune"
       class="list__filter-btn"
-      [class.is-active]="activeFilterCount() > 0"
+      [class.is-active]="panelFilterCount() > 0"
       [ariaExpanded]="filtersOpen()"
-      [badge]="activeFilterCount() > 0 ? (activeFilterCount() | faNum) : null"
+      [badge]="panelFilterCount() > 0 ? (panelFilterCount() | faNum) : null"
       [collapseBelow]="560"
       (click)="filtersOpen.set(!filtersOpen())"
     >
       {{ 'common.filters' | translate }}
     </pb-button>
+
+    <!-- On/off questions are filter chips here, as on every other list,
+         not checkboxes in the panel. -->
+    <pb-filter-chips
+      multiple
+      [options]="flagFilterOptions"
+      [selected]="flagsSelected()"
+      (selectedChange)="setFlags($event)"
+      [ariaLabel]="'common.filters' | translate"
+    />
 
     <!-- Only a dashboard link can set this; nothing in the panel would
          otherwise show why the register is suddenly short, so it gets its
@@ -91,28 +101,10 @@
           />
         </div>
 
-        <div class="filters__group filters__group--checks">
-          <pb-checkbox-field
-            [checked]="filters().hasIssues"
-            (checkedChange)="updateFilter('hasIssues', $event)"
-          >
-            {{ 'patients.needsReview' | translate }}
-          </pb-checkbox-field>
-          <pb-checkbox-field
-            [checked]="filters().hasMedicalHistory"
-            (checkedChange)="updateFilter('hasMedicalHistory', $event)"
-          >
-            {{ 'patients.hasMedicalHistory' | translate }}
-          </pb-checkbox-field>
-          <pb-checkbox-field
-            [checked]="filters().includeArchived"
-            (checkedChange)="updateFilter('includeArchived', $event)"
-          >
-            {{ 'patients.includeArchived' | translate }}
-          </pb-checkbox-field>
-
-          @if (activeFilterCount() > 0) {
-            <!-- Clearing filters loses nothing: a plain action, not a warning. -->
+        @if (activeFilterCount() > 0) {
+          <div class="filters__group filters__group--actions">
+            <!-- Clearing filters loses nothing: a plain action, not a warning.
+                 It clears the chips above the list too. -->
             <pb-button
               variant="text"
               type="button"
@@ -122,8 +114,8 @@
             >
               {{ 'patients.clearFilters' | translate }}
             </pb-button>
-          }
-        </div>
+          </div>
+        }
       </section>
     </pb-surface>
   }
