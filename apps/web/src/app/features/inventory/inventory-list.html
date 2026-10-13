@@ -49,15 +49,14 @@
     }
   }
 
-  <div class="stock__toolbar">
+  <pb-list-toolbar>
     <pb-search-field
-      class="stock__search"
       [control]="search"
       [placeholder]="'inventory.searchPlaceholder' | translate"
       [ariaLabel]="'inventory.searchAria' | translate"
     />
     <pb-select-field
-      class="stock__category"
+      subscript="dynamic"
       [value]="category()"
       (valueChange)="setCategory($event)"
       [options]="categoryOptions"
@@ -73,7 +72,7 @@
         [ariaLabel]="'common.filters' | translate"
       />
     }
-  </div>
+  </pb-list-toolbar>
 
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />

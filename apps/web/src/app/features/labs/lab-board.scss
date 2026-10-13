@@ -1,23 +1,6 @@
 @use '../../../styles/type';
 
 .labs {
-  &__toolbar {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-3) var(--pb-space-4);
-    flex-wrap: wrap;
-  }
-
-  &__search {
-    flex: 1 1 260px;
-    min-width: 0;
-  }
-
-  &__lab {
-    flex: 0 1 220px;
-    min-width: 160px;
-  }
-
   &__columns-picker {
     display: block;
   }

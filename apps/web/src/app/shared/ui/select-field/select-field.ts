@@ -33,7 +33,7 @@ export interface SelectOption {
   template: `
     <mat-form-field
       appearance="outline"
-      [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'"
+      [subscriptSizing]="subscript() === 'dynamic' || hint() || errorText() ? 'dynamic' : 'fixed'"
     >
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
@@ -98,6 +98,12 @@ export class PbSelectField {
   /** Leading "any/all" option for filter selects, e.g. "همه". Omit to require a real choice. */
   readonly anyLabel = input<string | null>(null);
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
+  /**
+   * `fixed` (a form) keeps a line under the field for an error to appear in
+   * without the layout jumping. `dynamic` (a list's toolbar, where nothing is
+   * ever invalid) drops it, so the field is its 56dp and no taller.
+   */
+  readonly subscript = input<'fixed' | 'dynamic'>('fixed');
 
   protected errorText(): string | null {
     const ctrl = this.control();
