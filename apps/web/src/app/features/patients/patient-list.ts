@@ -124,7 +124,7 @@ const EMPTY_FILTERS: Filters = {
   includeArchived: false,
 };
 
-/** The yes/no filters, shown as chips rather than in the panel. */
+/** The yes/no filters: chips in the panel, and above the list while on. */
 const FLAGS = ['hasIssues', 'hasMedicalHistory', 'includeArchived'] as const;
 
 /**
@@ -381,7 +381,7 @@ export class PatientList {
   });
   protected readonly referralSelected: readonly string[] = ['referral'];
 
-  /** The yes/no questions, as filter chips in the toolbar's chip row. */
+  /** The yes/no questions: chips in the panel, and above the list while on. */
   protected readonly flagFilterOptions: FilterChipOption[] = [
     { value: 'hasIssues', label: 'patients.needsReview', icon: 'error', translate: true },
     {
@@ -403,7 +403,17 @@ export class PatientList {
     return FLAGS.filter((flag) => f[flag]);
   });
 
-  /** All three at once: one chip toggled is one new set of filters, one fetch. */
+  /** The ones that are on, for the chip row above the list. */
+  protected readonly activeFlagOptions = computed(() => {
+    const on = new Set<string>(this.flagsSelected());
+    return this.flagFilterOptions.filter((option) => on.has(option.value));
+  });
+
+  /**
+   * All three at once: one chip toggled is one new set of filters, one fetch.
+   * From the row above the list only the ones that are on are offered, so a
+   * flag missing from `selected` is one turned off — or one already off.
+   */
   protected setFlags(selected: string[]): void {
     const on = new Set(selected);
     this.filters.update((f) => ({
@@ -426,16 +436,12 @@ export class PatientList {
   ]);
 
   /**
-   * What the «فیلترها» button's badge counts: only what is inside its panel.
-   * The chips are on screen already; counting them again would say a filter
-   * is hidden when none is.
+   * What the «فیلترها» button's badge counts: what is set inside its panel.
+   * The referral filter has no place in the panel, only its own chip.
    */
-  protected readonly panelFilterCount = computed(() => {
-    const f = this.filters();
-    return (
-      (f.gender ? 1 : 0) + (f.education ? 1 : 0) + f.treatments.length + (f.inactiveMonths ? 1 : 0)
-    );
-  });
+  protected readonly panelFilterCount = computed(
+    () => this.activeFilterCount() - (this.filters().referralSourceId ? 1 : 0),
+  );
 
   protected readonly activeFilterCount = computed(() => {
     const f = this.filters();

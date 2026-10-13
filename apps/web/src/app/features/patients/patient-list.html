@@ -30,15 +30,18 @@
       {{ 'common.filters' | translate }}
     </pb-button>
 
-    <!-- On/off questions are filter chips here, as on every other list,
-         not checkboxes in the panel. -->
-    <pb-filter-chips
-      multiple
-      [options]="flagFilterOptions"
-      [selected]="flagsSelected()"
-      (selectedChange)="setFlags($event)"
-      [ariaLabel]="'common.filters' | translate"
-    />
+    <!-- Set in the panel, or by the dashboard's needs-review tile. Shown
+         here only while on, so a shorter register says why, and one tap
+         turns it off. -->
+    @if (flagsSelected().length) {
+      <pb-filter-chips
+        multiple
+        [options]="activeFlagOptions()"
+        [selected]="flagsSelected()"
+        (selectedChange)="setFlags($event)"
+        [ariaLabel]="'common.filters' | translate"
+      />
+    }
 
     <!-- Only a dashboard link can set this; nothing in the panel would
          otherwise show why the register is suddenly short, so it gets its
@@ -98,6 +101,17 @@
             [selected]="filters().treatments"
             (selectedChange)="updateFilter('treatments', $event)"
             [ariaLabel]="'patients.treatmentFilterAria' | translate"
+          />
+        </div>
+
+        <div class="filters__group">
+          <span class="filters__label">{{ 'patients.flagsFilter' | translate }}</span>
+          <pb-filter-chips
+            multiple
+            [options]="flagFilterOptions"
+            [selected]="flagsSelected()"
+            (selectedChange)="setFlags($event)"
+            [ariaLabel]="'patients.flagsFilter' | translate"
           />
         </div>
 
