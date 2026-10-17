@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { InventoryItem } from '../../core/models/common.model';
-import { filterCounts, shelfFlags } from './inventory-overview';
+import { filterCounts, shelfBrands, shelfFlags } from './inventory-overview';
 
 const item = (over: Partial<InventoryItem>): InventoryItem =>
   ({
@@ -44,5 +44,23 @@ describe('shelfFlags', () => {
       expired: 0,
       expiring: 0,
     });
+  });
+});
+
+describe('shelfBrands', () => {
+  const shelf = (brands: (string | null)[]) => brands.map((brand) => item({ brand }));
+
+  it('offers a long shelf its brands, in the order its rows come', () => {
+    const rows = shelf([
+      ...Array<null>(2).fill(null),
+      ...Array<string>(10).fill('Dentium'),
+      ...Array<string>(10).fill('Straumann'),
+    ]);
+    expect(shelfBrands(rows)).toEqual(['Dentium', 'Straumann']);
+  });
+
+  it('offers nothing for a short shelf, or one of a single brand', () => {
+    expect(shelfBrands(shelf(['Dentium', 'Straumann']))).toEqual([]);
+    expect(shelfBrands(shelf([...Array<string>(30).fill('GC'), null]))).toEqual([]);
   });
 });
