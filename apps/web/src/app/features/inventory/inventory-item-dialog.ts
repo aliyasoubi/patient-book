@@ -30,6 +30,7 @@ import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import {
   PbBanner,
   PbButton,
+  PbCheckboxField,
   PbFieldGrid,
   PbSelectField,
   PbTextField,
@@ -63,6 +64,7 @@ interface Known {
   brand: string | null;
   unit: InventoryUnit;
   minQuantity: number | null;
+  soldToPatients: boolean;
 }
 
 /** Whole counts only, in either digit script. */
@@ -112,6 +114,7 @@ const MAX_SUGGESTIONS = 8;
     TranslatePipe,
     PbBanner,
     PbButton,
+    PbCheckboxField,
     PbFieldGrid,
     PbSelectField,
     PbTextField,
@@ -218,6 +221,16 @@ const MAX_SUGGESTIONS = 8;
               [ltr]="true"
             />
           }
+          <!-- A toothbrush or a home bleaching kit: its use asks who bought it. -->
+          <div class="pb-field-grid__full form__sold">
+            <pb-checkbox-field
+              [checked]="soldToPatients()"
+              (checkedChange)="form.controls.soldToPatients.setValue($event)"
+            >
+              {{ 'inventoryForm.soldToPatients' | translate }}
+            </pb-checkbox-field>
+            <span class="form__note">{{ 'inventoryForm.soldToPatientsHint' | translate }}</span>
+          </div>
           <pb-textarea-field
             class="pb-field-grid__full"
             [control]="form.controls.notes"
@@ -258,6 +271,14 @@ const MAX_SUGGESTIONS = 8;
       flex-direction: column;
       align-items: flex-start;
       gap: var(--pb-space-2);
+    }
+    .form__sold {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .form__sold .form__note {
+      padding-inline-start: var(--pb-space-3);
     }
     .form__note {
       margin: 0;
@@ -306,6 +327,8 @@ export class InventoryItemDialog {
     expiry: ['', Validators.maxLength(20)],
     lotNumber: ['', Validators.maxLength(60)],
     notes: [this.item?.notes ?? '', Validators.maxLength(2000)],
+    // Another size of a toothbrush is a toothbrush too.
+    soldToPatients: [this.base?.soldToPatients ?? false],
   });
 
   /** Everything on the shelves, for the suggestions. */
@@ -323,6 +346,9 @@ export class InventoryItemDialog {
   });
   private readonly specTyped = toSignal(this.form.controls.spec.valueChanges, {
     initialValue: this.form.controls.spec.value,
+  });
+  protected readonly soldToPatients = toSignal(this.form.controls.soldToPatients.valueChanges, {
+    initialValue: this.form.controls.soldToPatients.value,
   });
 
   /** «Supe Line (Dentium)»: picking one fills in the rest of what is known about it. */
@@ -418,7 +444,7 @@ export class InventoryItemDialog {
     });
   }
 
-  /** A product the clinic already stocks: take its category, brand, unit and minimum. */
+  /** A product the clinic already stocks: take its category, brand, unit, minimum and sale. */
   protected pickKnown(option: TextFieldOption): void {
     const known = this.known()[Number(option.id)];
     if (!known || this.item) return;
@@ -427,6 +453,7 @@ export class InventoryItemDialog {
       brand: known.brand ?? '',
       unit: known.unit,
       minQuantity: known.minQuantity !== null ? String(known.minQuantity) : '',
+      soldToPatients: known.soldToPatients,
     });
   }
 
@@ -445,6 +472,7 @@ export class InventoryItemDialog {
       unit: raw.unit as InventoryUnit,
       minQuantity: countValue(raw.minQuantity),
       notes: blank(raw.notes),
+      soldToPatients: raw.soldToPatients,
     };
     this.saving.set(true);
     this.formError.set(null);
@@ -491,6 +519,7 @@ function distinctProducts(items: readonly InventoryItem[]): Known[] {
         brand: i.brand,
         unit: i.unit,
         minQuantity: i.minQuantity,
+        soldToPatients: i.soldToPatients,
       });
     }
   }

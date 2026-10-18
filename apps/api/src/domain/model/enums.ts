@@ -194,10 +194,7 @@ export enum InventoryCategory {
   Orthodontic = 'orthodontic',
   /** مصرفی و ضدعفونی — gloves, gauze, masks, disinfectants. */
   Consumable = 'consumable',
-  /**
-   * بهداشت دهان — toothbrushes, pastes, floss, water jets and home bleaching
-   * kits handed or sold to patients; a use names the patient it went to.
-   */
+  /** بهداشت دهان — toothbrushes and pastes handed or sold to patients. */
   Hygiene = 'hygiene',
   Other = 'other',
 }

@@ -73,6 +73,14 @@ export class InventoryItem {
   notes!: string | null;
 
   /**
+   * Sold to patients to take home — a toothbrush, floss, a home bleaching
+   * kit: a use of it asks who it was sold to, as an implant's asks who it
+   * went into.
+   */
+  @Column({ type: 'boolean', default: false })
+  soldToPatients!: boolean;
+
+  /**
    * Category, folded name, brand and spec — see `identityKey`. Unique among
    * active items, so one product's stock is never split across two rows.
    */

@@ -1,5 +1,6 @@
 import {
   InventoryCategory,
+  loosePersianKey,
   normalizeForDisplay,
   searchKey,
   toLatinDigits,
@@ -119,3 +120,35 @@ export const TRACEABLE: ReadonlySet<InventoryCategory> = new Set([
   InventoryCategory.Implant,
   InventoryCategory.Regenerative,
 ]);
+
+/**
+ * What a patient buys to take home, by name, folded and without spaces:
+ * every toothbrush (manual, electric, orthodontic, interdental, and the
+ * toothbrush sterilizer), toothpastes, floss, water jets and home bleaching
+ * kits. Not the paste, powders and brushes the hygienist uses in the chair,
+ * nor in-office bleaching.
+ */
+const SOLD_TO_PATIENTS = [
+  'مسواک',
+  'خمیردندان',
+  'نخدندان',
+  'واترجت',
+  'بلیچینگخانگی',
+  'هومبلیچینگ',
+  'بلیچینگهوم',
+  'toothbrush',
+  'toothpaste',
+  'floss',
+  'waterjet',
+  'homebleach',
+];
+
+/**
+ * Whether an item is sold to patients, going by its name — what the item's
+ * own `soldToPatients` starts as when the stock is imported. Staff can then
+ * switch it either way on the item.
+ */
+export function soldToPatientsByName(name: string | null | undefined): boolean {
+  const key = loosePersianKey(name);
+  return SOLD_TO_PATIENTS.some((word) => key.includes(word));
+}

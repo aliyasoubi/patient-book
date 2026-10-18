@@ -23,7 +23,7 @@ import type {
 import { PatientsService } from '../patients/data/patients.service';
 import type { PatientSuggestion } from '../patients/data/patient.model';
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
-import { inventoryUnitLabel, SOLD_CATEGORIES, TRACEABLE_CATEGORIES } from '../../shared/labels';
+import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
 
@@ -273,8 +273,8 @@ export class InventoryMovementDialog {
   protected readonly copy = COPY[this.kind];
   protected readonly takesOut = this.kind === 'use' || this.kind === 'discard';
   protected readonly traceable = TRACEABLE_CATEGORIES.includes(this.item.category);
-  /** Sold or handed to a patient to take home. */
-  private readonly sold = SOLD_CATEGORIES.includes(this.item.category);
+  /** Sold to a patient to take home — switched on the item. */
+  private readonly sold = this.item.soldToPatients;
   /** A use of either kind can say whose it was. */
   protected readonly namesPatient = this.kind === 'use' && (this.traceable || this.sold);
   private readonly mustTrace = this.kind === 'receive' && this.traceable;

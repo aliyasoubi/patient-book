@@ -502,12 +502,6 @@ export const INVENTORY_CATEGORY_ICONS: Record<InventoryCategory, string> = {
  */
 export const TRACEABLE_CATEGORIES: readonly InventoryCategory[] = ['implant', 'regenerative'];
 
-/**
- * What is sold or handed to patients to take home — toothbrushes, pastes,
- * floss, water jets, home bleaching kits: a use names who it went to.
- */
-export const SOLD_CATEGORIES: readonly InventoryCategory[] = ['hygiene'];
-
 export const INVENTORY_UNITS: readonly InventoryUnit[] = [
   'piece',
   'pack',

@@ -5,6 +5,7 @@ import {
   brandSpellings,
   canonicalBrand,
   normalizeSpec,
+  soldToPatientsByName,
 } from './inventory-catalog';
 
 describe('canonicalBrand', () => {
@@ -53,5 +54,36 @@ describe('normalizeSpec', () => {
 
   it('leaves a slash alone where it is not a decimal: a suture is 4/0', () => {
     expect(normalizeSpec(InventoryCategory.Surgery, ' 4/0 ')).toBe('4/0');
+  });
+});
+
+describe('soldToPatientsByName', () => {
+  it.each([
+    'مسواک',
+    'مسواک برقی',
+    'مسواک بین‌دندانی ارتودنسی',
+    'استریل‌کننده مسواک',
+    'خمیردندان ضدحساسیت',
+    'خمیر دندان سفیدکننده',
+    'نخ دندان ارتودنسی',
+    'واتر جت',
+    'هوم بلیچینگ',
+    'بلیچینگ خانگی',
+    'مسواك',
+  ])('sells %p to patients', (name) => {
+    expect(soldToPatientsByName(name)).toBe(true);
+  });
+
+  it.each([
+    'خمیر پروفیلاکسی',
+    'پودر پامیس',
+    'پودر ایرفلو',
+    'براش بروساژ',
+    'بلیچینگ مطب',
+    'نخ زیر لثه',
+    'نخ بخیه نایلون',
+    null,
+  ])('keeps %p in the clinic', (name) => {
+    expect(soldToPatientsByName(name)).toBe(false);
   });
 });
