@@ -59,7 +59,7 @@ import {
   PbStatusChip,
 } from '../../shared/ui';
 import type { FilterChipOption, SelectOption, StatusTone } from '../../shared/ui';
-import { filterCounts, shelfFlags, type ShelfFlags } from './inventory-overview';
+import { filterCounts, shelfBrands, shelfFlags, type ShelfFlags } from './inventory-overview';
 import {
   InventoryItemDialog,
   type InventoryItemDialogData,
@@ -95,6 +95,12 @@ interface Shelf {
   category: InventoryCategory | null;
   items: InventoryItem[];
   flags: ShelfFlags;
+  /** Chips to narrow a long shelf to one brand; none for a short one. */
+  brands: FilterChipOption[];
+  /** The brand it is narrowed to, if any. */
+  brand: string | null;
+  /** What is listed: its items, or that brand's alone. */
+  rows: InventoryItem[];
 }
 
 /** The shelves left open, for the rest of the visit: nothing about a patient. */
@@ -230,23 +236,37 @@ export class InventoryList {
     return all ? filterCounts(all) : null;
   });
 
+  /** Each shelf's chosen brand, for this visit. */
+  private readonly brands = signal<Partial<Record<InventoryCategory, string>>>({});
+
   /**
    * Shelf by shelf, in the order the API sends them. Expiring stock is listed
    * soonest first instead, across categories, so it is one run with no heading.
    */
   protected readonly shelves = computed<Shelf[]>(() => {
     const items = this.items();
-    if (this.filter() === 'expiry') {
-      return items.length ? [{ category: null, items, flags: shelfFlags(items) }] : [];
-    }
-    const shelves: Shelf[] = [];
+    const chosen = this.brands();
+    const shelf = (category: InventoryCategory | null, items: InventoryItem[]): Shelf => {
+      const brands = category ? shelfBrands(items) : [];
+      // A brand the shelf no longer offers — a search left too few rows — is not applied.
+      const brand = brands.find((b) => category && b === chosen[category]) ?? null;
+      return {
+        category,
+        items,
+        flags: shelfFlags(items),
+        brands: brands.map((b) => ({ value: b, label: b })),
+        brand,
+        rows: brand ? items.filter((i) => i.brand === brand) : items,
+      };
+    };
+    if (this.filter() === 'expiry') return items.length ? [shelf(null, items)] : [];
+    const runs: { category: InventoryCategory; items: InventoryItem[] }[] = [];
     for (const item of items) {
-      const last = shelves.at(-1);
+      const last = runs.at(-1);
       if (last?.category === item.category) last.items.push(item);
-      else shelves.push({ category: item.category, items: [item], flags: shelfFlags([]) });
+      else runs.push({ category: item.category, items: [item] });
     }
-    for (const shelf of shelves) shelf.flags = shelfFlags(shelf.items);
-    return shelves;
+    return runs.map((run) => shelf(run.category, run.items));
   });
 
   /**
@@ -343,6 +363,13 @@ export class InventoryList {
       writeOpen(next);
       return next;
     });
+  }
+
+  /** Tapping the chosen brand again lists the whole shelf. */
+  protected setBrand(shelf: Shelf, selected: string[]): void {
+    const category = shelf.category;
+    if (!category) return;
+    this.brands.update((chosen) => ({ ...chosen, [category]: selected[0] }));
   }
 
   protected setCategory(value: string): void {
