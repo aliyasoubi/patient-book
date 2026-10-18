@@ -618,6 +618,7 @@
     "treatmentFilterAria": "فیلتر درمان",
     "needsReview": "نیازمند بازبینی داده",
     "hasMedicalHistory": "دارای سابقه بیماری",
+    "flagsFilter": "وضعیت پرونده",
     "includeArchived": "شامل بایگانی‌شده‌ها",
     "clearFilters": "پاک کردن فیلترها",
     "clearSearchAndFilters": "پاک کردن جستجو و فیلترها",
