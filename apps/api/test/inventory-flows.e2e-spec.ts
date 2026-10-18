@@ -54,7 +54,7 @@ interface ItemBody {
     change: number;
     quantityAfter: number;
     lotNumber: string | null;
-    patient: { id: string; fileNo: string } | null;
+    patient: { id: string; fileNo: string; fullName: string } | null;
     note: string | null;
     by: string | null;
   }>;
@@ -572,6 +572,39 @@ describeIfWritable('inventory flows (e2e)', () => {
       [patientId],
     );
     expect(left[0].n).toBe(0);
+    await archive(item.id);
+  });
+
+  it('names the patient a toothbrush was sold to on its stock card', async () => {
+    const fileNo = `7${Date.now()}`;
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({ fileNo, firstName: 'آزمون', lastName: 'فروش' })
+      .expect(201);
+    const patientId = (patient.body as { id: string }).id;
+    patientIds.push(patientId);
+    const item = await addItem({
+      name: `sold-${runId}`,
+      category: 'hygiene',
+      brand: 'Oral-B',
+      spec: 'Soft',
+      quantity: 5,
+    });
+
+    const sold = (
+      await move(item.id, { kind: 'use', quantity: 2, patientId }).expect(200)
+    ).body as ItemBody;
+    expect(sold.quantity).toBe(3);
+    expect(sold.movements[0]).toMatchObject({
+      kind: 'use',
+      change: -2,
+      patient: { id: patientId, fileNo, fullName: 'آزمون فروش' },
+    });
+    // Only an implant opens an implant file.
+    const cases = await db.query<Array<{ n: number }>>(
+      `SELECT count(*)::int AS n FROM implant_cases WHERE "patientId" = $1`,
+      [patientId],
+    );
+    expect(cases[0].n).toBe(0);
     await archive(item.id);
   });
 

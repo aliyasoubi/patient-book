@@ -181,10 +181,13 @@ export class InventoryService {
           account: string | null;
           lotNumber: string | null;
           fileNo: string | null;
+          firstName: string | null;
+          lastName: string | null;
         }
       >
     >(
-      `SELECT m.*, u."fullName", u.username AS account, l."lotNumber", p."fileNo"
+      `SELECT m.*, u."fullName", u.username AS account, l."lotNumber",
+              p."fileNo", p."firstName", p."lastName"
          FROM inventory_movements m
          LEFT JOIN users u ON u.id = m."userId"
          LEFT JOIN inventory_lots l ON l.id = m."lotId"
@@ -215,7 +218,11 @@ export class InventoryService {
         expiry: m.expiryText,
         patient:
           m.patientId && m.fileNo
-            ? { id: m.patientId, fileNo: m.fileNo }
+            ? {
+                id: m.patientId,
+                fileNo: m.fileNo,
+                fullName: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim(),
+              }
             : null,
         note: m.note,
         by: m.fullName?.trim() || m.account || m.username,
