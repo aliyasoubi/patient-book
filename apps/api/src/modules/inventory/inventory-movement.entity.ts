@@ -54,7 +54,8 @@ export class InventoryMovement {
 
   /**
    * The patient a use went into — for an implant, a graft or a membrane, what
-   * a recall of its batch is traced back through.
+   * a recall of its batch is traced back through; for a toothbrush or a home
+   * bleaching kit, who it was sold to.
    */
   @Index()
   @Column({ type: 'uuid', nullable: true })

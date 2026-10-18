@@ -125,7 +125,18 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
                   }
                   @if (m.patient; as patient) {
                     <pb-status-chip icon="person" [link]="['/patients', patient.id]">
-                      {{ 'inventoryHistory.patient' | translate: { fileNo: patient.fileNo } }}
+                      @if (patient.fullName) {
+                        {{
+                          'inventoryHistory.patientNamed'
+                            | translate
+                              : { name: patient.fullName, fileNo: (patient.fileNo | faNum) }
+                        }}
+                      } @else {
+                        {{
+                          'inventoryHistory.patient'
+                            | translate: { fileNo: (patient.fileNo | faNum) }
+                        }}
+                      }
                     </pb-status-chip>
                   }
                 </span>

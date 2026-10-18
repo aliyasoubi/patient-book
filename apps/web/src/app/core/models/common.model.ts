@@ -289,8 +289,8 @@ export interface InventoryMovement {
   quantityAfter: number;
   lotNumber: string | null;
   expiry: string | null;
-  /** The patient a use went into. */
-  patient: { id: string; fileNo: string } | null;
+  /** The patient a use went into, or an item was sold to. */
+  patient: { id: string; fileNo: string; fullName: string } | null;
   note: string | null;
   /** Who recorded it, by the name staff know them by. */
   by: string | null;

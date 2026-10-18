@@ -23,7 +23,7 @@ import type {
 import { PatientsService } from '../patients/data/patients.service';
 import type { PatientSuggestion } from '../patients/data/patient.model';
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
-import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
+import { inventoryUnitLabel, SOLD_CATEGORIES, TRACEABLE_CATEGORIES } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
 
@@ -88,7 +88,8 @@ const COPY: Record<
  * it. A delivery reads its lot and expiry off the packs. A use or a discard
  * comes out of the first-expiring batch unless another is picked; an implant
  * or a graft names its batch and the patient it went into, which is what a
- * recall is traced through. What is taken out is checked against the shelf
+ * recall is traced through, and a toothbrush, floss or a home bleaching kit
+ * names the patient it was sold to. What is taken out is checked against the shelf
  * here as well as by the API, which has the final word if someone else took
  * the last one meanwhile.
  */
@@ -168,7 +169,7 @@ const COPY: Record<
             [ltr]="true"
           />
         }
-        @if (kind === 'use' && traceable) {
+        @if (namesPatient) {
           <!-- Typing searches the patient book by name, mobile or file; the
                use is linked only to a patient picked from the list. -->
           <pb-text-field
@@ -272,6 +273,10 @@ export class InventoryMovementDialog {
   protected readonly copy = COPY[this.kind];
   protected readonly takesOut = this.kind === 'use' || this.kind === 'discard';
   protected readonly traceable = TRACEABLE_CATEGORIES.includes(this.item.category);
+  /** Sold or handed to a patient to take home. */
+  private readonly sold = SOLD_CATEGORIES.includes(this.item.category);
+  /** A use of either kind can say whose it was. */
+  protected readonly namesPatient = this.kind === 'use' && (this.traceable || this.sold);
   private readonly mustTrace = this.kind === 'receive' && this.traceable;
   /** An implant handed to a patient also goes into their implant file. */
   protected readonly isImplant = this.item.category === 'implant';
@@ -372,9 +377,17 @@ export class InventoryMovementDialog {
 
   protected readonly patientHint = computed(() => {
     const linked = this.linkedPatient();
-    if (!linked) return this.i18n.instant('inventoryMove.patientHint');
+    if (!linked) {
+      return this.i18n.instant(
+        this.sold ? 'inventoryMove.patientSoldHint' : 'inventoryMove.patientHint',
+      );
+    }
     return this.i18n.instant(
-      this.isImplant ? 'inventoryMove.patientImplantFile' : 'inventoryMove.patientLinked',
+      this.isImplant
+        ? 'inventoryMove.patientImplantFile'
+        : this.sold
+          ? 'inventoryMove.patientSold'
+          : 'inventoryMove.patientLinked',
       { fileNo: formatPersianNumber(linked.fileNo) },
     );
   });
@@ -522,7 +535,7 @@ export class InventoryMovementDialog {
             }
           : {}),
         ...(this.takesOut ? { lotId: raw.lotId || null } : {}),
-        ...(this.kind === 'use' && this.traceable
+        ...(this.namesPatient
           ? {
               patientId: this.linkedPatient()?.id ?? null,
               tooth: (this.isImplant && toLatinDigits(raw.tooth).trim()) || null,
