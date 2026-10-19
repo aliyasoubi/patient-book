@@ -6,6 +6,7 @@ import { basename, extname, resolve } from 'node:path';
 import dataSource from '../../../database/data-source';
 import { AuditLog } from '../../../infrastructure/persistence/entities/audit-log.entity';
 import { InventoryMovementKind } from '../../../domain';
+import { soldToPatientsByName } from '../inventory-catalog';
 import { InventoryItem } from '../inventory-item.entity';
 import { writeMovement } from '../inventory-ledger';
 import { identityKey, itemSearchText, receive } from '../inventory-stock';
@@ -124,6 +125,7 @@ async function main(): Promise<void> {
           expiresOn: null,
           expiryText: null,
           notes: row.notes,
+          soldToPatients: soldToPatientsByName(row.name),
         });
         item.identityKey = identityKey(item);
         item.searchText = itemSearchText(item);

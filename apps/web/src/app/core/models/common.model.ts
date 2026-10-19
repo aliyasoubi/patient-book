@@ -265,6 +265,8 @@ export interface InventoryItem {
   expiry: string | null;
   expiryState: ExpiryState | null;
   notes: string | null;
+  /** Sold to patients to take home: a use asks who it was sold to. */
+  soldToPatients: boolean;
   isArchived: boolean;
   /** Bumped by every edit and every movement; sent back on an edit. */
   version: number;

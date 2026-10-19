@@ -43,6 +43,7 @@ interface ItemBody {
   expiryState: 'ok' | 'expiring' | 'expired' | null;
   version: number;
   isArchived: boolean;
+  soldToPatients: boolean;
   lots: Array<{
     id: string;
     lotNumber: string | null;
@@ -588,7 +589,9 @@ describeIfWritable('inventory flows (e2e)', () => {
       brand: 'Oral-B',
       spec: 'Soft',
       quantity: 5,
+      soldToPatients: true,
     });
+    expect(item.soldToPatients).toBe(true);
 
     const sold = (
       await move(item.id, { kind: 'use', quantity: 2, patientId }).expect(200)
@@ -605,6 +608,14 @@ describeIfWritable('inventory flows (e2e)', () => {
       [patientId],
     );
     expect(cases[0].n).toBe(0);
+
+    // Switched off on the item, as for what the hygienist uses in the chair.
+    const edited = (
+      await asStaff(http().patch(`/api/inventory/items/${item.id}`))
+        .send({ soldToPatients: false, expectedVersion: sold.version })
+        .expect(200)
+    ).body as ItemBody;
+    expect(edited.soldToPatients).toBe(false);
     await archive(item.id);
   });
 

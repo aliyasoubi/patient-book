@@ -24,6 +24,7 @@ export interface InventoryItemInput {
   /** As printed on the pack; the API reads Gregorian and Jalali. */
   expiry?: string | null;
   notes?: string | null;
+  soldToPatients?: boolean;
   /** On creation only: what is on the shelf, as the first batch. */
   quantity?: number;
   lotNumber?: string | null;

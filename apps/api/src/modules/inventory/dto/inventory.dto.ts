@@ -169,6 +169,12 @@ export class CreateInventoryItemDto {
   @IsOptional()
   notes?: string | null;
 
+  /** Sold to patients: a use of it names who it was sold to. */
+  @ApiPropertyOptional({ default: false })
+  @IsBoolean()
+  @IsOptional()
+  soldToPatients?: boolean;
+
   /**
    * What is on the shelf now, recorded as the item's first count. It opens
    * the item's first batch, with `expiry` and `lotNumber`.

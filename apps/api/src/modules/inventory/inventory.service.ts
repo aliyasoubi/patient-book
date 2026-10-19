@@ -243,6 +243,7 @@ export class InventoryService {
         minQuantity: null,
         expiresOn: null,
         expiryText: null,
+        soldToPatients: false,
       });
       this.assign(item, dto);
       if (
@@ -769,6 +770,9 @@ export class InventoryService {
       item.minQuantity = dto.minQuantity ?? null;
     }
     if (dto.notes !== undefined) item.notes = dto.notes ?? null;
+    if (dto.soldToPatients !== undefined) {
+      item.soldToPatients = dto.soldToPatients;
+    }
     // One spelling for a brand and one form for a size, however typed.
     item.brand = canonicalBrand(item.brand);
     item.spec = normalizeSpec(item.category, item.spec);
@@ -809,6 +813,7 @@ export class InventoryService {
       expiry: i.expiryText,
       expiryState: expiryState(i.expiresOn, i.quantity, now),
       notes: i.notes,
+      soldToPatients: i.soldToPatients,
       isArchived: i.deletedAt !== null,
       /** Optimistic-concurrency token; send back as `expectedVersion` on update. */
       version: i.version,
