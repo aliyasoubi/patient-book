@@ -78,6 +78,12 @@ export class SurgeryBookDialog {
   });
 
   protected submit(): void {
+    // Left empty is a booking with no day; typed but not a date is a mistake
+    // to correct, not that — and on a booked row it would wipe the day it had.
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const date = this.form.controls.date.value;
     this.ref.close({ date: date ? this.dateAdapter.toIso8601(date) : null });
   }

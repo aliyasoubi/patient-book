@@ -17,7 +17,7 @@ import { PatientListContext } from './patient-list-context';
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryKind, RegistryService } from '../../core/services/registry.service';
 import { LabService } from '../../core/services/lab.service';
-import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
+import { JalaliPipe, jalaliStamp } from '../../shared/pipes/jalali.pipe';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import {
@@ -408,6 +408,9 @@ export class PatientDetail {
         if (this.stillShowing(patientId)) this.load(patientId);
       });
   }
+
+  /** When a history entry happened: the day and the time. */
+  protected readonly stamp = jalaliStamp;
 
   /** Field name in an audit entry. Falls back to the raw key when unmapped. */
   protected changeLabel(key: string): string {

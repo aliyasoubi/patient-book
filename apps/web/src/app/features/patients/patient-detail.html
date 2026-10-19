@@ -394,6 +394,9 @@
                               ((entry.userId ? 'audit.deletedUser' : 'audit.systemUser')
                                 | translate)
                           }}</span>
+                          <time class="timeline__when" [attr.datetime]="entry.createdAt">{{
+                            stamp(entry.createdAt)
+                          }}</time>
                         </div>
                         @for (change of changeEntries(entry.changes); track change[0]) {
                           <div class="timeline__change">

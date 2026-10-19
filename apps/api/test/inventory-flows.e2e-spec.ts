@@ -664,6 +664,72 @@ describeIfWritable('inventory flows (e2e)', () => {
     await archive(item.id);
   });
 
+  it('will not guess which batch extra implants belong to', async () => {
+    const item = await addItem({
+      name: `guessed-${runId}`,
+      category: 'implant',
+      quantity: 2,
+      lotNumber: 'LOT-A',
+      expiry: printed(24),
+    });
+    await move(item.id, {
+      kind: 'receive',
+      quantity: 3,
+      lotNumber: 'LOT-B',
+      expiry: printed(30),
+    }).expect(200);
+
+    // Two found over the record: the last batch in is not proof they are its.
+    const res = await move(item.id, { kind: 'count', quantity: 7 }).expect(400);
+    expect(res.body).toMatchObject({
+      code: ErrorCode.InventoryCountUntraced,
+      params: { id: item.id },
+    });
+
+    // Nor on a stocktake, which is refused whole.
+    const plain = await addItem({ name: `guessed-${runId}`, quantity: 4 });
+    const sheet = await asStaff(http().post('/api/inventory/items/count'))
+      .send({
+        lines: [
+          { id: plain.id, quantity: 1 },
+          { id: item.id, quantity: 6 },
+        ],
+      })
+      .expect(400);
+    expect(sheet.body).toMatchObject({
+      code: ErrorCode.InventoryCountUntraced,
+      params: { id: item.id },
+    });
+    const untouched = await list({ q: `guessed-${runId}` });
+    expect(untouched.map((i) => [i.id, i.quantity]).sort()).toEqual(
+      [
+        [item.id, 5],
+        [plain.id, 4],
+      ].sort(),
+    );
+
+    // Fewer than recorded is still a count; the extra comes in as a delivery.
+    await move(item.id, { kind: 'count', quantity: 4 }).expect(200);
+    const received = (
+      await move(item.id, {
+        kind: 'receive',
+        quantity: 2,
+        lotNumber: 'LOT-C',
+        expiry: printed(36),
+      }).expect(200)
+    ).body as ItemBody;
+    expect(received.quantity).toBe(6);
+    expect(received.lots.map((l) => [l.lotNumber, l.quantity]).sort()).toEqual(
+      [
+        ['LOT-A', 1],
+        ['LOT-B', 3],
+        ['LOT-C', 2],
+      ].sort(),
+    );
+    await archive(item.id);
+    await archive(plain.id);
+  });
+
   it('will not receive an implant without its lot and expiry', async () => {
     const item = await addItem({ name: `lot-${runId}`, category: 'implant' });
     const res = await move(item.id, { kind: 'receive', quantity: 1 }).expect(

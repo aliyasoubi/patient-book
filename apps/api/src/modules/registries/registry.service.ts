@@ -213,6 +213,7 @@ export class RegistryService<T extends RegistryCase> {
       existing.searchText = this.buildSearch(existing);
 
       await repository.save(existing as never);
+      await this.afterUpdate(manager, existing);
       await this.audit.recordRequired(
         {
           userId,
@@ -226,6 +227,17 @@ export class RegistryService<T extends RegistryCase> {
       // Re-read for the response, so it carries the patient now linked.
       return this.findOneFrom(repository, id);
     });
+  }
+
+  /**
+   * What follows a case once an edit is saved, in the same transaction.
+   * Nothing for a register on its own; the implant register's surgery rows
+   * keep its number and name.
+   */
+  protected afterUpdate(manager: EntityManager, saved: T): Promise<void> {
+    void manager;
+    void saved;
+    return Promise.resolve();
   }
 
   async remove(id: string, userId: string | null): Promise<void> {

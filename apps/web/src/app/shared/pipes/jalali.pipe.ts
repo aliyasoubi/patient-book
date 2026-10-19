@@ -2,9 +2,19 @@ import { inject, Pipe, PipeTransform } from '@angular/core';
 import type { JalaliValue } from '../../core/models/common.model';
 import { JALALI_MONTH_KEYS } from '../../core/jalali/jalali-date-adapter';
 import { TranslateService } from '@ngx-translate/core';
+import { format, isValid } from 'date-fns-jalali';
 
 const toPersian = (s: string): string =>
   s.replace(/[0-9]/g, (d) => String.fromCharCode(0x06f0 + Number(d)));
+
+/**
+ * When something happened, as the practice reads it: the Jalali day and the
+ * time on this computer's clock, in Persian digits — `۱۴۰۵/۰۷/۲۷ ۱۴:۳۲`.
+ */
+export function jalaliStamp(iso: string | null | undefined): string {
+  const date = iso ? new Date(iso) : null;
+  return date && isValid(date) ? toPersian(format(date, 'yyyy/MM/dd HH:mm')) : '—';
+}
 
 /**
  * Display a date at the precision the record actually holds.

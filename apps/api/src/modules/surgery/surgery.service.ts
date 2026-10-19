@@ -4,6 +4,7 @@ import { addMonths } from 'date-fns-jalali';
 import { EntityManager, In, Repository } from 'typeorm';
 
 import { SurgeryQueueItem } from './surgery-queue-item.entity';
+import { namesDiffer, surgerySearchText } from './case-copy';
 import { ImplantCase } from '../implants/implant-case.entity';
 import {
   QuerySurgeryDto,
@@ -12,7 +13,7 @@ import {
 } from './dto/surgery.dto';
 import { PageResult } from '../../presentation/http/dto/pagination.dto';
 import { JalaliDate, storedDate } from '../../domain';
-import { loosePersianKey, searchKey } from '../../domain';
+import { searchKey } from '../../domain';
 import { extractImplantBrand } from '../../domain';
 import { DatePrecisionEnum } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
@@ -465,25 +466,12 @@ export class SurgeryService {
     // and this also heals a copy left stale by a renumbering.
     if (implantCase) item.implantRegistryNo = implantCase.registryNo;
 
-    if (implantCase && item.recordedName) {
-      const a = loosePersianKey(implantCase.recordedName);
-      const b = loosePersianKey(item.recordedName);
-      item.hasNameMismatch = Boolean(a && b && a !== b);
-    } else {
-      item.hasNameMismatch = false;
-    }
-
-    item.searchText = searchKey(
-      [
-        item.implantRegistryNo,
-        item.recordedName,
-        item.toothPosition,
-        (item.teethFdi ?? []).join(' '),
-        item.implantBrand,
-      ]
-        .filter(Boolean)
-        .join(' '),
-    );
+    // The same rules the register applies when it renames or renumbers the
+    // case (`refreshCaseCopies`).
+    item.hasNameMismatch = implantCase
+      ? namesDiffer(implantCase.recordedName, item.recordedName)
+      : false;
+    item.searchText = surgerySearchText(item);
     return registered;
   }
 

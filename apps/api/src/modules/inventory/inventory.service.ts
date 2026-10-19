@@ -657,15 +657,17 @@ export class InventoryService {
 
   /**
    * A count of implants, grafts or membranes that finds more than recorded
-   * would put the extra in a batch with no lot — a box nobody could trace.
-   * The extra comes in as a delivery instead, with the lot on its box.
+   * would have to guess the extra's batch: a new one with no lot, a box
+   * nobody could trace, or the last to arrive, whose lot may not be the one
+   * on the box. The extra comes in as a delivery instead, with the lot on
+   * its box. A count that finds fewer still goes through.
    */
   private refuseUntracedCount(
     item: InventoryItem,
     changes: LotChange<InventoryLot | LotLevel>[],
   ): void {
     if (!TRACEABLE.has(item.category)) return;
-    if (changes.some((c) => c.change > 0 && !c.lot.lotNumber)) {
+    if (changes.some((c) => c.change > 0)) {
       throw AppException.badRequest(ErrorCode.InventoryCountUntraced, {
         id: item.id,
         name: [item.name, item.brand, item.spec].filter(Boolean).join(' · '),
