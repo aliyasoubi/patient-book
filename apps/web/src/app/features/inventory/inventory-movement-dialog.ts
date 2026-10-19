@@ -1,7 +1,23 @@
-import { Component, DestroyRef, type Signal, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  type Signal,
+  type WritableSignal,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
-import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  of,
+  type Subscription,
+  switchMap,
+} from 'rxjs';
 import {
   type AbstractControl,
   FormBuilder,
@@ -41,6 +57,25 @@ import { showOnFields } from './inventory-errors';
 /** An expiry the API will read — said on the field, before it is sent. */
 const readableExpiry = (control: AbstractControl<string>): ValidationErrors | null =>
   !control.value?.trim() || expiryEnd(control.value) ? null : { expiry: true };
+
+/**
+ * A patient picked from the book stays picked only while the field still
+ * shows their name. Typing over it is a new search, not the same patient: the
+ * pick is dropped and the field asks for one again, rather than saving the
+ * first patient under the second one's name.
+ */
+export function dropPickOnRetype(
+  control: AbstractControl<string>,
+  picked: WritableSignal<{ fullName: string } | null>,
+): Subscription {
+  return control.valueChanges.subscribe((typed) => {
+    const current = picked();
+    if (!current || typed.trim() === current.fullName.trim()) return;
+    picked.set(null);
+    // The validator ran before the pick was dropped; ask it again.
+    control.updateValueAndValidity({ emitEvent: false });
+  });
+}
 
 export interface InventoryMovementDialogData {
   item: InventoryItem;
@@ -441,6 +476,8 @@ export class InventoryMovementDialog {
   });
 
   constructor() {
+    const retyped = dropPickOnRetype(this.form.controls.patient, this.linkedPatient);
+    this.destroyRef.onDestroy(() => retyped.unsubscribe());
     if (!this.takesOut) return;
     this.form.controls.lotId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
