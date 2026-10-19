@@ -1125,6 +1125,78 @@ describeIfWritable('clinic flows (e2e)', () => {
         (matching.body as { hasNameMismatch: boolean }).hasNameMismatch,
       ).toBe(false);
     });
+
+    it('follows the register when the case is renamed or renumbered', async () => {
+      const registryNo = nextNumber();
+      const created = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo, recordedName: 'مریم کریمی' })
+        .expect(201);
+      const caseId = (created.body as { id: string }).id;
+      let caseVersion = (created.body as { version: number }).version;
+      implantCaseIds.push(caseId);
+
+      const row = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'مریم کریمی', implantRegistryNo: registryNo })
+        .expect(201);
+      const { id, version } = row.body as { id: string; version: number };
+      surgeryIds.push(id);
+
+      const editCase = async (body: Record<string, unknown>) => {
+        const res = await asAdmin(http().patch(`/api/implant-cases/${caseId}`))
+          .send({ ...body, expectedVersion: caseVersion })
+          .expect(200);
+        caseVersion = (res.body as { version: number }).version;
+      };
+      const read = async () =>
+        (await asAdmin(http().get(`/api/surgery-queue/${id}`)).expect(200))
+          .body as {
+          hasNameMismatch: boolean;
+          implantRegistryNo: string;
+          registeredName: string;
+        };
+      const listed = async (query: Record<string, string>) =>
+        (
+          (
+            await asAdmin(http().get('/api/surgery-queue'))
+              .query(query)
+              .expect(200)
+          ).body as { items: Array<{ id: string }> }
+        ).items.some((i) => i.id === id);
+
+      // The register corrected to another person: the row warns at once,
+      // and the mismatch filter finds it, without the row being saved.
+      await editCase({ recordedName: 'رضا احمدی' });
+      expect(await read()).toMatchObject({
+        hasNameMismatch: true,
+        registeredName: 'رضا احمدی',
+      });
+      expect(await listed({ q: registryNo, mismatchedOnly: 'true' })).toBe(
+        true,
+      );
+
+      // Back to the same name, written with Arabic letters: no warning.
+      await editCase({ recordedName: 'مريم كريمي' });
+      expect((await read()).hasNameMismatch).toBe(false);
+      expect(await listed({ q: registryNo, mismatchedOnly: 'true' })).toBe(
+        false,
+      );
+
+      // Renumbered: found by the number on its card, not the old one.
+      const renumbered = nextNumber();
+      await editCase({ registryNo: renumbered });
+      expect((await read()).implantRegistryNo).toBe(renumbered);
+      expect(await listed({ q: renumbered })).toBe(true);
+      expect(await listed({ q: registryNo })).toBe(false);
+
+      // A form opened before the renumber still holds the old number: it is
+      // refused, not taken as a move to a new, empty case under that number.
+      const stale = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({ implantRegistryNo: registryNo, expectedVersion: version })
+        .expect(409);
+      expect((stale.body as ErrorBody).code).toBe(
+        ErrorCode.SurgeryItemModified,
+      );
+    });
   });
 
   // ── Stale edits on surgery rows and register cases ───────────────
