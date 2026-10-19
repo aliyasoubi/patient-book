@@ -352,6 +352,7 @@ pb-surface.hero-surface--archived {
 
   &__head {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     gap: var(--pb-space-2);
     font: var(--mat-sys-body-medium);
@@ -360,6 +361,13 @@ pb-surface.hero-surface--archived {
   &__who {
     color: var(--mat-sys-on-surface-variant);
     font: var(--mat-sys-body-small);
+  }
+
+  &__when {
+    margin-inline-start: auto;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-body-small);
+    white-space: nowrap;
   }
 
   &__change {
