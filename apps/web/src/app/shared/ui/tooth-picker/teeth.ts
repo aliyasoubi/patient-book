@@ -23,6 +23,61 @@ export const QUADRANT_LABELS: Record<Quadrant, string> = {
 export const quadrantOf = (tooth: number): Quadrant => Math.floor(tooth / 10) as Quadrant;
 export const positionOf = (tooth: number): number => tooth % 10;
 
+/** One quadrant as the chart draws it. */
+export interface QuadrantView {
+  id: Quadrant;
+  label: string;
+  /** FDI numbers in the order they sit on screen. */
+  teeth: number[];
+}
+
+/**
+ * The chart's quadrants as the dentist sees the mouth: upper right, upper
+ * left, lower right, lower left, the patient's right on the viewer's left and
+ * each quadrant counting out from the midline — 7…1 | 1…7.
+ */
+export function chartQuadrants(i18n: TranslateService): QuadrantView[] {
+  return ([1, 2, 4, 3] as const).map((id) => {
+    const fromMidline = TOOTH_RANGE.map((n) => id * 10 + n);
+    const onViewersLeft = id === 1 || id === 4;
+    return {
+      id,
+      label: i18n.instant(QUADRANT_LABELS[id]),
+      teeth: onViewersLeft ? fromMidline.reverse() : fromMidline,
+    };
+  });
+}
+
+/** "6 upper right": a tooth as the practice says it, for a screen reader. */
+export function toothName(tooth: number, i18n: TranslateService): string {
+  return `${positionOf(tooth)} ${i18n.instant(QUADRANT_LABELS[quadrantOf(tooth)])}`;
+}
+
+/**
+ * One tooth and the work it gets — a crown on 14, a laminate on 11 — the way
+ * a lab prescription marks each tooth of its chart.
+ */
+export interface ToothWork<T extends string = string> {
+  tooth: number;
+  workType: T;
+}
+
+/** The teeth of each kind of work, kinds in the order given, teeth sorted; empty kinds left out. */
+export function teethByWork<T extends string>(
+  work: readonly ToothWork<T>[],
+  order: readonly T[],
+): { workType: T; teeth: number[] }[] {
+  return order
+    .map((workType) => ({
+      workType,
+      teeth: work
+        .filter((w) => w.workType === workType)
+        .map((w) => w.tooth)
+        .sort((a, b) => a - b),
+    }))
+    .filter((group) => group.teeth.length);
+}
+
 /** Every tooth of one jaw: quadrants 1 and 2 are the upper, 3 and 4 the lower. */
 export function jawTeeth(jaw: 'upper' | 'lower'): number[] {
   const quadrants: Quadrant[] = jaw === 'upper' ? [1, 2] : [3, 4];

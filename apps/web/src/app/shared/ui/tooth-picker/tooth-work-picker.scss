@@ -1,0 +1,71 @@
+@use '../../../../styles/type';
+
+// On top of tooth-picker.scss: a marked tooth takes its kind's tint, outlined
+// in the kind's ink so it holds against the page, with the kind's letter.
+.chart {
+  &__tooth {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    line-height: 1.1;
+
+    &--on {
+      border-color: var(--tooth-fg);
+      background: var(--tooth-bg);
+      color: var(--tooth-fg);
+
+      &:hover {
+        background: color-mix(in srgb, var(--tooth-fg) 10%, var(--tooth-bg));
+      }
+    }
+  }
+
+  &__mark {
+    font: var(--mat-sys-label-small);
+  }
+
+  &__legend {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__group {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--pb-space-2);
+  }
+
+  &__swatch {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    border: 1px solid var(--tooth-fg);
+    border-radius: var(--mat-sys-corner-extra-small);
+    background: var(--tooth-bg);
+    color: var(--tooth-fg);
+    font: var(--mat-sys-label-small);
+  }
+
+  &__group-text {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--pb-space-2);
+    font: var(--mat-sys-body-medium);
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
+  &__group-count,
+  &__group-teeth {
+    @include type.supporting-text(small);
+  }
+}

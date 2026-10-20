@@ -15,11 +15,13 @@ import {
 import { LabJaw, LabWorkType } from '../../domain';
 import { Patient } from '../patients/patient.entity';
 import { Lab } from './lab.entity';
+import { LabCaseTooth } from './lab-case-tooth.entity';
 import { LabTrip } from './lab-trip.entity';
 
 /**
- * One piece of lab work for one patient — a crown, a set of laminates — from
- * the first impression until it is fitted.
+ * One piece of lab work for one patient — a crown, a set of laminates, or a
+ * jaw's crowns and laminates sent together — from the first impression until
+ * it is fitted.
  *
  * Where the work is now is never stored: it is delivered once `deliveredAt` is
  * set, at the lab while a trip is out, and back at the clinic otherwise (see
@@ -58,6 +60,11 @@ export class LabCase {
   @JoinColumn({ name: 'labId' })
   lab!: Lab;
 
+  /**
+   * The kinds of work in the case, in the order the form offers them. For
+   * work picked on the chart it is read off `toothWork` on every save; on its
+   * own it names per-jaw work, or the work of a case written before the chart.
+   */
   @Column({ type: 'enum', enum: LabWorkType, array: true, default: [] })
   workTypes!: LabWorkType[];
 
@@ -67,11 +74,16 @@ export class LabCase {
 
   /**
    * The teeth the work is for, in FDI notation (`16` is the upper right first
-   * molar), sorted. Empty for per-jaw work, and for cases written before the
-   * tooth chart, which keep what staff typed in `toothCount` and `teeth`.
+   * molar), sorted: `toothWork`'s teeth, kept on the case for search and for
+   * the card. Empty for per-jaw work, and for cases written before the tooth
+   * chart, which keep what staff typed in `toothCount` and `teeth`.
    */
   @Column({ type: 'smallint', array: true, default: [] })
   teethFdi!: number[];
+
+  /** Each charted tooth and the work it gets; written only with the case. */
+  @OneToMany(() => LabCaseTooth, (t) => t.labCase)
+  toothWork!: LabCaseTooth[];
 
   /** Legacy: the count staff typed, before teeth were picked from the chart. */
   @Column({ type: 'smallint', nullable: true })

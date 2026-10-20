@@ -3,21 +3,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PersianNumberPipe } from '../../pipes/persian-number.pipe';
 import { PbButton } from '../button/button';
-import {
-  QUADRANT_LABELS,
-  type Quadrant,
-  TOOTH_RANGE,
-  jawTeeth,
-  positionOf,
-  quadrantOf,
-} from './teeth';
-
-interface QuadrantView {
-  id: Quadrant;
-  label: string;
-  /** FDI numbers in the order they sit on screen. */
-  teeth: number[];
-}
+import { type QuadrantView, chartQuadrants, jawTeeth, positionOf, toothName } from './teeth';
 
 /**
  * The teeth a piece of work is for, picked on a chart — lab work, a surgery.
@@ -89,17 +75,7 @@ export class PbToothPicker {
   /** Upper right, upper left, lower right, lower left — rows of the chart. */
   protected readonly quadrants = computed<QuadrantView[]>(() => {
     this.i18n.currentLang();
-    const view = (id: Quadrant): QuadrantView => {
-      // Quadrants on the viewer's left count outward to the left: 7…1 | 1…7.
-      const fromMidline = TOOTH_RANGE.map((n) => id * 10 + n);
-      const onViewersLeft = id === 1 || id === 4;
-      return {
-        id,
-        label: this.i18n.instant(QUADRANT_LABELS[id]),
-        teeth: onViewersLeft ? fromMidline.reverse() : fromMidline,
-      };
-    };
-    return ([1, 2, 4, 3] as const).map(view);
+    return chartQuadrants(this.i18n);
   });
 
   protected isSelected(tooth: number): boolean {
@@ -107,7 +83,7 @@ export class PbToothPicker {
   }
 
   protected toothLabel(tooth: number): string {
-    return `${positionOf(tooth)} ${this.i18n.instant(QUADRANT_LABELS[quadrantOf(tooth)])}`;
+    return toothName(tooth, this.i18n);
   }
 
   protected toggle(tooth: number): void {

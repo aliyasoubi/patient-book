@@ -333,6 +333,8 @@
     "jaw": "فک",
     "teeth": "دندان‌ها",
     "teethRequired": "دست‌کم یک دندان را انتخاب کنید.",
+    "toothWorkHint": "نوع کار را انتخاب کنید و روی دندان‌ها بزنید. برای کار ترکیبی، نوع کار را عوض کنید و دندان‌های دیگر را بزنید.",
+    "toothWorkPick": "برای علامت زدن دندان، اول نوع کار را انتخاب کنید.",
     "teethWritten": "در ثبت قبلی نوشته شده بود: «{{text}}». دندان‌ها را از نمودار انتخاب کنید.",
     "impressionCount": "تعداد ایمپرشن",
     "analogCount": "تعداد آنالوگ",
@@ -390,6 +392,12 @@
     "night_guard": "نایت گارد",
     "sx": "SX"
   },
+  "labWorkMark": {
+    "crown": "ر",
+    "implant_crown": "ا",
+    "laminate": "ل",
+    "post": "پ"
+  },
   "tooth": {
     "q1": "بالا راست",
     "q2": "بالا چپ",
@@ -398,6 +406,7 @@
     "wholeUpper": "کل فک بالا",
     "wholeLower": "کل فک پایین",
     "clear": "پاک کردن",
+    "count": "{{count}} دندان",
     "range": "{{from}} تا {{to}}",
     "group": "{{quadrant}}: {{numbers}}",
     "groupSeparator": "؛ "

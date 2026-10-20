@@ -8,6 +8,7 @@ import type {
   LabBoard,
   LabCase,
   LabJaw,
+  LabToothWork,
   LabTripKind,
   LabWorkType,
   PageResult,
@@ -19,9 +20,11 @@ export interface LabCaseInput {
   patientId?: string | null;
   recordedName?: string;
   labId?: string;
+  /** Work named once: per-jaw work, or per-tooth work with no teeth picked. Empty with `toothWork`. */
   workTypes?: LabWorkType[];
   jaw?: LabJaw | null;
-  teethFdi?: number[];
+  /** Per-tooth work, tooth by tooth. */
+  toothWork?: LabToothWork[];
   implantBrand?: string | null;
   impressionCount?: number | null;
   analogCount?: number | null;

@@ -11,8 +11,13 @@ import {
   formatPersianNumber,
   PersianNumberPipe,
 } from '../../shared/pipes/persian-number.pipe';
-import { teethSummary } from '../../shared/ui/tooth-picker/teeth';
-import { labJawLabel, labTripKindLabel, labWorkTypeLabel } from '../../shared/labels';
+import { teethByWork, teethSummary } from '../../shared/ui/tooth-picker/teeth';
+import {
+  LAB_TOOTH_WORK_TYPES,
+  labJawLabel,
+  labTripKindLabel,
+  labWorkTypeLabel,
+} from '../../shared/labels';
 import { PbButton, PbIconButton, PbStatusChip } from '../../shared/ui';
 import type { StatusTone } from '../../shared/ui';
 
@@ -97,15 +102,24 @@ import type { StatusTone } from '../../shared/ui';
       </header>
 
       <div class="card__details">
-        <span class="card__detail">
-          <mat-icon aria-hidden="true">dentistry</mat-icon>{{ workTypes() }}
-        </span>
+        @if (workLines(); as lines) {
+          <!-- Charted work, kind by kind: what it is, how many teeth, which. -->
+          @for (line of lines; track line) {
+            <span class="card__detail">
+              <mat-icon aria-hidden="true">dentistry</mat-icon>{{ line }}
+            </span>
+          }
+        } @else {
+          <span class="card__detail">
+            <mat-icon aria-hidden="true">dentistry</mat-icon>{{ workTypes() }}
+          </span>
+        }
         @if (c.lab) {
           <span class="card__detail card__detail--lab">
             <mat-icon aria-hidden="true">science</mat-icon>{{ c.lab.name }}
           </span>
         }
-        @if (teeth()) {
+        @if (!workLines() && teeth()) {
           <span class="card__detail">
             <mat-icon aria-hidden="true">pin_drop</mat-icon>{{ teeth() }}
           </span>
@@ -315,17 +329,29 @@ export class LabCaseCard {
       .join(this.i18n.instant('list.separator'));
   });
 
+  /**
+   * Work picked on the chart, one line a kind — "implant crown · 1 tooth ·
+   * upper right: 6" — so a jaw of mixed work reads at a glance. Null for
+   * per-jaw work and for cases written before the chart.
+   */
+  protected readonly workLines = computed(() => {
+    this.i18n.currentLang();
+    const { toothWork } = this.labCase();
+    if (!toothWork.length) return null;
+    return teethByWork(toothWork, LAB_TOOTH_WORK_TYPES).map(({ workType, teeth }) =>
+      [
+        this.i18n.instant(labWorkTypeLabel(workType)),
+        this.i18n.instant('labs.toothCount', { count: formatPersianCount(teeth.length) }),
+        teethSummary(teeth, this.i18n),
+      ].join(' · '),
+    );
+  });
+
   protected readonly teeth = computed(() => {
     this.i18n.currentLang();
-    const { jaw, teethFdi, toothCount, teeth } = this.labCase();
+    // Per-jaw work by its jaw; a case written before the chart as it was typed.
+    const { jaw, toothCount, teeth } = this.labCase();
     if (jaw) return this.i18n.instant(labJawLabel(jaw));
-    // Picked on the chart: the count, then which teeth. Older cases show what was typed.
-    if (teethFdi.length) {
-      return [
-        this.i18n.instant('labs.toothCount', { count: formatPersianCount(teethFdi.length) }),
-        teethSummary(teethFdi, this.i18n),
-      ].join(' · ');
-    }
     const count = toothCount
       ? this.i18n.instant('labs.toothCount', { count: formatPersianCount(toothCount) })
       : null;

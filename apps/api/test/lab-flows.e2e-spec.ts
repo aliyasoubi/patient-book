@@ -35,8 +35,10 @@ interface LabCaseBody {
   id: string;
   version: number;
   stage: 'at_lab' | 'at_clinic' | 'delivered';
+  workTypes: string[];
   jaw: 'upper' | 'lower' | 'both' | null;
   teethFdi: number[];
+  toothWork: Array<{ tooth: number; workType: string }>;
   toothCount: number | null;
   teeth: string;
   timeliness: 'on_time' | 'due_today' | 'overdue' | null;
@@ -633,19 +635,124 @@ describeIfWritable('lab flows (e2e)', () => {
   });
 
   describe('editing a case', () => {
-    it('takes one kind of work per case', async () => {
+    it('names the work one way: tooth by tooth, or once', async () => {
       const body = {
-        recordedName: `آزمون یک نوع کار ${runId}`,
+        recordedName: `آزمون نام کار ${runId}`,
         labId,
         tripKind: 'impression',
         sentAt: daysAgo(0),
         waitDays: 7,
       };
-      for (const workTypes of [[], ['crown', 'laminate']]) {
+      for (const work of [
+        // No work at all.
+        {},
+        { workTypes: [] },
+        { toothWork: [] },
+        // Named once means one kind; several are named tooth by tooth.
+        { workTypes: ['crown', 'laminate'] },
+        // Both ways at once, which could disagree.
+        {
+          workTypes: ['crown'],
+          toothWork: [{ tooth: 16, workType: 'crown' }],
+        },
+        // Per-jaw work has no teeth.
+        {
+          workTypes: ['night_guard'],
+          jaw: 'upper',
+          toothWork: [{ tooth: 16, workType: 'crown' }],
+        },
+        { toothWork: [{ tooth: 16, workType: 'night_guard' }] },
+      ]) {
         await asStaff(http().post('/api/lab-cases'))
-          .send({ ...body, workTypes })
+          .send({ ...body, ...work })
           .expect(400);
       }
+    });
+
+    it('carries a jaw of mixed work tooth by tooth, as one case', async () => {
+      const opened = await openCase(`آزمون کار ترکیبی ${runId}`, 0, 21, {
+        workTypes: undefined,
+        toothWork: [
+          { tooth: 22, workType: 'laminate' },
+          { tooth: 16, workType: 'implant_crown' },
+          { tooth: 15, workType: 'crown' },
+          { tooth: 11, workType: 'laminate' },
+          { tooth: 14, workType: 'crown' },
+          { tooth: 21, workType: 'laminate' },
+          { tooth: 12, workType: 'laminate' },
+        ],
+      });
+      // The teeth in order; the kinds in the order the form offers them.
+      expect(opened).toMatchObject({
+        workTypes: ['crown', 'implant_crown', 'laminate'],
+        teethFdi: [11, 12, 14, 15, 16, 21, 22],
+        toothCount: 7,
+        jaw: null,
+      });
+      expect(opened.toothWork).toEqual([
+        { tooth: 11, workType: 'laminate' },
+        { tooth: 12, workType: 'laminate' },
+        { tooth: 14, workType: 'crown' },
+        { tooth: 15, workType: 'crown' },
+        { tooth: 16, workType: 'implant_crown' },
+        { tooth: 21, workType: 'laminate' },
+        { tooth: 22, workType: 'laminate' },
+      ]);
+      // Found by any of its teeth, as before.
+      expect((await board(`${runId} 16`)).atLab.map((c) => c.id)).toContain(
+        opened.id,
+      );
+
+      // A tooth changes its work, another is dropped: the chart is replaced whole.
+      const edited = (
+        await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
+          .send({
+            toothWork: [
+              { tooth: 14, workType: 'crown' },
+              { tooth: 15, workType: 'post' },
+              { tooth: 16, workType: 'implant_crown' },
+            ],
+            expectedVersion: opened.version,
+          })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(edited).toMatchObject({
+        workTypes: ['crown', 'implant_crown', 'post'],
+        teethFdi: [14, 15, 16],
+        toothCount: 3,
+      });
+
+      // Work named once on a charted case: every tooth gets it.
+      const named = (
+        await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
+          .send({ workTypes: ['crown'], expectedVersion: edited.version })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(named.workTypes).toEqual(['crown']);
+      expect(named.toothWork).toEqual([
+        { tooth: 14, workType: 'crown' },
+        { tooth: 15, workType: 'crown' },
+        { tooth: 16, workType: 'crown' },
+      ]);
+
+      // Turned into per-jaw work: the teeth go.
+      const jaw = (
+        await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
+          .send({
+            workTypes: ['night_guard'],
+            jaw: 'lower',
+            toothWork: [],
+            expectedVersion: named.version,
+          })
+          .expect(200)
+      ).body as LabCaseBody;
+      expect(jaw).toMatchObject({
+        workTypes: ['night_guard'],
+        jaw: 'lower',
+        teethFdi: [],
+        toothWork: [],
+        toothCount: null,
+      });
     });
 
     it('records per-jaw work by jaw, and per-tooth work by teeth', async () => {
@@ -653,12 +760,11 @@ describeIfWritable('lab flows (e2e)', () => {
         const opened = await openCase(`آزمون فک ${workType} ${runId}`, 0, 7, {
           workTypes: [workType],
           jaw: 'upper',
-          // Teeth make no sense on per-jaw work: dropped, not stored.
-          teethFdi: [16],
         });
         expect(opened).toMatchObject({
           jaw: 'upper',
           teethFdi: [],
+          toothWork: [],
           toothCount: null,
           teeth: '',
         });
@@ -671,14 +777,18 @@ describeIfWritable('lab flows (e2e)', () => {
       const edited = (
         await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
           .send({
-            workTypes: ['crown'],
-            teethFdi: [17, 16, 21],
+            workTypes: [],
+            toothWork: [17, 16, 21].map((tooth) => ({
+              tooth,
+              workType: 'crown',
+            })),
             expectedVersion: opened.version,
           })
           .expect(200)
       ).body as LabCaseBody;
       // Sorted, counted from the chart, and the jaw is gone.
       expect(edited).toMatchObject({
+        workTypes: ['crown'],
         jaw: null,
         teethFdi: [16, 17, 21],
         toothCount: 3,
@@ -686,9 +796,12 @@ describeIfWritable('lab flows (e2e)', () => {
       });
 
       // Not teeth the chart offers: a wisdom tooth, a primary tooth, a repeat.
-      for (const teethFdi of [[18], [51], [0], [16, 16]]) {
+      for (const teeth of [[18], [51], [0], [16, 16]]) {
         await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
-          .send({ teethFdi, expectedVersion: edited.version })
+          .send({
+            toothWork: teeth.map((tooth) => ({ tooth, workType: 'crown' })),
+            expectedVersion: edited.version,
+          })
           .expect(400);
       }
       // Not a jaw the form offers.
@@ -703,7 +816,7 @@ describeIfWritable('lab flows (e2e)', () => {
       const edited = (
         await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
           .send({
-            teethFdi: [16],
+            toothWork: [{ tooth: 16, workType: 'crown' }],
             sentAt: daysAgo(3),
             waitDays: 21,
             expectedVersion: opened.version,
@@ -720,7 +833,10 @@ describeIfWritable('lab flows (e2e)', () => {
         .send({})
         .expect(200);
       const stale = await asStaff(http().patch(`/api/lab-cases/${opened.id}`))
-        .send({ teethFdi: [17], expectedVersion: edited.version })
+        .send({
+          toothWork: [{ tooth: 17, workType: 'crown' }],
+          expectedVersion: edited.version,
+        })
         .expect(409);
       expect((stale.body as { code: string }).code).toBe(
         ErrorCode.LabCaseModified,

@@ -1,14 +1,16 @@
 import type { TranslateService } from '@ngx-translate/core';
 
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
+import type { LabWorkType } from '../../core/models/common.model';
 import {
+  LAB_TOOTH_WORK_TYPES,
   LAB_TRIP_KINDS,
   LAB_WAIT_DAYS,
   LAB_WORK_TYPES,
   labTripKindLabel,
   labWorkTypeLabel,
 } from '../../shared/labels';
-import type { FilterChipOption, SelectOption } from '../../shared/ui';
+import type { FilterChipOption, SelectOption, ToothWorkKind, ToothWorkTone } from '../../shared/ui';
 
 /** The turnarounds as the book wrote them — «یک هفته»، «سه هفته» — not as a count of days. */
 const WAIT_LABELS: Partial<Record<number, string>> = {
@@ -54,5 +56,25 @@ export function labWorkTypeOptions(): FilterChipOption[] {
     value: type,
     label: labWorkTypeLabel(type),
     translate: true,
+  }));
+}
+
+/**
+ * How the chart marks each kind of per-tooth work: a tint and a letter, so a
+ * crown beside a laminate reads apart without relying on colour. Literal keys,
+ * so the i18n check sees every one.
+ */
+const TOOTH_WORK_LOOK: Partial<Record<LabWorkType, { mark: string; tone: ToothWorkTone }>> = {
+  crown: { mark: 'labWorkMark.crown', tone: 'sky' },
+  implant_crown: { mark: 'labWorkMark.implant_crown', tone: 'violet' },
+  laminate: { mark: 'labWorkMark.laminate', tone: 'teal' },
+  post: { mark: 'labWorkMark.post', tone: 'sand' },
+};
+
+export function labToothWorkKinds(): ToothWorkKind[] {
+  return LAB_TOOTH_WORK_TYPES.map((type) => ({
+    value: type,
+    label: labWorkTypeLabel(type),
+    ...TOOTH_WORK_LOOK[type]!,
   }));
 }

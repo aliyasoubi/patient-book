@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -17,6 +17,11 @@ import {
   MaxLength,
   Min,
   Validate,
+  ValidateIf,
+  ValidateNested,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 
 import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
@@ -26,6 +31,7 @@ import {
   LabJaw,
   LabTripKind,
   LabWorkType,
+  TOOTH_WORK_TYPES,
   normalizeForDisplay,
 } from '../../../domain';
 import { IsJalaliDateConstraint } from '../../patients/dto/patient.dto';
@@ -59,6 +65,36 @@ export class UpdateLabDto extends PartialType(CreateLabDto) {
 }
 
 // -- Lab cases ---------------------------------------------------------------
+
+/** One tooth of a case and the work it gets, as the chart marks it. */
+export class ToothWorkDto {
+  /** FDI number, `16` being the upper right first molar. */
+  @ApiProperty({ example: 16 })
+  @IsIn(LAB_TOOTH_NUMBERS)
+  tooth!: number;
+
+  @ApiProperty({ enum: TOOTH_WORK_TYPES })
+  @IsIn(TOOTH_WORK_TYPES)
+  workType!: LabWorkType;
+}
+
+/**
+ * The work is named one way: tooth by tooth on the chart, or once in
+ * `workTypes`. Both at once could disagree, so they are refused together.
+ */
+@ValidatorConstraint({ name: 'workNamedOnce', async: false })
+class WorkNamedOnceConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown, args: ValidationArguments): boolean {
+    const named = (args.object as { workTypes?: unknown[] | null }).workTypes;
+    return !(Array.isArray(value) && value.length && named?.length);
+  }
+  defaultMessage(): string {
+    return 'Name the work tooth by tooth or in workTypes, not both';
+  }
+}
+
+const hasToothWork = (o: { toothWork?: unknown[] | null }): boolean =>
+  !!o.toothWork?.length;
 
 /** What narrows the board; it is never paged — active work is always all shown. */
 export class LabBoardQueryDto {
@@ -111,29 +147,51 @@ export class CreateLabCaseDto {
   @IsUUID()
   labId!: string;
 
-  // One kind of work per case. The column stays a list so cases opened before
-  // that rule keep what they were written with.
-  @ApiProperty({ enum: LabWorkType, isArray: true, minItems: 1, maxItems: 1 })
+  /**
+   * Per-tooth work, tooth by tooth: one case can hold a jaw's crowns,
+   * laminates and implant crowns together. The case's `workTypes` and
+   * `teethFdi` are read off it.
+   */
+  @ApiPropertyOptional({
+    type: [ToothWorkDto],
+    example: [
+      { tooth: 11, workType: 'laminate' },
+      { tooth: 16, workType: 'implant_crown' },
+    ],
+  })
+  @IsArray()
+  @ArrayMaxSize(LAB_TOOTH_NUMBERS.length)
+  @ArrayUnique((w: ToothWorkDto) => w?.tooth)
+  @ValidateNested({ each: true })
+  @Type(() => ToothWorkDto)
+  @Validate(WorkNamedOnceConstraint)
+  @IsOptional()
+  toothWork?: ToothWorkDto[];
+
+  /**
+   * Work named once instead of tooth by tooth: per-jaw work (a night guard,
+   * SX), or per-tooth work whose teeth are not picked. Required unless
+   * `toothWork` names teeth. Naming per-tooth work here on a case that has
+   * teeth gives every one of them that work.
+   */
+  @ApiPropertyOptional({
+    enum: LabWorkType,
+    isArray: true,
+    minItems: 1,
+    maxItems: 1,
+  })
+  @ValidateIf((o: CreateLabCaseDto) => !hasToothWork(o))
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(1)
   @IsEnum(LabWorkType, { each: true })
-  workTypes!: LabWorkType[];
+  workTypes?: LabWorkType[];
 
   /** For per-jaw work (a night guard, SX), instead of tooth numbers. */
   @ApiPropertyOptional({ enum: LabJaw })
   @IsEnum(LabJaw)
   @IsOptional()
   jaw?: LabJaw | null;
-
-  /** For per-tooth work: FDI numbers, `16` being the upper right first molar. */
-  @ApiPropertyOptional({ type: [Number], example: [16, 17] })
-  @IsArray()
-  @ArrayMaxSize(LAB_TOOTH_NUMBERS.length)
-  @ArrayUnique()
-  @IsIn(LAB_TOOTH_NUMBERS, { each: true })
-  @IsOptional()
-  teethFdi?: number[];
 
   @ApiPropertyOptional({ enum: IMPLANT_BRAND_NAMES })
   @IsIn(IMPLANT_BRAND_NAMES)
