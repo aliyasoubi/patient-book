@@ -167,16 +167,25 @@ export interface LabTrip {
   note: string | null;
 }
 
+/** One charted tooth of a lab case and its work — a crown on 14, a laminate on 11. */
+export interface LabToothWork {
+  tooth: number;
+  workType: LabWorkType;
+}
+
 export interface LabCase {
   id: string;
   patientId: string | null;
   patient: { id: string; fileNo: string; fullName: string; mobile: string | null } | null;
   recordedName: string;
   lab: Lab | null;
+  /** The kinds of work, in the order the form offers them; for charted work, read off its teeth. */
   workTypes: LabWorkType[];
   jaw: LabJaw | null;
   /** FDI numbers picked on the chart, sorted. Empty for per-jaw work and for older cases. */
   teethFdi: number[];
+  /** Each charted tooth and the work it gets, in tooth order. */
+  toothWork: LabToothWork[];
   /** The chart's count; for a case written before the chart, the count staff typed. */
   toothCount: number | null;
   /** Older cases only: the tooth text as typed. */

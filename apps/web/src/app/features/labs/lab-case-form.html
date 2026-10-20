@@ -73,12 +73,19 @@
             />
           </div>
         } @else {
+          <!-- Per-tooth work: the chosen kind is what a tap puts on a tooth, so
+               one case can hold a jaw's crowns, laminates and implant crowns. -->
           <div class="pb-field-grid__full form__work">
             <span class="form__label">{{ 'labForm.teeth' | translate }}</span>
-            <pb-tooth-picker
-              [selected]="form.controls.teeth.value"
-              (selectedChange)="setTeeth($event)"
-              [invalid]="form.controls.teeth.touched && form.controls.teeth.invalid"
+            <span class="form__hint">{{
+              (brush() ? 'labForm.toothWorkHint' : 'labForm.toothWorkPick') | translate
+            }}</span>
+            <pb-tooth-work-picker
+              [value]="form.controls.toothWork.value"
+              (valueChange)="setToothWork($event)"
+              [kinds]="toothWorkKinds"
+              [brush]="brush()"
+              [invalid]="form.controls.toothWork.touched && form.controls.toothWork.invalid"
               [ariaLabel]="'labForm.teeth' | translate"
             />
             @if (legacyTeeth(); as written) {
@@ -86,7 +93,7 @@
                 'labForm.teethWritten' | translate: { text: written }
               }}</span>
             }
-            @if (form.controls.teeth.touched && form.controls.teeth.invalid) {
+            @if (form.controls.toothWork.touched && form.controls.toothWork.invalid) {
               <span class="form__error" role="alert">{{
                 'labForm.teethRequired' | translate
               }}</span>

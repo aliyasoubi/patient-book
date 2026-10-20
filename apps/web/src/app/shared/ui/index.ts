@@ -41,5 +41,8 @@ export { PbListToolbar } from './list-toolbar/list-toolbar';
 export { PbFormActions } from './form-actions/form-actions';
 export { PbSwitch } from './switch/switch';
 export { PbToothPicker } from './tooth-picker/tooth-picker';
+export { PbToothWorkPicker } from './tooth-picker/tooth-work-picker';
+export type { ToothWorkKind, ToothWorkTone } from './tooth-picker/tooth-work-picker';
+export type { ToothWork } from './tooth-picker/teeth';
 export { PbProgressSteps } from './progress-steps/progress-steps';
 export type { ProgressStep, ProgressStepState } from './progress-steps/progress-steps';

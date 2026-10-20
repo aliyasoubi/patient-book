@@ -3,7 +3,7 @@ import type { TranslateService } from '@ngx-translate/core';
 
 import type { LabTrip } from '../../core/models/common.model';
 import { defaultLabWaitDays } from '../../shared/labels';
-import { labWaitOptions } from './lab-options';
+import { labToothWorkKinds, labWaitOptions } from './lab-options';
 import { suggestedTripKind } from './lab-send-dialog';
 
 /** Echoes the key and its params, so a test reads what would be translated. */
@@ -57,9 +57,25 @@ describe('suggestedTripKind', () => {
     expect(suggestedTripKind({ workTypes: ['crown'], trips: [trip(1)] })).toBe('frame');
   });
 
+  it('offers the frame when laminates went with other work', () => {
+    expect(suggestedTripKind({ workTypes: ['implant_crown', 'laminate'], trips: [trip(1)] })).toBe(
+      'frame',
+    );
+    expect(suggestedTripKind({ workTypes: ['laminate', 'post'], trips: [trip(1)] })).toBe('frame');
+  });
+
   it('offers a correction once the try-in has been', () => {
     expect(suggestedTripKind({ workTypes: ['crown'], trips: [trip(1), trip(2)] })).toBe(
       'correction',
     );
+  });
+});
+
+describe('labToothWorkKinds', () => {
+  it('offers the per-tooth work only, each with its own tint and letter', () => {
+    const kinds = labToothWorkKinds();
+    expect(kinds.map((k) => k.value)).toEqual(['crown', 'implant_crown', 'laminate', 'post']);
+    expect(new Set(kinds.map((k) => k.tone)).size).toBe(kinds.length);
+    expect(new Set(kinds.map((k) => k.mark)).size).toBe(kinds.length);
   });
 });

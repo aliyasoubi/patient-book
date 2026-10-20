@@ -4,6 +4,7 @@ import { addDays, differenceInCalendarDays } from 'date-fns-jalali';
 import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { LabCase } from './lab-case.entity';
+import { LabCaseTooth } from './lab-case-tooth.entity';
 import { LabTrip } from './lab-trip.entity';
 import { Lab } from './lab.entity';
 import { Patient } from '../patients/patient.entity';
@@ -33,6 +34,8 @@ import {
   ErrorCode,
   JAW_WORK_TYPES,
   JalaliDate,
+  LabWorkType,
+  TOOTH_WORK_TYPES,
   searchKey,
   storedDate,
 } from '../../domain';
@@ -64,6 +67,14 @@ const dayOrToday = (value: string | undefined): Date =>
 /** How long the lab has to send parts that did not come with the work, unless told otherwise. */
 const DEFAULT_PARTS_DAYS = 7;
 
+/** A charted tooth and the work it gets. */
+interface ToothWork {
+  tooth: number;
+  workType: LabWorkType;
+}
+
+const byTooth = (a: ToothWork, b: ToothWork): number => a.tooth - b.tooth;
+
 const partsOwed = (c: LabCase): boolean =>
   (c.impressionCount ?? 0) + (c.analogCount ?? 0) > 0 && !c.partsReturnedAt;
 
@@ -87,7 +98,8 @@ export class LabCasesService {
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.lab', 'l')
       .leftJoinAndSelect('c.patient', 'p')
-      .leftJoinAndSelect('c.trips', 't');
+      .leftJoinAndSelect('c.trips', 't')
+      .leftJoinAndSelect('c.toothWork', 'w');
   }
 
   private search(qb: SelectQueryBuilder<LabCase>, q?: string): void {
@@ -205,8 +217,9 @@ export class LabCasesService {
         teeth: '',
         searchText: '',
       });
-      await this.assign(c, dto, manager);
+      const chart = await this.assign(c, dto, manager);
       const saved = await cases.save(c);
+      await this.writeTeeth(saved.id, chart, manager);
       const sentAt = JalaliDate.parse(dto.sentAt).date;
       await manager.getRepository(LabTrip).save(
         manager.getRepository(LabTrip).create({
@@ -230,6 +243,7 @@ export class LabCasesService {
             recordedName: saved.recordedName,
             labId: saved.labId,
             workTypes: saved.workTypes,
+            ...(chart?.length ? { toothWork: chart } : {}),
             tripKind: dto.tripKind,
             sentAt: dto.sentAt,
           },
@@ -260,8 +274,9 @@ export class LabCasesService {
       if (c.version !== expectedVersion) {
         throw AppException.conflict(ErrorCode.LabCaseModified);
       }
-      await this.assign(c, dto, manager);
+      const chart = await this.assign(c, dto, manager);
       await cases.save(c);
+      await this.writeTeeth(id, chart, manager);
 
       const tripEdit =
         dto.tripKind !== undefined ||
@@ -613,12 +628,16 @@ export class LabCasesService {
     return this.findOne(id);
   }
 
-  /** Apply the case's own fields, checking the lab and patient they name exist. */
+  /**
+   * Apply the case's own fields, checking the lab and patient they name exist.
+   * Returns the case's teeth when they change, for {@link writeTeeth} to store
+   * once the case is saved; null leaves them as they are.
+   */
   private async assign(
     c: LabCase,
     dto: Partial<CreateLabCaseDto>,
     manager: EntityManager,
-  ): Promise<void> {
+  ): Promise<ToothWork[] | null> {
     if (dto.labId !== undefined && dto.labId !== c.labId) {
       const lab = await manager
         .getRepository(Lab)
@@ -636,17 +655,20 @@ export class LabCasesService {
       c.patientId = dto.patientId ?? null;
     }
     if (dto.recordedName !== undefined) c.recordedName = dto.recordedName;
-    if (dto.workTypes !== undefined) c.workTypes = dto.workTypes;
     if (dto.jaw !== undefined) c.jaw = dto.jaw ?? null;
-    if (dto.teethFdi !== undefined) {
-      c.teethFdi = [...dto.teethFdi].sort((a, b) => a - b);
+    const chart = await this.chartOf(c, dto, manager);
+    if (chart) c.teethFdi = chart.map((w) => w.tooth);
+    // Charted work is whatever its teeth carry; otherwise it is named once.
+    const named = dto.workTypes?.[0];
+    if (chart?.length) {
+      c.workTypes = TOOTH_WORK_TYPES.filter((t) =>
+        chart.some((w) => w.workType === t),
+      );
+    } else if (named) {
+      c.workTypes = [named];
     }
     // Per-jaw work has a jaw and no teeth; everything else has teeth and no jaw.
-    if (c.workTypes.some((t) => JAW_WORK_TYPES.includes(t))) {
-      c.teethFdi = [];
-    } else {
-      c.jaw = null;
-    }
+    if (!c.workTypes.some((t) => JAW_WORK_TYPES.includes(t))) c.jaw = null;
     // Teeth picked from the chart replace what a case was first written with.
     if (c.teethFdi.length || c.jaw) {
       c.toothCount = null;
@@ -671,6 +693,48 @@ export class LabCasesService {
         .filter(Boolean)
         .join(' '),
     );
+    return chart;
+  }
+
+  /**
+   * The case's teeth after this request, or null when it leaves them alone.
+   * Teeth sent tooth by tooth replace the chart; per-tooth work named once
+   * gives every charted tooth that work; per-jaw work has no teeth at all.
+   */
+  private async chartOf(
+    c: LabCase,
+    dto: Partial<CreateLabCaseDto>,
+    manager: EntityManager,
+  ): Promise<ToothWork[] | null> {
+    if (dto.toothWork?.length) {
+      return dto.toothWork
+        .map(({ tooth, workType }) => ({ tooth, workType }))
+        .sort(byTooth);
+    }
+    const named = dto.workTypes?.[0];
+    if (named && JAW_WORK_TYPES.includes(named)) return [];
+    if (dto.toothWork !== undefined) return [];
+    if (!named || !c.id) return null;
+    const charted = await manager
+      .getRepository(LabCaseTooth)
+      .find({ where: { labCaseId: c.id } });
+    return charted.length
+      ? charted.map(({ tooth }) => ({ tooth, workType: named })).sort(byTooth)
+      : null;
+  }
+
+  /** Store the teeth {@link assign} worked out, whole, beside the saved case. */
+  private async writeTeeth(
+    labCaseId: string,
+    chart: ToothWork[] | null,
+    manager: EntityManager,
+  ): Promise<void> {
+    if (!chart) return;
+    const teeth = manager.getRepository(LabCaseTooth);
+    await teeth.delete({ labCaseId });
+    if (chart.length) {
+      await teeth.insert(chart.map((w) => ({ labCaseId, ...w })));
+    }
   }
 
   private toResponse(c: LabCase, now: Date): Record<string, unknown> {
@@ -719,6 +783,10 @@ export class LabCasesService {
       workTypes: c.workTypes,
       jaw: c.jaw,
       teethFdi: c.teethFdi,
+      // Each charted tooth and its work, in tooth order.
+      toothWork: [...(c.toothWork ?? [])]
+        .map(({ tooth, workType }) => ({ tooth, workType }))
+        .sort(byTooth),
       // Counted from the chart; the typed count only for cases that predate it.
       toothCount: c.teethFdi.length || c.toothCount,
       teeth: c.teeth,

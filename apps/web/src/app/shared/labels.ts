@@ -388,6 +388,14 @@ const LAB_WORK_TYPE_LABELS: Record<LabWorkType, string> = {
   sx: 'labWorkType.sx',
 };
 
+/** Made tooth by tooth: each tooth of a case gets one of these, so a case can mix them. */
+export const LAB_TOOTH_WORK_TYPES: readonly LabWorkType[] = [
+  'crown',
+  'implant_crown',
+  'laminate',
+  'post',
+];
+
 /** Made per jaw, not per tooth: the form asks for a jaw instead of teeth. */
 export function isJawWork(type: LabWorkType | undefined): boolean {
   return type === 'night_guard' || type === 'sx';
@@ -424,7 +432,8 @@ export function labTripKindLabel(kind: LabTripKind): string {
 
 /**
  * A lab's turnaround as the book wrote it — «یک هفته»، «سه هفته» — in days.
- * Laminates take three weeks at most labs, everything else about one.
+ * Laminates take three weeks at most labs, everything else about one; work
+ * sent together comes back together, so a case with laminates takes three.
  */
 export const LAB_WAIT_DAYS = [3, 7, 10, 14, 21, 28] as const;
 

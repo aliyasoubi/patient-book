@@ -33,6 +33,7 @@ import type {
   Lab,
   LabCase,
   LabJaw,
+  LabToothWork,
   LabTripKind,
   LabWorkType,
 } from '../../core/models/common.model';
@@ -44,6 +45,7 @@ import { adoptUntouched } from '../../shared/form-sync';
 import {
   IMPLANT_BRAND_KEYS,
   LAB_JAWS,
+  LAB_TOOTH_WORK_TYPES,
   isJawWork,
   labJawLabel,
   defaultLabWaitDays,
@@ -65,10 +67,15 @@ import {
   PbSurface,
   PbTextField,
   PbTextareaField,
-  PbToothPicker,
+  PbToothWorkPicker,
 } from '../../shared/ui';
-import type { SegmentOption, SelectOption, TextFieldOption } from '../../shared/ui';
-import { labTripKindOptions, labWaitOptions, labWorkTypeOptions } from './lab-options';
+import type { SegmentOption, SelectOption, TextFieldOption, ToothWork } from '../../shared/ui';
+import {
+  labToothWorkKinds,
+  labTripKindOptions,
+  labWaitOptions,
+  labWorkTypeOptions,
+} from './lab-options';
 
 interface LinkedPatient {
   id: string;
@@ -91,11 +98,14 @@ const countValue = (raw: string): number | null => {
   return value ? Number(value) : null;
 };
 
-const atLeastOne = (control: AbstractControl<string[]>): ValidationErrors | null =>
-  control.value.length ? null : { required: true };
+/** A kind of work is chosen, unless teeth on the chart already carry theirs. */
+const workUnlessCharted = (control: AbstractControl<string[]>): ValidationErrors | null => {
+  const teeth = (control.parent?.get('toothWork')?.value ?? []) as LabToothWork[];
+  return control.value.length || teeth.length ? null : { required: true };
+};
 
 /** Teeth are asked for unless the work is made per jaw. */
-const teethUnlessJawWork = (control: AbstractControl<number[]>): ValidationErrors | null => {
+const teethUnlessJawWork = (control: AbstractControl<LabToothWork[]>): ValidationErrors | null => {
   const types = (control.parent?.get('workTypes')?.value ?? []) as string[];
   return types.some((type) => isJawWork(type as LabWorkType)) || control.value.length
     ? null
@@ -129,7 +139,7 @@ const teethUnlessJawWork = (control: AbstractControl<number[]>): ValidationError
     PbSurface,
     PbTextField,
     PbTextareaField,
-    PbToothPicker,
+    PbToothWorkPicker,
   ],
   templateUrl: './lab-case-form.html',
   styleUrl: './lab-case-form.scss',
@@ -153,6 +163,7 @@ export class LabCaseForm implements HasUnsavedChanges {
 
   protected readonly tripKindLabel = labTripKindLabel;
   protected readonly workTypeOptions = labWorkTypeOptions();
+  protected readonly toothWorkKinds = labToothWorkKinds();
   protected readonly tripKindOptions = labTripKindOptions();
 
   protected readonly saving = signal(false);
@@ -165,9 +176,11 @@ export class LabCaseForm implements HasUnsavedChanges {
   protected readonly form = this.fb.nonNullable.group({
     recordedName: ['', [Validators.required, Validators.maxLength(160)]],
     labId: ['', Validators.required],
-    workTypes: this.fb.nonNullable.control<string[]>([], atLeastOne),
+    // The kind of work chosen: what a tap on the chart puts on a tooth, or the
+    // per-jaw work itself. Each charted tooth carries its own.
+    workTypes: this.fb.nonNullable.control<string[]>([], workUnlessCharted),
     // After `workTypes`: its validator reads the work type from the group.
-    teeth: this.fb.nonNullable.control<number[]>([], teethUnlessJawWork),
+    toothWork: this.fb.nonNullable.control<LabToothWork[]>([], teethUnlessJawWork),
     jaw: ['upper' as LabJaw],
     implantBrand: [''],
     impressionCount: ['', count(0, 32)],
@@ -182,11 +195,37 @@ export class LabCaseForm implements HasUnsavedChanges {
   private readonly workTypesValue = toSignal(this.form.controls.workTypes.valueChanges, {
     initialValue: [] as string[],
   });
+  private readonly toothWorkValue = toSignal(this.form.controls.toothWork.valueChanges, {
+    initialValue: [] as LabToothWork[],
+  });
+  private readonly tripKindValue = toSignal(this.form.controls.tripKind.valueChanges, {
+    initialValue: this.form.controls.tripKind.value,
+  });
+
   /** A night guard or SX is made per jaw: the jaw replaces the teeth. */
   protected readonly isJawWork = computed(() => {
     const types = this.workTypesValue();
     return types.length === 1 && isJawWork(types[0] as LabWorkType);
   });
+
+  /** The per-tooth work chosen, which a tap on the chart puts on a tooth. */
+  protected readonly brush = computed(() =>
+    this.isJawWork() ? null : (this.workTypesValue()[0] ?? null),
+  );
+
+  /** What the case makes, as it will be saved: the jaw's work, or whatever its teeth carry. */
+  private readonly caseWork = computed<LabWorkType[]>(() => {
+    if (this.isJawWork()) return this.workTypesValue() as LabWorkType[];
+    const teeth = this.toothWorkValue();
+    return LAB_TOOTH_WORK_TYPES.filter((type) => teeth.some((w) => w.workType === type));
+  });
+
+  /** Teeth getting an implant crown: each sends an impression coping and an analog along. */
+  private readonly implantTeeth = computed(() =>
+    this.isJawWork()
+      ? 0
+      : this.toothWorkValue().filter((w) => w.workType === 'implant_crown').length,
+  );
 
   /** What a case written before the chart says about its teeth, shown until it is picked again. */
   protected readonly legacyTeeth = computed(() => {
@@ -208,9 +247,7 @@ export class LabCaseForm implements HasUnsavedChanges {
     translate: true,
   }));
 
-  protected readonly isImplantCrown = computed(() =>
-    this.workTypesValue().includes('implant_crown'),
-  );
+  protected readonly isImplantCrown = computed(() => this.implantTeeth() > 0);
 
   // -- Options ------------------------------------------------------------------
 
@@ -296,18 +333,41 @@ export class LabCaseForm implements HasUnsavedChanges {
       error: () => undefined,
     });
 
-    // Teeth are required for per-tooth work only, so a change of work re-checks them.
+    // Teeth are required for per-tooth work only, and a kind of work only
+    // until teeth carry theirs, so each re-checks the other.
     this.form.controls.workTypes.valueChanges.subscribe(() =>
-      this.form.controls.teeth.updateValueAndValidity(),
+      this.form.controls.toothWork.updateValueAndValidity({ emitEvent: false }),
+    );
+    this.form.controls.toothWork.valueChanges.subscribe(() =>
+      this.form.controls.workTypes.updateValueAndValidity({ emitEvent: false }),
     );
 
-    // Until someone picks a turnaround, it follows the work: three weeks for
-    // laminates, one for the rest.
-    this.form.controls.workTypes.valueChanges.subscribe((types) => {
-      const wait = this.form.controls.waitDays;
-      if (!this.isEdit() && !wait.dirty) {
-        wait.setValue(String(defaultLabWaitDays(types as LabWorkType[])));
-      }
+    // Until someone picks a turnaround, it follows the work: three weeks when
+    // it has laminates, one otherwise.
+    effect(() => {
+      const work = this.caseWork();
+      untracked(() => {
+        const wait = this.form.controls.waitDays;
+        const days = String(defaultLabWaitDays(work));
+        if (!this.isEdit() && !wait.dirty && wait.value !== days) wait.setValue(days);
+      });
+    });
+
+    // A new case's impression copings and analogs follow its implant crowns,
+    // one each a tooth, until someone types a count. A scan sends none.
+    effect(() => {
+      const implants = this.implantTeeth();
+      const scan = this.tripKindValue() === 'scan';
+      untracked(() => {
+        if (this.isEdit()) return;
+        const count = implants && !scan ? String(implants) : '';
+        for (const control of [
+          this.form.controls.impressionCount,
+          this.form.controls.analogCount,
+        ]) {
+          if (!control.dirty && control.value !== count) control.setValue(count);
+        }
+      });
     });
 
     effect(() => {
@@ -356,16 +416,18 @@ export class LabCaseForm implements HasUnsavedChanges {
     this.form.controls.jaw.markAsDirty();
   }
 
-  protected setTeeth(teeth: number[]): void {
-    const control = this.form.controls.teeth;
-    control.setValue(teeth);
+  protected setToothWork(work: readonly ToothWork[]): void {
+    const control = this.form.controls.toothWork;
+    // The chart is only given lab work types, so that is all it hands back.
+    control.setValue(work.map((w) => ({ tooth: w.tooth, workType: w.workType as LabWorkType })));
     control.markAsDirty();
     control.markAsTouched();
   }
 
   protected setWorkTypes(types: string[]): void {
     const control = this.form.controls.workTypes;
-    // One kind of work per case; tapping the chosen chip again leaves none chosen.
+    // One kind chosen at a time — the teeth keep theirs; tapping the chosen
+    // chip again leaves none chosen.
     control.setValue(types.slice(0, 1));
     control.markAsDirty();
     control.markAsTouched();
@@ -404,10 +466,10 @@ export class LabCaseForm implements HasUnsavedChanges {
     return {
       recordedName: c.recordedName,
       labId: c.lab?.id ?? '',
-      // A case opened before there was one choice may hold several: it asks for one.
-      workTypes: c.workTypes.length === 1 ? [...c.workTypes] : [],
+      // The chart opens on the case's first kind of work; its teeth keep their own.
+      workTypes: c.workTypes.slice(0, 1),
       jaw: c.jaw ?? ('upper' as LabJaw),
-      teeth: [...c.teethFdi],
+      toothWork: c.toothWork.map((w) => ({ ...w })),
       implantBrand: c.implantBrand ?? '',
       impressionCount: c.impressionCount !== null ? String(c.impressionCount) : '',
       analogCount: c.analogCount !== null ? String(c.analogCount) : '',
@@ -433,16 +495,17 @@ export class LabCaseForm implements HasUnsavedChanges {
 
     const raw = this.form.getRawValue();
     const blank = (v: string): string | null => v.trim() || null;
-    const implant = raw.workTypes.includes('implant_crown');
     const jawWork = this.isJawWork();
+    const implant = this.isImplantCrown();
     const body: LabCaseInput = {
       patientId: this.linkedPatient()?.id ?? null,
       recordedName: raw.recordedName.trim(),
       labId: raw.labId,
-      workTypes: raw.workTypes as LabWorkType[],
-      // One or the other: per-jaw work by its jaw, everything else by its teeth.
+      // One or the other: per-jaw work named with its jaw, everything else
+      // tooth by tooth, each tooth with its own work.
+      workTypes: jawWork ? (raw.workTypes as LabWorkType[]) : [],
       jaw: jawWork ? raw.jaw : null,
-      teethFdi: jawWork ? [] : raw.teeth,
+      toothWork: jawWork ? [] : raw.toothWork,
       // The parts go with an implant crown only; a case that is no longer one
       // must not keep owing them.
       implantBrand: implant ? raw.implantBrand || null : null,

@@ -19,11 +19,14 @@ export interface LabSendDialogData {
 /**
  * What a case goes back to the lab for, the second time and after. The first
  * time back is usually the next step of the work — resin for laminates, the
- * frame for a crown; after that it is a correction more often than not.
+ * frame for anything else — laminates sent with crowns too, since the
+ * crowns' frames are tried in first; after that it is a correction more often
+ * than not.
  */
 export function suggestedTripKind(c: Pick<LabCase, 'workTypes' | 'trips'>): LabTripKind {
   if (c.trips.length > 1) return 'correction';
-  return c.workTypes.includes('laminate') ? 'resin' : 'frame';
+  const laminatesOnly = c.workTypes.length > 0 && c.workTypes.every((t) => t === 'laminate');
+  return laminatesOnly ? 'resin' : 'frame';
 }
 
 @Component({

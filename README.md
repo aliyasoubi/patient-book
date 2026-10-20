@@ -221,6 +221,15 @@ Implant crowns travel with impression copings and analogs that belong to the
 clinic. A case keeps owing them — on the board, even after delivery — until
 someone marks them returned.
 
+A case is one prescription to the lab, so it can hold a jaw's crowns,
+laminates and implant crowns together — one impression, one set of trips, one
+fitting. As on a lab's own prescription chart, each tooth names its own work:
+a `lab_case_teeth` row per tooth (FDI number and work type, one kind of work a
+tooth). The case's `workTypes` and `teethFdi` are read off those rows on every
+save, for the card and the search. Night guards and SX are made per jaw and
+carry a jaw instead of teeth; work that genuinely travels apart — another lab,
+another schedule — is a case of its own.
+
 ### Stock is a ledger of batches, not a number
 
 An item's quantity is never edited. It is the sum of its batches
@@ -400,6 +409,7 @@ Persian sentence frozen into the database at import time.
 | `surgery_queue`       | Second-stage surgery list, linked to the implant register. |
 | `labs`                | The labs work is sent to; managed in Settings.             |
 | `lab_cases`           | One piece of lab work for one patient, until it is fitted. |
+| `lab_case_teeth`      | Each tooth of a lab case and the work it gets.             |
 | `lab_case_trips`      | Each trip of a case to the lab and back.                   |
 | `inventory_items`     | One product on the shelves and its balance.                |
 | `inventory_lots`      | Its batches: lot number, expiry, how many are left.        |

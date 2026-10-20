@@ -1,7 +1,14 @@
 import type { TranslateService } from '@ngx-translate/core';
 import { describe, expect, it } from 'vitest';
 
-import { jawTeeth, teethSummary, teethByQuadrant, toothRuns } from './teeth';
+import {
+  chartQuadrants,
+  jawTeeth,
+  teethByQuadrant,
+  teethByWork,
+  teethSummary,
+  toothRuns,
+} from './teeth';
 
 /** Stands in for the translations the app loads, so the summary reads as it will. */
 const TEXT: Record<string, string> = {
@@ -55,5 +62,40 @@ describe('teethSummary', () => {
 
   it('is empty for no teeth', () => {
     expect(teethSummary([], i18n)).toBe('');
+  });
+});
+
+describe('chartQuadrants', () => {
+  it('lays the mouth out as the dentist sees it, each quadrant counting out from the midline', () => {
+    const quadrants = chartQuadrants(i18n);
+    expect(quadrants.map((q) => q.label)).toEqual([
+      'upper right',
+      'upper left',
+      'lower right',
+      'lower left',
+    ]);
+    expect(quadrants[0].teeth).toEqual([17, 16, 15, 14, 13, 12, 11]);
+    expect(quadrants[1].teeth).toEqual([21, 22, 23, 24, 25, 26, 27]);
+    expect(quadrants[2].teeth).toEqual([47, 46, 45, 44, 43, 42, 41]);
+  });
+});
+
+describe('teethByWork', () => {
+  it('groups the teeth by their work, in the order given, and leaves empty kinds out', () => {
+    expect(
+      teethByWork(
+        [
+          { tooth: 21, workType: 'laminate' },
+          { tooth: 16, workType: 'implant_crown' },
+          { tooth: 11, workType: 'laminate' },
+          { tooth: 15, workType: 'crown' },
+        ],
+        ['crown', 'implant_crown', 'laminate', 'post'],
+      ),
+    ).toEqual([
+      { workType: 'crown', teeth: [15] },
+      { workType: 'implant_crown', teeth: [16] },
+      { workType: 'laminate', teeth: [11, 21] },
+    ]);
   });
 });

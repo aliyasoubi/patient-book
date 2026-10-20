@@ -106,9 +106,9 @@ export enum CaseStatus {
 }
 
 /**
- * What a lab case makes. A case is one kind of work; older ones, written when
- * the book's "laminate and implant crown" rows were kept as one case, may still
- * hold several, which is why the case stores a list.
+ * What a lab case makes. Per-tooth work is named tooth by tooth, so one case
+ * can be a jaw's crowns, laminates and implant crowns together, as one
+ * prescription to the lab; per-jaw work is a case of its own.
  */
 export enum LabWorkType {
   /** روکش دندان — the book's «روکش زیرکونیا» rows are this. */
@@ -135,6 +135,14 @@ export enum LabJaw {
 export const JAW_WORK_TYPES: readonly LabWorkType[] = [
   LabWorkType.NightGuard,
   LabWorkType.Sx,
+];
+
+/** Work made tooth by tooth: each tooth of a case names one of these. */
+export const TOOTH_WORK_TYPES: readonly LabWorkType[] = [
+  LabWorkType.Crown,
+  LabWorkType.ImplantCrown,
+  LabWorkType.Laminate,
+  LabWorkType.Post,
 ];
 
 /**
