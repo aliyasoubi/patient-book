@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { addMonths, format, startOfMonth } from 'date-fns-jalali';
 
@@ -19,6 +21,10 @@ import { LoadError } from '../../shared/components/load-error';
 import { PbPage, PbPageHeader, PbStatTile, PbSurface } from '../../shared/ui';
 import type { PracticeStats } from '../../core/models/common.model';
 import type { TreatmentType } from '../patients/data/patient.model';
+import { MaterialConsumptionReport } from './material-consumption';
+
+/** The page's tabs, as the `tab` query parameter names them; the first has none. */
+const TABS = ['practice', 'consumption'] as const;
 
 interface TotalTile {
   label: string;
@@ -28,9 +34,9 @@ interface TotalTile {
 }
 
 /**
- * How the practice looks — totals, growth and who the patients are. The one
- * page for statistics: the dashboard keeps only the front desk's work, and
- * no other page shows counts or charts.
+ * How the practice looks — totals, growth and who the patients are — and how
+ * much material it uses a month. The one page for statistics: the dashboard
+ * keeps only the front desk's work, and no other page shows counts or charts.
  */
 @Component({
   selector: 'pb-stats',
@@ -39,6 +45,8 @@ interface TotalTile {
     RouterLink,
     MatIconModule,
     MatProgressBarModule,
+    MatTabsModule,
+    MaterialConsumptionReport,
     PersianCountPipe,
     PersianNumberPipe,
     PbPage,
@@ -55,6 +63,15 @@ export class Stats {
   private readonly registry = inject(RegistryService);
   private readonly patients = inject(PatientsService);
   private readonly i18n = inject(TranslateService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  private readonly query = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly tabIndex = computed(() =>
+    Math.max(0, TABS.indexOf(this.query().get('tab') as (typeof TABS)[number])),
+  );
 
   protected readonly genderLabel = genderLabel;
   protected readonly genderIcon = genderIcon;
@@ -152,6 +169,14 @@ export class Stats {
     this.patients.treatmentTypes().subscribe({
       next: (t) => this.catalogue.set(t),
       error: () => undefined,
+    });
+  }
+
+  protected selectTab(index: number): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: index > 0 ? TABS[index] : null },
+      replaceUrl: true,
     });
   }
 

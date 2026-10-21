@@ -330,6 +330,43 @@ export interface DashboardSummary {
   inactiveOverYear: number;
 }
 
+/** One column of the consumption table: a Jalali month, and how much of it is on record. */
+export interface ConsumptionMonth {
+  /** `yyyy/MM` on the Jalali calendar. */
+  month: string;
+  /** Stock was recorded in this month; before that a cell is unknown, not zero. */
+  tracked: boolean;
+  /** The day recording began, when it began part-way through this month. */
+  trackedFromDay: number | null;
+  /** This month, still running. */
+  current: boolean;
+}
+
+/** One item's units used each month, in its own unit. */
+export interface ItemConsumption {
+  id: string;
+  category: InventoryCategory;
+  name: string;
+  brand: string | null;
+  spec: string | null;
+  unit: InventoryUnit;
+  archived: boolean;
+  /** Per month, in the order of {@link MaterialConsumption.months}. */
+  used: number[];
+  total: number;
+  /** Over complete months only; null until a whole month is on record. */
+  monthlyAverage: number | null;
+}
+
+/** How much of each material the clinic used, month by month. */
+export interface MaterialConsumption {
+  months: ConsumptionMonth[];
+  /** The day the first stock card line was written, `yyyy/MM/dd`. */
+  trackedFrom: string | null;
+  /** Items used at least once in the window, most used first. */
+  items: ItemConsumption[];
+}
+
 /** How the practice looks, for the statistics page. */
 export interface PracticeStats {
   totals: {
