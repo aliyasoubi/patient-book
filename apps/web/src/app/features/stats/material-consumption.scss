@@ -1,0 +1,203 @@
+@use '../../../styles/type';
+
+:host {
+  display: block;
+}
+
+.consumption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-4);
+
+  &__note {
+    @include type.supporting-text;
+
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    margin: 0 0 var(--pb-space-3);
+    font-feature-settings: var(--pb-font-numeric);
+
+    mat-icon {
+      font-size: var(--pb-icon-sm);
+      width: var(--pb-icon-sm);
+      height: var(--pb-icon-sm);
+      flex: none;
+    }
+  }
+
+  &__scroll {
+    overflow-x: auto;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: var(--mat-sys-corner-medium);
+
+    &:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &__footnote,
+  &__empty {
+    @include type.supporting-text(small);
+
+    margin: var(--pb-space-3) 0 0;
+  }
+}
+
+/* ── The table ─────────────────────────────────────────────────────── */
+.usage {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font: var(--mat-sys-body-medium);
+  font-feature-settings: var(--pb-font-numeric);
+
+  th,
+  td {
+    padding: var(--pb-space-2) var(--pb-space-3);
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    background: var(--mat-sys-surface);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--mat-sys-surface-container-low);
+    font: var(--mat-sys-label-large);
+    color: var(--mat-sys-on-surface-variant);
+    vertical-align: bottom;
+  }
+
+  // The item column stays in view while the months scroll past it.
+  .usage__item {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    min-width: 12rem;
+    max-width: 18rem;
+    text-align: start;
+    white-space: normal;
+    font-weight: normal;
+    border-inline-end: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  thead .usage__item {
+    z-index: 2;
+  }
+
+  // Latin names and sizes (`dir="auto"`) still line up with the column.
+  &__name,
+  &__detail {
+    text-align: match-parent;
+  }
+
+  &__name {
+    display: block;
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface);
+  }
+
+  &__detail,
+  &__archived {
+    display: block;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__archived {
+    font-style: italic;
+  }
+
+  &__unit {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__unit-inline {
+    display: none;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  // A phone shows a month or two beside the item: the item column narrows
+  // and takes the unit in, so the months get the width.
+  @media (max-width: 599px) {
+    .usage__item {
+      min-width: 8rem;
+      max-width: 10rem;
+    }
+
+    .usage__unit {
+      display: none;
+    }
+
+    .usage__unit-inline {
+      display: block;
+    }
+  }
+
+  &__month-name,
+  &__month-year,
+  &__month-note {
+    display: block;
+  }
+
+  &__month-year,
+  &__month-note {
+    font: var(--mat-sys-label-small);
+  }
+
+  &__month-note {
+    color: var(--mat-sys-primary);
+  }
+
+  &__cell {
+    min-width: 3.5rem;
+
+    &--zero,
+    &--none {
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  // The figure to order by: set apart from the months it is drawn from.
+  td.usage__average {
+    font-weight: 600;
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  thead .usage__average {
+    background: var(--mat-sys-surface-container);
+  }
+
+  &__group th {
+    text-align: start;
+    background: var(--mat-sys-surface-container);
+    font: var(--mat-sys-title-small);
+    color: var(--mat-sys-on-surface);
+  }
+
+  // The heading spans the whole row; its label stays at the start of the
+  // visible part while the months scroll.
+  &__group-label {
+    position: sticky;
+    inset-inline-start: var(--pb-space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+
+    mat-icon {
+      font-size: var(--pb-icon-sm);
+      width: var(--pb-icon-sm);
+      height: var(--pb-icon-sm);
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  tbody tr:not(.usage__group):hover > * {
+    background: color-mix(in srgb, var(--mat-sys-primary) 6%, var(--mat-sys-surface));
+  }
+}

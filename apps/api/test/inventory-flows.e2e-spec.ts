@@ -6,6 +6,11 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { DataSource } from 'typeorm';
 import { addMonths, format } from 'date-fns';
+import {
+  addMonths as addJalaliMonths,
+  format as formatJalali,
+  setDate as setJalaliDate,
+} from 'date-fns-jalali';
 
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
@@ -803,6 +808,78 @@ describeIfWritable('inventory flows (e2e)', () => {
       ).expect(201)
     ).body as ItemBody;
     expect(restored).toMatchObject({ isArchived: false, quantity: 1 });
+  });
+
+  it('reports each month’s use per item, without discards or undone uses', async () => {
+    // A name of its own: other tests use items too, and the search below must find only this one.
+    const item = await addItem({ quantity: 20, name: `consumption-${runId}` });
+
+    // A use last month: written now, then moved to the 10th of last month.
+    await move(item.id, { kind: 'use', quantity: 4 }).expect(200);
+    const lastMonth = setJalaliDate(addJalaliMonths(new Date(), -1), 10);
+    lastMonth.setHours(12, 0, 0, 0);
+    await db.query(
+      `UPDATE inventory_movements SET "createdAt" = $2
+        WHERE id = (SELECT id FROM inventory_movements
+                     WHERE "itemId" = $1 AND kind = 'use' ORDER BY seq DESC LIMIT 1)`,
+      [item.id, lastMonth],
+    );
+
+    // This month: two uses count; a discard is waste, and an undone use is gone.
+    await move(item.id, { kind: 'use', quantity: 3 }).expect(200);
+    await move(item.id, { kind: 'use', quantity: 2 }).expect(200);
+    await move(item.id, { kind: 'discard', quantity: 1 }).expect(200);
+    const mistaken = (
+      await move(item.id, { kind: 'use', quantity: 5 }).expect(200)
+    ).body as ItemBody;
+    await asStaff(http().post(`/api/inventory/items/${item.id}/movements/undo`))
+      .send({ expectedVersion: mistaken.version })
+      .expect(200);
+
+    const report = (
+      await asViewer(http().get('/api/stats/consumption'))
+        .query({ months: 6 })
+        .expect(200)
+    ).body as {
+      months: Array<{ month: string; tracked: boolean; current: boolean }>;
+      trackedFrom: string | null;
+      items: Array<{ id: string; used: number[]; total: number; unit: string }>;
+    };
+    expect(report.months).toHaveLength(6);
+    expect(report.months.at(-1)).toMatchObject({
+      month: formatJalali(new Date(), 'yyyy/MM'),
+      current: true,
+      tracked: true,
+    });
+    expect(report.months.at(-2)?.month).toBe(
+      formatJalali(lastMonth, 'yyyy/MM'),
+    );
+    expect(report.trackedFrom).not.toBeNull();
+    const row = report.items.find((i) => i.id === item.id);
+    expect(row).toMatchObject({
+      used: [0, 0, 0, 0, 4, 5],
+      total: 9,
+      unit: 'piece',
+    });
+
+    // The stock list's search narrows it: to this item, or to nothing.
+    const found = (
+      await asStaff(http().get('/api/stats/consumption'))
+        .query({ q: `consumption-${runId}` })
+        .expect(200)
+    ).body as { items: Array<{ id: string }> };
+    expect(found.items.map((i) => i.id)).toEqual([item.id]);
+    const none = (
+      await asStaff(http().get('/api/stats/consumption'))
+        .query({ q: `nothing-${runId}` })
+        .expect(200)
+    ).body as { items: unknown[] };
+    expect(none.items).toEqual([]);
+
+    // Only the windows the page offers.
+    await asStaff(http().get('/api/stats/consumption'))
+      .query({ months: 7 })
+      .expect(400);
   });
 
   it('lets a viewer read the stock but not change it', async () => {

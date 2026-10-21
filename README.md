@@ -273,6 +273,16 @@ An item with no minimum is never "to order" at zero: plenty of sizes stay on
 the list unstocked. One active row per product (category, name, brand and
 size, Persian-folded) keeps a product's stock from splitting across two rows.
 
+Material consumption is read straight off the stock card: the statistics
+page's consumption tab (`/stats?tab=consumption`) lists every item used in
+the last 6 or 12 Jalali months, one column a month, in the item's own unit —
+a box and a cartridge are never added together. Discards are waste, not
+use, and an undone use leaves the card, so neither counts. Months are cut on
+the clinic's clock (`material-consumption.ts`). A month before the first
+stock line shows «—», unknown rather than zero, and the monthly average to
+order by counts complete months only, leaving out the running month and the
+one recording began in.
+
 ### Dates are free-form Jalali, and often imprecise
 
 Handwritten birth dates arrive as a bare year, a year and month, a full date, or

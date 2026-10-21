@@ -7,6 +7,7 @@ import {
   DashboardSummary,
   FollowUpDue,
   FollowUpFilter,
+  MaterialConsumption,
   PageResult,
   PracticeStats,
   RegistryCase,
@@ -113,7 +114,10 @@ export class RegistryService {
   }
 
   restoreSurgery(id: string): Observable<SurgeryQueueItem> {
-    return this.http.post<SurgeryQueueItem>(`${environment.apiUrl}/surgery-queue/${id}/restore`, {});
+    return this.http.post<SurgeryQueueItem>(
+      `${environment.apiUrl}/surgery-queue/${id}/restore`,
+      {},
+    );
   }
 
   /** The dashboard's work counts — what needs attention, not how the practice looks. */
@@ -124,6 +128,16 @@ export class RegistryService {
   /** Totals and breakdowns for the statistics page. */
   practiceStats(): Observable<PracticeStats> {
     return this.http.get<PracticeStats>(`${environment.apiUrl}/stats/overview`);
+  }
+
+  /**
+   * Units of each material used per Jalali month, over the last `months`
+   * months; `q` narrows the items as the stock list's search does.
+   */
+  materialConsumption(months: 6 | 12, q = ''): Observable<MaterialConsumption> {
+    return this.http.get<MaterialConsumption>(`${environment.apiUrl}/stats/consumption`, {
+      params: toParams({ months, q }),
+    });
   }
 
   /** The coming week's open follow-ups, soonest first. */
