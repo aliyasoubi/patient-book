@@ -558,16 +558,21 @@ describeIfWritable('clinic flows (e2e)', () => {
       await edit(first);
     });
 
-    it("opens a case with the book's next number and the patient's name when neither is sent", async () => {
+    const addPatient = async (firstName: string): Promise<string> => {
       const res = await asAdmin(http().post('/api/patients'))
-        .send({ fileNo: nextNumber(), firstName: 'نرگس', lastName: 'صالحی' })
+        .send({ fileNo: nextNumber(), firstName, lastName: 'صالحی' })
         .expect(201);
-      const patientId = (res.body as { id: string }).id;
-      patientIds.push(patientId);
+      const id = (res.body as { id: string }).id;
+      patientIds.push(id);
+      return id;
+    };
 
-      // Two at once, as a double click would send: each gets its own number.
+    it("opens a case with the book's next number and the patient's name when neither is sent", async () => {
+      const patients = [await addPatient('نرگس'), await addPatient('نسرین')];
+
+      // Two at once, for two patients: each gets its own number.
       const created = await Promise.all(
-        [0, 1].map(() =>
+        patients.map((patientId) =>
           asAdmin(http().post('/api/implant-cases'))
             .send({ patientId })
             .expect(201),
@@ -578,15 +583,71 @@ describeIfWritable('clinic flows (e2e)', () => {
       );
       implantCaseIds.push(...cases.map((c) => c.id));
 
-      for (const c of cases) {
-        expect(c).toMatchObject({
+      expect(cases).toEqual([
+        expect.objectContaining({
           recordedName: 'نرگس صالحی',
-          patientId,
+          patientId: patients[0],
           matchMethod: 'manual',
-        });
-      }
+        }),
+        expect.objectContaining({
+          recordedName: 'نسرین صالحی',
+          patientId: patients[1],
+          matchMethod: 'manual',
+        }),
+      ]);
       const [a, b] = cases.map((c) => BigInt(c.registryNo));
       expect(a > b ? a - b : b - a).toBe(1n);
+    });
+
+    it('keeps one file per patient: a second is not opened, linked or restored', async () => {
+      const patientId = await addPatient('نگار');
+
+      // Two at once, as a double click would send: one file, one refusal.
+      const both = await Promise.all(
+        [0, 1].map(() =>
+          asAdmin(http().post('/api/implant-cases')).send({ patientId }),
+        ),
+      );
+      expect(both.map((r) => r.status).sort()).toEqual([201, 409]);
+      const opened = both.find((r) => r.status === 201)!.body as {
+        id: string;
+        registryNo: string;
+      };
+      implantCaseIds.push(opened.id);
+      expect(both.find((r) => r.status === 409)!.body).toMatchObject({
+        code: ErrorCode.ImplantCaseExists,
+        params: { registryNo: opened.registryNo },
+      });
+
+      // Another file is not linked to them either.
+      const other = (
+        await asAdmin(http().post('/api/implant-cases'))
+          .send({ registryNo: nextNumber(), recordedName: 'نگار صالحی' })
+          .expect(201)
+      ).body as { id: string; registryNo: string; version: number };
+      implantCaseIds.push(other.id);
+      const link = () =>
+        asAdmin(http().patch(`/api/implant-cases/${other.id}`)).send({
+          patientId,
+          expectedVersion: other.version,
+        });
+      expect((await link().expect(409)).body).toMatchObject({
+        code: ErrorCode.ImplantCaseExists,
+        params: { registryNo: opened.registryNo },
+      });
+
+      // An archived file no longer counts — and cannot come back beside the new one.
+      await asAdmin(http().delete(`/api/implant-cases/${opened.id}`)).expect(
+        204,
+      );
+      await link().expect(200);
+      const restored = await asAdmin(
+        http().post(`/api/implant-cases/${opened.id}/restore`),
+      ).expect(409);
+      expect(restored.body).toMatchObject({
+        code: ErrorCode.ImplantCaseExists,
+        params: { registryNo: other.registryNo },
+      });
     });
 
     it('edits, archives and restores a case through the same audited path', async () => {

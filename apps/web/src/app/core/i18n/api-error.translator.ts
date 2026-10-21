@@ -91,6 +91,8 @@ export class ApiErrorTranslator {
         return this.t('error.registryNumberTaken', params);
       case 'ERR_REGISTRY_CASE_MODIFIED':
         return this.t('error.registryCaseModified');
+      case 'ERR_IMPLANT_CASE_EXISTS':
+        return this.t('error.implantCaseExists', params);
       case 'ERR_SURGERY_ITEM_MODIFIED':
         return this.t('error.surgeryItemModified');
       case 'ERR_SURGERY_ITEM_NOT_FOUND':
@@ -121,6 +123,8 @@ export class ApiErrorTranslator {
         return this.t('error.inventoryLotExists');
       case 'ERR_INVENTORY_LOT_REQUIRED':
         return this.t('error.inventoryLotRequired');
+      case 'ERR_INVENTORY_PATIENT_REQUIRED':
+        return this.t('error.inventoryPatientRequired');
       case 'ERR_INVENTORY_NOTHING_TO_UNDO':
         return this.t('error.inventoryNothingToUndo');
       case 'ERR_INVENTORY_LOT_EXPIRED':

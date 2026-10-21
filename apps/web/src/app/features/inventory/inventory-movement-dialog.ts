@@ -315,6 +315,8 @@ export class InventoryMovementDialog {
   private readonly mustTrace = this.kind === 'receive' && this.traceable;
   /** An implant handed to a patient also goes into their implant file. */
   protected readonly isImplant = this.item.category === 'implant';
+  /** So an implant's use always names the patient: the file is theirs. */
+  private readonly mustName = this.kind === 'use' && this.isImplant;
   protected readonly faNum = formatPersianNumber;
   protected readonly itemLabel = [this.item.name, this.item.brand, this.item.spec]
     .filter(Boolean)
@@ -359,7 +361,11 @@ export class InventoryMovementDialog {
     ],
     patient: [
       '',
-      [Validators.maxLength(160), (c: AbstractControl<string>) => this.pickedPatient(c)],
+      [
+        ...(this.mustName ? [Validators.required] : []),
+        Validators.maxLength(160),
+        (c: AbstractControl<string>) => this.pickedPatient(c),
+      ],
     ],
     tooth: ['', Validators.maxLength(60)],
     note: ['', Validators.maxLength(300)],
@@ -383,7 +389,10 @@ export class InventoryMovementDialog {
     return typed && !this.linkedPatient() ? { pick: true } : null;
   }
 
-  protected readonly patientErrors = { pick: this.i18n.instant('inventoryMove.patientPick') };
+  protected readonly patientErrors = {
+    required: this.i18n.instant('inventoryMove.patientRequired'),
+    pick: this.i18n.instant('inventoryMove.patientPick'),
+  };
   protected readonly lotErrors = { required: this.i18n.instant('inventoryMove.lotPick') };
 
   private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
@@ -588,6 +597,7 @@ export class InventoryMovementDialog {
             showOnFields(error, this.errors, this.form.controls, {
               ERR_INVENTORY_INSUFFICIENT_STOCK: 'quantity',
               ERR_PATIENT_NOT_FOUND: 'patient',
+              ERR_INVENTORY_PATIENT_REQUIRED: 'patient',
               ERR_INVENTORY_LOT_EXPIRED: 'lotId',
             }),
           );

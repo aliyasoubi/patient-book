@@ -46,6 +46,12 @@ export enum ErrorCode {
   RegistryNumberTaken = 'ERR_REGISTRY_NUMBER_TAKEN',
   /** As {@link ErrorCode.PatientModified}, for a register case. */
   RegistryCaseModified = 'ERR_REGISTRY_CASE_MODIFIED',
+  /**
+   * The patient already has an implant file, and a patient has only one: a
+   * second is not opened, linked or restored for them. `params.registryNo`
+   * is the file they have.
+   */
+  ImplantCaseExists = 'ERR_IMPLANT_CASE_EXISTS',
   SurgeryItemNotFound = 'ERR_SURGERY_ITEM_NOT_FOUND',
   /** As {@link ErrorCode.PatientModified}, for a surgery-list row. */
   SurgeryItemModified = 'ERR_SURGERY_ITEM_MODIFIED',
@@ -87,6 +93,11 @@ export enum ErrorCode {
    * printed on it — what a recall is traced by.
    */
   InventoryLotRequired = 'ERR_INVENTORY_LOT_REQUIRED',
+  /**
+   * An implant used without naming the patient it went into: it goes into
+   * their implant file, so the use has to say whose it is.
+   */
+  InventoryPatientRequired = 'ERR_INVENTORY_PATIENT_REQUIRED',
   /** Undo on an item with no stock card line to take back. */
   InventoryNothingToUndo = 'ERR_INVENTORY_NOTHING_TO_UNDO',
   /**

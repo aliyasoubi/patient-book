@@ -14,7 +14,6 @@ import {
   TRACEABLE,
 } from './inventory-catalog';
 import { Patient } from '../patients/patient.entity';
-import { ImplantCase } from '../implants/implant-case.entity';
 import { ImplantRegistryService } from '../implants/implant-registry.service';
 import { SurgeryService } from '../surgery/surgery.service';
 import {
@@ -328,6 +327,15 @@ export class InventoryService {
   ): Promise<unknown> {
     await this.items.manager.transaction(async (manager) => {
       const item = await this.lock(manager, id);
+      // An implant goes into someone, and into their implant file.
+      if (
+        dto.kind === InventoryMovementKind.Use &&
+        item.category === InventoryCategory.Implant &&
+        !dto.patientId &&
+        !dto.patientFileNo
+      ) {
+        throw AppException.badRequest(ErrorCode.InventoryPatientRequired);
+      }
       const lots = await loadLots(manager, id);
       let changes: LotChange<InventoryLot | LotLevel>[];
       switch (dto.kind) {
@@ -677,7 +685,7 @@ export class InventoryService {
 
   /**
    * Implants handed to a patient go into the patient's implant file — the
-   * file they already have, or a new one under the book's next number — as
+   * one file they have, or a new one under the book's next number — as
    * one surgery row per implant, dated today with the prosthesis due, naming
    * the system, the tooth and the box. Each row keeps the stock card line it
    * came from, so an undo takes it back.
@@ -690,12 +698,11 @@ export class InventoryService {
     tooth: string | null | undefined,
     userId: string | null,
   ): Promise<void> {
-    const implantCase =
-      (await manager.getRepository(ImplantCase).findOne({
-        where: { patientId },
-        order: { createdAt: 'DESC' },
-      })) ??
-      (await this.implantRegistry.createIn(manager, { patientId }, userId));
+    const implantCase = await this.implantRegistry.fileFor(
+      manager,
+      patientId,
+      userId,
+    );
     const lotNumbers = new Map(
       (await loadLots(manager, item.id)).map((l) => [l.id, l.lotNumber]),
     );

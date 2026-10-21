@@ -283,6 +283,7 @@ describeIfWritable('inventory flows (e2e)', () => {
       .send({ fileNo, firstName: 'آزمون', lastName: 'انبار' })
       .expect(201);
     patientIds.push((patient.body as { id: string }).id);
+    implantCasePatients.push((patient.body as { id: string }).id);
 
     const item = await addItem({
       name: `traced-${runId}`,
@@ -334,6 +335,7 @@ describeIfWritable('inventory flows (e2e)', () => {
       kind: 'use',
       quantity: 4,
       lotId: later.id,
+      patientFileNo: fileNo,
     }).expect(409);
     expect(tooMany.body).toMatchObject({
       code: ErrorCode.InventoryInsufficientStock,
@@ -578,6 +580,37 @@ describeIfWritable('inventory flows (e2e)', () => {
       [patientId],
     );
     expect(left[0].n).toBe(0);
+
+    // The file stays, and is the one the next implant goes into.
+    await move(item.id, { kind: 'use', quantity: 1, patientId }).expect(200);
+    const files = await db.query<Array<{ n: number; rows: number }>>(
+      `SELECT count(DISTINCT c.id)::int AS n, count(s.id)::int AS rows
+         FROM implant_cases c
+         LEFT JOIN surgery_queue s ON s."implantCaseId" = c.id AND s."deletedAt" IS NULL
+        WHERE c."patientId" = $1`,
+      [patientId],
+    );
+    expect(files[0]).toEqual({ n: 1, rows: 1 });
+    await archive(item.id);
+  });
+
+  it('will not hand out an implant without the patient it goes into', async () => {
+    const item = await addItem({
+      name: `unnamed-${runId}`,
+      category: 'implant',
+      quantity: 2,
+      lotNumber: 'N-1',
+      expiry: printed(30),
+    });
+    const res = await move(item.id, { kind: 'use', quantity: 1 }).expect(400);
+    expect((res.body as { code: string }).code).toBe(
+      ErrorCode.InventoryPatientRequired,
+    );
+    // A box thrown away goes into nobody.
+    const discarded = (
+      await move(item.id, { kind: 'discard', quantity: 1 }).expect(200)
+    ).body as ItemBody;
+    expect(discarded.quantity).toBe(1);
     await archive(item.id);
   });
 
@@ -625,6 +658,12 @@ describeIfWritable('inventory flows (e2e)', () => {
   });
 
   it('will not hand out an expired implant unless its batch is picked', async () => {
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({ fileNo: `6${Date.now()}`, firstName: 'آزمون', lastName: 'تاریخ' })
+      .expect(201);
+    const patientId = (patient.body as { id: string }).id;
+    patientIds.push(patientId);
+    implantCasePatients.push(patientId);
     const item = await addItem({
       name: `expired-${runId}`,
       category: 'implant',
@@ -632,7 +671,11 @@ describeIfWritable('inventory flows (e2e)', () => {
       lotNumber: 'OLD-1',
       expiry: printed(-2),
     });
-    const res = await move(item.id, { kind: 'use', quantity: 1 }).expect(409);
+    const res = await move(item.id, {
+      kind: 'use',
+      quantity: 1,
+      patientId,
+    }).expect(409);
     expect((res.body as { code: string }).code).toBe(
       ErrorCode.InventoryLotExpired,
     );
@@ -640,6 +683,7 @@ describeIfWritable('inventory flows (e2e)', () => {
       kind: 'use',
       quantity: 1,
       lotId: item.lots[0].id,
+      patientId,
     }).expect(200);
     await archive(item.id);
   });

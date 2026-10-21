@@ -355,6 +355,7 @@ export class RegistryCaseDialog {
 
     const fieldForCode: Partial<Record<string, keyof typeof this.form.controls>> = {
       ERR_REGISTRY_NUMBER_TAKEN: 'registryNo',
+      ERR_IMPLANT_CASE_EXISTS: 'patientSearch',
     };
     const target = body?.code ? fieldForCode[body.code] : undefined;
     const message = this.errors.translate(error);
