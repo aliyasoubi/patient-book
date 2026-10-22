@@ -67,6 +67,12 @@
   opacity: 0.35;
 }
 
+/* Let go: the card glides into its slot. The CDK animates the drop only when
+   the dragged card has a transform transition; without one it jumps there. */
+.cdk-drag-animating {
+  transition: transform 250ms var(--pb-ease-emphasized);
+}
+
 .cdk-drop-list-receiving {
   outline: 2px dashed color-mix(in srgb, var(--mat-sys-primary) 50%, transparent);
   outline-offset: 4px;

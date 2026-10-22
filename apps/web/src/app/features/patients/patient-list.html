@@ -59,7 +59,7 @@
 
   <!-- ── Filter panel ──────────────────────────────────────────── -->
   @if (filtersOpen()) {
-    <pb-surface class="pb-surface--low">
+    <pb-surface class="pb-surface--low" animate.enter="pb-enter" animate.leave="pb-leave">
       <section class="filters" [attr.aria-label]="'common.filters' | translate">
         <div class="filters__row">
           <pb-select-field

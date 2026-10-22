@@ -273,6 +273,32 @@ mat-icon.material-symbols-rounded {
   padding-block: 8px;
 }
 
+/* ── Loading ───────────────────────────────────────────────────────── */
+/**
+ * A page's indeterminate bar lies over the top edge of what follows it
+ * rather than taking a row of its own. In the flow it pushed the content down
+ * by its 4px plus the page gap on every refetch — every search keystroke —
+ * and let it jump back after. The patient list does the same inside its
+ * results box.
+ */
+pb-page > mat-progress-bar {
+  position: relative;
+  z-index: 1;
+  margin-block-end: calc(-4px - var(--pb-page-gap));
+}
+
+/* ── Snackbars ─────────────────────────────────────────────────────── */
+/**
+ * On a phone the bottom navigation holds the bottom 72px, and a snackbar
+ * there covered it for as long as the message was up. Material marks the
+ * snackbar's pane `mat-mdc-snack-bar-handset` on the same CDK Handset
+ * breakpoint the shell shows that bar at; the `:has` keeps the sign-in page,
+ * which has no bar, as it was.
+ */
+body:has(.bottom-nav) .mat-mdc-snack-bar-handset .mat-mdc-snack-bar-container {
+  margin-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
 /* ── Motion ────────────────────────────────────────────────────────── */
 /**
  * Material's dialog/snackbar entrances ship the plain M2 "standard decelerate"
@@ -286,6 +312,35 @@ mat-icon.material-symbols-rounded {
 
 .mat-snack-bar-container-animations-enabled.mat-snack-bar-container-enter {
   animation-timing-function: var(--pb-ease-emphasized) !important;
+}
+
+/**
+ * How content arrives: a short fade and an 8px rise on the emphasized curve.
+ * `pb-page` plays it for every screen; `.pb-enter` / `.pb-leave` are for
+ * Angular's `animate.enter` / `animate.leave` on a block that comes and goes
+ * in place, like the patient list's filter panel. `backwards`, not `both`, so
+ * no transform is left behind once it has played.
+ */
+@keyframes pb-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pb-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.pb-enter {
+  animation: pb-enter 220ms var(--pb-ease-emphasized) backwards;
+}
+
+.pb-leave {
+  animation: pb-leave 120ms ease-in forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -165,13 +165,18 @@
         <!-- A long shelf of several brands, as implants are: one tap to one brand's rows. -->
         @if (shelf.brands.length) {
           <pb-filter-chips
+            animate.enter="pb-enter"
             [options]="shelf.brands"
             [selected]="shelf.brand ? [shelf.brand] : []"
             (selectedChange)="setBrand(shelf, $event)"
             [ariaLabel]="'inventory.brandsAria' | translate"
           />
         }
-        <ul class="shelf__items" [id]="shelf.category ? 'shelf-' + shelf.category : null">
+        <ul
+          class="shelf__items"
+          animate.enter="pb-enter"
+          [id]="shelf.category ? 'shelf-' + shelf.category : null"
+        >
           @for (item of shelf.rows; track item.id) {
             <li class="item" [attr.data-stock]="item.stockState">
               <div class="item__what">

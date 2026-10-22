@@ -17,7 +17,11 @@
 
   @if (summary()) {
     <!-- ── Work tiles ──────────────────────────────────────────── -->
-    <section class="tiles" [attr.aria-label]="'dashboard.workAria' | translate">
+    <section
+      class="tiles"
+      animate.enter="pb-enter"
+      [attr.aria-label]="'dashboard.workAria' | translate"
+    >
       @for (tile of tiles(); track tile.label) {
         <pb-stat-tile
           [label]="tile.label | translate"
