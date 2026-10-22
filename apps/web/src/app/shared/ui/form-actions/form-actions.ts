@@ -36,7 +36,7 @@ import { Component, booleanAttribute, input } from '@angular/core';
       bottom: 0;
       z-index: 2;
       padding-block: var(--pb-space-4);
-      background: linear-gradient(to top, var(--mat-sys-surface) 60%, transparent);
+      background: linear-gradient(to top, var(--pb-canvas) 60%, transparent);
     }
   `,
 })

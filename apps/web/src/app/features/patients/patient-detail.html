@@ -5,8 +5,8 @@
 @if (patient(); as p) {
   <pb-page>
     <!-- ── Hero ──────────────────────────────────────────────────── -->
-    <!-- Tonal surface: the container tone alone marks it off from the page. -->
-    <pb-surface class="pb-surface--low hero-surface" [class.hero-surface--archived]="p.isArchived">
+    <!-- A card like the panels below it: the record's header, not a well. -->
+    <pb-surface class="hero-surface" [class.hero-surface--archived]="p.isArchived">
       <header class="hero">
         <pb-icon-button
           icon="arrow_forward"
