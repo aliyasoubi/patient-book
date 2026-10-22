@@ -217,6 +217,7 @@ export class ImportWorkbookUseCase {
       matcher,
       SHEET.implants,
       ImplantCase,
+      true,
     );
     return new Map(rows.map((c) => [c.registryNo, c]));
   }
@@ -231,7 +232,8 @@ export class ImportWorkbookUseCase {
 
   /**
    * The implant and orthodontic books differ only in which table they land in,
-   * so one routine serves both rather than two near-identical copies.
+   * so one routine serves both rather than two near-identical copies — and in
+   * that a patient has one implant file (`onePerPatient`).
    */
   private async importRegistry<T extends ImplantCase | OrthoCase>(
     manager: EntityManager,
@@ -239,6 +241,7 @@ export class ImportWorkbookUseCase {
     matcher: PatientNameMatcher,
     sheetName: string,
     Entity: new () => T,
+    onePerPatient = false,
   ): Promise<T[]> {
     const sheet: SheetReport = emptySheetReport();
     sheet.matched = { exact: 0, fuzzy: 0, unmatched: 0 };
@@ -246,6 +249,8 @@ export class ImportWorkbookUseCase {
 
     const mapper = new RegistryRowMapper(matcher);
     const seen = new Set<string>();
+    /** Patient → the number of the case already linked to them. */
+    const linked = new Map<string, string>();
     const staged: T[] = [];
 
     for (const row of this.workbook.rows(sheetName)) {
@@ -262,6 +267,26 @@ export class ImportWorkbookUseCase {
       }
       seen.add(mapped.registryNo);
 
+      // A second row the name matches stays unlinked, for staff to settle,
+      // rather than giving the patient two files.
+      const first =
+        onePerPatient && mapped.patientId
+          ? linked.get(mapped.patientId)
+          : undefined;
+      if (first) {
+        mapped.patientId = null;
+        mapped.matchMethod = 'unmatched';
+        report.warnings.push({
+          sheet: sheetName,
+          row: row.rowNumber,
+          field: 'patient',
+          code: ErrorCode.ImplantCaseExists,
+          params: { registryNo: first, name: mapped.recordedName },
+        });
+      } else if (onePerPatient && mapped.patientId) {
+        linked.set(mapped.patientId, mapped.registryNo);
+      }
+
       const entity = Object.assign(new Entity(), mapped);
       staged.push(entity);
 
@@ -269,7 +294,7 @@ export class ImportWorkbookUseCase {
       const tallied =
         mapped.matchMethod === 'manual' ? 'unmatched' : mapped.matchMethod;
       sheet.matched[tallied]++;
-      if (mapped.matchMethod === 'unmatched' && mapped.recordedName) {
+      if (!first && mapped.matchMethod === 'unmatched' && mapped.recordedName) {
         report.warnings.push({
           sheet: sheetName,
           row: row.rowNumber,

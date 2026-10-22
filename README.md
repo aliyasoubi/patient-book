@@ -167,6 +167,11 @@ attached to a plausible guess.
 `PatientNameMatcher` owns this rule, including its refusal to choose between two
 patients who share a name.
 
+A patient has **one implant file**. The API refuses opening, linking or
+restoring a second one for them (`ERR_IMPLANT_CASE_EXISTS`, naming the file
+they have), and the import leaves a second row its name matches unlinked, with
+a warning, for staff to settle. An archived file no longer counts.
+
 ### The surgery list quotes register numbers, not patient files
 
 Surgery queue rows reference the **implant register** number. Because those
@@ -251,10 +256,10 @@ shelf is corrected by counting it, not by going negative.
   many as it takes, unless the batch is named. For implants, grafts and
   membranes the form names it — never an expired one unless picked by hand —
   and a use names the patient, picked by name: the line then links the batch
-  to the patient, which is what a recall is traced through. An implant used
-  for a patient also goes into their implant file (a new one if they have
-  none) as one surgery row per implant, with the tooth, the system, the box
-  and the prosthesis due in three months; undoing the use archives those
+  to the patient, which is what a recall is traced through. An implant's use
+  must name the patient, and goes into their implant file (a new one if they
+  have none) as one surgery row per implant, with the tooth, the system, the
+  box and the prosthesis due in three months; undoing the use archives those
   rows.
 - **A count** takes what is missing from the first-expiring batches and adds
   what is found to the last to arrive — except for implants, grafts and

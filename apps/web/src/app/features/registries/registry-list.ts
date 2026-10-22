@@ -17,6 +17,7 @@ import {
 } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryKind, RegistryQuery, RegistryService } from '../../core/services/registry.service';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
@@ -93,6 +94,7 @@ export class RegistryList {
   private readonly i18n = inject(TranslateService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
 
   /** Bound from the route's `data`. */
@@ -276,12 +278,17 @@ export class RegistryList {
   }
 
   protected restore(c: RegistryCase): void {
-    this.registry.restoreCase(this.kind(), c.id).subscribe(() => {
-      this.snackBar.open(
-        this.i18n.instant('registryForm.restored'),
-        this.i18n.instant('action.dismiss'),
-      );
-      this.retry();
+    this.registry.restoreCase(this.kind(), c.id).subscribe({
+      next: () => {
+        this.snackBar.open(
+          this.i18n.instant('registryForm.restored'),
+          this.i18n.instant('action.dismiss'),
+        );
+        this.retry();
+      },
+      // The patient has another implant file by now: one each.
+      error: (error: unknown) =>
+        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss')),
     });
   }
 }

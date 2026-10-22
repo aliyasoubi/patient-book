@@ -127,6 +127,9 @@ export class RegistryService<T extends RegistryCase> {
     userId: string | null,
   ): Promise<T> {
     const repository = manager.getRepository(this.repo.target);
+    if (dto.patientId) {
+      await this.assertPatientFree(manager, dto.patientId, null);
+    }
     const registryNo =
       dto.registryNo ?? (await this.nextRegistryNo(manager, repository));
     if (dto.registryNo) {
@@ -194,6 +197,9 @@ export class RegistryService<T extends RegistryCase> {
       if (existing.version !== expectedVersion) {
         throw AppException.conflict(ErrorCode.RegistryCaseModified);
       }
+      if (dto.patientId && dto.patientId !== existing.patientId) {
+        await this.assertPatientFree(manager, dto.patientId, id);
+      }
 
       if (dto.registryNo && dto.registryNo !== existing.registryNo) {
         const clash = await repository.findOne({
@@ -240,6 +246,22 @@ export class RegistryService<T extends RegistryCase> {
     return Promise.resolve();
   }
 
+  /**
+   * Refuses giving `patientId` this case — `caseId`, or a new one — when the
+   * book keeps one case per patient and they already have another. Nothing
+   * for a register on its own; the implant register keeps one file each.
+   */
+  protected assertPatientFree(
+    manager: EntityManager,
+    patientId: string,
+    caseId: string | null,
+  ): Promise<void> {
+    void manager;
+    void patientId;
+    void caseId;
+    return Promise.resolve();
+  }
+
   async remove(id: string, userId: string | null): Promise<void> {
     await this.repo.manager.transaction(async (manager) => {
       const repository = manager.getRepository(this.repo.target);
@@ -262,6 +284,9 @@ export class RegistryService<T extends RegistryCase> {
     await this.repo.manager.transaction(async (manager) => {
       const repository = manager.getRepository(this.repo.target);
       const existing = await this.findOneFrom(repository, id, true);
+      if (existing.patientId) {
+        await this.assertPatientFree(manager, existing.patientId, id);
+      }
       await repository.restore(id);
       await this.audit.recordRequired(
         {

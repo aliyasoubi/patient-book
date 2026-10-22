@@ -366,17 +366,24 @@ export class PatientDetail {
     this.registry
       .createCase(kind, { patientId: p.id })
       .pipe(finalize(() => this.openingCase.set(null)))
-      .subscribe((created) => {
-        this.snackBar.open(
-          this.i18n.instant(
-            kind === 'ortho'
-              ? 'patientDetail.orthoCaseCreated'
-              : 'patientDetail.implantCaseCreated',
-            { number: created.registryNo },
-          ),
-          this.i18n.instant('action.dismiss'),
-        );
-        if (this.stillShowing(p.id)) this.load(p.id);
+      .subscribe({
+        next: (created) => {
+          this.snackBar.open(
+            this.i18n.instant(
+              kind === 'ortho'
+                ? 'patientDetail.orthoCaseCreated'
+                : 'patientDetail.implantCaseCreated',
+              { number: created.registryNo },
+            ),
+            this.i18n.instant('action.dismiss'),
+          );
+          if (this.stillShowing(p.id)) this.load(p.id);
+        },
+        // Most likely a file opened meanwhile (one per patient): say so, and show it.
+        error: (error: unknown) => {
+          this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'));
+          if (this.stillShowing(p.id)) this.load(p.id);
+        },
       });
   }
 
