@@ -4,23 +4,25 @@
  * that is a `<button>`. `pb-surface` draws itself from these same mixins, so
  * a row and a panel never drift apart.
  *
- * One signal each, never two: an outlined card is the page's own `surface`
- * tone with an outline-variant border; a tonal card is a container tone with
- * no border; an elevated card is a container tone lifted by a shadow. None is
- * ever darker than the ground it sits on.
+ * Card on canvas (tokens in `styles.scss`): the page ground is `--pb-canvas`;
+ * a card is a lighter tone lifted by a soft shadow; a tonal panel is a well, a
+ * step recessed from the canvas, that cards sit in; an elevated card is the
+ * one a screen is built around, like sign-in. Each keeps its 1px border box,
+ * transparent where it shows nothing, so the three line up.
  */
 
-/** M3 outlined card. `$corner` is an M3 shape step: large for cards, medium for rows inside one. */
+/** The card. `$corner` is an M3 shape step: large for cards, medium for rows inside one. */
 @mixin outlined($corner: large) {
-  border: 1px solid var(--mat-sys-outline-variant);
+  border: 1px solid var(--pb-card-border);
   border-radius: var(--mat-sys-corner-#{$corner});
-  background: var(--mat-sys-surface);
+  background: var(--pb-card);
+  box-shadow: var(--pb-card-shadow);
 }
 
-/** M3 filled (tonal) card. */
+/** The well: recessed from the canvas, flat, for cards to sit in. */
 @mixin tonal($corner: large) {
   border-radius: var(--mat-sys-corner-#{$corner});
-  background: var(--mat-sys-surface-container-low);
+  background: var(--pb-well);
 }
 
 /**

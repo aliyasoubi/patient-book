@@ -146,6 +146,30 @@ html {
   --pb-on-success-container: light-dark(#0e4a1f, #b4e5c0);
   --pb-warning-container: light-dark(#fbe8c4, #4a3710);
   --pb-on-warning-container: light-dark(#5a3c00, #f4d68b);
+
+  /*
+   * Card on canvas. The page ground is a tinted neutral, and a card sits on it
+   * a tone lighter, lifted by a soft shadow instead of outlined. M3's
+   * container ramp runs the other way in dark (`lowest` is the darkest), so
+   * each mode names its own tones; a card is lighter than the ground in both.
+   * Dark has no shadow to see, so there a hairline does the lifting. A well —
+   * a lab column, the filter panel — is recessed: a step darker than the
+   * canvas, holding cards.
+   */
+  --pb-canvas: light-dark(var(--mat-sys-surface-container-low), var(--mat-sys-surface));
+  --pb-card: light-dark(
+    var(--mat-sys-surface-container-lowest),
+    var(--mat-sys-surface-container-low)
+  );
+  --pb-card-border: light-dark(
+    transparent,
+    color-mix(in srgb, var(--mat-sys-outline-variant) 60%, transparent)
+  );
+  --pb-card-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.05);
+  --pb-well: light-dark(
+    var(--mat-sys-surface-container),
+    var(--mat-sys-surface-container-lowest)
+  );
 }
 
 /** Explicit dark/light override, used when the user picks one in settings. */
@@ -175,7 +199,7 @@ body {
 
 body {
   font-family: Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
-  background: var(--mat-sys-surface);
+  background: var(--pb-canvas);
   color: var(--mat-sys-on-surface);
   overscroll-behavior-y: none;
   // Persian text is more legible with slightly looser lines than Latin.
@@ -273,6 +297,32 @@ mat-icon.material-symbols-rounded {
   padding-block: 8px;
 }
 
+/* ── Loading ───────────────────────────────────────────────────────── */
+/**
+ * A page's indeterminate bar lies over the top edge of what follows it
+ * rather than taking a row of its own. In the flow it pushed the content down
+ * by its 4px plus the page gap on every refetch — every search keystroke —
+ * and let it jump back after. The patient list does the same inside its
+ * results box.
+ */
+pb-page > mat-progress-bar {
+  position: relative;
+  z-index: 1;
+  margin-block-end: calc(-4px - var(--pb-page-gap));
+}
+
+/* ── Snackbars ─────────────────────────────────────────────────────── */
+/**
+ * On a phone the bottom navigation holds the bottom 72px, and a snackbar
+ * there covered it for as long as the message was up. Material marks the
+ * snackbar's pane `mat-mdc-snack-bar-handset` on the same CDK Handset
+ * breakpoint the shell shows that bar at; the `:has` keeps the sign-in page,
+ * which has no bar, as it was.
+ */
+body:has(.bottom-nav) .mat-mdc-snack-bar-handset .mat-mdc-snack-bar-container {
+  margin-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
 /* ── Motion ────────────────────────────────────────────────────────── */
 /**
  * Material's dialog/snackbar entrances ship the plain M2 "standard decelerate"
@@ -286,6 +336,35 @@ mat-icon.material-symbols-rounded {
 
 .mat-snack-bar-container-animations-enabled.mat-snack-bar-container-enter {
   animation-timing-function: var(--pb-ease-emphasized) !important;
+}
+
+/**
+ * How content arrives: a short fade and an 8px rise on the emphasized curve.
+ * `pb-page` plays it for every screen; `.pb-enter` / `.pb-leave` are for
+ * Angular's `animate.enter` / `animate.leave` on a block that comes and goes
+ * in place, like the patient list's filter panel. `backwards`, not `both`, so
+ * no transform is left behind once it has played.
+ */
+@keyframes pb-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pb-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.pb-enter {
+  animation: pb-enter 220ms var(--pb-ease-emphasized) backwards;
+}
+
+.pb-leave {
+  animation: pb-leave 120ms ease-in forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

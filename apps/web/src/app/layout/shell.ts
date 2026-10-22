@@ -1,5 +1,14 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -159,6 +168,16 @@ export class Shell {
 
   constructor() {
     effect(() => this.pageScroll.attach(this.page()?.nativeElement ?? null));
+
+    // A new page opens at its top. The router's own reset moves the window,
+    // which never scrolls here, so without this a page opened at the offset
+    // the last one was left at. A new query on the same page — a search, a
+    // filter — keeps its place; the patient list puts its saved offset back
+    // after this, once its rows are in.
+    effect(() => {
+      this.path();
+      untracked(() => this.pageScroll.scrollTo(0));
+    });
   }
 
   protected readonly navItems = computed(() =>

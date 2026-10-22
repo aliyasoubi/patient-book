@@ -7,7 +7,7 @@ import {
   LOCALE_ID,
 } from '@angular/core';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatDatepickerIntl } from '@angular/material/datepicker';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
@@ -31,12 +31,10 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
 
-    provideRouter(
-      routes,
-      withComponentInputBinding(),
-      // Returning to the patient list should land where the user left it.
-      withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
-    ),
+    // No router scroll restoration: it moves the window, and the window never
+    // scrolls here. The shell resets the page on navigation, and the patient
+    // list restores its own offset (see PageScroll).
+    provideRouter(routes, withComponentInputBinding()),
 
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, errorInterceptor])),
     provideTranslateService({

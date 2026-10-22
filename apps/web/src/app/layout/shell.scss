@@ -5,15 +5,15 @@
 
 .shell {
   height: 100%;
-  // The page ground is `surface`; cards are outlined on it (same tone, an
-  // outline-variant border) or tonal (a container tone, no border) — never
-  // both, and never darker than the ground they sit on.
-  background: var(--mat-sys-surface);
+  // The page ground is the canvas; cards sit on it a tone lighter (see
+  // styles/_surface.scss). The rail, top bar and bottom bar are the card
+  // tone, so the canvas reads as the work area they frame.
+  background: var(--pb-canvas);
 
   &__nav {
     width: 264px;
     border-inline-end: 1px solid var(--mat-sys-outline-variant);
-    background: var(--mat-sys-surface-container);
+    background: var(--pb-card);
   }
 
   &__content {
@@ -118,7 +118,7 @@
   // left it 3.5px on top and 4.5px underneath).
   height: auto;
   padding: var(--pb-space-2) var(--pb-space-3);
-  background: var(--mat-sys-surface);
+  background: var(--pb-card);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
   // Sits above the page; the shadow only appears once content scrolls under it.
   box-shadow: none;
@@ -193,7 +193,7 @@
   align-items: center;
   gap: 2px;
   padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
-  background: var(--mat-sys-surface-container);
+  background: var(--pb-card);
   border-top: 1px solid var(--mat-sys-outline-variant);
 
   &__item {

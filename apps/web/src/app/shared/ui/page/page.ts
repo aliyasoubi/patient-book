@@ -32,6 +32,8 @@ export type PageWidth = 'wide' | 'content' | 'form' | 'narrow';
       max-width: var(--pb-page-content);
       margin-inline: auto;
       padding: var(--pb-page-block-start) var(--pb-page-inline) var(--pb-page-block-end);
+      /* Every screen eases in rather than snapping; keyframes in styles.scss. */
+      animation: pb-enter 220ms var(--pb-ease-emphasized) backwards;
 
       @media (max-width: 700px) {
         padding: var(--pb-page-block-start-compact) var(--pb-page-inline-compact)
