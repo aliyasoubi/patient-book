@@ -99,6 +99,10 @@
             }
           </ul>
         </pb-banner>
+      } @else if (duplicateCheckFailed()) {
+        <pb-banner tone="warning" size="compact" icon="cloud_off">
+          {{ 'patientForm.duplicates.failed' | translate }}
+        </pb-banner>
       }
     </div>
 
