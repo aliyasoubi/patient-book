@@ -23,11 +23,24 @@ compose build
 
 # After the build, so a failed build costs no dump, and right before `up`,
 # which runs the migrations. No dump, no deploy. A first deploy has no
-# database running yet, and nothing to keep. sudo because the backup key is
-# root-only.
+# database running yet, and nothing to keep.
+#
+# The backup key is root-only. The deploy button runs this over SSH with no
+# terminal, where sudo cannot ask for a password: there it must be allowed
+# without one, which install.sh sets up for this one command. Run by hand in
+# a terminal, sudo may ask as usual.
+readonly PREDEPLOY=("$REPO_ROOT/ops/deploy/pb-backup.sh" predeploy)
 if [[ -n "$(compose ps --status running --quiet db 2>/dev/null)" ]]; then
   echo "→ backing up the database before migrations"
-  sudo "$REPO_ROOT/ops/deploy/pb-backup.sh" predeploy
+  if [[ $EUID -eq 0 ]]; then
+    "${PREDEPLOY[@]}"
+  elif [[ -t 0 ]] || sudo -n -l "${PREDEPLOY[@]}" >/dev/null 2>&1; then
+    sudo "${PREDEPLOY[@]}"
+  else
+    echo "✗  the pre-deploy backup needs root, and sudo would ask for a password" >&2
+    echo "   nobody can type here. Run once on the server: sudo ./ops/deploy/install.sh" >&2
+    exit 1
+  fi
 else
   echo "→ no database running yet — no backup to take"
 fi
