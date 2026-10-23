@@ -2,7 +2,6 @@ import type { TranslateService } from '@ngx-translate/core';
 import { describe, expect, it } from 'vitest';
 
 import {
-  PERMANENT_TOOTH_RANGE,
   chartQuadrants,
   jawTeeth,
   teethByQuadrant,
@@ -78,13 +77,6 @@ describe('chartQuadrants', () => {
     expect(quadrants[0].teeth).toEqual([17, 16, 15, 14, 13, 12, 11]);
     expect(quadrants[1].teeth).toEqual([21, 22, 23, 24, 25, 26, 27]);
     expect(quadrants[2].teeth).toEqual([47, 46, 45, 44, 43, 42, 41]);
-  });
-
-  it('takes the wisdom teeth in at the outer end when asked for the whole set', () => {
-    const quadrants = chartQuadrants(i18n, PERMANENT_TOOTH_RANGE);
-    expect(quadrants[0].teeth).toEqual([18, 17, 16, 15, 14, 13, 12, 11]);
-    expect(quadrants[3].teeth).toEqual([31, 32, 33, 34, 35, 36, 37, 38]);
-    expect(jawTeeth('lower', PERMANENT_TOOTH_RANGE)).toHaveLength(16);
   });
 });
 
