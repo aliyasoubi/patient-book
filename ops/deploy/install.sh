@@ -60,6 +60,26 @@ systemctl daemon-reload
 systemctl enable --now patient-book-backup.timer
 echo "✓  nightly backup timer installed and enabled"
 
+# -- pre-deploy backup without a password -----------------------------------
+# deploy.sh dumps the database before migrations, which needs the root-only
+# key. The deploy button runs it over SSH with no terminal to type a sudo
+# password into, so the deploying account may run exactly that one command
+# as root without one. That account already drives Docker, which is as much
+# as root, so this gives it nothing new.
+readonly DEPLOY_USER_NAME="${PB_DEPLOY_USER:-${SUDO_USER:-}}"
+readonly SUDOERS_FILE="/etc/sudoers.d/patient-book-predeploy"
+if [[ -n "$DEPLOY_USER_NAME" && "$DEPLOY_USER_NAME" != root ]]; then
+  rule="$DEPLOY_USER_NAME ALL=(root) NOPASSWD: $HERE/pb-backup.sh predeploy"
+  tmp="$(mktemp)"
+  printf '%s\n' "$rule" >"$tmp"
+  visudo -cf "$tmp" >/dev/null || { rm -f "$tmp"; die "the sudoers rule did not validate"; }
+  install -m 440 -o root -g root "$tmp" "$SUDOERS_FILE"
+  rm -f "$tmp"
+  echo "✓  $DEPLOY_USER_NAME may run the pre-deploy backup without a password"
+else
+  echo "✓  deploying as root: the pre-deploy backup needs no sudo rule"
+fi
+
 echo
 systemctl list-timers patient-book-backup.timer --no-pager || true
 echo

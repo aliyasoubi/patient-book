@@ -147,6 +147,19 @@ schema is always current before new code serves a request. Just before them,
 last 3 are kept, apart from the nightly ones); it asks for `sudo` because the
 backup key is root-only, and if the dump fails, nothing is deployed.
 
+The **Deploy** workflow on GitHub runs the same thing over SSH with no
+terminal, where `sudo` cannot ask for a password. `install.sh` lets the
+account that ran it (or `PB_DEPLOY_USER=<name>`) run exactly that dump as
+root without one. A server set up before this needs it once, as that
+account:
+
+```bash
+sudo ./ops/deploy/install.sh
+```
+
+Without it, a deploy from the button stops before migrating, with nothing
+changed, and says so.
+
 Write each release's migrations so the release before it still runs on the
 new schema: add tables, and columns that are nullable or have a default.
 Dropping or renaming a column, or rewriting data already stored, goes in a
