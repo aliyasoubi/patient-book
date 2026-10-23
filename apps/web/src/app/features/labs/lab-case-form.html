@@ -13,7 +13,8 @@
     <pb-surface icon="dentistry" [title]="'labForm.caseSection' | translate">
       <pb-field-grid>
         <!-- Typing searches the patient book; picking a name links the case to
-             that file. A name typed without picking is kept as written. -->
+             that file, and typing another name over it unlinks it. A name
+             typed without picking is kept as written. -->
         <div class="pb-field-grid__full">
           <pb-text-field
             [control]="form.controls.recordedName"
@@ -27,7 +28,10 @@
           @if (linkedPatient(); as linked) {
             <div class="form__linked">
               <mat-icon aria-hidden="true">link</mat-icon>
-              <span>{{ 'labs.patientFile' | translate: { fileNo: linked.fileNo } }}</span>
+              <span
+                >{{ linked.fullName || ('patient.unnamed' | translate) }} —
+                {{ 'labs.patientFile' | translate: { fileNo: linked.fileNo } }}</span
+              >
               <pb-icon-button
                 icon="close"
                 size="compact"

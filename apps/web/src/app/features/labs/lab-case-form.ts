@@ -41,7 +41,7 @@ import { LabCaseInput, LabService } from '../../core/services/lab.service';
 import { ListReturn } from '../../core/services/list-return.service';
 import { PatientsService } from '../patients/data/patients.service';
 import type { PatientSuggestion } from '../patients/data/patient.model';
-import { adoptUntouched } from '../../shared/form-sync';
+import { adoptUntouched, dropPickOnRetype } from '../../shared/form-sync';
 import {
   IMPLANT_BRAND_KEYS,
   LAB_JAWS,
@@ -341,6 +341,11 @@ export class LabCaseForm implements HasUnsavedChanges {
     this.form.controls.toothWork.valueChanges.subscribe(() =>
       this.form.controls.workTypes.updateValueAndValidity({ emitEvent: false }),
     );
+
+    // Another name typed over the linked one is someone else: the case is
+    // unlinked until a patient is picked again, and a conflict will not link
+    // it back. A name the case was saved under stays linked until edited.
+    dropPickOnRetype(this.form.controls.recordedName, this.linkedPatient, () => this.unlink());
 
     // Until someone picks a turnaround, it follows the work: three weeks when
     // it has laminates, one otherwise.

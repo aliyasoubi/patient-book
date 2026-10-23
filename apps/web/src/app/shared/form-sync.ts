@@ -1,4 +1,6 @@
-import type { FormGroup } from '@angular/forms';
+import type { Signal } from '@angular/core';
+import type { AbstractControl, FormGroup } from '@angular/forms';
+import type { Subscription } from 'rxjs';
 
 /** A field a conflict message can name: its label key, and how to read it. */
 export type FieldReader<T> = readonly [labelKey: string, read: (record: T) => unknown];
@@ -26,4 +28,26 @@ export function adoptUntouched(form: FormGroup, saved: Readonly<Record<string, u
     const control = form.get(name);
     if (control?.pristine) control.setValue(value);
   }
+}
+
+/**
+ * A patient picked from the book stays picked only while the field still
+ * shows their name. Typing over it is a new search, not the same patient:
+ * `drop` lets the pick go, rather than saving the first patient under the
+ * second one's name. Only the user's typing counts — a field still untouched
+ * is being filled in by the form itself (a reset, a conflict adopting what was
+ * saved), and its link is the form's to set.
+ */
+export function dropPickOnRetype(
+  control: AbstractControl<string>,
+  picked: Signal<{ fullName: string } | null>,
+  drop: () => void,
+): Subscription {
+  return control.valueChanges.subscribe((typed) => {
+    const current = picked();
+    if (!current || control.pristine || typed.trim() === current.fullName.trim()) return;
+    drop();
+    // The validator ran before the pick was dropped; ask it again.
+    control.updateValueAndValidity({ emitEvent: false });
+  });
 }
