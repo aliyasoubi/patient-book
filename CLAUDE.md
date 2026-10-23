@@ -56,6 +56,10 @@ npm run icons:check   # a new Material Symbol needs `npm run icons:build --works
   path, change the id and drop the loaded relation (or don't load it).
 - **Edits are versioned.** Updates lock the row and check `expectedVersion`;
   a write path that reads, changes and saves a whole entity must lock it too.
+- **Migrations only add within a release.** New columns are nullable or have
+  a default. A drop, a rename or a rewrite of stored data ships a release
+  later, so rolling back is just running the previous commit
+  (`ops/deploy/README.md`, "Rolling back a release").
 - **Stock moves only through a movement.** Never write
   `inventory_items.quantity`, its expiry or `inventory_lots.quantity`
   directly: work out the batch changes with `receive`/`take`/`count`
