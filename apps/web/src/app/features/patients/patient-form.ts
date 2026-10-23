@@ -215,18 +215,27 @@ export class PatientForm implements HasUnsavedChanges {
    * filled in, never a block: two people can share a name, and a family
    * shares a phone. Debounced to one request per pause in typing, and
    * `switchMap` so a slow answer for an earlier spelling never lands last.
+   * A check that failed says so: shown as no matches, it would read as "no
+   * file on record", which nobody has checked.
    */
-  protected readonly duplicates = toSignal(
+  private readonly duplicateCheck = toSignal(
     this.form.valueChanges.pipe(
       map(() => this.duplicateQuery()),
       debounceTime(400),
       distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
       switchMap((query) =>
-        query ? this.service.possibleDuplicates(query).pipe(catchError(() => of([]))) : of([]),
+        query
+          ? this.service.possibleDuplicates(query).pipe(
+              map((found) => ({ found, failed: false })),
+              catchError(() => of({ found: [] as PossibleDuplicate[], failed: true })),
+            )
+          : of({ found: [] as PossibleDuplicate[], failed: false }),
       ),
     ),
-    { initialValue: [] as PossibleDuplicate[] },
+    { initialValue: { found: [] as PossibleDuplicate[], failed: false } },
   );
+  protected readonly duplicates = computed(() => this.duplicateCheck().found);
+  protected readonly duplicateCheckFailed = computed(() => this.duplicateCheck().failed);
 
   protected duplicateReasons(d: PossibleDuplicate): string {
     return d.reasons
