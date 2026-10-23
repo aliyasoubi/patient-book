@@ -160,6 +160,29 @@ chmod 600 "$TARGET"
 readonly SIZE="$(du -h "$TARGET" | cut -f1)"
 log "wrote $(basename "$TARGET") ($SIZE)"
 
+# -- housekeeping -----------------------------------------------------------
+# The dumps are pruned below; the two other things that would otherwise only
+# ever grow are this log and spare copies of the database itself.
+#
+# The log needs recent history only: its last 2000 lines are about a year.
+if [[ "$(wc -l <"$LOG_FILE")" -gt 2000 ]]; then
+  tail -n 2000 "$LOG_FILE" >"$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
+fi
+# A recovery keeps the database it replaced as a fallback, and a drill killed
+# mid-way leaves its throwaway copy. Each is a full set of patient records
+# that nothing else will drop, so every run names them until someone does
+# (README: "What the server keeps"). Named, never dropped here: the fallback
+# is kept on purpose, for as long as someone is unsure.
+leftovers="$(docker compose -f "$COMPOSE_FILE" exec -T db \
+  psql --username="$DB_USER" --dbname=postgres -tAc \
+  "SELECT datname FROM pg_database
+    WHERE datname IN ('patient_book_before_restore', 'patient_book_restore')
+       OR datname LIKE 'patient\_book\_drill\_%'" 2>>"$LOG_FILE" | tr '\n' ' ' || true)"
+if [[ -n "${leftovers// /}" ]]; then
+  log "WARNING: spare copies of the database still on this server: $leftovers"
+  echo "warning: spare copies of the database still on this server: $leftovers" >&2
+fi
+
 # A pre-deploy dump stops here. Weekly promotion, the offsite mirror and the
 # success marker belong to the nightly schedule, which already covers them.
 if [[ "$MODE" == predeploy ]]; then
