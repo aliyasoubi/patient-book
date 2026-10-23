@@ -93,8 +93,11 @@ export class LabCasesService {
     private readonly audit: AuditService,
   ) {}
 
-  private query(): SelectQueryBuilder<LabCase> {
-    return this.cases
+  private query(
+    manager: EntityManager = this.cases.manager,
+  ): SelectQueryBuilder<LabCase> {
+    return manager
+      .getRepository(LabCase)
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.lab', 'l')
       .leftJoinAndSelect('c.patient', 'p')
@@ -199,8 +202,12 @@ export class LabCasesService {
     );
   }
 
-  async findOne(id: string): Promise<unknown> {
-    const c = await this.query()
+  /** Read through `manager` to see the case as a transaction holding its lock does. */
+  async findOne(
+    id: string,
+    manager: EntityManager = this.cases.manager,
+  ): Promise<unknown> {
+    const c = await this.query(manager)
       .withDeleted()
       .where('c.id = :id', { id })
       .getOne();
@@ -593,6 +600,9 @@ export class LabCasesService {
    * One move of a case, in one transaction: lock the case, check it is where
    * the move starts from, apply, bump the version so an open edit form knows,
    * and audit. A case that has moved on is refused with where it is now.
+   *
+   * The answer is read before the lock goes, so the version its Undo carries
+   * is this move's own, not that of a colleague's move landing just after.
    */
   private async move(
     id: string,
@@ -604,7 +614,7 @@ export class LabCasesService {
       stage: LabStage,
     ) => Promise<Record<string, unknown>>,
   ): Promise<unknown> {
-    await this.cases.manager.transaction(async (manager) => {
+    return this.cases.manager.transaction(async (manager) => {
       const cases = manager.getRepository(LabCase);
       const c = await cases.findOne({
         where: { id },
@@ -624,8 +634,8 @@ export class LabCasesService {
         { userId, action: 'update', entity: 'lab_case', entityId: id, changes },
         manager,
       );
+      return this.findOne(id, manager);
     });
-    return this.findOne(id);
   }
 
   /**

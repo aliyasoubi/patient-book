@@ -124,8 +124,12 @@ export class SurgeryService {
     );
   }
 
-  async findOne(id: string): Promise<unknown> {
-    const item = await this.queue.findOne({
+  /** Read through `manager` to see the row as a transaction holding its lock does. */
+  async findOne(
+    id: string,
+    manager: EntityManager = this.queue.manager,
+  ): Promise<unknown> {
+    const item = await manager.getRepository(SurgeryQueueItem).findOne({
       where: { id },
       relations: { implantCase: { patient: true } },
     });
@@ -256,16 +260,19 @@ export class SurgeryService {
     userId: string | null,
     role?: string,
   ): Promise<unknown> {
-    await this.queue.manager.transaction(async (manager) => {
+    return this.queue.manager.transaction(async (manager) => {
       const queue = manager.getRepository(SurgeryQueueItem);
       // Lock and read in one, then the version check: a concurrent edit
-      // waits here, reads the bumped version and is refused.
+      // waits here, reads the bumped version and is refused. A follow-up
+      // status alone needs no version, but one sent is checked: that is an
+      // Undo, which must not put back a status over someone's newer one.
       const item = await queue.findOne({
         where: { id },
         lock: { mode: 'pessimistic_write' },
       });
       if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
-      if (!isFollowUpChange(dto) && item.version !== expectedVersion) {
+      const versioned = expectedVersion !== undefined || !isFollowUpChange(dto);
+      if (versioned && item.version !== expectedVersion) {
         throw AppException.conflict(ErrorCode.SurgeryItemModified);
       }
       assertMayWriteClinicalNotes(role, [[dto.notes, item.notes]]);
@@ -286,8 +293,9 @@ export class SurgeryService {
         },
         manager,
       );
+      // Read before the lock goes: the version an Undo carries is this save's own.
+      return this.findOne(id, manager);
     });
-    return this.findOne(id);
   }
 
   async remove(id: string, userId: string | null): Promise<void> {

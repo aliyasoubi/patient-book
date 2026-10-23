@@ -168,12 +168,21 @@ export class InventoryService {
     ].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
   }
 
-  /** One item, its batches on the shelf first-expiring first, and its stock card newest first. */
-  async findOne(id: string): Promise<unknown> {
-    const item = await this.items.findOne({ where: { id }, withDeleted: true });
+  /**
+   * One item, its batches on the shelf first-expiring first, and its stock
+   * card newest first. Read through `manager` to see it as a transaction
+   * still holding the item's lock does.
+   */
+  async findOne(
+    id: string,
+    manager: EntityManager = this.items.manager,
+  ): Promise<unknown> {
+    const item = await manager
+      .getRepository(InventoryItem)
+      .findOne({ where: { id }, withDeleted: true });
     if (!item) throw AppException.notFound(ErrorCode.InventoryItemNotFound);
-    const lots = await loadLots(this.items.manager, id);
-    const movements = await this.items.query<
+    const lots = await loadLots(manager, id);
+    const movements = await manager.query<
       Array<
         InventoryMovement & {
           fullName: string | null;
@@ -319,13 +328,18 @@ export class InventoryService {
    * A delivery, a use, a discard or a count. Needs no version: a delivery
    * adds to whatever is there, and a count is what is on the shelf now. The
    * lock makes two at once queue rather than both read the same batches.
+   *
+   * The answer is read before the lock goes, so the version it carries — the
+   * one its Undo is checked against — is this movement's own: read after the
+   * commit, a colleague's movement in between would lend it theirs, and this
+   * Undo would take back their work.
    */
   async move(
     id: string,
     dto: InventoryMovementDto,
     userId: string | null,
   ): Promise<unknown> {
-    await this.items.manager.transaction(async (manager) => {
+    return this.items.manager.transaction(async (manager) => {
       const item = await this.lock(manager, id);
       // An implant goes into someone, and into their implant file.
       if (
@@ -389,8 +403,8 @@ export class InventoryService {
           userId,
         );
       }
+      return this.findOne(id, manager);
     });
-    return this.findOne(id);
   }
 
   /**
