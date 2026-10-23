@@ -197,6 +197,17 @@ const MAX_SUGGESTIONS = 8;
             [options]="unitOptions"
             [label]="'inventoryForm.unit' | translate"
           />
+          @if (unitRelabels()) {
+            <pb-banner
+              class="pb-field-grid__full"
+              tone="warning"
+              size="compact"
+              icon="straighten"
+              role="note"
+            >
+              {{ 'inventoryForm.unitRelabels' | translate }}
+            </pb-banner>
+          }
           <pb-text-field
             [control]="form.controls.minQuantity"
             [label]="'inventoryForm.minQuantity' | translate"
@@ -350,6 +361,18 @@ export class InventoryItemDialog {
   protected readonly soldToPatients = toSignal(this.form.controls.soldToPatients.valueChanges, {
     initialValue: this.form.controls.soldToPatients.value,
   });
+  private readonly unitPicked = toSignal(this.form.controls.unit.valueChanges, {
+    initialValue: this.form.controls.unit.value,
+  });
+  /**
+   * The item's numbers are counts of its unit, and a new unit converts none
+   * of them: its stock and every use recorded read in the new one. Right for
+   * a unit that was mislabelled, wrong for a new pack size — said before it
+   * is saved.
+   */
+  protected readonly unitRelabels = computed(
+    () => !!this.item && this.unitPicked() !== this.item.unit,
+  );
 
   /** «Supe Line (Dentium)»: picking one fills in the rest of what is known about it. */
   protected readonly nameOptions = computed<TextFieldOption[]>(() => {
