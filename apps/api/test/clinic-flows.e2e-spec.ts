@@ -963,6 +963,48 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(await listFollowUps('declined')).not.toContain(id);
     });
 
+    it('undoes a follow-up status only while nobody has saved over it', async () => {
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'برگشت پیگیری',
+          surgeryDate: monthsAgo(3),
+          followUpMonths: 3,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+      const patch = (body: object) =>
+        asAdmin(http().patch(`/api/surgery-queue/${id}`)).send(body);
+
+      // Declined by mistake, put right at once: the Undo carries the
+      // version its save answered with.
+      const declined = await patch({ followUpStatus: 'declined' }).expect(200);
+      await patch({
+        followUpStatus: 'open',
+        expectedVersion: (declined.body as { version: number }).version,
+      }).expect(200);
+
+      // Declined again; a colleague books the patient before the Undo is
+      // pressed. The Undo is refused and the booking stays.
+      const again = await patch({ followUpStatus: 'declined' }).expect(200);
+      await patch({
+        followUpStatus: 'booked',
+        followUpAppointmentAt: today,
+      }).expect(200);
+      const refused = await patch({
+        followUpStatus: 'open',
+        expectedVersion: (again.body as { version: number }).version,
+      }).expect(409);
+      expect(refused.body).toMatchObject({ code: 'ERR_SURGERY_ITEM_MODIFIED' });
+      const now = await asAdmin(http().get(`/api/surgery-queue/${id}`)).expect(
+        200,
+      );
+      expect(now.body).toMatchObject({
+        followUpStatus: 'booked',
+        followUpAppointmentAt: today,
+      });
+    });
+
     it('lists open follow-ups first, soonest first, whatever the surgery order', async () => {
       const add = async (months: number): Promise<string> => {
         const res = await asAdmin(http().post('/api/surgery-queue'))

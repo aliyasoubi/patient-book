@@ -194,11 +194,12 @@ export class UpdateSurgeryDto extends PartialType(
    * edit but one: the card's follow-up status, which sends `followUpStatus`
    * and its appointment day alone — one deliberate fact about the patient,
    * which overwrites nothing else and must not fail because someone
-   * corrected the tooth meanwhile.
+   * corrected the tooth meanwhile. Sent with one anyway — an Undo of that
+   * status — the version is checked like any edit's.
    */
   @ApiPropertyOptional({
     description:
-      'Version the client loaded; refused if stale. Required unless only followUpStatus / followUpAppointmentAt are sent',
+      'Version the client loaded; refused if stale. Required unless only followUpStatus / followUpAppointmentAt are sent, and checked whenever sent',
   })
   @IsInt()
   @Min(1)

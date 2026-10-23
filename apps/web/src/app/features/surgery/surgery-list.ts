@@ -471,14 +471,18 @@ export class SurgeryList {
 
   private saveStatus(
     item: SurgeryQueueItem,
-    body: { followUpStatus: FollowUpStatus; followUpAppointmentAt?: string | null },
+    body: {
+      followUpStatus: FollowUpStatus;
+      followUpAppointmentAt?: string | null;
+      expectedVersion?: number;
+    },
     previous: FollowUpStatus,
     previousDay: string | null,
     undoing = false,
   ): void {
     this.updating.set(item.id);
     this.registry.saveSurgery(item.id, body).subscribe({
-      next: () => {
+      next: (saved) => {
         this.updating.set(null);
         const ref = this.snackBar.open(
           this.i18n.instant('surgery.statusSaved'),
@@ -488,11 +492,14 @@ export class SurgeryList {
         if (!undoing) {
           ref.onAction().subscribe(() => {
             const back = previous === 'booked' && previousDay ? previousDay : null;
+            // Against this save's version: once someone has booked or closed
+            // the follow-up since, the Undo is refused rather than undo theirs.
+            const expectedVersion = saved.version;
             this.saveStatus(
               item,
               previous === 'booked'
-                ? { followUpStatus: previous, followUpAppointmentAt: back }
-                : { followUpStatus: previous },
+                ? { followUpStatus: previous, followUpAppointmentAt: back, expectedVersion }
+                : { followUpStatus: previous, expectedVersion },
               body.followUpStatus,
               null,
               true,
