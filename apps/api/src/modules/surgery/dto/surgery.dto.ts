@@ -22,7 +22,7 @@ import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
 import {
   AbutmentType,
   FollowUpStatus,
-  LAB_TOOTH_NUMBERS,
+  PERMANENT_TOOTH_NUMBERS,
   SurgeryKind,
   SurgeryStatus,
 } from '../../../domain';
@@ -119,9 +119,9 @@ export class UpsertSurgeryDto {
   /** The teeth, as FDI numbers: `16` is the upper right first molar. */
   @ApiPropertyOptional({ type: [Number], example: [36, 37] })
   @IsArray()
-  @ArrayMaxSize(LAB_TOOTH_NUMBERS.length)
+  @ArrayMaxSize(PERMANENT_TOOTH_NUMBERS.length)
   @ArrayUnique()
-  @IsIn(LAB_TOOTH_NUMBERS, { each: true })
+  @IsIn(PERMANENT_TOOTH_NUMBERS, { each: true })
   @IsOptional()
   teethFdi?: number[];
 

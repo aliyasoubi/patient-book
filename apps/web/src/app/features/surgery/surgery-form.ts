@@ -42,6 +42,7 @@ import {
   PbToothPicker,
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
+import { PERMANENT_TOOTH_RANGE } from '../../shared/ui/tooth-picker/teeth';
 import { AuthService } from '../../core/services/auth.service';
 import { ListReturn } from '../../core/services/list-return.service';
 
@@ -119,6 +120,7 @@ export class SurgeryForm implements HasUnsavedChanges {
   /** Present when editing; absent on `/surgery/new`. */
   readonly id = input<string | undefined>(undefined);
   protected readonly isEdit = computed(() => !!this.id());
+  protected readonly permanentTeeth = PERMANENT_TOOTH_RANGE;
   protected readonly title = computed(() =>
     this.isEdit() ? 'surgeryForm.editTitle' : 'surgeryForm.createTitle',
   );

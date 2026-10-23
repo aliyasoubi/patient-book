@@ -155,6 +155,11 @@ export const LAB_TOOTH_NUMBERS: readonly number[] = [1, 2, 3, 4].flatMap((q) =>
   [1, 2, 3, 4, 5, 6, 7].map((n) => q * 10 + n),
 );
 
+/** The whole permanent set, wisdom teeth (18, 28, 38, 48) included, for a surgery. */
+export const PERMANENT_TOOTH_NUMBERS: readonly number[] = [1, 2, 3, 4].flatMap(
+  (q) => [1, 2, 3, 4, 5, 6, 7, 8].map((n) => q * 10 + n),
+);
+
 /**
  * Why a case went to the lab this time. A crown or a laminate makes several
  * trips — the impression, a resin or frame try-in, now and then a correction
