@@ -142,7 +142,50 @@ git pull && ./ops/deploy/deploy.sh
 ```
 
 Migrations run as their own one-shot service that the API waits on, so the
-schema is always current before new code serves a request.
+schema is always current before new code serves a request. Just before them,
+`deploy.sh` dumps the database into `predeploy/` in the backup directory (the
+last 3 are kept, apart from the nightly ones); it asks for `sudo` because the
+backup key is root-only, and if the dump fails, nothing is deployed.
+
+Write each release's migrations so the release before it still runs on the
+new schema: add tables, and columns that are nullable or have a default.
+Dropping or renaming a column, or rewriting data already stored, goes in a
+later release, once code that no longer uses it is live. That keeps the
+first, quick rollback below always available.
+
+### Rolling back a release
+
+Find the commit that ran before the last pull — the line before the newest
+`pull` in:
+
+```bash
+git reflog -n 10
+```
+
+**If the release only added to the schema** (the usual case), run that
+commit again. The data stays as it is, including what was written since the
+deploy:
+
+```bash
+git checkout <commit> && ./ops/deploy/deploy.sh
+```
+
+**If its migrations dropped, renamed or rewrote data**, or the older code
+fails on the new schema, go back to the dump taken just before the deploy.
+Everything written since then leaves the live database, so note what staff
+recorded in between; it stays readable in `patient_book_before_restore`.
+
+1. `git checkout <commit>`, as above, but do not deploy yet.
+2. Follow steps 1 to 4 of [Real recovery](#real-recovery) with the newest
+   file in `predeploy/` instead of `daily/`.
+3. Instead of step 5, run `./ops/deploy/deploy.sh`. It builds the older
+   version, re-grants the runtime role through `migrate`, and starts the API.
+   Step 5's `start api` would restart the container of the release you are
+   leaving.
+4. Carry on with step 6.
+
+Either way, `git checkout main && git pull` puts the checkout back on the
+branch once a fix is merged; then deploy as usual.
 
 **Upgrading from a build that had a backup screen in Settings:** the backup
 path is now read from `PB_BACKUP_DIR` in `.env` only; the
@@ -203,7 +246,8 @@ keep it that way.
 A systemd timer runs `pb-backup.sh` nightly at 21:00. The dump runs *inside*
 the Postgres container, so it needs no client on the host and its version
 always matches the server. Output is gzipped and AES-256 encrypted before it
-touches disk, with 7 daily and 4 weekly copies kept.
+touches disk, with 7 daily and 4 weekly copies kept. Each deploy adds one
+more to `predeploy/` (see [Rolling back a release](#rolling-back-a-release)).
 
 ```bash
 systemctl list-timers patient-book-backup.timer

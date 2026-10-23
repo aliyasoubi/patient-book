@@ -4,7 +4,9 @@
 # ship a change.
 #
 # Migrations run as their own one-shot service that the API waits on, so the
-# schema is always current before the new code serves a request.
+# schema is always current before the new code serves a request. A dump taken
+# just before them is what a bad release rolls back to (README: "Rolling back
+# a release").
 
 set -euo pipefail
 
@@ -18,6 +20,17 @@ compose() { docker compose -f "$COMPOSE_FILE" "$@"; }
 
 echo "→ building images"
 compose build
+
+# After the build, so a failed build costs no dump, and right before `up`,
+# which runs the migrations. No dump, no deploy. A first deploy has no
+# database running yet, and nothing to keep. sudo because the backup key is
+# root-only.
+if [[ -n "$(compose ps --status running --quiet db 2>/dev/null)" ]]; then
+  echo "→ backing up the database before migrations"
+  sudo "$REPO_ROOT/ops/deploy/pb-backup.sh" predeploy
+else
+  echo "→ no database running yet — no backup to take"
+fi
 
 echo "→ starting stack"
 compose up -d --remove-orphans

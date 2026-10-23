@@ -9,10 +9,19 @@
 # Output format is identical to the macOS script (gzip, then AES-256), so one
 # set of restore instructions covers both.
 #
+#   pb-backup.sh             the nightly run, from the systemd timer
+#   pb-backup.sh predeploy   the dump deploy.sh takes before migrations
+#
 # Exit codes: 0 success, non-zero failure (systemd records it; see
 # `systemctl status patient-book-backup`).
 
 set -euo pipefail
+
+readonly MODE="${1:-nightly}"
+[[ "$MODE" == nightly || "$MODE" == predeploy ]] || {
+  echo "usage: $0 [predeploy]" >&2
+  exit 2
+}
 
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly COMPOSE_FILE="$REPO_ROOT/compose.prod.yml"
@@ -37,6 +46,10 @@ readonly KEY_FILE="${PB_BACKUP_KEY:-/etc/patient-book/backup.key}"
 
 readonly KEEP_DAILY="${PB_KEEP_DAILY:-7}"
 readonly KEEP_WEEKLY="${PB_KEEP_WEEKLY:-4}"
+# Pre-deploy dumps are the state a bad release rolls back to. They keep a
+# directory and a count of their own, so a day of several deploys cannot push
+# the nightly history out of daily/.
+readonly KEEP_PREDEPLOY="${PB_KEEP_PREDEPLOY:-3}"
 
 # A second, independent copy, off this VPS. Two ways to configure one, and
 # either (or both) can be set:
@@ -59,6 +72,7 @@ readonly OFFSITE_DIR="${PB_OFFSITE_DIR:-}"
 
 readonly DAILY_DIR="$BACKUP_DIR/daily"
 readonly WEEKLY_DIR="$BACKUP_DIR/weekly"
+readonly PREDEPLOY_DIR="$BACKUP_DIR/predeploy"
 readonly LOG_FILE="$BACKUP_DIR/backup.log"
 readonly STAMP="$(date +%Y%m%d-%H%M%S)"
 
@@ -74,7 +88,18 @@ fail() {
   exit 1
 }
 
+prune() {
+  local dir="$1" keep="$2" removed=0
+  # Timestamped names contain no spaces, so this stays safe.
+  for old in $(ls -1t "$dir"/*.enc 2>/dev/null | tail -n +$((keep + 1))); do
+    rm -f "$old" && removed=$((removed + 1))
+  done
+  [[ $removed -gt 0 ]] && log "pruned $removed old backup(s) from $(basename "$dir")"
+  return 0
+}
+
 mkdir -p "$DAILY_DIR" "$WEEKLY_DIR"
+if [[ "$MODE" == predeploy ]]; then mkdir -p "$PREDEPLOY_DIR"; fi
 trap 'fail "unexpected error on line $LINENO"' ERR
 
 command -v docker >/dev/null || fail "docker is not installed"
@@ -105,11 +130,15 @@ fi
 [[ -s "$KEY_FILE" ]] || fail "encryption key $KEY_FILE is empty"
 
 # -- dump -------------------------------------------------------------------
-readonly TARGET="$DAILY_DIR/patient-book-$STAMP.sql.gz.enc"
+if [[ "$MODE" == predeploy ]]; then
+  readonly TARGET="$PREDEPLOY_DIR/patient-book-$STAMP.sql.gz.enc"
+else
+  readonly TARGET="$DAILY_DIR/patient-book-$STAMP.sql.gz.enc"
+fi
 readonly TMP="$(mktemp "${TMPDIR:-/tmp}/pb-backup.XXXXXX")"
 trap 'rm -f "$TMP"' EXIT
 
-log "starting dump of $DB_NAME"
+log "starting $MODE dump of $DB_NAME"
 
 # `exec -T` because there is no TTY under systemd. pipefail is what makes a
 # pg_dump failure fatal here rather than producing a perfectly valid
@@ -131,6 +160,15 @@ chmod 600 "$TARGET"
 readonly SIZE="$(du -h "$TARGET" | cut -f1)"
 log "wrote $(basename "$TARGET") ($SIZE)"
 
+# A pre-deploy dump stops here. Weekly promotion, the offsite mirror and the
+# success marker belong to the nightly schedule, which already covers them.
+if [[ "$MODE" == predeploy ]]; then
+  prune "$PREDEPLOY_DIR" "$KEEP_PREDEPLOY"
+  trap - ERR
+  echo "backup ok: $TARGET ($SIZE)"
+  exit 0
+fi
+
 # -- weekly promotion -------------------------------------------------------
 # Promote whenever the newest weekly is more than 6 days old rather than on a
 # fixed weekday: a VPS that was rebooted on the chosen day would otherwise skip
@@ -141,15 +179,6 @@ if [[ -z "$(find "$WEEKLY_DIR" -name '*.enc' -mtime -6 -print -quit 2>/dev/null 
 fi
 
 # -- retention --------------------------------------------------------------
-prune() {
-  local dir="$1" keep="$2" removed=0
-  # Timestamped names contain no spaces, so this stays safe.
-  for old in $(ls -1t "$dir"/*.enc 2>/dev/null | tail -n +$((keep + 1))); do
-    rm -f "$old" && removed=$((removed + 1))
-  done
-  [[ $removed -gt 0 ]] && log "pruned $removed old backup(s) from $(basename "$dir")"
-  return 0
-}
 prune "$DAILY_DIR" "$KEEP_DAILY"
 prune "$WEEKLY_DIR" "$KEEP_WEEKLY"
 
