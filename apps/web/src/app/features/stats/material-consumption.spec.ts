@@ -137,6 +137,28 @@ describe('MaterialConsumptionReport', () => {
     expect(el.querySelectorAll('tbody tr:not(.usage__group)')).toHaveLength(1);
   });
 
+  it('keeps the shelf filtered on in view, to clear, when a search finds none of it', () => {
+    const { fixture, el, text } = render();
+    const view = fixture.componentInstance as unknown as {
+      setCategory(v: string[]): void;
+      search: { setValue(v: string): void };
+    };
+    view.setCategory(['implant']);
+    // The search finds only anaesthetics: one shelf in the answer, none of it implants.
+    answer = () => of(report({ items: [item({ id: 'a', used: [0, 0, 0, 0, 40, 12] })] }));
+    view.search.setValue('lidocaine');
+    vi.advanceTimersByTime(250);
+    fixture.detectChanges();
+
+    expect(text('.consumption__empty')).toEqual(['consumption.noMatch']);
+    const chips = el.querySelector('pb-filter-chips');
+    expect(chips?.textContent).toContain('inventoryCategory.implant');
+
+    view.setCategory([]);
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.usage__group')).toHaveLength(1);
+  });
+
   it('asks again for twelve months, and for a search once typing pauses', () => {
     const { fixture } = render();
     const view = fixture.componentInstance as unknown as {

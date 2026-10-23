@@ -12,7 +12,7 @@
       [options]="periodOptions"
       [label]="'consumption.period' | translate"
     />
-    @if (categoryOptions().length > 1) {
+    @if (categoryOptions().length > 1 || category()) {
       <pb-filter-chips
         [options]="categoryOptions()"
         [selected]="category() ? [category()!] : []"

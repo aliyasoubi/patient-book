@@ -134,9 +134,15 @@ export class MaterialConsumptionReport {
     return (this.report()?.months ?? []).map((m) => this.column(m));
   });
 
-  /** The shelves that used anything, in the store's order, for the chips. */
+  /**
+   * The shelves that used anything, in the store's order, for the chips —
+   * and the one filtered on, even when a search or a period leaves it empty,
+   * so it can still be seen and cleared.
+   */
   protected readonly categoryOptions = computed<FilterChipOption[]>(() => {
     const used = new Set((this.report()?.items ?? []).map((i) => i.category));
+    const only = this.category();
+    if (only) used.add(only);
     return INVENTORY_CATEGORIES.filter((c) => used.has(c)).map((c) => ({
       value: c,
       label: inventoryCategoryLabel(c),
