@@ -11,8 +11,6 @@ import { formatPersianNumber } from '../../pipes/persian-number.pipe';
 export type Quadrant = 1 | 2 | 3 | 4;
 
 export const TOOTH_RANGE: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
-/** The whole permanent set, wisdom teeth (8) included: a surgery can take one out. */
-export const PERMANENT_TOOTH_RANGE: readonly number[] = [...TOOTH_RANGE, 8];
 
 /** Literal keys, not a template, so the i18n check sees every one. */
 export const QUADRANT_LABELS: Record<Quadrant, string> = {
@@ -38,12 +36,9 @@ export interface QuadrantView {
  * left, lower right, lower left, the patient's right on the viewer's left and
  * each quadrant counting out from the midline — 7…1 | 1…7.
  */
-export function chartQuadrants(
-  i18n: TranslateService,
-  range: readonly number[] = TOOTH_RANGE,
-): QuadrantView[] {
+export function chartQuadrants(i18n: TranslateService): QuadrantView[] {
   return ([1, 2, 4, 3] as const).map((id) => {
-    const fromMidline = range.map((n) => id * 10 + n);
+    const fromMidline = TOOTH_RANGE.map((n) => id * 10 + n);
     const onViewersLeft = id === 1 || id === 4;
     return {
       id,
@@ -84,9 +79,9 @@ export function teethByWork<T extends string>(
 }
 
 /** Every tooth of one jaw: quadrants 1 and 2 are the upper, 3 and 4 the lower. */
-export function jawTeeth(jaw: 'upper' | 'lower', range: readonly number[] = TOOTH_RANGE): number[] {
+export function jawTeeth(jaw: 'upper' | 'lower'): number[] {
   const quadrants: Quadrant[] = jaw === 'upper' ? [1, 2] : [3, 4];
-  return quadrants.flatMap((q) => range.map((n) => q * 10 + n));
+  return quadrants.flatMap((q) => TOOTH_RANGE.map((n) => q * 10 + n));
 }
 
 /** Runs of consecutive tooth positions: [1,2,3,5] → [[1,3],[5,5]]. */

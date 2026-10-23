@@ -49,12 +49,10 @@
           [placeholder]="'surgeryForm.surgeryDatePlaceholder' | translate"
         />
 
-        <!-- The teeth, picked on the chart the lab form uses, with the wisdom
-             teeth too: an extraction is often one. -->
+        <!-- The teeth, picked on the chart the lab form uses. -->
         <div class="pb-field-grid__full form__teeth">
           <span class="form__label">{{ 'surgeryForm.teeth' | translate }}</span>
           <pb-tooth-picker
-            [range]="permanentTeeth"
             [selected]="form.controls.teeth.value"
             (selectedChange)="setTeeth($event)"
             [ariaLabel]="'surgeryForm.teeth' | translate"

@@ -3,14 +3,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PersianNumberPipe } from '../../pipes/persian-number.pipe';
 import { PbButton } from '../button/button';
-import {
-  type QuadrantView,
-  TOOTH_RANGE,
-  chartQuadrants,
-  jawTeeth,
-  positionOf,
-  toothName,
-} from './teeth';
+import { type QuadrantView, chartQuadrants, jawTeeth, positionOf, toothName } from './teeth';
 
 /**
  * The teeth a piece of work is for, picked on a chart — lab work, a surgery.
@@ -32,7 +25,7 @@ import {
       [attr.aria-label]="ariaLabel()"
       [attr.aria-invalid]="invalid() || null"
     >
-      <div class="chart__arches" dir="ltr" [style.--chart-teeth]="range().length">
+      <div class="chart__arches" dir="ltr">
         @for (quadrant of quadrants(); track quadrant.id) {
           <div class="chart__quadrant" role="group" [attr.aria-label]="quadrant.label">
             <span class="chart__caption">{{ quadrant.label }}</span>
@@ -75,8 +68,6 @@ export class PbToothPicker {
   readonly selected = input<readonly number[]>([]);
   readonly ariaLabel = input.required<string>();
   readonly invalid = input(false);
-  /** Positions offered in each quadrant, from the midline: 1–7 unless the form asks for more. */
-  readonly range = input<readonly number[]>(TOOTH_RANGE);
   readonly selectedChange = output<number[]>();
 
   protected readonly position = positionOf;
@@ -84,7 +75,7 @@ export class PbToothPicker {
   /** Upper right, upper left, lower right, lower left — rows of the chart. */
   protected readonly quadrants = computed<QuadrantView[]>(() => {
     this.i18n.currentLang();
-    return chartQuadrants(this.i18n, this.range());
+    return chartQuadrants(this.i18n);
   });
 
   protected isSelected(tooth: number): boolean {
@@ -105,7 +96,7 @@ export class PbToothPicker {
 
   /** The whole jaw; once every tooth of it is chosen, the same button lets it go. */
   protected toggleJaw(jaw: 'upper' | 'lower'): void {
-    const teeth = jawTeeth(jaw, this.range());
+    const teeth = jawTeeth(jaw);
     const chosen = this.selected();
     this.emit(
       teeth.every((t) => chosen.includes(t))
