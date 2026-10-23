@@ -963,6 +963,30 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(await listFollowUps('declined')).not.toContain(id);
     });
 
+    it('records a wisdom tooth taken out, and still refuses a tooth that does not exist', async () => {
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'کشیدن عقل',
+          kind: 'extraction',
+          teethFdi: [38, 48],
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+      const read = await asAdmin(http().get(`/api/surgery-queue/${id}`)).expect(
+        200,
+      );
+      expect((read.body as { teethFdi: number[] }).teethFdi).toEqual([38, 48]);
+
+      await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'دندان ناموجود',
+          kind: 'extraction',
+          teethFdi: [19],
+        })
+        .expect(400);
+    });
+
     it('lists open follow-ups first, soonest first, whatever the surgery order', async () => {
       const add = async (months: number): Promise<string> => {
         const res = await asAdmin(http().post('/api/surgery-queue'))
