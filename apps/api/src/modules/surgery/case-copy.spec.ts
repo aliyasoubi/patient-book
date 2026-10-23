@@ -29,7 +29,8 @@ function managerWith(rows: unknown[]) {
     (sql) => Promise.resolve(sql.trimStart().startsWith('SELECT') ? rows : []),
   );
   const manager = { query } as unknown as EntityManager;
-  const update = () => query.mock.calls.find(([sql]) => sql.includes('UPDATE'));
+  const update = () =>
+    query.mock.calls.find(([sql]) => sql.trimStart().startsWith('UPDATE'));
   return { manager, query, update };
 }
 
@@ -73,6 +74,8 @@ describe('refreshCaseCopies', () => {
     const one = managerWith([]);
     await refreshCaseCopies(one.manager, ['case-1']);
     expect(one.query.mock.calls[0][1]).toEqual([['case-1']]);
+    // Locked as read, so a surgery edit saving at the same moment is waited for.
+    expect(one.query.mock.calls[0][0]).toContain('FOR UPDATE OF s');
 
     const every = managerWith([]);
     await refreshCaseCopies(every.manager);

@@ -62,6 +62,12 @@ interface LinkedRow {
  * form opened before would otherwise send the old number back as a change
  * and file the row under a new, empty case.
  *
+ * The rows are read locked. A surgery edit saving one of them at the same
+ * moment is waited for, and the row is worked out as that edit left it:
+ * read without the lock, the warning and search would be worked out from
+ * the name it had before, and written over the edit. Lock order cannot
+ * cross: a surgery edit locks its row and only reads the case.
+ *
  * `caseIds` narrows it to those cases; without it, every linked row.
  */
 export async function refreshCaseCopies(
@@ -75,7 +81,8 @@ export async function refreshCaseCopies(
             c."recordedName" AS "caseName"
        FROM surgery_queue s
        JOIN implant_cases c ON c.id = s."implantCaseId"
-      ${caseIds ? `WHERE s."implantCaseId" = ANY($1::uuid[])` : ''}`,
+      ${caseIds ? `WHERE s."implantCaseId" = ANY($1::uuid[])` : ''}
+        FOR UPDATE OF s`,
     caseIds ? [caseIds] : [],
   );
   const changed = rows.flatMap((row) => {

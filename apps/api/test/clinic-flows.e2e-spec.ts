@@ -1258,6 +1258,69 @@ describeIfWritable('clinic flows (e2e)', () => {
         ErrorCode.SurgeryItemModified,
       );
     });
+
+    it('follows the register without undoing a surgery edit saved at the same moment', async () => {
+      const registryNo = nextNumber();
+      const created = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo, recordedName: 'مریم کریمی' })
+        .expect(201);
+      const { id: caseId, version: caseVersion } = created.body as {
+        id: string;
+        version: number;
+      };
+      implantCaseIds.push(caseId);
+      const row = await asAdmin(http().post('/api/surgery-queue'))
+        .send({ recordedName: 'مریم کریمی', implantRegistryNo: registryNo })
+        .expect(201);
+      const { id } = row.body as { id: string };
+      surgeryIds.push(id);
+
+      // A colleague's surgery edit, mid-save: the row is renamed and holds
+      // its lock, with the warning its own save worked out against the case
+      // as it still reads.
+      const colleague = db.createQueryRunner();
+      await colleague.connect();
+      await colleague.startTransaction();
+      try {
+        await colleague.query(
+          `UPDATE surgery_queue
+              SET "recordedName" = 'رضا احمدی', "hasNameMismatch" = true,
+                  version = version + 1
+            WHERE id = $1`,
+          [id],
+        );
+        // The register renames the case to that same person meanwhile.
+        const rename = asAdmin(http().patch(`/api/implant-cases/${caseId}`))
+          .send({ recordedName: 'رضا احمدی', expectedVersion: caseVersion })
+          .then((res) => res);
+        // Let the rename reach the row and wait on the colleague's lock.
+        for (let i = 0; i < 50; i++) {
+          const [{ waiting }] = await db.query<Array<{ waiting: number }>>(
+            `SELECT count(*)::int AS waiting FROM pg_stat_activity
+              WHERE wait_event_type = 'Lock' AND datname = current_database()`,
+          );
+          if (waiting > 0) break;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        await colleague.commitTransaction();
+        expect((await rename).status).toBe(200);
+      } finally {
+        if (colleague.isTransactionActive)
+          await colleague.rollbackTransaction();
+        await colleague.release();
+      }
+
+      // Both now name the same person: no warning. Worked out from the row
+      // as it read before the colleague's save, it would still warn.
+      const after = await asAdmin(
+        http().get(`/api/surgery-queue/${id}`),
+      ).expect(200);
+      expect(after.body).toMatchObject({
+        recordedName: 'رضا احمدی',
+        registeredName: 'رضا احمدی',
+        hasNameMismatch: false,
+      });
+    });
   });
 
   // ── Stale edits on surgery rows and register cases ───────────────
