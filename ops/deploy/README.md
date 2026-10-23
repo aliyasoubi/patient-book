@@ -310,6 +310,37 @@ real path instead of shelling out to `rclone` per file? Set `PB_OFFSITE_DIR`
 to that directory instead (or as well) — same mirroring, just a plain `cp`.
 Either way, until one of these is set, the only copy is on this VPS.
 
+### What the server keeps
+
+Every run prunes as it goes, so the backup directory stays the same size
+from month to month:
+
+| What | Kept | Change with |
+| --- | --- | --- |
+| `daily/` | newest 7 | `PB_KEEP_DAILY` |
+| `weekly/` | newest 4 | `PB_KEEP_WEEKLY` |
+| `predeploy/` | newest 3 | `PB_KEEP_PREDEPLOY` |
+| Offsite copy | same counts as `daily/` and `weekly/` | the same |
+| `backup.log` | last 2000 lines, about a year | — |
+
+The counts go in `.env`. Lowering one takes effect on the next run, which
+removes the extra files. To see what it all takes on disk:
+
+```bash
+sudo du -sh /srv/patient-book/home/PatientBookBackups/*
+```
+
+The one thing no run removes on its own is a spare copy of the database: the
+`patient_book_before_restore` a recovery leaves as its fallback, or a
+`patient_book_drill_…` left by a drill that was killed half-way. Each holds
+every patient record, so as long as one exists, every backup and every deploy
+prints a warning naming it. Once you no longer need it:
+
+```bash
+docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
+  -c 'DROP DATABASE <name>;'
+```
+
 ### Prove a backup restores
 
 A backup that has never been restored is not a recovery plan. The drill
@@ -408,6 +439,8 @@ docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
 
 Keeping `patient_book_before_restore` around costs nothing but disk space
 until you are sure — dropping it is the only step here that cannot be undone.
+Until it is dropped, every backup run prints a reminder that it is still
+there.
 
 Plain SQL rather than `pg_dump`'s custom format is on purpose throughout: in a
 real recovery someone may be working from a different machine under time
