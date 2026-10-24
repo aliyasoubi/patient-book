@@ -139,6 +139,8 @@ services:
       # which Let's Encrypt rate-limits — keep it.
       - caddy_data:/data
       - caddy_config:/config
+      # Site files of other apps on this VPS (Taraz). Read-only for Caddy.
+      - /opt/caddy/sites:/etc/caddy/sites:ro
     depends_on:
       api:
         condition: service_started
