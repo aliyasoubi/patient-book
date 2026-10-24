@@ -74,3 +74,8 @@
 www.{$PB_DOMAIN} {
 	redir https://{$PB_DOMAIN}{uri} permanent
 }
+
+# Other apps on this VPS (e.g. Taraz at taraz.dentixo.ir) drop their site files
+# into /opt/caddy/sites. An empty directory is fine; a broken file is rejected by
+# `caddy reload` and the running config stays.
+import /etc/caddy/sites/*.caddy
