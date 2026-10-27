@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { addMonths } from 'date-fns-jalali';
+import { addDays, addMonths } from 'date-fns-jalali';
 import { EntityManager, In, Repository } from 'typeorm';
 
 import { SurgeryQueueItem } from './surgery-queue-item.entity';
@@ -19,7 +19,14 @@ import { DatePrecisionEnum } from '../../domain';
 import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { assertMayWriteClinicalNotes } from '../../application/policies/clinical-notes.policy';
-import { ErrorCode, FollowUpStatus, SurgeryStatus } from '../../domain';
+import {
+  ErrorCode,
+  FollowUpStatus,
+  InventoryCategory,
+  InventoryMovementKind,
+  SurgeryKind,
+  SurgeryStatus,
+} from '../../domain';
 import {
   followUpState,
   followUpWindow,
@@ -43,6 +50,19 @@ function isFollowUpChange(dto: Partial<UpsertSurgeryDto>): boolean {
       ['followUpStatus', 'followUpAppointmentAt'].includes(key),
     )
   );
+}
+
+/** `text` with the parts of `more` it does not already have appended. */
+function joinNew(
+  text: string | null,
+  more: string | null | undefined,
+  separator: string,
+): string {
+  const have = new Set(text ? text.split(separator) : []);
+  const added = (more ? more.split(separator) : []).filter(
+    (part) => part && !have.has(part),
+  );
+  return [...(text ? [text] : []), ...added].join(separator);
 }
 
 @Injectable()
@@ -199,9 +219,61 @@ export class SurgeryService {
   }
 
   /**
+   * Implants out of the stock for a patient. The day's implants are one
+   * surgery and one follow-up, however many uses they took: the day's row —
+   * the stock's, or one written by hand — takes the new teeth and boxes, and
+   * only a day without one gets a new row, naming the stock card line it
+   * came from. Runs under the lock the patient's implant file takes, so two
+   * uses at once queue and the second finds the first's row.
+   */
+  async placeFromStock(
+    manager: EntityManager,
+    dto: UpsertSurgeryDto,
+    userId: string | null,
+    inventoryMovementId: string,
+  ): Promise<SurgeryQueueItem> {
+    const queue = manager.getRepository(SurgeryQueueItem);
+    const day = await queue
+      .createQueryBuilder('s')
+      .setLock('pessimistic_write')
+      .where('s."implantCaseId" = :caseId', { caseId: dto.implantCaseId })
+      .andWhere('s.kind = :kind', { kind: SurgeryKind.Implant })
+      .andWhere('s."surgeryDate" = :date', {
+        date: JalaliDate.parse(dto.surgeryDate ?? '').toIsoDate(),
+      })
+      .andWhere('s.status <> :cancelled', {
+        cancelled: SurgeryStatus.Cancelled,
+      })
+      .orderBy('s.createdAt', 'ASC')
+      .getOne();
+    if (!day) return this.createIn(manager, dto, userId, inventoryMovementId);
+
+    const changes = {
+      teethFdi: [...new Set([...day.teethFdi, ...(dto.teethFdi ?? [])])],
+      toothPosition: joinNew(day.toothPosition, dto.toothPosition, ' '),
+      notes: joinNew(day.notes, dto.notes, '\n') || null,
+    };
+    await this.assign(day, changes, manager.getRepository(ImplantCase));
+    const saved = await queue.save(day);
+    await this.audit.recordRequired(
+      {
+        userId,
+        action: 'update',
+        entity: 'surgery_queue',
+        entityId: saved.id,
+        changes: { ...changes, inventoryMovementId },
+      },
+      manager,
+    );
+    return saved;
+  }
+
+  /**
    * The rows a use of the stock wrote, archived when that use is taken back:
    * the implant did not go in after all. Archived, not erased, so a row
-   * someone has since filled in can still be restored.
+   * someone has since filled in can still be restored. A row the day's other
+   * implants joined stays while one of them still stands, and names that
+   * use's line instead.
    */
   async withdrawStockRows(
     manager: EntityManager,
@@ -213,7 +285,28 @@ export class SurgeryService {
     const rows = await queue.find({
       where: { inventoryMovementId: In(inventoryMovementIds) },
     });
+    let withdrawn = 0;
     for (const row of rows) {
+      const standing = await this.standingUse(
+        manager,
+        row,
+        inventoryMovementIds,
+      );
+      if (standing) {
+        await queue.update(row.id, { inventoryMovementId: standing });
+        await this.audit.recordRequired(
+          {
+            userId,
+            action: 'update',
+            entity: 'surgery_queue',
+            entityId: row.id,
+            changes: { inventoryMovementId: standing },
+          },
+          manager,
+        );
+        continue;
+      }
+      withdrawn++;
       await queue.softDelete(row.id);
       await this.audit.recordRequired(
         {
@@ -229,7 +322,40 @@ export class SurgeryService {
         manager,
       );
     }
-    return rows.length;
+    return withdrawn;
+  }
+
+  /**
+   * An implant use for the row's patient on the row's day, other than the
+   * lines being taken back: one that joined the row and still stands.
+   */
+  private async standingUse(
+    manager: EntityManager,
+    row: SurgeryQueueItem,
+    undone: string[],
+  ): Promise<string | null> {
+    if (!row.implantCaseId || !row.surgeryDate) return null;
+    // Local midnight, and the clinic's day: the process runs in its zone.
+    const day = storedDate(row.surgeryDate);
+    const [line] = await manager.query<Array<{ id: string }>>(
+      `SELECT m.id FROM inventory_movements m
+         JOIN inventory_items i ON i.id = m."itemId"
+         JOIN implant_cases c ON c."patientId" = m."patientId"
+        WHERE c.id = $1 AND m.kind = $2 AND i.category = $3
+          AND m."createdAt" >= $4 AND m."createdAt" < $5
+          AND m.id <> ALL($6::uuid[])
+        ORDER BY m.seq
+        LIMIT 1`,
+      [
+        row.implantCaseId,
+        InventoryMovementKind.Use,
+        InventoryCategory.Implant,
+        day,
+        addDays(day, 1),
+        undone,
+      ],
+    );
+    return line?.id ?? null;
   }
 
   /** The implant register entry a surgery row opened on its own behalf. */

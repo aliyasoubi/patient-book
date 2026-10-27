@@ -258,9 +258,11 @@ shelf is corrected by counting it, not by going negative.
   and a use names the patient, picked by name: the line then links the batch
   to the patient, which is what a recall is traced through. An implant's use
   must name the patient, and goes into their implant file (a new one if they
-  have none) as one surgery row per implant, with the tooth, the system, the
-  box and the prosthesis due in three months; undoing the use archives those
-  rows.
+  have none) as one surgery row for the day, with the teeth, the system, the
+  boxes and the prosthesis due in three months. Further implants for that
+  patient the same day join the day's row rather than writing their own;
+  undoing a use archives the row once no implant that day still stands on
+  it.
 - **A count** takes what is missing from the first-expiring batches and adds
   what is found to the last to arrive — except for implants, grafts and
   membranes, whose extra comes in as a delivery with its lot. The count sheet (`/inventory/count`)

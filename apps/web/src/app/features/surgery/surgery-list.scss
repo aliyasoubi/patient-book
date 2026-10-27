@@ -90,7 +90,7 @@
       justify-content: flex-start;
     }
 
-    &__menu {
+    &__actions {
       grid-area: menu;
       align-self: start;
     }
@@ -211,8 +211,9 @@
     margin-inline-start: auto;
   }
 
-  &__menu {
+  &__actions {
     flex: 0 0 auto;
+    display: flex;
     margin-inline-end: calc(var(--pb-space-2) * -1);
   }
 }
