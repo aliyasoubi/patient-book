@@ -130,35 +130,36 @@
               }
             </div>
 
-            <!-- Edit and archive/restore only; the status lives on the card. -->
+            <!-- Edit and archive/restore, one tap each and in sight; the
+                 status lives on the card. -->
             @if (hasActions()) {
-              <pb-icon-button
-                class="queue__menu"
-                icon="more_vert"
-                [menu]="rowMenu"
-                [ariaLabel]="'surgery.rowActions' | translate"
-              />
-              <mat-menu #rowMenu="matMenu">
+              <div class="queue__actions">
                 @if (archivedOnly()) {
-                  <button mat-menu-item type="button" (click)="restore(item)">
-                    <mat-icon aria-hidden="true">unarchive</mat-icon>
-                    <span>{{ 'surgery.restore' | translate }}</span>
-                  </button>
+                  <pb-icon-button
+                    icon="unarchive"
+                    [ariaLabel]="'surgery.restore' | translate"
+                    [tooltip]="'surgery.restore' | translate"
+                    (click)="restore(item)"
+                  />
                 } @else {
                   @if (auth.can('editSurgery')) {
-                    <a mat-menu-item [routerLink]="['/surgery', item.id, 'edit']">
-                      <mat-icon aria-hidden="true">edit</mat-icon>
-                      <span>{{ 'common.edit' | translate }}</span>
-                    </a>
+                    <pb-icon-button
+                      icon="edit"
+                      [link]="['/surgery', item.id, 'edit']"
+                      [ariaLabel]="'common.edit' | translate"
+                      [tooltip]="'common.edit' | translate"
+                    />
                   }
                   @if (auth.can('archiveSurgery')) {
-                    <button mat-menu-item type="button" (click)="delete(item)">
-                      <mat-icon aria-hidden="true">archive</mat-icon>
-                      <span>{{ 'common.archive' | translate }}</span>
-                    </button>
+                    <pb-icon-button
+                      icon="archive"
+                      [ariaLabel]="'common.archive' | translate"
+                      [tooltip]="'common.archive' | translate"
+                      (click)="delete(item)"
+                    />
                   }
                 }
-              </mat-menu>
+              </div>
             }
           </div>
 
