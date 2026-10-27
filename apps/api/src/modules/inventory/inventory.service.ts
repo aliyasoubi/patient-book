@@ -452,7 +452,8 @@ export class InventoryService {
         if (lot.quantity === 0 && !elsewhere) await lots.delete(lot.id);
         else await lots.save(lot);
       }
-      // An implant handed to a patient wrote its surgery rows: they go too.
+      // An implant handed to a patient wrote its surgery row: it goes too,
+      // unless another implant that day still stands on it.
       const withdrawn = await this.surgery.withdrawStockRows(
         manager,
         lines.map((l) => l.id),
@@ -699,10 +700,12 @@ export class InventoryService {
 
   /**
    * Implants handed to a patient go into the patient's implant file — the
-   * one file they have, or a new one under the book's next number — as
-   * one surgery row per implant, dated today with the prosthesis due, naming
-   * the system, the tooth and the box. Each row keeps the stock card line it
-   * came from, so an undo takes it back.
+   * one file they have, or a new one under the book's next number — as a
+   * surgery dated today with the prosthesis due, naming the system, the
+   * teeth and the boxes. The day's implants are one surgery with one
+   * follow-up, so a second use that day joins the first's row rather than
+   * writing another. The row keeps the stock card line it came from, so an
+   * undo takes it back.
    */
   private async placeImplants(
     manager: EntityManager,
@@ -712,6 +715,8 @@ export class InventoryService {
     tooth: string | null | undefined,
     userId: string | null,
   ): Promise<void> {
+    const used = lines.filter((line) => line.change < 0);
+    if (!used.length) return;
     const implantCase = await this.implantRegistry.fileFor(
       manager,
       patientId,
@@ -720,37 +725,32 @@ export class InventoryService {
     const lotNumbers = new Map(
       (await loadLots(manager, item.id)).map((l) => [l.id, l.lotNumber]),
     );
-    // One row per implant: a line that took two out stands for two.
-    const units = lines.flatMap((line) =>
-      Array.from({ length: Math.max(-line.change, 0) }, () => line),
+    // A use split across batches names each box it took.
+    const boxes = new Set(
+      used.map((line) => {
+        const lot = line.lotId ? lotNumbers.get(line.lotId) : null;
+        return [item.name, item.spec, lot ? `LOT ${lot}` : null]
+          .filter(Boolean)
+          .join(' · ');
+      }),
     );
-    // «36 37» for two implants is one tooth each; anything else goes on every row.
     const written = toLatinDigits(tooth ?? '').trim();
-    const teeth = written.split(/[\s,،;؛]+/).filter(Boolean);
-    const today = JalaliDate.today().format();
-    for (const [i, line] of units.entries()) {
-      const lot = line.lotId ? lotNumbers.get(line.lotId) : null;
-      await this.surgery.createIn(
-        manager,
-        {
-          kind: SurgeryKind.Implant,
-          implantCaseId: implantCase.id,
-          recordedName: implantCase.recordedName,
-          surgeryDate: today,
-          teethFdi: toothNumbers(
-            teeth.length === units.length ? teeth[i] : written,
-          ),
-          toothPosition: teeth.length === units.length ? teeth[i] : written,
-          implantBrand: extractImplantBrand(item.brand) ?? item.brand,
-          followUpMonths: PROSTHESIS_AFTER_MONTHS,
-          notes: [item.name, item.spec, lot ? `LOT ${lot}` : null]
-            .filter(Boolean)
-            .join(' · '),
-        },
-        userId,
-        line.id,
-      );
-    }
+    await this.surgery.placeFromStock(
+      manager,
+      {
+        kind: SurgeryKind.Implant,
+        implantCaseId: implantCase.id,
+        recordedName: implantCase.recordedName,
+        surgeryDate: JalaliDate.today().format(),
+        teethFdi: toothNumbers(written),
+        toothPosition: written,
+        implantBrand: extractImplantBrand(item.brand) ?? item.brand,
+        followUpMonths: PROSTHESIS_AFTER_MONTHS,
+        notes: [...boxes].join('\n'),
+      },
+      userId,
+      used[0].id,
+    );
   }
 
   /** The patient a use went into, picked by name. */
