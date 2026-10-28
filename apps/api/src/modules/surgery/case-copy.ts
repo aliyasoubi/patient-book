@@ -49,6 +49,8 @@ interface LinkedRow {
   searchText: string;
   caseRegistryNo: string;
   caseName: string;
+  patientId: string | null;
+  casePatientId: string | null;
 }
 
 /**
@@ -57,6 +59,9 @@ interface LinkedRow {
  * after the register renumbered or renamed it. Without this the card shows
  * the case's number but a search for it misses, and the name warning stays
  * as it was the last time the row itself was saved.
+ *
+ * A row with no patient of its own takes the case's, once the register has
+ * linked one and the two names agree — the same rule a save applies.
  *
  * Only rows that change are written, and their version moves: a surgery
  * form opened before would otherwise send the old number back as a change
@@ -78,7 +83,8 @@ export async function refreshCaseCopies(
     `SELECT s.id, s."recordedName", s."toothPosition", s."teethFdi",
             s."implantBrand", s."implantRegistryNo", s."hasNameMismatch",
             s."searchText", c."registryNo" AS "caseRegistryNo",
-            c."recordedName" AS "caseName"
+            c."recordedName" AS "caseName", s."patientId",
+            c."patientId" AS "casePatientId"
        FROM surgery_queue s
        JOIN implant_cases c ON c.id = s."implantCaseId"
       ${caseIds ? `WHERE s."implantCaseId" = ANY($1::uuid[])` : ''}
@@ -89,11 +95,22 @@ export async function refreshCaseCopies(
     const implantRegistryNo = row.caseRegistryNo;
     const hasNameMismatch = namesDiffer(row.caseName, row.recordedName);
     const searchText = surgerySearchText({ ...row, implantRegistryNo });
+    const patientId =
+      row.patientId ?? (hasNameMismatch ? null : (row.casePatientId ?? null));
     return implantRegistryNo === row.implantRegistryNo &&
       hasNameMismatch === row.hasNameMismatch &&
-      searchText === row.searchText
+      searchText === row.searchText &&
+      patientId === (row.patientId ?? null)
       ? []
-      : [{ id: row.id, implantRegistryNo, hasNameMismatch, searchText }];
+      : [
+          {
+            id: row.id,
+            implantRegistryNo,
+            hasNameMismatch,
+            searchText,
+            patientId,
+          },
+        ];
   });
   if (!changed.length) return 0;
   await manager.query(
@@ -101,16 +118,18 @@ export async function refreshCaseCopies(
         SET "implantRegistryNo" = v.no,
             "hasNameMismatch" = v.mismatch,
             "searchText" = v.search,
+            "patientId" = v.patient,
             "version" = s."version" + 1,
             "updatedAt" = now()
-       FROM unnest($1::uuid[], $2::text[], $3::boolean[], $4::text[])
-            AS v(id, no, mismatch, search)
+       FROM unnest($1::uuid[], $2::text[], $3::boolean[], $4::text[], $5::uuid[])
+            AS v(id, no, mismatch, search, patient)
       WHERE s.id = v.id`,
     [
       changed.map((c) => c.id),
       changed.map((c) => c.implantRegistryNo),
       changed.map((c) => c.hasNameMismatch),
       changed.map((c) => c.searchText),
+      changed.map((c) => c.patientId),
     ],
   );
   return changed.length;

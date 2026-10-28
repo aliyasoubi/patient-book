@@ -1,8 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  Component,
+  type Signal,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators, type FormControl } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
@@ -23,15 +33,23 @@ import {
 } from '../../shared/labels';
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
 import { digitString, identifierValue } from '../../shared/validators';
-import { adoptUntouched, changedFields, type FieldReader } from '../../shared/form-sync';
+import {
+  adoptUntouched,
+  changedFields,
+  dropPickOnRetype,
+  type FieldReader,
+} from '../../shared/form-sync';
+import { PatientsService } from '../patients/data/patients.service';
+import type { PatientSuggestion } from '../patients/data/patient.model';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
-import type { RegistryCase, SurgeryKind, SurgeryQueueItem } from '../../core/models/common.model';
+import type { SurgeryKind, SurgeryQueueItem } from '../../core/models/common.model';
 import {
   PbButton,
   PbDateField,
   PbFieldGrid,
   PbFormActions,
+  PbIconButton,
   PbPage,
   PbPageHeader,
   PbSelectField,
@@ -46,7 +64,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ListReturn } from '../../core/services/list-return.service';
 
 const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
-  ['surgeryForm.recordedName', (s) => s.recordedName],
+  ['surgeryForm.recordedName', (s) => `${s.recordedName}|${s.patient?.id ?? ''}`],
   ['surgeryForm.surgeryDate', (s) => s.surgeryDate?.jalali ?? null],
   ['surgeryForm.teeth', (s) => `${s.teethFdi.join(' ')}|${s.toothPosition}`],
   ['surgeryForm.implantRegistryNo', (s) => s.implantRegistryNo],
@@ -61,14 +79,18 @@ const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
 ];
 
 /**
- * Fills the register number from a picked register entry. A value set from
- * code stays pristine, but this one is the user's choice: marked dirty, it is
- * sent with the save, and conflict recovery keeps it beside the name it was
- * picked with instead of restoring the old number under the new name.
+ * Fills the register number with the picked patient's implant file. A value
+ * set from code stays pristine, but this one follows the user's choice:
+ * marked dirty, it is sent with the save, and conflict recovery keeps it
+ * beside the patient it came with instead of restoring the old number under
+ * the new name.
  */
-export function pickRegistryNo(control: FormControl<string>, option: TextFieldOption): void {
-  if (!option.meta) return;
-  control.setValue(String(option.meta));
+export function pickRegistryNo(
+  control: FormControl<string>,
+  registryNo: string | null | undefined,
+): void {
+  if (!registryNo) return;
+  control.setValue(registryNo);
   control.markAsDirty();
 }
 
@@ -98,7 +120,9 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
     PbPage,
     PbFieldGrid,
     PbFormActions,
+    PbIconButton,
     PbToothPicker,
+    MatIconModule,
   ],
   templateUrl: './surgery-form.html',
   styleUrl: './surgery-form.scss',
@@ -108,7 +132,9 @@ export class SurgeryForm implements HasUnsavedChanges {
   private readonly auth = inject(AuthService);
   protected readonly canEditClinicalNotes = this.auth.can('editClinicalNotes');
   private readonly registry = inject(RegistryService);
+  private readonly patients = inject(PatientsService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   /** The list this form was opened from, with its search and filters. */
   private readonly listReturn = inject(ListReturn);
   private readonly snackBar = inject(MatSnackBar);
@@ -237,41 +263,68 @@ export class SurgeryForm implements HasUnsavedChanges {
     return this.i18n.instant('surgeryForm.followUpNeedsDate');
   });
 
+  /** The patient file the follow-up is for; picking a name from the book sets it. */
+  protected readonly linkedPatient = signal<SurgeryQueueItem['patient']>(null);
+  /** The user picked or unlinked a patient here — a conflict must not undo that. */
+  private linkChanged = false;
+
   /**
-   * Implant-register cases whose recorded name matches what's been typed so
+   * Patients whose name, mobile or file number matches what's been typed so
    * far. `switchMap` drops the response to an earlier, slower query, so a
    * result for "Ali" cannot land after — and replace — the one for "Alireza".
    */
-  private readonly implantMatches = toSignal(
+  private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
     this.form.controls.recordedName.valueChanges.pipe(
-      debounceTime(300),
+      debounceTime(250),
       map((v) => v.trim()),
       distinctUntilChanged(),
-      switchMap((q) =>
-        q.length < 2
-          ? of<RegistryCase[]>([])
-          : this.registry.implants({ q, page: 1, limit: 8 }).pipe(
-              map((result) => result.items),
-              catchError(() => of<RegistryCase[]>([])),
-            ),
-      ),
+      switchMap((q) => {
+        // Picking an option writes its value — the id — before the name replaces it.
+        const current = this.patientMatches();
+        if (current.some((p) => p.id === q)) return of(current);
+        if (q.length < 2) return of<PatientSuggestion[]>([]);
+        return this.patients.suggest(q).pipe(catchError(() => of<PatientSuggestion[]>([])));
+      }),
     ),
-    { initialValue: [] as RegistryCase[] },
+    { initialValue: [] as PatientSuggestion[] },
   );
-  protected readonly nameOptions = computed<TextFieldOption[]>(() =>
-    this.implantMatches().map((c) => ({
-      id: c.id,
-      value: c.recordedName,
-      label: c.recordedName,
-      meta: c.registryNo,
-    })),
-  );
+  protected readonly patientOptions = computed<TextFieldOption[]>(() => {
+    this.i18n.currentLang();
+    return this.patientMatches().map((p) => ({
+      value: p.id,
+      label: p.fullName || this.i18n.instant('patient.unnamed'),
+      meta: this.i18n.instant('surgery.patientFile', { fileNo: p.fileNo }),
+    }));
+  });
 
   constructor() {
     warnBeforeUnload(() => this.hasUnsavedChanges());
+    // Another name typed over the linked one is someone else: the row is
+    // unlinked until a patient is picked again, and a conflict will not link
+    // it back.
+    dropPickOnRetype(this.form.controls.recordedName, this.linkedPatient, () => this.unlink());
     effect(() => {
       const id = this.id();
-      untracked(() => (id ? this.loadSurgery(id) : this.prefillNew()));
+      untracked(() => {
+        if (id) return this.loadSurgery(id);
+        this.prefillNew();
+        this.prefillPatient(this.route.snapshot.queryParamMap.get('patientId'));
+      });
+    });
+  }
+
+  /** Opened from a patient's page: the follow-up is that patient's from the start. */
+  private prefillPatient(patientId: string | null): void {
+    if (!patientId) return;
+    this.patients.get(patientId).subscribe({
+      next: (p) => {
+        const fullName = `${p.firstName} ${p.lastName}`.trim();
+        this.linkedPatient.set({ id: p.id, fileNo: p.fileNo, fullName, mobile: p.mobile });
+        this.linkChanged = true;
+        this.form.controls.recordedName.setValue(fullName, { emitEvent: false });
+        this.useImplantFile(p.implantCases?.[0]?.registryNo);
+      },
+      error: () => undefined,
     });
   }
 
@@ -327,6 +380,8 @@ export class SurgeryForm implements HasUnsavedChanges {
     this.form.patchValue(this.formValues(item));
     this.legacyProsthesisDue.set(item.prosthesisDue);
     this.loaded.set(item);
+    this.linkedPatient.set(item.patient);
+    this.linkChanged = false;
   }
 
   /** The row as the form's controls hold it. */
@@ -355,12 +410,48 @@ export class SurgeryForm implements HasUnsavedChanges {
   }
 
   /**
-   * Picking a name from the implant register is how a row gets linked to the
-   * right case — its registry number is what the API actually matches on, so
-   * filling it in here is what makes the link real rather than just cosmetic.
+   * Picking a patient links the follow-up to their file: its number and the
+   * phone to call come from there. A new implant row also takes the
+   * patient's implant file number, so it lands in their one file.
    */
-  protected onNameSelected(option: TextFieldOption): void {
-    pickRegistryNo(this.form.controls.implantRegistryNo, option);
+  protected onPatientSelected(option: TextFieldOption): void {
+    const match = this.patientMatches().find((p) => p.id === option.value);
+    if (!match) return;
+    this.linkedPatient.set({
+      id: match.id,
+      fileNo: match.fileNo,
+      fullName: match.fullName,
+      mobile: match.mobile,
+    });
+    this.linkChanged = true;
+    this.form.controls.recordedName.setValue(match.fullName, { emitEvent: false });
+    this.form.controls.recordedName.markAsDirty();
+    if (this.isImplant() && !this.isEdit()) {
+      this.patients.get(match.id).subscribe({
+        next: (p) => {
+          if (this.linkedPatient()?.id === p.id)
+            this.useImplantFile(p.implantCases?.[0]?.registryNo);
+        },
+        error: () => undefined,
+      });
+    }
+  }
+
+  protected unlink(): void {
+    this.linkedPatient.set(null);
+    this.linkChanged = true;
+    this.form.markAsDirty();
+  }
+
+  /**
+   * A new row goes into the patient's implant file when they have one. A
+   * number the user typed is theirs to keep; with no file, the book's next
+   * number stays, and the API opens it as this patient's file.
+   */
+  private useImplantFile(registryNo: string | null | undefined): void {
+    const control = this.form.controls.implantRegistryNo;
+    if (this.isEdit() || control.dirty) return;
+    pickRegistryNo(control, registryNo);
   }
 
   protected setTeeth(teeth: number[]): void {
@@ -393,6 +484,11 @@ export class SurgeryForm implements HasUnsavedChanges {
     const implant = raw.kind === 'implant';
     const payload: Record<string, unknown> = {
       recordedName: raw.recordedName.trim(),
+      // Sent when the link was made or cleared here, and always on a new
+      // row; an edit that left it alone does not restate it.
+      ...(!this.isEdit() || this.linkChanged
+        ? { patientId: this.linkedPatient()?.id ?? null }
+        : {}),
       // The legacy phrase is not sent: the chart replaces it, and an older
       // row that is saved without picking keeps what it was written with.
       teethFdi: raw.teeth,
@@ -481,6 +577,7 @@ export class SurgeryForm implements HasUnsavedChanges {
         this.loaded.set(after);
         this.legacyProsthesisDue.set(after.prosthesisDue);
         adoptUntouched(this.form, this.formValues(after));
+        if (!this.linkChanged) this.linkedPatient.set(after.patient);
         const changed = changedSurgeryFields(before, after)
           .map((key) => this.i18n.instant(key))
           .join(this.i18n.instant('list.separator'));

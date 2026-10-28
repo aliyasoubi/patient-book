@@ -49,6 +49,7 @@ describe('refreshCaseCopies', () => {
       ['301'],
       [true],
       [linked().searchText],
+      [null],
     ]);
 
     // Written with Arabic letters is still the same name.
@@ -68,6 +69,32 @@ describe('refreshCaseCopies', () => {
     expect(no).toEqual(['401']);
     expect(search[0]).toContain('401');
     expect(search[0]).not.toContain('301');
+  });
+
+  it('gives an unlinked row its case’s patient, unless the names disagree', async () => {
+    const agrees = managerWith([
+      linked({ patientId: null, casePatientId: 'patient-1' }),
+    ]);
+    expect(await refreshCaseCopies(agrees.manager, ['case-1'])).toBe(1);
+    expect(agrees.update()?.[1]?.[4]).toEqual(['patient-1']);
+
+    // A reused number naming someone else is not handed its holder.
+    const reused = managerWith([
+      linked({
+        patientId: null,
+        casePatientId: 'patient-1',
+        caseName: 'رضا احمدی',
+        hasNameMismatch: true,
+      }),
+    ]);
+    await refreshCaseCopies(reused.manager, ['case-1']);
+    expect(reused.update()).toBeUndefined();
+
+    // A row already linked keeps its own patient.
+    const own = managerWith([
+      linked({ patientId: 'patient-2', casePatientId: 'patient-1' }),
+    ]);
+    expect(await refreshCaseCopies(own.manager, ['case-1'])).toBe(0);
   });
 
   it('narrows to the cases named, or reads every linked row', async () => {

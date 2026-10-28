@@ -122,6 +122,31 @@
     font-feature-settings: var(--pb-font-numeric);
   }
 
+  // The number to call: plain text, selectable, never a button.
+  &__phone,
+  &__unlinked {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pb-space-1);
+    font: var(--mat-sys-body-medium);
+
+    mat-icon {
+      font-size: var(--pb-icon-xs);
+    }
+  }
+
+  &__phone {
+    color: var(--mat-sys-on-surface-variant);
+    font-feature-settings: var(--pb-font-numeric);
+    user-select: all;
+  }
+
+  // As the implant register marks a row with no patient file.
+  &__unlinked {
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-tertiary);
+  }
+
   &__when {
     flex: 0 0 auto;
     display: flex;

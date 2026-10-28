@@ -106,6 +106,7 @@ function isFollowUpFilter(value: unknown): value is FollowUpFilter {
 interface UrlFilters {
   q: string;
   followUp: FollowUpFilter | '';
+  unlinked: boolean;
   archived: boolean;
   page: number;
   limit: number;
@@ -122,6 +123,7 @@ function readUrlFilters(params: ParamMap): UrlFilters {
   return {
     q: params.get('q')?.trim() ?? '',
     followUp: isFollowUpFilter(followUp) ? followUp : '',
+    unlinked: params.get('unlinked') === 'true',
     archived: params.get('archived') === 'true',
     page: countParam(params.get('page'), 1, 10_000),
     limit: countParam(params.get('limit'), 25, 100),
@@ -169,8 +171,15 @@ export class SurgeryList {
   protected readonly doneLabel = surgeryDoneLabel;
   protected readonly kindIcon = surgeryKindIcon;
   protected readonly followUpFilters = FOLLOW_UP_FILTERS;
-  protected readonly archiveFilter: FilterChipOption[] = [
-    { value: 'archived', label: 'surgery.archivedOnly', icon: 'inventory_2', translate: true },
+  /**
+   * Which rows are listed at all, each its own switch: those not yet linked
+   * to a patient file — to be linked from the form — and the archived ones.
+   */
+  protected readonly rowFilters: FilterChipOption[] = [
+    { value: 'unlinked', label: 'surgery.unlinkedOnly', icon: 'link_off', translate: true },
+    ...(this.auth.can('archiveSurgery')
+      ? [{ value: 'archived', label: 'surgery.archivedOnly', icon: 'inventory_2', translate: true }]
+      : []),
   ];
 
   // Seeded from the URL so a dashboard tile lands on the list it promised,
@@ -178,8 +187,14 @@ export class SurgeryList {
   private readonly urlFilters = readUrlFilters(this.route.snapshot.queryParamMap);
   protected readonly search = new FormControl(this.urlFilters.q, { nonNullable: true });
   protected readonly followUp = signal<FollowUpFilter | ''>(this.urlFilters.followUp);
+  /** Rows with no patient file yet, to be linked one by one. */
+  protected readonly unlinkedOnly = signal(this.urlFilters.unlinked);
   /** Deleted rows are only archived; this shows them so one can be brought back. */
   protected readonly archivedOnly = signal(this.urlFilters.archived);
+  protected readonly rowFiltersSelected = computed(() => [
+    ...(this.unlinkedOnly() ? ['unlinked'] : []),
+    ...(this.archivedOnly() ? ['archived'] : []),
+  ]);
   protected readonly followUpSelected = computed(() => {
     const value = this.followUp();
     return value ? [value] : [];
@@ -258,6 +273,7 @@ export class SurgeryList {
       const query: SurgeryQuery = {
         q: this.query() || undefined,
         followUp: this.followUp() || undefined,
+        unlinkedOnly: this.unlinkedOnly() || undefined,
         archivedOnly: this.archivedOnly() || undefined,
         page: this.page(),
         limit: this.limit(),
@@ -278,6 +294,7 @@ export class SurgeryList {
       const queryParams = {
         q: this.query() || null,
         followUp: this.followUp() || null,
+        unlinked: this.unlinkedOnly() ? 'true' : null,
         archived: this.archivedOnly() ? 'true' : null,
         page: this.page() > 1 ? this.page() : null,
         limit: this.limit() !== 25 ? this.limit() : null,
@@ -412,13 +429,15 @@ export class SurgeryList {
   }
 
   protected emptyHint(): string {
-    return this.search.value || this.followUp() || this.archivedOnly()
+    return this.search.value || this.followUp() || this.unlinkedOnly() || this.archivedOnly()
       ? this.i18n.instant('filters.changeThem')
       : '';
   }
 
-  protected toggleArchived(checked: boolean): void {
-    this.archivedOnly.set(checked);
+  /** Each chip is its own switch; the list comes back as whichever are on. */
+  protected setRowFilters(selected: string[]): void {
+    this.unlinkedOnly.set(selected.includes('unlinked'));
+    this.archivedOnly.set(selected.includes('archived'));
     this.page.set(1);
   }
 

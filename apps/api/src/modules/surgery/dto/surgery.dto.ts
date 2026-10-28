@@ -76,6 +76,20 @@ export class QuerySurgeryDto extends PaginationDto {
   @IsOptional()
   archivedOnly?: boolean;
 
+  /** One patient's follow-ups, for their file. */
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  patientId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Only rows not yet linked to a patient file',
+  })
+  @Transform(toBool)
+  @IsBoolean()
+  @IsOptional()
+  unlinkedOnly?: boolean;
+
   @ApiPropertyOptional({ example: '1404/01/01' })
   @Validate(IsJalaliDateConstraint)
   @IsOptional()
@@ -97,6 +111,12 @@ export class UpsertSurgeryDto {
   @IsUUID()
   @IsOptional()
   implantCaseId?: string | null;
+
+  /** The patient file the follow-up is for; `null` unlinks it. */
+  @ApiPropertyOptional({ nullable: true })
+  @IsUUID()
+  @IsOptional()
+  patientId?: string | null;
 
   @ApiPropertyOptional({ description: 'Implant register number' })
   @Transform(optionalIdentifier)

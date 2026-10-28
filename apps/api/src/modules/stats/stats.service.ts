@@ -252,8 +252,7 @@ export class StatsService {
     const { from, to } = followUpWindow('week');
     const rows = await this.surgery
       .createQueryBuilder('s')
-      .leftJoinAndSelect('s.implantCase', 'ic')
-      .leftJoinAndSelect('ic.patient', 'p')
+      .leftJoinAndSelect('s.patient', 'p')
       .where(openFollowUpSql('s'))
       .andWhere('s."followUpDate" BETWEEN :from AND :to', { from, to })
       .orderBy('s.followUpDate', 'ASC')
@@ -264,8 +263,8 @@ export class StatsService {
       id: s.id,
       recordedName: s.recordedName,
       implantRegistryNo: s.implantRegistryNo,
-      patientId: s.implantCase?.patient?.id ?? null,
-      mobile: s.implantCase?.patient?.mobile ?? null,
+      patientId: s.patient?.id ?? null,
+      mobile: s.patient?.mobile ?? null,
       followUpDate: s.followUpDate
         ? (JalaliDate.fromStored(s.followUpDate)?.format() ?? null)
         : null,

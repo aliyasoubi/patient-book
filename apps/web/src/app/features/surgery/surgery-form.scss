@@ -20,6 +20,26 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+/* The patient file the row is linked to, under the name it was picked by. */
+.form__linked {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+  margin-block: var(--pb-space-1) var(--pb-space-3);
+  padding: var(--pb-space-1) var(--pb-space-3);
+  border-radius: var(--mat-sys-corner-medium);
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font: var(--mat-sys-body-medium);
+  font-feature-settings: var(--pb-font-numeric);
+  --mat-icon-button-icon-color: var(--mat-sys-on-secondary-container);
+
+  span {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
 .form__teeth {
   display: flex;
   flex-direction: column;

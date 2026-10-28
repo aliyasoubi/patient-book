@@ -399,6 +399,8 @@ export class ImportWorkbookUseCase {
       implantCase.recordedName,
       item.recordedName,
     );
+    // The follow-up is the case's patient's only when the two agree.
+    item.patientId = item.hasNameMismatch ? null : implantCase.patientId;
     if (item.hasNameMismatch) {
       report.warnings.push({
         sheet: SHEET.surgery,
