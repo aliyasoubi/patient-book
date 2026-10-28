@@ -12,6 +12,7 @@ import {
   canonicalBrand,
   normalizeSpec,
   TRACEABLE,
+  usedPerPatient,
 } from './inventory-catalog';
 import { Patient } from '../patients/patient.entity';
 import { ImplantRegistryService } from '../implants/implant-registry.service';
@@ -341,10 +342,11 @@ export class InventoryService {
   ): Promise<unknown> {
     return this.items.manager.transaction(async (manager) => {
       const item = await this.lock(manager, id);
-      // An implant goes into someone, and into their implant file.
+      // An implant or a membrane goes into one patient, named on the use;
+      // an implant also into their implant file.
       if (
         dto.kind === InventoryMovementKind.Use &&
-        item.category === InventoryCategory.Implant &&
+        usedPerPatient(item.category, item.name) &&
         !dto.patientId &&
         !dto.patientFileNo
       ) {
@@ -837,6 +839,8 @@ export class InventoryService {
       expiryState: expiryState(i.expiresOn, i.quantity, now),
       notes: i.notes,
       soldToPatients: i.soldToPatients,
+      /** A use must name its patient: an implant or a membrane. */
+      usedPerPatient: usedPerPatient(i.category, i.name),
       isArchived: i.deletedAt !== null,
       /** Optimistic-concurrency token; send back as `expectedVersion` on update. */
       version: i.version,

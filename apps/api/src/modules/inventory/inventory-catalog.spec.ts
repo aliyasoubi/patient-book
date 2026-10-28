@@ -6,6 +6,7 @@ import {
   canonicalBrand,
   normalizeSpec,
   soldToPatientsByName,
+  usedPerPatient,
 } from './inventory-catalog';
 
 describe('canonicalBrand', () => {
@@ -85,5 +86,22 @@ describe('soldToPatientsByName', () => {
     null,
   ])('keeps %p in the clinic', (name) => {
     expect(soldToPatientsByName(name)).toBe(false);
+  });
+});
+
+describe('usedPerPatient', () => {
+  it('names a patient for an implant and a membrane, not for bone powder', () => {
+    expect(usedPerPatient(InventoryCategory.Implant, 'SuperLine')).toBe(true);
+    expect(usedPerPatient(InventoryCategory.Regenerative, 'ممبران')).toBe(true);
+    expect(usedPerPatient(InventoryCategory.Regenerative, 'ممبران خارجی')).toBe(
+      true,
+    );
+    expect(
+      usedPerPatient(InventoryCategory.Regenerative, 'Collagen Membrane'),
+    ).toBe(true);
+    expect(usedPerPatient(InventoryCategory.Regenerative, 'پودر استخوان')).toBe(
+      false,
+    );
+    expect(usedPerPatient(InventoryCategory.Surgery, 'ممبران')).toBe(false);
   });
 });

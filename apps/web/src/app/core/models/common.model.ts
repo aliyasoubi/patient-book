@@ -275,6 +275,8 @@ export interface InventoryItem {
   expiryState: ExpiryState | null;
   notes: string | null;
   /** Sold to patients to take home: a use asks who it was sold to. */
+  /** A use must name its patient: an implant or a membrane. */
+  usedPerPatient?: boolean;
   soldToPatients: boolean;
   isArchived: boolean;
   /** Bumped by every edit and every movement; sent back on an edit. */

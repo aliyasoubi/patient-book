@@ -282,7 +282,8 @@ export class InventoryMovementDialog {
   /** An implant handed to a patient also goes into their implant file. */
   protected readonly isImplant = this.item.category === 'implant';
   /** So an implant's use always names the patient: the file is theirs. */
-  private readonly mustName = this.kind === 'use' && this.isImplant;
+  /** An implant or a membrane goes into one patient, who must be named; bone powder names nobody. */
+  private readonly mustName = this.kind === 'use' && (this.item.usedPerPatient ?? this.isImplant);
   protected readonly faNum = formatPersianNumber;
   protected readonly itemLabel = [this.item.name, this.item.brand, this.item.spec]
     .filter(Boolean)
