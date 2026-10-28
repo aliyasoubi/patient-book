@@ -15,6 +15,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SurgeryService } from './surgery.service';
 import {
   QuerySurgeryDto,
+  RecordContactDto,
   UpdateSurgeryDto,
   UpsertSurgeryDto,
 } from './dto/surgery.dto';
@@ -60,6 +61,25 @@ export class SurgeryController {
     @CurrentUser() user: RequestUser,
   ) {
     return this.surgery.update(id, dto, user.id, user.role);
+  }
+
+  @Get(':id/contacts')
+  @ApiOperation({ summary: 'The calls made about a follow-up, newest first' })
+  contacts(@Param('id', ParseUUIDPipe) id: string) {
+    return this.surgery.contacts(id);
+  }
+
+  @Post(':id/contacts')
+  @Roles(UserRole.Admin, UserRole.Dentist, UserRole.Receptionist)
+  @ApiOperation({
+    summary: 'Record a call about a follow-up and what it came to',
+  })
+  recordContact(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RecordContactDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.surgery.recordContact(id, dto, userId);
   }
 
   @Delete(':id')

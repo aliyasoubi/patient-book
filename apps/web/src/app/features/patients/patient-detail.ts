@@ -33,6 +33,7 @@ import {
   fieldLabel,
   genderIcon,
   genderLabel,
+  contactOutcomeLabel,
   labStageLabel,
   labWorkTypeLabel,
   surgeryDoneLabel,
@@ -153,6 +154,7 @@ export class PatientDetail {
   protected readonly surgeryKindIcon = surgeryKindIcon;
   protected readonly surgeryKindLabel = surgeryKindLabel;
   protected readonly surgeryDoneLabel = surgeryDoneLabel;
+  protected readonly contactOutcomeLabel = contactOutcomeLabel;
 
   /** Where the follow-up stands, in the words and colours of its card on the list. */
   protected followUpNote(f: SurgeryQueueItem): string {

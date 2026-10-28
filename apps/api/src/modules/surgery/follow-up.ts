@@ -22,6 +22,7 @@ export type FollowUpState =
  * `declined` instead list the ones that have been settled either way.
  */
 export const FOLLOW_UP_FILTERS = [
+  'callsToday',
   'pending',
   'week',
   'thisMonth',
@@ -48,6 +49,33 @@ export function openFollowUpSql(alias: string): string {
   return `${alias}."followUpDate" IS NOT NULL AND ${alias}."followUpStatus" = '${FollowUpStatus.Open}' AND ${alias}.status <> '${SurgeryStatus.Cancelled}'`;
 }
 
+/**
+ * SQL for "call this patient today", over `surgery_queue` aliased as
+ * `alias`: an open follow-up due this month or before, unless a call put the
+ * next one off to a later day — and any whose next call is due, whenever its
+ * follow-up falls. `today` and `monthEnd` name ISO-date parameters. Shared so
+ * the list's chip and the dashboard's tile count the same rows.
+ */
+export function callsTodaySql(
+  alias: string,
+  today: string,
+  monthEnd: string,
+): string {
+  const s = alias;
+  return `${openFollowUpSql(s)} AND (
+    (${s}."followUpDate" <= ${monthEnd}
+      AND (${s}."nextContactAt" IS NULL OR ${s}."nextContactAt" <= ${today}))
+    OR ${s}."nextContactAt" <= ${today})`;
+}
+
+/** Today and the last day of this Jalali month, as `callsTodaySql` takes them. */
+export function callsTodayBounds(now = new Date()): {
+  today: string;
+  monthEnd: string;
+} {
+  return { today: iso(now), monthEnd: iso(endOfMonth(now)) };
+}
+
 /** ISO `yyyy-MM-dd` bounds, inclusive, for a `date` column comparison. */
 export interface DateWindow {
   from?: string;
@@ -70,6 +98,7 @@ export function followUpWindow(
   now = new Date(),
 ): DateWindow {
   switch (filter) {
+    case 'callsToday':
     case 'pending':
     case 'booked':
     case 'declined':

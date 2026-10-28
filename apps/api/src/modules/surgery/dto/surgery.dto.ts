@@ -1,4 +1,9 @@
-import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+  OmitType,
+  PartialType,
+} from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -21,6 +26,7 @@ import {
 import { PaginationDto } from '../../../presentation/http/dto/pagination.dto';
 import {
   AbutmentType,
+  ContactOutcome,
   FollowUpStatus,
   LAB_TOOTH_NUMBERS,
   SurgeryKind,
@@ -225,4 +231,34 @@ export class UpdateSurgeryDto extends PartialType(
   @Min(1)
   @IsOptional()
   expectedVersion?: number;
+}
+
+/**
+ * A call about a follow-up and what it came to. "Booked" and "declined"
+ * settle the follow-up as the card's status would; the other two leave it
+ * open, with the day to call again.
+ */
+export class RecordContactDto {
+  @ApiProperty({ enum: ContactOutcome })
+  @IsEnum(ContactOutcome)
+  outcome!: ContactOutcome;
+
+  @ApiPropertyOptional({ maxLength: 300 })
+  @Transform(clean)
+  @IsString()
+  @MaxLength(300)
+  @IsOptional()
+  note?: string | null;
+
+  /** No answer, call later: the day to call again. */
+  @ApiPropertyOptional({ example: '1405/08/10' })
+  @Validate(IsJalaliDateConstraint)
+  @IsOptional()
+  nextContactAt?: string | null;
+
+  /** Booked: the day of the appointment, when it is known. */
+  @ApiPropertyOptional({ example: '1405/08/12' })
+  @Validate(IsJalaliDateConstraint)
+  @IsOptional()
+  appointmentAt?: string | null;
 }

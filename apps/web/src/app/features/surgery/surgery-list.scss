@@ -236,6 +236,37 @@
     margin-inline-start: auto;
   }
 
+  // The last call and the next: a line of its own under the track.
+  &__contact {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pb-space-1) var(--pb-space-3);
+    margin: 0;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+    font-feature-settings: var(--pb-font-numeric);
+
+    mat-icon {
+      font-size: var(--pb-icon-xs);
+    }
+
+    strong {
+      color: var(--mat-sys-on-surface);
+    }
+  }
+
+  &__next-call--due {
+    color: var(--mat-sys-tertiary);
+    font-weight: 600;
+  }
+
+  &__contact-note {
+    flex-basis: 100%;
+    padding-inline-start: calc(var(--pb-icon-xs) + var(--pb-space-1));
+  }
+
   &__actions {
     flex: 0 0 auto;
     display: flex;

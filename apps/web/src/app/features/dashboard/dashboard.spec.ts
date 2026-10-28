@@ -14,6 +14,7 @@ const summary = (over: Partial<DashboardSummary> = {}): DashboardSummary => ({
   needsReview: 0,
   followUpsThisWeek: 0,
   followUpsOverdue: 0,
+  callsToday: 0,
   labsOverdue: 0,
   labsToBook: 0,
   inventoryReorder: 0,
@@ -95,6 +96,23 @@ describe('Dashboard', () => {
     ]);
     // The recall tile opens exactly the list it counts.
     expect(tiles[3].querySelector('a')?.getAttribute('href')).toBe('/patients?inactiveMonths=12');
+  });
+
+  it('counts today’s calls only when there are any, and opens exactly that list', () => {
+    const { fixture, el } = render();
+    const callsTile = () =>
+      [...el.querySelectorAll('pb-stat-tile')].find(
+        (t) => t.querySelector('.pb-stat-tile__label')?.textContent === 'tile.callsToday',
+      );
+    dashboard$.next(summary({ callsToday: 0 }));
+    fixture.detectChanges();
+    expect(callsTile()).toBeUndefined();
+
+    dashboard$.next(summary({ callsToday: 4 }));
+    fixture.detectChanges();
+    expect(callsTile()?.querySelector('a')?.getAttribute('href')).toBe(
+      '/surgery?followUp=callsToday',
+    );
   });
 
   it('lists the lab work still to book for the front desk, and opens exactly that list', () => {

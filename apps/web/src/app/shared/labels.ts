@@ -1,4 +1,5 @@
 import type {
+  ContactOutcome,
   EducationLevel,
   ExpiryState,
   Gender,
@@ -354,6 +355,18 @@ export const TREATMENT_COLORS: Record<string, { bg: string; fg: string }> = {
 
 export function treatmentColor(key: string): { bg: string; fg: string } {
   return TREATMENT_COLORS[key] ?? TREATMENT_COLORS['primary'];
+}
+
+const CONTACT_OUTCOME_LABELS: Record<ContactOutcome, string> = {
+  no_answer: 'contactOutcome.no_answer',
+  call_later: 'contactOutcome.call_later',
+  booked: 'contactOutcome.booked',
+  declined: 'contactOutcome.declined',
+};
+
+/** What a call about a follow-up came to, as the front desk says it. */
+export function contactOutcomeLabel(outcome: ContactOutcome): string {
+  return CONTACT_OUTCOME_LABELS[outcome];
 }
 
 const LAB_STAGE_LABELS: Record<LabStage, string> = {

@@ -12,6 +12,8 @@ import {
   PracticeStats,
   RegistryCase,
   SurgeryQueueItem,
+  ContactOutcome,
+  FollowUpContact,
 } from '../models/common.model';
 import { toParams } from './http-params.util';
 
@@ -34,6 +36,14 @@ export interface SurgeryQuery extends RegistryQuery {
   followUp?: FollowUpFilter;
   from?: string;
   to?: string;
+}
+
+/** A call and what it came to; dates are Jalali days. */
+export interface RecordContactInput {
+  outcome: ContactOutcome;
+  note?: string | null;
+  nextContactAt?: string | null;
+  appointmentAt?: string | null;
 }
 
 /** The two registers share one shape and one set of endpoints; this picks which. */
@@ -109,6 +119,19 @@ export class RegistryService {
     return id
       ? this.http.patch<SurgeryQueueItem>(`${url}/${id}`, body)
       : this.http.post<SurgeryQueueItem>(url, body);
+  }
+
+  /** The calls made about a follow-up, newest first. */
+  surgeryContacts(id: string): Observable<FollowUpContact[]> {
+    return this.http.get<FollowUpContact[]>(`${environment.apiUrl}/surgery-queue/${id}/contacts`);
+  }
+
+  /** One call and what it came to; answers with the follow-up as it now stands. */
+  recordContact(id: string, body: RecordContactInput): Observable<SurgeryQueueItem> {
+    return this.http.post<SurgeryQueueItem>(
+      `${environment.apiUrl}/surgery-queue/${id}/contacts`,
+      body,
+    );
   }
 
   deleteSurgery(id: string): Observable<void> {

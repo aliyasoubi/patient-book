@@ -26,6 +26,8 @@ const row = (over: Partial<SurgeryQueueItem> = {}): SurgeryQueueItem => ({
   followUpStatus: 'open',
   followUpAppointmentAt: null,
   followUpState: 'due',
+  nextContactAt: null,
+  lastContact: null,
   status: 'completed',
   notes: null,
   version: 1,

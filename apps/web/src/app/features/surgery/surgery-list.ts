@@ -35,6 +35,7 @@ import {
 } from '../../shared/pipes/persian-number.pipe';
 import {
   abutmentLabel,
+  contactOutcomeLabel,
   surgeryDoneLabel,
   surgeryKindIcon,
   surgeryKindLabel,
@@ -60,6 +61,8 @@ import type {
   SurgeryQueueItem,
 } from '../../core/models/common.model';
 import { SurgeryBookDialog, type SurgeryBookResult } from './surgery-book-dialog';
+import { FollowUpContactDialog, type FollowUpContactDialogData } from './follow-up-contact-dialog';
+import type { RecordContactInput } from '../../core/services/registry.service';
 import { daysUntil, followUpDistance, followUpProgress } from './follow-up-distance';
 
 /**
@@ -68,6 +71,8 @@ import { daysUntil, followUpDistance, followUpProgress } from './follow-up-dista
  * dates, so the chips here never disagree with the dashboard.
  */
 const FOLLOW_UP_FILTERS: readonly (FilterChipOption & { value: FollowUpFilter })[] = [
+  // The front desk's day: who to ring today, whatever window they fall in.
+  { value: 'callsToday', label: 'surgery.filterCallsToday', icon: 'call', translate: true },
   { value: 'overdue', label: 'surgery.filterOverdue', icon: 'event_busy', translate: true },
   { value: 'pending', label: 'surgery.filterPending', icon: 'pending_actions', translate: true },
   { value: 'week', label: 'surgery.filterWeek', icon: 'date_range', translate: true },
@@ -167,6 +172,7 @@ export class SurgeryList {
   private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
   protected readonly abutmentLabel = abutmentLabel;
+  protected readonly outcomeLabel = contactOutcomeLabel;
   protected readonly kindLabel = surgeryKindLabel;
   protected readonly doneLabel = surgeryDoneLabel;
   protected readonly kindIcon = surgeryKindIcon;
@@ -464,6 +470,47 @@ export class SurgeryList {
       item.followUpStatus,
       item.followUpAppointmentAt,
     );
+  }
+
+  /** A call was made: write down what it came to, and when to call again. */
+  protected recordCall(item: SurgeryQueueItem): void {
+    if (this.updating()) return;
+    this.dialog
+      .open<FollowUpContactDialog, FollowUpContactDialogData, RecordContactInput | undefined>(
+        FollowUpContactDialog,
+        { data: { item }, width: '520px', maxWidth: '92vw', autoFocus: false },
+      )
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) return;
+        this.updating.set(item.id);
+        this.registry.recordContact(item.id, result).subscribe({
+          next: () => {
+            this.updating.set(null);
+            this.snackBar.open(
+              this.i18n.instant('followUpContact.saved'),
+              this.i18n.instant('action.dismiss'),
+            );
+            this.retry();
+          },
+          error: (error: unknown) => {
+            this.updating.set(null);
+            if (isHandledByCaller(error)) {
+              this.snackBar.open(
+                this.errors.translate(error),
+                this.i18n.instant('action.dismiss'),
+                { duration: 6000 },
+              );
+            }
+            this.retry();
+          },
+        });
+      });
+  }
+
+  /** The next call is due: today or a day already gone by. */
+  protected callDue(item: SurgeryQueueItem): boolean {
+    return !!item.nextContactAt && daysUntil(item.nextContactAt.iso) <= 0;
   }
 
   /** Ask for the appointment day; on a booked row this changes it, otherwise it books. */
