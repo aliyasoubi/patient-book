@@ -135,6 +135,35 @@ shell access to this server. Both are recorded in the audit log as
 `cli:<user>`. An exported workbook is patient data — keep it off the server
 once you have it, and delete the copy you upload for a reconcile afterwards.
 
+### Implant records from before the current rules
+
+Once, after deploying the release that links a stock card line to its
+follow-up (migration `InventoryMovementSurgery`):
+
+```bash
+./ops/deploy/implant-cleanup.sh            # preview: what would change, nothing written
+sudo systemctl start patient-book-backup.service
+./ops/deploy/implant-cleanup.sh --apply    # write exactly that
+```
+
+- **Stock card lines.** Older implant uses get linked to the follow-up they
+  went into, so the card lists them. Their teeth are added where the rows they
+  wrote say which tooth; a day whose uses were already joined on one row keeps
+  its boxes without teeth.
+- **Same-day follow-ups.** Follow-ups the stock once wrote one per implant are
+  merged into one per patient per day, as long as none has been called about,
+  booked or declined. Any other such day is listed, to be settled on the
+  cards.
+- **Implant files.** A patient linked to more than one implant file keeps one:
+  the file the stock writes to, else one linked by hand, else the first
+  opened. The others are unlinked, not merged: the import linked them by name,
+  and two patients can share a name. Each is then settled from the implant
+  register's list of unlinked files.
+
+The preview runs everything in a transaction and rolls it back, so it is
+exactly what `--apply` writes. It prints file and register numbers, never
+names. Running it again changes nothing.
+
 ## Shipping a change
 
 ```bash
