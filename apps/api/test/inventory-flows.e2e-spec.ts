@@ -323,6 +323,7 @@ describeIfWritable('inventory flows (e2e)', () => {
         quantity: 1,
         lotId: later.id,
         patientFileNo: fileNo.replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]),
+        tooth: '۳۶',
       }).expect(200)
     ).body as ItemBody;
     expect(body.movements[0]).toMatchObject({
@@ -337,6 +338,7 @@ describeIfWritable('inventory flows (e2e)', () => {
       quantity: 4,
       lotId: later.id,
       patientFileNo: fileNo,
+      tooth: '36',
     }).expect(409);
     expect(tooMany.body).toMatchObject({
       code: ErrorCode.InventoryInsufficientStock,
@@ -347,6 +349,7 @@ describeIfWritable('inventory flows (e2e)', () => {
       kind: 'use',
       quantity: 1,
       patientFileNo: '1',
+      tooth: '36',
     }).expect(404);
     expect(unknown.body).toMatchObject({
       code: ErrorCode.PatientNotFound,
@@ -610,7 +613,12 @@ describeIfWritable('inventory flows (e2e)', () => {
     expect(await rows()).toHaveLength(0);
 
     // The file stays, and is the one the next implant goes into.
-    await move(item.id, { kind: 'use', quantity: 1, patientId }).expect(200);
+    await move(item.id, {
+      kind: 'use',
+      quantity: 1,
+      patientId,
+      tooth: '36',
+    }).expect(200);
     const files = await db.query<Array<{ n: number; rows: number }>>(
       `SELECT count(DISTINCT c.id)::int AS n, count(s.id)::int AS rows
          FROM implant_cases c
@@ -635,6 +643,23 @@ describeIfWritable('inventory flows (e2e)', () => {
     expect((res.body as { code: string }).code).toBe(
       ErrorCode.InventoryPatientRequired,
     );
+    // Nor without the tooth it goes into — one the chart can hold.
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({ fileNo: `7${Date.now()}`, firstName: 'آزمون', lastName: 'دندان' })
+      .expect(201);
+    const patientId = (patient.body as { id: string }).id;
+    patientIds.push(patientId);
+    for (const tooth of [undefined, '', '19', 'بالا']) {
+      const noTooth = await move(item.id, {
+        kind: 'use',
+        quantity: 1,
+        patientId,
+        tooth,
+      }).expect(400);
+      expect((noTooth.body as { code: string }).code).toBe(
+        ErrorCode.InventoryToothRequired,
+      );
+    }
     // A box thrown away goes into nobody.
     const discarded = (
       await move(item.id, { kind: 'discard', quantity: 1 }).expect(200)
@@ -697,6 +722,13 @@ describeIfWritable('inventory flows (e2e)', () => {
       soldToPatients: true,
     });
     expect(item.soldToPatients).toBe(true);
+    // Sold means sold to someone: the use names them.
+    const nobody = await move(item.id, { kind: 'use', quantity: 1 }).expect(
+      400,
+    );
+    expect((nobody.body as { code: string }).code).toBe(
+      ErrorCode.InventoryPatientRequired,
+    );
 
     const sold = (
       await move(item.id, { kind: 'use', quantity: 2, patientId }).expect(200)
@@ -742,6 +774,7 @@ describeIfWritable('inventory flows (e2e)', () => {
       kind: 'use',
       quantity: 1,
       patientId,
+      tooth: '36',
     }).expect(409);
     expect((res.body as { code: string }).code).toBe(
       ErrorCode.InventoryLotExpired,
@@ -751,6 +784,7 @@ describeIfWritable('inventory flows (e2e)', () => {
       quantity: 1,
       lotId: item.lots[0].id,
       patientId,
+      tooth: '36',
     }).expect(200);
     await archive(item.id);
   });

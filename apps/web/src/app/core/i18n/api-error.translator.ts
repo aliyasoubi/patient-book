@@ -125,6 +125,8 @@ export class ApiErrorTranslator {
         return this.t('error.inventoryLotRequired');
       case 'ERR_INVENTORY_PATIENT_REQUIRED':
         return this.t('error.inventoryPatientRequired');
+      case 'ERR_INVENTORY_TOOTH_REQUIRED':
+        return this.t('error.inventoryToothRequired');
       case 'ERR_INVENTORY_NOTHING_TO_UNDO':
         return this.t('error.inventoryNothingToUndo');
       case 'ERR_INVENTORY_LOT_EXPIRED':
