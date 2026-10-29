@@ -166,6 +166,19 @@ export class Dashboard {
         tone: 'warn',
       });
     }
+    // Who to ring today — the follow-up list's «تماس امروز», calls put off to
+    // a later day left out. Shown only when there is someone to call.
+    if (s.callsToday > 0) {
+      tiles.push({
+        label: 'tile.callsToday',
+        value: s.callsToday,
+        icon: 'call',
+        link: '/surgery',
+        // Exactly the rows the tile counts.
+        queryParams: { followUp: 'callsToday' },
+        tone: 'neutral',
+      });
+    }
     // Who to call this week: the operational number a receptionist opens
     // the dashboard for.
     tiles.push({

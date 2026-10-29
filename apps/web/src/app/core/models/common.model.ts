@@ -111,10 +111,29 @@ export interface SurgeryQueueItem {
   /** Jalali day the patient was booked for; only while `booked`, and optional even then. */
   followUpAppointmentAt: string | null;
   followUpState: FollowUpState;
+  /** The day the last call said to call again; apart from the follow-up's own date. */
+  nextContactAt: { jalali: string; iso: string } | null;
+  /** The latest call about the follow-up, for the card. */
+  lastContact: FollowUpContact | null;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes: string | null;
   /** Optimistic-concurrency token; sent back as `expectedVersion` on an edit. */
   version: number;
+}
+
+/** What a call about a follow-up came to; the last two settle it. */
+export type ContactOutcome = 'no_answer' | 'call_later' | 'booked' | 'declined';
+
+/** One call about a follow-up, as the API formats it. */
+export interface FollowUpContact {
+  outcome: ContactOutcome;
+  note: string | null;
+  /** Jalali day this call said to call again. */
+  nextContactAt: string | null;
+  /** Who made the call, by name. */
+  by: string | null;
+  /** Jalali date and Tehran time, `yyyy/MM/dd HH:mm`. */
+  at: string;
 }
 
 /** Judged by the API against the current Jalali month. */
@@ -122,7 +141,7 @@ export type FollowUpState = 'none' | 'pending' | 'due' | 'overdue' | 'booked' | 
 
 /** The list's follow-up windows; the API owns what each means in dates. */
 export type FollowUpFilter =
-  'pending' | 'week' | 'thisMonth' | 'nextMonth' | 'overdue' | 'booked' | 'declined';
+  'callsToday' | 'pending' | 'week' | 'thisMonth' | 'nextMonth' | 'overdue' | 'booked' | 'declined';
 
 /** A row for the dashboard's follow-up panel — already formatted, not the full queue record. */
 export interface FollowUpDue {
@@ -321,6 +340,8 @@ export interface DashboardSummary {
   needsReview: number;
   followUpsThisWeek: number;
   followUpsOverdue: number;
+  /** Patients to call today: the follow-up list's «تماس امروز». */
+  callsToday: number;
   labsOverdue: number;
   /** Lab work that is back with no booking for the patient yet. */
   labsToBook: number;

@@ -4,6 +4,7 @@ import type { Repository } from 'typeorm';
 import { SurgeryService } from './surgery.service';
 import { followUpState } from './follow-up';
 import { SurgeryQueueItem } from './surgery-queue-item.entity';
+import { FollowUpContact } from './follow-up-contact.entity';
 import { ImplantCase } from '../implants/implant-case.entity';
 import type { UpsertSurgeryDto } from './dto/surgery.dto';
 import type { AuditService } from '../../application/services/audit.service';
@@ -46,6 +47,7 @@ describe('SurgeryService.assign — implant brand precedence', () => {
   const service = new SurgeryService(
     {} as Repository<SurgeryQueueItem>,
     {} as Repository<ImplantCase>,
+    {} as Repository<FollowUpContact>,
     {} as AuditService,
   );
   const helpers = service as unknown as SurgeryWriteHelpers;
@@ -92,6 +94,7 @@ describe('SurgeryService.assign — follow-up date', () => {
   const service = new SurgeryService(
     {} as Repository<SurgeryQueueItem>,
     {} as Repository<ImplantCase>,
+    {} as Repository<FollowUpContact>,
     {} as AuditService,
   );
   const helpers = service as unknown as SurgeryWriteHelpers;
@@ -177,6 +180,7 @@ describe('SurgeryService.assign — teeth', () => {
   const service = new SurgeryService(
     {} as Repository<SurgeryQueueItem>,
     {} as Repository<ImplantCase>,
+    {} as Repository<FollowUpContact>,
     {} as AuditService,
   );
   const helpers = service as unknown as SurgeryWriteHelpers;
@@ -212,6 +216,7 @@ describe('SurgeryService.update concurrency', () => {
     return new SurgeryService(
       queue,
       {} as Repository<ImplantCase>,
+      {} as Repository<FollowUpContact>,
       {} as AuditService,
     );
   };
@@ -271,6 +276,7 @@ describe('SurgeryService.assign — implant register link', () => {
   const service = new SurgeryService(
     {} as Repository<SurgeryQueueItem>,
     {} as Repository<ImplantCase>,
+    {} as Repository<FollowUpContact>,
     {} as AuditService,
   );
   const helpers = service as unknown as SurgeryWriteHelpers;

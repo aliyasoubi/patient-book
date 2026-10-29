@@ -93,6 +93,21 @@ export enum FollowUpStatus {
   Declined = 'declined',
 }
 
+/**
+ * What a call about a follow-up came to. The last two settle it as the card's
+ * own status would; the first two leave it open, with a day to call again.
+ */
+export enum ContactOutcome {
+  /** جواب نداد */
+  NoAnswer = 'no_answer',
+  /** بعداً تماس بگیرید */
+  CallLater = 'call_later',
+  /** نوبت داد */
+  Booked = 'booked',
+  /** انصراف داد */
+  Declined = 'declined',
+}
+
 export enum SurgeryStatus {
   Scheduled = 'scheduled',
   Completed = 'completed',

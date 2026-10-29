@@ -157,6 +157,15 @@ export class SurgeryQueueItem {
   followUpAppointmentAt!: Date | null;
 
   /**
+   * The day to call the patient again, set by the last call that settled
+   * nothing ("no answer", "call next week"). Apart from `followUpDate`: the
+   * clinical follow-up stays when it is; only the call moves.
+   */
+  @Index('idx_surgery_queue_next_contact')
+  @Column({ type: 'date', nullable: true })
+  nextContactAt!: Date | null;
+
+  /**
    * Rows are written after the surgery, so a new one is `completed`; the
    * value is kept for the odd row that is genuinely still ahead, and for
    * the imported history.

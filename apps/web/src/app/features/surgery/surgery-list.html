@@ -236,6 +236,16 @@
               />
               @if (canChangeStatus()) {
                 <div class="queue__track-actions">
+                  @if (item.followUpStatus !== 'declined') {
+                    <pb-button
+                      variant="text"
+                      icon="call"
+                      [disabled]="updating() !== null"
+                      (click)="recordCall(item)"
+                    >
+                      {{ 'surgery.recordCall' | translate }}
+                    </pb-button>
+                  }
                   @if (item.followUpStatus === 'booked') {
                     <pb-button
                       variant="text"
@@ -263,6 +273,30 @@
                     </pb-button>
                   }
                 </div>
+              }
+              <!-- The last call and the next one, so whoever picks the card up
+                   next knows where it stands before dialling. -->
+              @if (item.lastContact || item.nextContactAt) {
+                <p class="queue__contact">
+                  <mat-icon aria-hidden="true">history</mat-icon>
+                  @if (item.lastContact; as last) {
+                    <span>
+                      {{ 'surgery.lastCall' | translate: { when: (last.at | faNum) } }}
+                      @if (last.by) {
+                        · {{ last.by }}
+                      }
+                      — <strong>{{ outcomeLabel(last.outcome) | translate }}</strong>
+                    </span>
+                  }
+                  @if (item.nextContactAt; as next) {
+                    <span class="queue__next-call" [class.queue__next-call--due]="callDue(item)">
+                      {{ 'surgery.nextCall' | translate: { date: (next.jalali | faNum) } }}
+                    </span>
+                  }
+                  @if (item.lastContact?.note; as note) {
+                    <span class="queue__contact-note">«{{ note }}»</span>
+                  }
+                </p>
               }
             </div>
           }

@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { Patient } from '../patients/patient.entity';
 import { SurgeryQueueItem } from '../surgery/surgery-queue-item.entity';
 import {
+  callsTodayBounds,
+  callsTodaySql,
   followUpState,
   followUpWindow,
   openFollowUpSql,
@@ -33,6 +35,8 @@ export interface DashboardSummary {
   followUpsThisWeek: number;
   /** Follow-ups whose month has passed without being marked done. */
   followUpsOverdue: number;
+  /** Patients to call today: the follow-up list's «تماس امروز». */
+  callsToday: number;
   /** Lab work past the day the lab said it would be back — whose lab to call. */
   labsOverdue: number;
   /** Lab work that is back with no booking for the patient yet — the front desk's list. */
@@ -104,6 +108,7 @@ export class StatsService {
   async dashboard(): Promise<DashboardSummary> {
     const week = followUpWindow('week');
     const overdue = followUpWindow('overdue');
+    const calls = callsTodayBounds();
     const [row] = await this.patients.query<Array<Record<string, string>>>(
       `
       SELECT
@@ -117,6 +122,8 @@ export class StatsService {
         (SELECT count(*) FROM surgery_queue s
           WHERE s."deletedAt" IS NULL AND ${openFollowUpSql('s')}
             AND s."followUpDate" <= $3)                                                AS "followUpsOverdue",
+        (SELECT count(*) FROM surgery_queue s
+          WHERE s."deletedAt" IS NULL AND ${callsTodaySql('s', '$6', '$7')})          AS "callsToday",
         (SELECT count(*) FROM lab_cases c
           WHERE c."deletedAt" IS NULL AND ${overdueSql('c', '$4')})                   AS "labsOverdue",
         (SELECT count(*) FROM lab_cases c
@@ -133,7 +140,15 @@ export class StatsService {
             AND ("lastVisitAt" IS NULL
               OR "lastVisitAt" < now() - interval '12 months'))                       AS "inactiveOverYear"
     `,
-      [week.from, week.to, overdue.to, todayIso(), expiryHorizon()],
+      [
+        week.from,
+        week.to,
+        overdue.to,
+        todayIso(),
+        expiryHorizon(),
+        calls.today,
+        calls.monthEnd,
+      ],
     );
 
     const n = (key: string): number => Number(row?.[key] ?? 0);
@@ -141,6 +156,7 @@ export class StatsService {
       needsReview: n('needsReview'),
       followUpsThisWeek: n('followUpsThisWeek'),
       followUpsOverdue: n('followUpsOverdue'),
+      callsToday: n('callsToday'),
       labsOverdue: n('labsOverdue'),
       labsToBook: n('labsToBook'),
       inventoryReorder: n('inventoryReorder'),

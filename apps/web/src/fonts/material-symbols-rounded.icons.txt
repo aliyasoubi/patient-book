@@ -114,13 +114,14 @@ pending_actions
 person
 person_add
 person_search
+phone_callback
+phone_missed
 pin_drop
 post
 refresh
 remove
 remove_shopping_cart
 reorder
-restore_from_trash
 save
 scan
 schedule

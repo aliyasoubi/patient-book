@@ -350,6 +350,17 @@
                         @if (f.teethFdi.length) {
                           · {{ 'patientDetail.teeth' | translate: { teeth: followUpTeeth(f) } }}
                         }
+                        @if (f.lastContact; as last) {
+                          ·
+                          {{
+                            'patientDetail.lastCall'
+                              | translate
+                                : {
+                                    when: (last.at | faNum),
+                                    outcome: (contactOutcomeLabel(last.outcome) | translate),
+                                  }
+                          }}
+                        }
                       </small>
                     </span>
                     <pb-status-chip [tone]="followUpTone(f)">{{ followUpNote(f) }}</pb-status-chip>

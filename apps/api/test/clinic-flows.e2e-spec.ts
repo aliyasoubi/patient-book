@@ -6,7 +6,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { DataSource } from 'typeorm';
 
-import { addMonths, format as formatJalali } from 'date-fns-jalali';
+import { addDays, addMonths, format as formatJalali } from 'date-fns-jalali';
 
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
@@ -1090,6 +1090,115 @@ describeIfWritable('clinic flows (e2e)', () => {
       const other = await add('رضا احمدی');
       expect(other.hasNameMismatch).toBe(true);
       expect(other.patient).toBeNull();
+    });
+
+    it('records each call, puts the next one off, and settles the follow-up when booked', async () => {
+      const patient = await asAdmin(http().post('/api/patients'))
+        .send({
+          fileNo: nextNumber(),
+          firstName: 'تماس',
+          lastName: 'پیگیری',
+          mobile: '09120000072',
+        })
+        .expect(201);
+      const patientId = (patient.body as { id: string }).id;
+      patientIds.push(patientId);
+      // Due this month: on today's call list until a call puts it off.
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          kind: 'extraction',
+          recordedName: 'تماس پیگیری',
+          patientId,
+          surgeryDate: monthsAgo(2),
+          followUpMonths: 2,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+      const callsToday = async () =>
+        (
+          (
+            await asAdmin(http().get('/api/surgery-queue'))
+              .query({ followUp: 'callsToday', limit: '100' })
+              .expect(200)
+          ).body as { items: Array<{ id: string }> }
+        ).items.map((i) => i.id);
+      const call = (body: object) =>
+        asAdmin(http().post(`/api/surgery-queue/${id}/contacts`)).send(body);
+      expect(await callsToday()).toContain(id);
+
+      // No answer; call again tomorrow. The follow-up stays open and its
+      // date stays where it was; only the call moves.
+      const tomorrow = formatJalali(addDays(new Date(), 1), 'yyyy/MM/dd');
+      const missed = await call({
+        outcome: 'no_answer',
+        nextContactAt: tomorrow,
+      }).expect(201);
+      expect(missed.body).toMatchObject({
+        followUpStatus: 'open',
+        followUpDate: (created.body as { followUpDate: unknown }).followUpDate,
+        nextContactAt: { jalali: tomorrow },
+        lastContact: {
+          outcome: 'no_answer',
+          nextContactAt: tomorrow,
+          by: expect.any(String),
+        },
+      });
+      expect(await callsToday()).not.toContain(id);
+
+      // Asked to be called back today.
+      await call({
+        outcome: 'call_later',
+        nextContactAt: today,
+        note: 'بعد از ظهر',
+      }).expect(201);
+      expect(await callsToday()).toContain(id);
+
+      // Booked: settled as the card's status would, and nothing left to call.
+      const booked = await call({
+        outcome: 'booked',
+        appointmentAt: today,
+      }).expect(201);
+      expect(booked.body).toMatchObject({
+        followUpStatus: 'booked',
+        followUpAppointmentAt: today,
+        nextContactAt: null,
+        lastContact: { outcome: 'booked' },
+      });
+      expect(await callsToday()).not.toContain(id);
+
+      // Put off again, then booked from the card's own status: the next
+      // call goes with it, as it does when a call books.
+      await call({ outcome: 'no_answer', nextContactAt: today }).expect(201);
+      const bookedOnCard = await asAdmin(
+        http().patch(`/api/surgery-queue/${id}`),
+      )
+        .send({ followUpStatus: 'booked' })
+        .expect(200);
+      expect(bookedOnCard.body).toMatchObject({ nextContactAt: null });
+
+      const history = await asAdmin(
+        http().get(`/api/surgery-queue/${id}/contacts`),
+      ).expect(200);
+      expect(
+        (history.body as Array<{ outcome: string; note: string | null }>).map(
+          (c) => [c.outcome, c.note],
+        ),
+      ).toEqual([
+        ['no_answer', null],
+        ['booked', null],
+        ['call_later', 'بعد از ظهر'],
+        ['no_answer', null],
+      ]);
+
+      await asAdmin(
+        http().post(
+          '/api/surgery-queue/00000000-0000-4000-8000-000000000000/contacts',
+        ),
+      )
+        .send({ outcome: 'no_answer' })
+        .expect(404);
+      await call({ outcome: 'maybe' }).expect(400);
     });
 
     it('lists open follow-ups first, soonest first, whatever the surgery order', async () => {

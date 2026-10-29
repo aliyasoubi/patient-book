@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { addDays, addMonths } from 'date-fns-jalali';
+import { addDays, addMonths, format as formatJalali } from 'date-fns-jalali';
 import { EntityManager, In, Repository } from 'typeorm';
 
 import { SurgeryQueueItem } from './surgery-queue-item.entity';
+import { FollowUpContact } from './follow-up-contact.entity';
 import { namesDiffer, surgerySearchText } from './case-copy';
 import { ImplantCase } from '../implants/implant-case.entity';
 import { Patient } from '../patients/patient.entity';
 import {
   QuerySurgeryDto,
+  RecordContactDto,
   UpdateSurgeryDto,
   UpsertSurgeryDto,
 } from './dto/surgery.dto';
@@ -21,6 +23,7 @@ import { AuditService } from '../../application/services/audit.service';
 import { AppException } from '../../application/errors/app.exception';
 import { assertMayWriteClinicalNotes } from '../../application/policies/clinical-notes.policy';
 import {
+  ContactOutcome,
   ErrorCode,
   FollowUpStatus,
   InventoryCategory,
@@ -29,6 +32,8 @@ import {
   SurgeryStatus,
 } from '../../domain';
 import {
+  callsTodayBounds,
+  callsTodaySql,
   followUpState,
   followUpWindow,
   openFollowUpSql,
@@ -73,6 +78,8 @@ export class SurgeryService {
     private readonly queue: Repository<SurgeryQueueItem>,
     @InjectRepository(ImplantCase)
     private readonly implants: Repository<ImplantCase>,
+    @InjectRepository(FollowUpContact)
+    private readonly contactRows: Repository<FollowUpContact>,
     private readonly audit: AuditService,
   ) {}
 
@@ -107,7 +114,13 @@ export class SurgeryService {
     if (dto.archivedOnly) {
       qb.withDeleted().andWhere('s."deletedAt" IS NOT NULL');
     }
-    if (dto.followUp) {
+    if (dto.followUp === 'callsToday') {
+      const { today, monthEnd } = callsTodayBounds();
+      qb.andWhere(callsTodaySql('s', ':today', ':monthEnd'), {
+        today,
+        monthEnd,
+      });
+    } else if (dto.followUp) {
       const settled = settledStatusOf(dto.followUp);
       if (settled) {
         qb.andWhere('s."followUpDate" IS NOT NULL')
@@ -150,8 +163,12 @@ export class SurgeryService {
       );
     qb.addOrderBy('s.id', 'ASC');
     const [items, total] = await qb.getManyAndCount();
+    const last = await this.lastContacts(
+      this.queue.manager,
+      items.map((i) => i.id),
+    );
     return PageResult.of(
-      items.map((i) => this.toResponse(i)),
+      items.map((i) => this.toResponse(i, last.get(i.id) ?? null)),
       total,
       dto,
     );
@@ -167,7 +184,152 @@ export class SurgeryService {
       relations: { implantCase: true, patient: true },
     });
     if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
-    return this.toResponse(item);
+    const last = await this.lastContacts(manager, [id]);
+    return this.toResponse(item, last.get(id) ?? null);
+  }
+
+  /** The calls made about a follow-up, newest first, with who made each. */
+  async contacts(id: string): Promise<unknown[]> {
+    const exists = await this.queue.exists({
+      where: { id },
+      withDeleted: true,
+    });
+    if (!exists) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
+    const rows = await this.contactRows.find({
+      where: { surgeryId: id },
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+    });
+    return rows.map((c) => this.contactResponse(c, c.user));
+  }
+
+  /**
+   * One call and what it came to. "Booked" and "declined" settle the
+   * follow-up as the card's status would, and clear the next call; the other
+   * two leave it as it stands, with the day to call again. Like the card's
+   * status it needs no version: it overwrites nothing anyone else edits.
+   */
+  async recordContact(
+    id: string,
+    dto: RecordContactDto,
+    userId: string | null,
+  ): Promise<unknown> {
+    return this.queue.manager.transaction(async (manager) => {
+      const queue = manager.getRepository(SurgeryQueueItem);
+      const item = await queue.findOne({
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
+
+      const settles =
+        dto.outcome === ContactOutcome.Booked ||
+        dto.outcome === ContactOutcome.Declined;
+      if (settles) {
+        await this.assign(
+          item,
+          {
+            followUpStatus:
+              dto.outcome === ContactOutcome.Booked
+                ? FollowUpStatus.Booked
+                : FollowUpStatus.Declined,
+            followUpAppointmentAt:
+              dto.outcome === ContactOutcome.Booked
+                ? (dto.appointmentAt ?? null)
+                : null,
+          },
+          manager.getRepository(ImplantCase),
+        );
+      }
+      item.nextContactAt =
+        !settles && dto.nextContactAt
+          ? JalaliDate.parse(dto.nextContactAt).date
+          : null;
+      await queue.save(item);
+
+      const contact = await manager.getRepository(FollowUpContact).save(
+        manager.getRepository(FollowUpContact).create({
+          surgeryId: id,
+          outcome: dto.outcome,
+          note: dto.note ?? null,
+          nextContactAt: item.nextContactAt,
+          userId,
+        }),
+      );
+      await this.audit.recordRequired(
+        {
+          userId,
+          action: 'update',
+          entity: 'surgery_queue',
+          entityId: id,
+          changes: {
+            contact: dto.outcome,
+            ...(dto.note ? { note: dto.note } : {}),
+            ...(item.nextContactAt ? { nextContactAt: dto.nextContactAt } : {}),
+            ...(contact.outcome === ContactOutcome.Booked
+              ? { followUpAppointmentAt: dto.appointmentAt ?? null }
+              : {}),
+          },
+        },
+        manager,
+      );
+      // Read before the lock goes, as an edit's answer is.
+      return this.findOne(id, manager);
+    });
+  }
+
+  /** The latest call about each of `ids`, for the cards. */
+  private async lastContacts(
+    manager: EntityManager,
+    ids: readonly string[],
+  ): Promise<Map<string, Record<string, unknown>>> {
+    if (!ids.length) return new Map();
+    const rows = await manager.query<
+      Array<{
+        surgeryId: string;
+        outcome: ContactOutcome;
+        note: string | null;
+        nextContactAt: Date | string | null;
+        createdAt: Date;
+        fullName: string | null;
+        username: string | null;
+      }>
+    >(
+      `SELECT DISTINCT ON (c."surgeryId")
+              c."surgeryId", c.outcome, c.note, c."nextContactAt", c."createdAt",
+              u."fullName", u.username
+         FROM follow_up_contacts c
+         LEFT JOIN users u ON u.id = c."userId"
+        WHERE c."surgeryId" = ANY($1::uuid[])
+        ORDER BY c."surgeryId", c."createdAt" DESC`,
+      [ids],
+    );
+    return new Map(
+      rows.map((r) => [
+        r.surgeryId,
+        this.contactResponse(r, { fullName: r.fullName, username: r.username }),
+      ]),
+    );
+  }
+
+  private contactResponse(
+    c: {
+      outcome: ContactOutcome;
+      note: string | null;
+      nextContactAt: Date | string | null;
+      createdAt: Date;
+    },
+    user: { fullName: string | null; username: string | null } | null,
+  ): Record<string, unknown> {
+    return {
+      outcome: c.outcome,
+      note: c.note,
+      nextContactAt: c.nextContactAt
+        ? this.formatDate(c.nextContactAt, null)
+        : null,
+      by: user?.fullName?.trim() || user?.username || null,
+      at: formatJalali(new Date(c.createdAt), 'yyyy/MM/dd HH:mm'),
+    };
   }
 
   /**
@@ -525,6 +687,9 @@ export class SurgeryService {
     item.followUpStatus ??= FollowUpStatus.Open;
     if (dto.followUpStatus !== undefined) {
       item.followUpStatus = dto.followUpStatus;
+      // Booked or declined, there is no one left to call back — however it
+      // was settled, from a call or the card's own status.
+      if (dto.followUpStatus !== FollowUpStatus.Open) item.nextContactAt = null;
     }
     if (dto.followUpAppointmentAt !== undefined) {
       item.followUpAppointmentAt = dto.followUpAppointmentAt
@@ -657,7 +822,10 @@ export class SurgeryService {
     return JalaliDate.fromStored(value, precision ?? 'day')?.format() ?? '';
   }
 
-  private toResponse(item: SurgeryQueueItem): Record<string, unknown> {
+  private toResponse(
+    item: SurgeryQueueItem,
+    lastContact: Record<string, unknown> | null = null,
+  ): Record<string, unknown> {
     return {
       id: item.id,
       kind: item.kind,
@@ -708,6 +876,13 @@ export class SurgeryService {
         ? this.formatDate(item.followUpAppointmentAt, null)
         : null,
       followUpState: followUpState(item),
+      nextContactAt: item.nextContactAt
+        ? {
+            jalali: this.formatDate(item.nextContactAt, null),
+            iso: JalaliDate.fromStored(item.nextContactAt)?.toIsoDate() ?? '',
+          }
+        : null,
+      lastContact,
       status: item.status,
       notes: item.notes,
       /** Optimistic-concurrency token; send back as `expectedVersion` on update. */

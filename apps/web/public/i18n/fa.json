@@ -149,6 +149,7 @@
     "followUpsOverdue": "پیگیری‌های عقب‌افتاده",
     "needsReview": "نیازمند بازبینی",
     "followUpsThisWeek": "پیگیری‌های این هفته",
+    "callsToday": "تماس‌های امروز",
     "labsOverdue": "دیرکرد لابراتوار",
     "labsToBook": "کار برگشته، بدون نوبت",
     "inventoryReorder": "نیاز به سفارش",
@@ -190,6 +191,7 @@
     "searchPlaceholder": "جستجوی نام، شماره پرونده، موبایل یا دندان…",
     "searchAria": "جستجو در پیگیری‌ها",
     "followUpFilter": "فیلتر پیگیری",
+    "filterCallsToday": "تماس امروز",
     "filterPending": "در انتظار",
     "filterWeek": "این هفته",
     "filterThisMonth": "ماه جاری",
@@ -212,6 +214,9 @@
     "bookedOn": "نوبت: {{date}}",
     "bookedNoDate": "نوبت داده شد",
     "declinedLabel": "لغو شد",
+    "recordCall": "ثبت تماس",
+    "lastCall": "آخرین تماس: {{when}}",
+    "nextCall": "تماس بعدی: {{date}}",
     "setAppointment": "ثبت تاریخ نوبت",
     "changeAppointment": "تغییر تاریخ نوبت",
     "relToday": "امروز",
@@ -793,6 +798,7 @@
     "noFollowUps": "پیگیری‌ای برای این بیمار ثبت نشده است.",
     "addFollowUp": "پیگیری جدید",
     "followUpOn": "پیگیری {{date}}",
+    "lastCall": "آخرین تماس {{when}}: {{outcome}}",
     "teeth": "دندان {{teeth}}"
   },
   "registryForm": {
@@ -1192,5 +1198,29 @@
     "bone_graft": "پیوند استخوان: {{date}}",
     "sinus_lift": "سینوس لیفت: {{date}}",
     "prosthesis": "تحویل پروتز: {{date}}"
+  },
+  "contactOutcome": {
+    "no_answer": "جواب نداد",
+    "call_later": "بعداً تماس بگیرید",
+    "booked": "نوبت گرفت",
+    "declined": "انصراف داد"
+  },
+  "followUpContact": {
+    "title": "ثبت تماس",
+    "noPhone": "به پرونده بیمار وصل نیست؛ شماره‌ای برای تماس ندارد.",
+    "history": "تماس‌های قبلی",
+    "historyFailed": "تماس‌های قبلی بارگذاری نشد.",
+    "outcome": "نتیجه تماس",
+    "nextCall": "تماس بعدی",
+    "nextCallHint": "تاریخ پیگیری درمان تغییر نمی‌کند؛ فقط زمان تماس بعدی",
+    "tomorrow": "فردا",
+    "inThreeDays": "۳ روز دیگر",
+    "nextWeek": "هفته بعد",
+    "appointment": "روز نوبت",
+    "declinedHint": "پیگیری بسته می‌شود و از فهرست تماس‌ها بیرون می‌رود.",
+    "note": "یادداشت",
+    "noteHint": "اختیاری؛ برای کسی که بعداً تماس می‌گیرد",
+    "save": "ثبت تماس",
+    "saved": "تماس ثبت شد."
   }
 }
