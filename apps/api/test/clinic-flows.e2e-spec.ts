@@ -1167,6 +1167,16 @@ describeIfWritable('clinic flows (e2e)', () => {
       });
       expect(await callsToday()).not.toContain(id);
 
+      // Put off again, then booked from the card's own status: the next
+      // call goes with it, as it does when a call books.
+      await call({ outcome: 'no_answer', nextContactAt: today }).expect(201);
+      const bookedOnCard = await asAdmin(
+        http().patch(`/api/surgery-queue/${id}`),
+      )
+        .send({ followUpStatus: 'booked' })
+        .expect(200);
+      expect(bookedOnCard.body).toMatchObject({ nextContactAt: null });
+
       const history = await asAdmin(
         http().get(`/api/surgery-queue/${id}/contacts`),
       ).expect(200);
@@ -1175,6 +1185,7 @@ describeIfWritable('clinic flows (e2e)', () => {
           (c) => [c.outcome, c.note],
         ),
       ).toEqual([
+        ['no_answer', null],
         ['booked', null],
         ['call_later', 'بعد از ظهر'],
         ['no_answer', null],

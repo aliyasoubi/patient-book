@@ -687,6 +687,9 @@ export class SurgeryService {
     item.followUpStatus ??= FollowUpStatus.Open;
     if (dto.followUpStatus !== undefined) {
       item.followUpStatus = dto.followUpStatus;
+      // Booked or declined, there is no one left to call back — however it
+      // was settled, from a call or the card's own status.
+      if (dto.followUpStatus !== FollowUpStatus.Open) item.nextContactAt = null;
     }
     if (dto.followUpAppointmentAt !== undefined) {
       item.followUpAppointmentAt = dto.followUpAppointmentAt
