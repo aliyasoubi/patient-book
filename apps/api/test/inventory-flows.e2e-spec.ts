@@ -643,6 +643,44 @@ describeIfWritable('inventory flows (e2e)', () => {
     await archive(item.id);
   });
 
+  it('asks who a membrane goes into, and nobody for bone powder from the same shelf', async () => {
+    const membrane = await addItem({
+      name: `ممبران ${runId}`,
+      category: 'regenerative',
+      brand: 'Regen',
+      spec: '1x2',
+      quantity: 2,
+      lotNumber: 'M-1',
+      expiry: printed(30),
+    });
+    expect(membrane).toMatchObject({ usedPerPatient: true });
+    const refused = await move(membrane.id, {
+      kind: 'use',
+      quantity: 1,
+    }).expect(400);
+    expect((refused.body as { code: string }).code).toBe(
+      ErrorCode.InventoryPatientRequired,
+    );
+
+    const powder = await addItem({
+      name: `پودر استخوان ${runId}`,
+      category: 'regenerative',
+      brand: 'Regen',
+      spec: '500-1000',
+      quantity: 2,
+      lotNumber: 'P-1',
+      expiry: printed(30),
+    });
+    expect(powder).toMatchObject({ usedPerPatient: false });
+    const used = (
+      await move(powder.id, { kind: 'use', quantity: 1 }).expect(200)
+    ).body as ItemBody;
+    expect(used.quantity).toBe(1);
+
+    await archive(membrane.id);
+    await archive(powder.id);
+  });
+
   it('names the patient a toothbrush was sold to on its stock card', async () => {
     const fileNo = `7${Date.now()}`;
     const patient = await asStaff(http().post('/api/patients'))
