@@ -155,6 +155,15 @@ fi
 
 [[ -s "$TMP" ]] || fail "dump produced an empty file"
 
+# Read it back with the key on disk before calling it a backup, so a key that
+# changed under us or a dump that did not finish shows up tonight rather than
+# on the day it is needed. Captured, not piped into grep: grep exiting early
+# would SIGPIPE the decrypt and fail a check that passed.
+ending="$(openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass "file:$KEY_FILE" -in "$TMP" |
+  gunzip | tail -n 20)" || fail "the new dump does not decrypt with $KEY_FILE"
+[[ "$ending" == *"PostgreSQL database dump complete"* ]] ||
+  fail "the new dump is cut short: it does not end the way a finished dump does"
+
 mv "$TMP" "$TARGET"
 chmod 600 "$TARGET"
 readonly SIZE="$(du -h "$TARGET" | cut -f1)"
@@ -168,16 +177,17 @@ log "wrote $(basename "$TARGET") ($SIZE)"
 if [[ "$(wc -l <"$LOG_FILE")" -gt 2000 ]]; then
   tail -n 2000 "$LOG_FILE" >"$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
 fi
-# A recovery keeps the database it replaced as a fallback, and a drill killed
-# mid-way leaves its throwaway copy. Each is a full set of patient records
-# that nothing else will drop, so every run names them until someone does
-# (README: "What the server keeps"). Named, never dropped here: the fallback
-# is kept on purpose, for as long as someone is unsure.
+# A recovery (pb-restore.sh) keeps the database it replaced as a fallback and
+# may leave the one it restored into, and a drill killed mid-way leaves its
+# throwaway copy. Each is a full set of patient records that nothing else will
+# drop, so every run names them until someone does (README: "What the server
+# keeps"). Named, never dropped here: the fallback is kept on purpose, for as
+# long as someone is unsure.
 leftovers="$(docker compose -f "$COMPOSE_FILE" exec -T db \
   psql --username="$DB_USER" --dbname=postgres -tAc \
   "SELECT datname FROM pg_database
-    WHERE datname IN ('patient_book_before_restore', 'patient_book_restore')
-       OR datname LIKE 'patient\_book\_drill\_%'" 2>>"$LOG_FILE" | tr '\n' ' ' || true)"
+    WHERE datname IN ('${DB_NAME}_before_restore', '${DB_NAME}_restore')
+       OR datname LIKE '${DB_NAME//_/\\_}\_drill\_%'" 2>>"$LOG_FILE" | tr '\n' ' ' || true)"
 if [[ -n "${leftovers// /}" ]]; then
   log "WARNING: spare copies of the database still on this server: $leftovers"
   echo "warning: spare copies of the database still on this server: $leftovers" >&2

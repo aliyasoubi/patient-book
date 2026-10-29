@@ -52,13 +52,22 @@ chmod 700 /etc/patient-book
 echo "✓  key directory ready at /etc/patient-book (root only)"
 
 # -- systemd units ----------------------------------------------------------
-for unit in patient-book-backup.service patient-book-backup.timer; do
+for unit in patient-book-backup.service patient-book-backup.timer patient-book-drill.service; do
   sed -e "s|__REPO_ROOT__|$REPO_ROOT|g" "$HERE/$unit" >"$UNIT_DIR/$unit"
   chmod 644 "$UNIT_DIR/$unit"
 done
 systemctl daemon-reload
 systemctl enable --now patient-book-backup.timer
 echo "✓  nightly backup timer installed and enabled"
+# The restore test hangs off the backup's OnSuccess=, which older systemd
+# ignores without complaint — leaving backups that are never tested.
+readonly SYSTEMD_VERSION="$(systemctl --version | awk 'NR == 1 { print $2 }')"
+if [[ "$SYSTEMD_VERSION" =~ ^[0-9]+$ && "$SYSTEMD_VERSION" -ge 249 ]]; then
+  echo "✓  each nightly backup is restore-tested right after it is written"
+else
+  echo "!  systemd $SYSTEMD_VERSION is older than 249, so backups are not restore-tested" >&2
+  echo "   on their own: run sudo ./ops/deploy/pb-restore-drill.sh after each one" >&2
+fi
 
 # -- pre-deploy backup without a password -----------------------------------
 # deploy.sh dumps the database before migrations, which needs the root-only
@@ -97,9 +106,9 @@ Next:
        docker compose -f compose.prod.yml run --rm api \\
          node apps/api/dist/database/seeds/run-seed.js
 
-  4. Prove a backup restores before you rely on it:
+  4. Take a backup now (it is restore-tested straight after) and check both:
        sudo systemctl start patient-book-backup.service
-       sudo ./ops/deploy/pb-restore-drill.sh
+       sudo ./ops/deploy/pb-backup-status.sh
 
   5. Copy /etc/patient-book/backup.key somewhere off this server.
      Without it every backup is unreadable.

@@ -217,14 +217,19 @@ fails on the new schema, go back to the dump taken just before the deploy.
 Everything written since then leaves the live database, so note what staff
 recorded in between; it stays readable in `patient_book_before_restore`.
 
-1. `git checkout <commit>`, as above, but do not deploy yet.
-2. Follow steps 1 to 4 of [Real recovery](#real-recovery) with the newest
-   file in `predeploy/` instead of `daily/`.
-3. Instead of step 5, run `./ops/deploy/deploy.sh`. It builds the older
-   version, re-grants the runtime role through `migrate`, and starts the API.
-   Step 5's `start api` would restart the container of the release you are
-   leaving.
-4. Carry on with step 6.
+1. Build the older release, without deploying it. The restore runs `migrate`
+   from the images the checkout last built, and those must be the older
+   release's, or they would apply the very migrations you are undoing:
+
+   ```bash
+   git checkout <commit> && docker compose -f compose.prod.yml build
+   ```
+
+2. Follow [Real recovery](#real-recovery) with the newest file in
+   `predeploy/` instead of `daily/`. Its first step should report no
+   migration as "now applied"; if it names one, step 1 did not happen —
+   drop `patient_book_restore` and start again. `--switch` then starts the
+   app on the images from step 1, the older release.
 
 Either way, `git checkout main && git pull` puts the checkout back on the
 branch once a fix is merged; then deploy as usual.
@@ -290,9 +295,15 @@ the Postgres container, so it needs no client on the host and its version
 always matches the server. Output is gzipped and AES-256 encrypted before it
 touches disk, with 7 daily and 4 weekly copies kept. Each deploy adds one
 more to `predeploy/` (see [Rolling back a release](#rolling-back-a-release)).
+Every good nightly run is then restore-tested
+([Prove a backup restores](#prove-a-backup-restores)).
+
+Everything at a glance — the last backup, the last restore test, the
+off-server copy and the key — exiting non-zero when something needs
+attention:
 
 ```bash
-systemctl list-timers patient-book-backup.timer
+sudo ./ops/deploy/pb-backup-status.sh
 ```
 
 ```bash
@@ -302,6 +313,9 @@ sudo systemctl start patient-book-backup.service   # run one now
 ```bash
 journalctl -u patient-book-backup.service -n 50
 ```
+
+A server set up before the restore test needs `sudo ./ops/deploy/install.sh`
+once to get it; until then every deploy says so.
 
 **The encryption key lives at `/etc/patient-book/backup.key`, root-only.** It is
 deliberately outside the directory bind-mounted into the API container: a
@@ -313,11 +327,13 @@ Because dumps are encrypted before they are written, pointing the destination
 at a cloud-synced folder is a supported setup; the sync provider never holds
 readable records. The destination is `PB_BACKUP_DIR` in `.env` — the
 application has no backup settings, so this file is the only place it is
-configured — and the timer picks a change up on its next run:
+configured — and the timer picks a change up on its next run.
+
+The status script prints the key's fingerprint. To check that the copy you
+keep elsewhere is the same key, run this on that copy and compare:
 
 ```bash
-cat "${PB_BACKUP_DIR:-/srv/patient-book/home/PatientBookBackups}"/last-success   # last good run
-cat "${PB_BACKUP_DIR:-/srv/patient-book/home/PatientBookBackups}"/last-failure   # present only while failing
+openssl dgst -sha256 -r backup.key | cut -c1-16
 ```
 
 ### Off-server copies
@@ -373,7 +389,8 @@ sudo du -sh /srv/patient-book/home/PatientBookBackups/*
 ```
 
 The one thing no run removes on its own is a spare copy of the database: the
-`patient_book_before_restore` a recovery leaves as its fallback, or a
+`patient_book_before_restore` a recovery leaves as its fallback, a
+`patient_book_restore` that was never switched to, or a
 `patient_book_drill_…` left by a drill that was killed half-way. Each holds
 every patient record, so as long as one exists, every backup and every deploy
 prints a warning naming it. Once you no longer need it:
@@ -385,109 +402,110 @@ docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
 
 ### Prove a backup restores
 
-A backup that has never been restored is not a recovery plan. The drill
-restores the newest backup into a throwaway database, re-provisions the
-runtime role against it exactly as step 5 below does, checks that patients
-come back **when read as that role**, and drops it. The live database is never
-touched, and the check fails if the recovery path would leave the API without
-its grants.
+A backup that has never been restored is not a recovery plan. Straight after
+every good nightly backup, systemd runs `pb-restore-drill.sh`
+(`patient-book-drill.service`). It restores the newest dump into a throwaway
+database with the same steps a real recovery takes — they live in
+`restore-lib.sh`, shared with `pb-restore.sh` — provisions the API's role on
+it, reads every table back **as that role**, and drops it. The live database
+is never touched. `last-drill` records the last pass, and the status script
+flags it once that is more than a day old.
 
 ```bash
-sudo ./ops/deploy/pb-restore-drill.sh
+journalctl -u patient-book-drill.service -n 20   # the last test
+```
+
+```bash
+sudo ./ops/deploy/pb-restore-drill.sh            # one now
 ```
 
 ### Real recovery
 
-**Read this before you need it.** Piping the dump straight into `psql -d
-patient_book` is exactly what the drill above avoids, and for good reason:
-Postgres does not stop on a SQL error by default, so a truncated download or
-a version mismatch would not fail loudly — `psql` carries on to the next
-statement and exits looking successful, leaving `patient_book` with some
-tables dropped (the dump uses `--clean --if-exists`) and never recreated.
-Restore into a new database instead, confirm it looks right, then switch the
-app over. The app stays up for every step except the last two.
+**Read this before you need it.** `pb-restore.sh` does it in three commands,
+each of which changes one thing and says what it did. Its restore steps are
+the ones the nightly test runs, so a passing test means they work on this
+server as it is today.
 
-**1. Restore into a new database** — `patient_book` is not touched here:
+**1. Restore into a new database.** The live `patient_book` is not touched,
+and the app stays up:
 
 ```bash
-docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
-  -c 'CREATE DATABASE patient_book_restore;'
-
-openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
-  -pass file:/etc/patient-book/backup.key \
-  -in /srv/patient-book/home/PatientBookBackups/daily/<file>.sql.gz.enc \
-  | gunzip \
-  | docker compose -f compose.prod.yml exec -T db psql -U dental \
-      -d patient_book_restore -v ON_ERROR_STOP=1
+sudo ./ops/deploy/pb-restore.sh /srv/patient-book/home/PatientBookBackups/daily/<file>.sql.gz.enc
 ```
 
-`-v ON_ERROR_STOP=1` — the same flag `pb-restore-drill.sh` already runs
-with — is what turns a broken restore into a command that fails visibly
-instead of one that quietly leaves half a schema behind.
+`sudo` because the key and the backups are root-only. It reads the whole file
+through first, so a wrong key or a damaged or cut-short file stops it before
+anything is created. Then it restores into `patient_book_restore`, runs
+`migrate` against it — which grants the API's role (the dump carries no
+grants), and applies any migration newer than the backup, naming it — reads
+every table back as that role, and prints each table's rows in the backup
+beside the live database's.
 
-**2. Validate before switching anything over:**
+**2. Look before you switch.** Compare the counts with what you expect, and
+spot-check a patient or two:
 
 ```bash
-docker compose -f compose.prod.yml exec -T db psql -U dental \
-  -d patient_book_restore -tAc 'SELECT count(*) FROM patients;'
+docker compose -f compose.prod.yml exec db psql -U dental -d patient_book_restore
 ```
 
-Compare the count against what you expect, and spot-check a patient or two by
-name while you are in there. Do not go further on any doubt — the live
-database is still untouched.
+On any doubt, stop here: drop `patient_book_restore` (the command is in the
+output) and nothing has changed.
 
-**3. Stop the API**, so nothing writes to either database during the swap:
+**3. Switch the app over:**
 
 ```bash
-docker compose -f compose.prod.yml stop api
+./ops/deploy/pb-restore.sh --switch
 ```
 
-**4. Swap the names.** `DB_NAME` never changes — only which physical database
-currently holds it — so the app needs no config change to come back up
-against the restored data:
+It stops the API, then renames `patient_book` to `patient_book_before_restore`
+and `patient_book_restore` to `patient_book` in one transaction — both happen
+or neither does, so there is never a moment with no live database — and
+starts the app again. `DB_NAME` never changes, so nothing needs
+reconfiguring.
+
+**4. Confirm the app looks right.** If it does not, put the previous database
+back:
 
 ```bash
-docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
-  -v ON_ERROR_STOP=1 <<'SQL'
-ALTER DATABASE patient_book RENAME TO patient_book_before_restore;
-ALTER DATABASE patient_book_restore RENAME TO patient_book;
-SQL
+./ops/deploy/pb-restore.sh --undo
 ```
 
-**5. Re-grant the runtime role, then start the API.** The backup is taken
-with `--no-privileges`, and the restore ran as the superuser, so every table
-in the restored database is owned by `dental` with no grants at all — the
-API's own role (`DB_APP_USER`) cannot read a row of it. `migrate` is what
-provisions that role after every deploy (`ensure-app-role.ts`); running it
-here re-applies the grants to the database that now carries the name.
-`start api` alone would skip this and the app would come up with
-"permission denied" on its first query.
+Anything staff entered between the backup and the switch is still in
+`patient_book_before_restore`. Once you are sure, drop it (the command is in
+the output of `--switch`). That is the only step here that cannot be undone,
+and every backup run reminds you while it is there.
+
+Why a script and not a pipe into `psql`: without `pipefail`, a stream that
+breaks half-way still ends in `psql`'s success. Tested on this setup, a backup
+cut at a line boundary loaded that way exits 0 holding about half the rows
+and none of the indexes, and a patient count alone does not show it.
+
+### If the server itself is gone
+
+1. Put the backup key back before anything else, at
+   `/etc/patient-book/backup.key` (root, `chmod 600`). The first backup run
+   generates a new key when none is there, and that one cannot read the old
+   backups.
+2. Set up the new server as in [First deploy](#first-deploy), up to and
+   including `deploy.sh`. Skip creating the administrator: the backup has
+   the accounts.
+3. Fetch a backup from the off-server copy, for example
+   `sudo rclone copy dropbox:PatientBookBackups/daily/<file> /root/`, and
+   follow [Real recovery](#real-recovery) with it.
+
+To read a backup on some other machine, decrypt it with the key and load it
+with `psql` from **Postgres 17.6 or newer** (`-v ON_ERROR_STOP=1`): the dump
+opens with commands older versions reject.
 
 ```bash
-docker compose -f compose.prod.yml run --rm migrate
-docker compose -f compose.prod.yml start api
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:backup.key -in <file>.sql.gz.enc | gunzip > patient-book.sql
 ```
 
-Expect the line `✓  Runtime role … is up to date` in the output; the
-migrations themselves are already applied in the dump and report nothing.
-
-**6. Confirm the app looks right**, then drop the pre-restore database once
-you no longer need it as a fallback:
-
-```bash
-docker compose -f compose.prod.yml exec -T db psql -U dental -d postgres \
-  -c 'DROP DATABASE patient_book_before_restore;'
-```
-
-Keeping `patient_book_before_restore` around costs nothing but disk space
-until you are sure — dropping it is the only step here that cannot be undone.
-Until it is dropped, every backup run prints a reminder that it is still
-there.
+That file is every record in plain text; delete it when you are done.
 
 Plain SQL rather than `pg_dump`'s custom format is on purpose throughout: in a
 real recovery someone may be working from a different machine under time
-pressure, and none of this needs a matching `pg_restore` or any expertise
-beyond following these steps in order.
+pressure, and none of this needs a matching `pg_restore`.
 
 ---
 
