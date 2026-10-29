@@ -310,6 +310,69 @@
         </div>
       </mat-tab>
 
+      <!-- What each surgery still owes the patient: the same rows as the
+           follow-up list, filtered to this file. -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <span>{{ 'patientDetail.followUpsTab' | translate }}</span>
+          @if (followUps().length) {
+            <span class="tab__badge">{{ followUps().length | faNum }}</span>
+          }
+        </ng-template>
+        <div class="tab">
+          <pb-surface [title]="'patientDetail.followUps' | translate">
+            @if (followUpsState() === 'failed') {
+              <pb-load-error
+                [message]="'patientDetail.followUpsFailed' | translate"
+                (retry)="loadFollowUps()"
+              />
+            } @else if (followUpsState() === 'loading') {
+              <p class="card__empty">{{ 'patientDetail.followUpsLoading' | translate }}</p>
+            } @else if (followUps().length) {
+              <ul class="registry">
+                @for (f of followUps(); track f.id) {
+                  <li>
+                    <mat-icon aria-hidden="true">{{ surgeryKindIcon(f.kind) }}</mat-icon>
+                    <span class="registry__lab">
+                      @if (auth.can('editSurgery')) {
+                        <a [routerLink]="['/surgery', f.id, 'edit']">{{
+                          surgeryKindLabel(f.kind) | translate
+                        }}</a>
+                      } @else {
+                        {{ surgeryKindLabel(f.kind) | translate }}
+                      }
+                      <small>
+                        @if (f.surgeryDate; as done) {
+                          {{
+                            surgeryDoneLabel(f.kind) | translate: { date: (done.jalali | faNum) }
+                          }}
+                        }
+                        @if (f.teethFdi.length) {
+                          · {{ 'patientDetail.teeth' | translate: { teeth: followUpTeeth(f) } }}
+                        }
+                      </small>
+                    </span>
+                    <pb-status-chip [tone]="followUpTone(f)">{{ followUpNote(f) }}</pb-status-chip>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="card__empty">{{ 'patientDetail.noFollowUps' | translate }}</p>
+            }
+            @if (auth.can('editSurgery') && !p.isArchived) {
+              <pb-button
+                variant="text"
+                icon="add"
+                link="/surgery/new"
+                [queryParams]="{ patientId: p.id }"
+              >
+                {{ 'patientDetail.addFollowUp' | translate }}
+              </pb-button>
+            }
+          </pb-surface>
+        </div>
+      </mat-tab>
+
       <mat-tab>
         <ng-template mat-tab-label>
           <span>{{ 'patientDetail.labTab' | translate }}</span>

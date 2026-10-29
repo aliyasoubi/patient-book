@@ -26,7 +26,9 @@ export interface RegistryQuery {
   archivedOnly?: boolean;
 }
 
-export interface SurgeryQuery extends Omit<RegistryQuery, 'unlinkedOnly'> {
+export interface SurgeryQuery extends RegistryQuery {
+  /** One patient's follow-ups, for their file. */
+  patientId?: string;
   mismatchedOnly?: boolean;
   /** Open follow-ups within a window; the API decides the dates. */
   followUp?: FollowUpFilter;

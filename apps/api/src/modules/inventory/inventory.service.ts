@@ -740,6 +740,7 @@ export class InventoryService {
       {
         kind: SurgeryKind.Implant,
         implantCaseId: implantCase.id,
+        patientId,
         recordedName: implantCase.recordedName,
         surgeryDate: JalaliDate.today().format(),
         teethFdi: toothNumbers(written),

@@ -64,11 +64,8 @@ describe('pickRegistryNo', () => {
     const f = form();
     f.controls.recordedName.setValue('سارا احمدی');
     f.controls.recordedName.markAsDirty();
-    pickRegistryNo(f.controls.implantRegistryNo, {
-      value: 'سارا احمدی',
-      label: 'سارا احمدی',
-      meta: '77',
-    });
+    // The picked patient's implant file.
+    pickRegistryNo(f.controls.implantRegistryNo, '77');
 
     // Someone else saved the row meanwhile; untouched fields take their copy.
     adoptUntouched(f, { recordedName: 'مریم کریمی', implantRegistryNo: '42' });
@@ -76,9 +73,9 @@ describe('pickRegistryNo', () => {
     expect(f.getRawValue()).toEqual({ recordedName: 'سارا احمدی', implantRegistryNo: '77' });
   });
 
-  it('leaves the number alone when the picked entry has none', () => {
+  it('leaves the number alone when the picked patient has no implant file', () => {
     const f = form();
-    pickRegistryNo(f.controls.implantRegistryNo, { value: 'x', label: 'x' });
+    pickRegistryNo(f.controls.implantRegistryNo, null);
     expect(f.controls.implantRegistryNo.value).toBe('42');
     expect(f.controls.implantRegistryNo.pristine).toBe(true);
   });

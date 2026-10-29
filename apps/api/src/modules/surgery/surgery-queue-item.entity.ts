@@ -18,6 +18,7 @@ import {
   SurgeryStatus,
 } from '../../domain';
 import { ImplantCase } from '../implants/implant-case.entity';
+import { Patient } from '../patients/patient.entity';
 
 /**
  * لیست انتظار جراحی — the second-stage surgery queue.
@@ -44,6 +45,22 @@ export class SurgeryQueueItem {
   })
   @JoinColumn({ name: 'implantCaseId' })
   implantCase!: ImplantCase | null;
+
+  /**
+   * The patient file the follow-up is for — its file number and the phone to
+   * call. Picked on the form, or taken from the implant case when the two
+   * names agree; an extraction or a graft has no case and is linked here
+   * only.
+   */
+  @Index('idx_surgery_queue_patient')
+  @Column({ type: 'uuid', nullable: true })
+  patientId!: string | null;
+
+  // Pairs with `patientId`. With this relation loaded, save() takes the id from it
+  // and ignores a changed `patientId` — set both, or drop the relation (CLAUDE.md).
+  @ManyToOne(() => Patient, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'patientId' })
+  patient!: Patient | null;
 
   @Column({ type: 'enum', enum: SurgeryKind, default: SurgeryKind.Implant })
   kind!: SurgeryKind;

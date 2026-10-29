@@ -1005,6 +1005,93 @@ describeIfWritable('clinic flows (e2e)', () => {
       });
     });
 
+    it('links a follow-up to its patient file, found by its file number', async () => {
+      const fileNo = nextNumber();
+      const patient = await asAdmin(http().post('/api/patients'))
+        .send({
+          fileNo,
+          firstName: 'پیگیری',
+          lastName: 'پرونده‌دار',
+          mobile: '09120000071',
+        })
+        .expect(201);
+      const patientId = (patient.body as { id: string }).id;
+      patientIds.push(patientId);
+
+      // An extraction has no implant file: the patient is linked directly.
+      const created = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          kind: 'extraction',
+          recordedName: 'پیگیری پرونده‌دار',
+          patientId,
+          surgeryDate: monthsAgo(1),
+          followUpMonths: 2,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      surgeryIds.push(id);
+      expect(created.body).toMatchObject({
+        patient: { id: patientId, fileNo, mobile: '09120000071' },
+      });
+
+      const list = async (query: Record<string, string>) =>
+        (
+          (
+            await asAdmin(http().get('/api/surgery-queue'))
+              .query({ limit: '100', ...query })
+              .expect(200)
+          ).body as { items: Array<{ id: string }> }
+        ).items.map((i) => i.id);
+      expect(await list({ q: fileNo })).toEqual([id]);
+      expect(await list({ patientId })).toEqual([id]);
+      expect(await list({ q: fileNo, unlinkedOnly: 'true' })).toEqual([]);
+
+      // Unlinked on the form: the row keeps its name and loses the file.
+      const unlinked = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
+        .send({
+          patientId: null,
+          expectedVersion: (created.body as { version: number }).version,
+        })
+        .expect(200);
+      expect((unlinked.body as { patient: unknown }).patient).toBeNull();
+
+      await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          recordedName: 'بیمار ناموجود',
+          patientId: '00000000-0000-4000-8000-000000000000',
+        })
+        .expect(404);
+    });
+
+    it('takes the implant file’s patient only when the names agree', async () => {
+      const patient = await asAdmin(http().post('/api/patients'))
+        .send({ fileNo: nextNumber(), firstName: 'کاشت', lastName: 'هم‌نام' })
+        .expect(201);
+      const patientId = (patient.body as { id: string }).id;
+      patientIds.push(patientId);
+      const registryNo = nextNumber();
+      const file = await asAdmin(http().post('/api/implant-cases'))
+        .send({ registryNo, recordedName: 'کاشت هم‌نام', patientId })
+        .expect(201);
+      implantCaseIds.push((file.body as { id: string }).id);
+
+      const add = async (recordedName: string) => {
+        const res = await asAdmin(http().post('/api/surgery-queue'))
+          .send({ recordedName, implantRegistryNo: registryNo })
+          .expect(201);
+        surgeryIds.push((res.body as { id: string }).id);
+        return res.body as {
+          patient: { id: string } | null;
+          hasNameMismatch: boolean;
+        };
+      };
+      expect((await add('کاشت هم‌نام')).patient?.id).toBe(patientId);
+      // The same number written under someone else's name: not their file.
+      const other = await add('رضا احمدی');
+      expect(other.hasNameMismatch).toBe(true);
+      expect(other.patient).toBeNull();
+    });
+
     it('lists open follow-ups first, soonest first, whatever the surgery order', async () => {
       const add = async (months: number): Promise<string> => {
         const res = await asAdmin(http().post('/api/surgery-queue'))

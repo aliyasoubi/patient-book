@@ -28,17 +28,15 @@
       [ariaLabel]="'surgery.followUpFilter' | translate"
     />
 
-    <!-- Separate from the follow-up questions: it changes which rows are
-         listed at all, and combines with any of them. -->
-    @if (auth.can('archiveSurgery')) {
-      <pb-filter-chips
-        multiple
-        [options]="archiveFilter"
-        [selected]="archivedOnly() ? ['archived'] : []"
-        (selectedChange)="toggleArchived($event.length > 0)"
-        [ariaLabel]="'common.filters' | translate"
-      />
-    }
+    <!-- Separate from the follow-up questions: they change which rows are
+         listed at all, and combine with any of them. -->
+    <pb-filter-chips
+      multiple
+      [options]="rowFilters"
+      [selected]="rowFiltersSelected()"
+      (selectedChange)="setRowFilters($event)"
+      [ariaLabel]="'common.filters' | translate"
+    />
   </pb-list-toolbar>
 
   @if (loading()) {
@@ -91,10 +89,23 @@
             <div class="queue__who">
               <div class="queue__identity">
                 <strong>{{ item.recordedName || ('patient.unnamed' | translate) }}</strong>
-                @if (item.patient) {
-                  <pb-status-chip icon="link" [link]="['/patients', item.patient.id]">
-                    {{ 'surgery.patientFile' | translate: { fileNo: item.patient.fileNo } }}
+                <!-- The file and the number to call, from the patient's file. A
+                     row not linked yet says so, to be linked from the form. -->
+                @if (item.patient; as patient) {
+                  <pb-status-chip icon="link" [link]="['/patients', patient.id]">
+                    {{ 'surgery.patientFile' | translate: { fileNo: patient.fileNo } }}
                   </pb-status-chip>
+                  @if (patient.mobile) {
+                    <span class="queue__phone" dir="ltr">
+                      <mat-icon aria-hidden="true">smartphone</mat-icon>
+                      {{ patient.mobile | faNum }}
+                    </span>
+                  }
+                } @else {
+                  <span class="queue__unlinked">
+                    <mat-icon aria-hidden="true">link_off</mat-icon>
+                    {{ 'surgery.unlinked' | translate }}
+                  </span>
                 }
               </div>
               <!-- What was done and when: a footnote to the follow-up. -->

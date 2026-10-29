@@ -34,14 +34,38 @@
           />
         }
 
-        <pb-text-field
-          class="pb-field-grid__full"
-          [control]="form.controls.recordedName"
-          [label]="'surgeryForm.recordedName' | translate"
-          prefixIcon="badge"
-          [options]="nameOptions()"
-          (optionSelected)="onNameSelected($event)"
-        />
+        <!-- Typing searches the patient book; picking a name links the row to
+             that file, and its number and phone come from there. Typing
+             another name over it unlinks it. -->
+        <div class="pb-field-grid__full">
+          <pb-text-field
+            [control]="form.controls.recordedName"
+            [label]="'surgeryForm.recordedName' | translate"
+            [hint]="
+              (linkedPatient() ? 'surgeryForm.patientLinked' : 'surgeryForm.patientHint')
+                | translate
+            "
+            prefixIcon="person_search"
+            [maxlength]="160"
+            [options]="patientOptions()"
+            (optionSelected)="onPatientSelected($event)"
+          />
+          @if (linkedPatient(); as linked) {
+            <div class="form__linked">
+              <mat-icon aria-hidden="true">link</mat-icon>
+              <span
+                >{{ linked.fullName || ('patient.unnamed' | translate) }} —
+                {{ 'surgery.patientFile' | translate: { fileNo: linked.fileNo } }}</span
+              >
+              <pb-icon-button
+                icon="close"
+                size="compact"
+                (click)="unlink()"
+                [ariaLabel]="'surgeryForm.unlink' | translate"
+              />
+            </div>
+          }
+        </div>
 
         <pb-date-field
           [control]="form.controls.surgeryDate"

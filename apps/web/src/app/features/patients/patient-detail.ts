@@ -18,7 +18,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { RegistryKind, RegistryService } from '../../core/services/registry.service';
 import { LabService } from '../../core/services/lab.service';
 import { JalaliPipe, jalaliStamp } from '../../shared/pipes/jalali.pipe';
-import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import {
+  formatPersianCount,
+  formatPersianNumber,
+  PersianNumberPipe,
+} from '../../shared/pipes/persian-number.pipe';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import {
   RegistryCaseDialog,
@@ -31,6 +35,9 @@ import {
   genderLabel,
   labStageLabel,
   labWorkTypeLabel,
+  surgeryDoneLabel,
+  surgeryKindIcon,
+  surgeryKindLabel,
   treatmentColor,
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
@@ -45,7 +52,7 @@ import {
   PbSurface,
 } from '../../shared/ui';
 import type { DataIssue, Patient, RegistryRef } from './data/patient.model';
-import type { AuditEntry, LabCase } from '../../core/models/common.model';
+import type { AuditEntry, LabCase, SurgeryQueueItem } from '../../core/models/common.model';
 import type { StatusTone } from '../../shared/ui';
 
 @Component({
@@ -139,6 +146,56 @@ export class PatientDetail {
       .join(this.i18n.instant('list.separator'));
   }
 
+  /** The patient's follow-ups after surgery, the list's order: open ones first, soonest first. */
+  protected readonly followUps = signal<SurgeryQueueItem[]>([]);
+  /** As with the lab work: "none" is a fact only once the list has come back. */
+  protected readonly followUpsState = signal<'loading' | 'loaded' | 'failed'>('loading');
+  protected readonly surgeryKindIcon = surgeryKindIcon;
+  protected readonly surgeryKindLabel = surgeryKindLabel;
+  protected readonly surgeryDoneLabel = surgeryDoneLabel;
+
+  /** Where the follow-up stands, in the words and colours of its card on the list. */
+  protected followUpNote(f: SurgeryQueueItem): string {
+    if (f.status === 'cancelled') return this.i18n.instant('surgery.cancelled');
+    switch (f.followUpState) {
+      case 'booked':
+        return f.followUpAppointmentAt
+          ? this.i18n.instant('surgery.bookedOn', {
+              date: formatPersianNumber(f.followUpAppointmentAt),
+            })
+          : this.i18n.instant('surgery.bookedNoDate');
+      case 'declined':
+        return this.i18n.instant('surgery.declinedLabel');
+      default:
+        return f.followUpDate
+          ? this.i18n.instant('patientDetail.followUpOn', {
+              date: formatPersianNumber(f.followUpDate.jalali),
+            })
+          : this.i18n.instant('surgeryForm.noFollowUp');
+    }
+  }
+
+  /** FDI numbers as the card lists them, in Persian digits. */
+  protected followUpTeeth(f: SurgeryQueueItem): string {
+    return f.teethFdi
+      .map((tooth) => formatPersianNumber(String(tooth)))
+      .join(this.i18n.instant('list.separator'));
+  }
+
+  protected followUpTone(f: SurgeryQueueItem): StatusTone {
+    if (f.status === 'cancelled') return 'neutral';
+    switch (f.followUpState) {
+      case 'overdue':
+        return 'error';
+      case 'due':
+        return 'warning';
+      case 'booked':
+        return 'success';
+      default:
+        return 'neutral';
+    }
+  }
+
   protected labStageTone(c: LabCase): StatusTone {
     if (c.stage === 'delivered') return c.partsOutstanding ? 'error' : 'success';
     return c.timeliness === 'overdue' ? 'error' : 'primary';
@@ -186,6 +243,9 @@ export class PatientDetail {
   /** Same shape again for the lab work, loaded with the record. */
   private readonly labCases$ = new Subject<string>();
 
+  /** And for the follow-ups. */
+  private readonly followUps$ = new Subject<string>();
+
   constructor() {
     this.load$
       .pipe(
@@ -226,6 +286,22 @@ export class PatientDetail {
         this.historyState.set(failed ? 'failed' : 'loaded');
       });
 
+    this.followUps$
+      .pipe(
+        switchMap((id) =>
+          this.registry.surgeryQueue({ patientId: id, limit: 50 }).pipe(
+            map((result) => ({ id, rows: result.items, failed: false })),
+            catchError(() => of({ id, rows: [] as SurgeryQueueItem[], failed: true })),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ id, rows, failed }) => {
+        if (id !== this.id()) return;
+        this.followUps.set(rows);
+        this.followUpsState.set(failed ? 'failed' : 'loaded');
+      });
+
     this.labCases$
       .pipe(
         switchMap((id) =>
@@ -261,6 +337,13 @@ export class PatientDetail {
     this.historyState.set('idle');
     this.load$.next(id);
     this.loadLabCases();
+    this.loadFollowUps();
+  }
+
+  protected loadFollowUps(): void {
+    this.followUps.set([]);
+    this.followUpsState.set('loading');
+    this.followUps$.next(this.id());
   }
 
   protected loadLabCases(): void {

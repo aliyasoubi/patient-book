@@ -6,6 +6,7 @@ import { EntityManager, In, Repository } from 'typeorm';
 import { SurgeryQueueItem } from './surgery-queue-item.entity';
 import { namesDiffer, surgerySearchText } from './case-copy';
 import { ImplantCase } from '../implants/implant-case.entity';
+import { Patient } from '../patients/patient.entity';
 import {
   QuerySurgeryDto,
   UpdateSurgeryDto,
@@ -79,16 +80,28 @@ export class SurgeryService {
     const qb = this.queue
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.implantCase', 'ic')
-      .leftJoinAndSelect('ic.patient', 'p')
+      .leftJoinAndSelect('s.patient', 'p')
       .skip(dto.skip)
       .take(dto.limit);
 
     const key = searchKey(dto.q);
     if (key) {
-      for (const [i, word] of key.split(' ').entries()) {
-        qb.andWhere(`s."searchText" LIKE :w${i}`, { [`w${i}`]: `%${word}%` });
+      const words = key.split(' ');
+      // A number on its own may be the patient's file number or mobile,
+      // which the row's own text does not hold.
+      const number = words.length === 1 && /^\d+$/.test(key) ? key : null;
+      for (const [i, word] of words.entries()) {
+        const text = `s."searchText" LIKE :w${i}`;
+        qb.andWhere(
+          number ? `(${text} OR p."fileNo" = :n OR p.mobile = :n)` : text,
+          { [`w${i}`]: `%${word}%`, ...(number ? { n: number } : {}) },
+        );
       }
     }
+    if (dto.patientId) {
+      qb.andWhere('s."patientId" = :patientId', { patientId: dto.patientId });
+    }
+    if (dto.unlinkedOnly) qb.andWhere('s."patientId" IS NULL');
     if (dto.status) qb.andWhere('s.status = :status', { status: dto.status });
     if (dto.mismatchedOnly) qb.andWhere('s."hasNameMismatch" = true');
     if (dto.archivedOnly) {
@@ -151,7 +164,7 @@ export class SurgeryService {
   ): Promise<unknown> {
     const item = await manager.getRepository(SurgeryQueueItem).findOne({
       where: { id },
-      relations: { implantCase: { patient: true } },
+      relations: { implantCase: true, patient: true },
     });
     if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
     return this.toResponse(item);
@@ -210,6 +223,7 @@ export class SurgeryService {
         changes: {
           recordedName: saved.recordedName,
           registryNo: saved.implantRegistryNo,
+          patientId: saved.patientId,
           ...(inventoryMovementId ? { inventoryMovementId } : {}),
         },
       },
@@ -477,6 +491,17 @@ export class SurgeryService {
     // The number this row carried before the edit: the register may have
     // renumbered its case since, so this copy can be stale (see below).
     const previousRegistryNo = item.implantRegistryNo;
+    // The patient picked on the form, or unlinked there. The relation is
+    // never loaded on a write path, so the id alone is what save() writes.
+    if (dto.patientId !== undefined && dto.patientId !== item.patientId) {
+      if (dto.patientId) {
+        const exists = await implants.manager
+          .getRepository(Patient)
+          .exists({ where: { id: dto.patientId } });
+        if (!exists) throw AppException.notFound(ErrorCode.PatientNotFound);
+      }
+      item.patientId = dto.patientId ?? null;
+    }
     if (dto.kind !== undefined) item.kind = dto.kind;
     if (dto.recordedName !== undefined)
       item.recordedName = dto.recordedName ?? '';
@@ -570,15 +595,21 @@ export class SurgeryService {
       });
       // A number the book does not know yet is a new entry in the book: the
       // list is where a surgery gets written down first, and the register
-      // has to grow with it or the two drift apart. The patient link is
-      // left for staff to make from the register screen.
+      // has to grow with it or the two drift apart. It is the row's
+      // patient's file when they have none yet — one file per patient —
+      // and otherwise left for staff to link from the register screen.
       if (!implantCase && item.recordedName) {
+        const owner =
+          item.patientId &&
+          !(await implants.exists({ where: { patientId: item.patientId } }))
+            ? item.patientId
+            : null;
         implantCase = await implants.save(
           implants.create({
             registryNo: dto.implantRegistryNo,
             recordedName: item.recordedName,
-            patientId: null,
-            matchMethod: 'unmatched',
+            patientId: owner,
+            matchMethod: owner ? 'manual' : 'unmatched',
             mobile: null,
             homePhone: null,
             notes: null,
@@ -605,6 +636,16 @@ export class SurgeryService {
     item.hasNameMismatch = implantCase
       ? namesDiffer(implantCase.recordedName, item.recordedName)
       : false;
+    // A row nobody linked takes its case's patient, when the two name the
+    // same person. A link picked or cleared in this edit is left as chosen.
+    if (
+      dto.patientId === undefined &&
+      !item.patientId &&
+      implantCase?.patientId &&
+      !item.hasNameMismatch
+    ) {
+      item.patientId = implantCase.patientId;
+    }
     item.searchText = surgerySearchText(item);
     return registered;
   }
@@ -627,13 +668,15 @@ export class SurgeryService {
       recordedName: item.recordedName,
       hasNameMismatch: item.hasNameMismatch,
       registeredName: item.implantCase?.recordedName ?? null,
-      patient: item.implantCase?.patient
+      // The row's own link. A case reached through a reused number is not
+      // shown as the patient: the identity warning says whose it is.
+      patient: item.patient
         ? {
-            id: item.implantCase.patient.id,
-            fileNo: item.implantCase.patient.fileNo,
+            id: item.patient.id,
+            fileNo: item.patient.fileNo,
             fullName:
-              `${item.implantCase.patient.firstName} ${item.implantCase.patient.lastName}`.trim(),
-            mobile: item.implantCase.patient.mobile,
+              `${item.patient.firstName} ${item.patient.lastName}`.trim(),
+            mobile: item.patient.mobile,
           }
         : null,
       surgeryDate: item.surgeryDate
