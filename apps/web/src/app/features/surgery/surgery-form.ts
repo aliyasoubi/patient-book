@@ -267,6 +267,8 @@ export class SurgeryForm implements HasUnsavedChanges {
   protected readonly linkedPatient = signal<SurgeryQueueItem['patient']>(null);
   /** The user picked or unlinked a patient here — a conflict must not undo that. */
   private linkChanged = false;
+  /** The implant file number a picked patient brought in, to give back if they are unpicked. */
+  private registryFromPatient: string | null = null;
 
   /**
    * Patients whose name, mobile or file number matches what's been typed so
@@ -322,7 +324,7 @@ export class SurgeryForm implements HasUnsavedChanges {
         this.linkedPatient.set({ id: p.id, fileNo: p.fileNo, fullName, mobile: p.mobile });
         this.linkChanged = true;
         this.form.controls.recordedName.setValue(fullName, { emitEvent: false });
-        this.useImplantFile(p.implantCases?.[0]?.registryNo);
+        if (this.isImplant()) this.useImplantFile(p.implantCases?.[0]?.registryNo);
       },
       error: () => undefined,
     });
@@ -340,8 +342,13 @@ export class SurgeryForm implements HasUnsavedChanges {
     this.form.controls.followUpMonths.setValue(String(KIND_FOLLOW_UP_MONTHS[kind]));
     if (kind === 'implant') {
       this.prefillNew();
+      // A patient picked under another kind has an implant file to go into.
+      const linked = this.linkedPatient();
+      if (linked) this.fetchImplantFile(linked.id);
     } else {
       this.form.patchValue({ implantRegistryNo: '', implantBrand: '', abutmentType: 'unknown' });
+      this.form.controls.implantRegistryNo.markAsPristine();
+      this.registryFromPatient = null;
     }
   }
 
@@ -426,32 +433,54 @@ export class SurgeryForm implements HasUnsavedChanges {
     this.linkChanged = true;
     this.form.controls.recordedName.setValue(match.fullName, { emitEvent: false });
     this.form.controls.recordedName.markAsDirty();
-    if (this.isImplant() && !this.isEdit()) {
-      this.patients.get(match.id).subscribe({
-        next: (p) => {
-          if (this.linkedPatient()?.id === p.id)
-            this.useImplantFile(p.implantCases?.[0]?.registryNo);
-        },
-        error: () => undefined,
-      });
-    }
+    this.fetchImplantFile(match.id);
   }
 
   protected unlink(): void {
     this.linkedPatient.set(null);
     this.linkChanged = true;
     this.form.markAsDirty();
+    this.releaseImplantFile();
+  }
+
+  /** A new implant row looks up the linked patient's implant file. */
+  private fetchImplantFile(patientId: string): void {
+    if (!this.isImplant() || this.isEdit()) return;
+    this.patients.get(patientId).subscribe({
+      next: (p) => {
+        if (this.linkedPatient()?.id === p.id) this.useImplantFile(p.implantCases?.[0]?.registryNo);
+      },
+      error: () => undefined,
+    });
   }
 
   /**
    * A new row goes into the patient's implant file when they have one. A
    * number the user typed is theirs to keep; with no file, the book's next
-   * number stays, and the API opens it as this patient's file.
+   * number stays, and the API opens it as this patient's file. A number an
+   * earlier pick brought in is that patient's, never the next one's.
    */
   private useImplantFile(registryNo: string | null | undefined): void {
     const control = this.form.controls.implantRegistryNo;
-    if (this.isEdit() || control.dirty) return;
+    if (this.isEdit()) return;
+    if (control.dirty && control.value !== this.registryFromPatient) return;
+    if (!registryNo) {
+      this.releaseImplantFile();
+      return;
+    }
     pickRegistryNo(control, registryNo);
+    this.registryFromPatient = registryNo;
+  }
+
+  /** The number a patient no longer linked brought in goes back to the book's next. */
+  private releaseImplantFile(): void {
+    const control = this.form.controls.implantRegistryNo;
+    if (this.isEdit() || !this.registryFromPatient) return;
+    if (control.value !== this.registryFromPatient) return;
+    this.registryFromPatient = null;
+    control.setValue('');
+    control.markAsPristine();
+    if (this.isImplant()) this.prefillNew();
   }
 
   protected setTeeth(teeth: number[]): void {
