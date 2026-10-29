@@ -64,6 +64,7 @@ import { SurgeryBookDialog, type SurgeryBookResult } from './surgery-book-dialog
 import { FollowUpContactDialog, type FollowUpContactDialogData } from './follow-up-contact-dialog';
 import type { RecordContactInput } from '../../core/services/registry.service';
 import { daysUntil, followUpDistance, followUpProgress } from './follow-up-distance';
+import { placedImplantLine } from '../../shared/placed-implant';
 
 /**
  * The questions staff ask of the list, most urgent first. Each is a
@@ -172,6 +173,7 @@ export class SurgeryList {
   private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
   protected readonly abutmentLabel = abutmentLabel;
+  protected readonly placedImplantLine = placedImplantLine;
   protected readonly outcomeLabel = contactOutcomeLabel;
   protected readonly kindLabel = surgeryKindLabel;
   protected readonly doneLabel = surgeryDoneLabel;

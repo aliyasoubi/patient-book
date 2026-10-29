@@ -222,6 +222,15 @@
             }
           </div>
 
+          <!-- Each implant the stock handed out for it: which tooth took which box. -->
+          @if (item.implants.length) {
+            <ul class="queue__implants" [attr.aria-label]="'surgery.implants' | translate">
+              @for (implant of item.implants; track $index) {
+                <li>{{ placedImplantLine(implant) }}</li>
+              }
+            </ul>
+          }
+
           <!-- Where the follow-up stands with the patient, as steps along a
                track. Still to call is the default and the only open state: a
                call that settles nothing leaves it as it is. -->

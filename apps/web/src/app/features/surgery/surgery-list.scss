@@ -213,6 +213,19 @@
     }
   }
 
+  /* The implants out of the stock, one line each: the tooth, then the box. */
+  &__implants {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-space-1);
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
   /* Row 3: where the follow-up stands, under a hairline instead of in a panel of its own. */
   &__track {
     display: flex;

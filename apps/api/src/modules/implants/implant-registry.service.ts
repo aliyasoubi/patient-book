@@ -8,6 +8,7 @@ import { ErrorCode } from '../../domain';
 import { RegistryService } from '../registries/registry.service';
 import { refreshCaseCopies } from '../surgery/case-copy';
 import { ImplantCase } from './implant-case.entity';
+import { lockImplantFile } from './implant-file-lock';
 
 /**
  * The implant register, as an injectable service.
@@ -68,17 +69,23 @@ export class ImplantRegistryService extends RegistryService<ImplantCase> {
    * The patient's implant file, archived ones aside. Read under a lock on the
    * patient, so two saves for them at once queue and the second sees the
    * file the first opened.
+   *
+   * A patient linked to two files before they were kept to one gets the
+   * first opened, every time. The workbook import opened its files all at
+   * one moment, so among those it is the book's lower number.
    */
   private async fileOf(
     manager: EntityManager,
     patientId: string,
   ): Promise<ImplantCase | null> {
-    await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
-      `implant_case:${patientId}`,
-    ]);
-    return manager.getRepository(ImplantCase).findOne({
-      where: { patientId },
-      order: { createdAt: 'ASC' },
-    });
+    await lockImplantFile(manager, patientId);
+    return manager
+      .getRepository(ImplantCase)
+      .createQueryBuilder('c')
+      .where('c."patientId" = :patientId', { patientId })
+      .orderBy('c."createdAt"', 'ASC')
+      .addOrderBy('length(c."registryNo")', 'ASC')
+      .addOrderBy('c."registryNo"', 'ASC')
+      .getOne();
   }
 }

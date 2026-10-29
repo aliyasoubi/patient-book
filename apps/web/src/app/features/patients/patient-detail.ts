@@ -42,6 +42,8 @@ import {
   treatmentColor,
 } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
+import { isHandledByCaller } from '../../core/interceptors/error.interceptor';
+import { placedImplantLine } from '../../shared/placed-implant';
 import { LoadError } from '../../shared/components/load-error';
 import {
   PbAvatar,
@@ -155,6 +157,7 @@ export class PatientDetail {
   protected readonly surgeryKindLabel = surgeryKindLabel;
   protected readonly surgeryDoneLabel = surgeryDoneLabel;
   protected readonly contactOutcomeLabel = contactOutcomeLabel;
+  protected readonly placedImplantLine = placedImplantLine;
 
   /** Where the follow-up stands, in the words and colours of its card on the list. */
   protected followUpNote(f: SurgeryQueueItem): string {
@@ -464,9 +467,14 @@ export class PatientDetail {
           );
           if (this.stillShowing(p.id)) this.load(p.id);
         },
-        // Most likely a file opened meanwhile (one per patient): say so, and show it.
+        // Most likely a file opened meanwhile (one per patient): say so, and
+        // show it. Anything unexpected the interceptor has said already.
         error: (error: unknown) => {
-          this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'));
+          if (isHandledByCaller(error)) {
+            this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
+              duration: 6000,
+            });
+          }
           if (this.stillShowing(p.id)) this.load(p.id);
         },
       });

@@ -65,6 +65,18 @@ export class InventoryMovement {
   @Column({ type: 'varchar', length: 300, nullable: true })
   note!: string | null;
 
+  /** On an implant's use: the teeth it went into, as FDI numbers («36 37»). */
+  @Column({ type: 'varchar', length: 60, nullable: true })
+  tooth!: string | null;
+
+  /**
+   * On an implant's use: the follow-up it is filed under — the patient's one
+   * for that day, which lists each implant from these lines.
+   */
+  @Index('idx_inventory_movements_surgery')
+  @Column({ type: 'uuid', nullable: true })
+  surgeryId!: string | null;
+
   /** Who recorded it; null for the terminal import, which names itself in `username`. */
   @Column({ type: 'uuid', nullable: true })
   userId!: string | null;

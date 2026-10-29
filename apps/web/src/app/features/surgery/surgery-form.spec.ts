@@ -17,6 +17,7 @@ const row = (over: Partial<SurgeryQueueItem> = {}): SurgeryQueueItem => ({
   surgeryDate: { jalali: '1405/04/01', iso: '2026-06-22', precision: 'day' },
   teethFdi: [16],
   toothPosition: '',
+  implants: [],
   implantBrand: null,
   abutmentType: 'unknown',
   abutmentRaw: null,
