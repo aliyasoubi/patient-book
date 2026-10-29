@@ -4,6 +4,9 @@ Documentation=file://__REPO_ROOT__/ops/deploy/README.md
 # The dump runs inside the Postgres container, so Docker has to be up first.
 Requires=docker.service
 After=docker.service
+# A backup that has never been restored is a belief, not a backup: each good
+# run is restored into a throwaway database and read back (systemd 249+).
+OnSuccess=patient-book-drill.service
 
 [Service]
 Type=oneshot

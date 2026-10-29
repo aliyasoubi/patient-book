@@ -1,0 +1,18 @@
+[Unit]
+Description=Patient Book restore test of the newest backup
+Documentation=file://__REPO_ROOT__/ops/deploy/README.md
+# Started by patient-book-backup.service (OnSuccess=) right after each good
+# backup, so every night's dump is restored and read back, not just written.
+Requires=docker.service
+After=docker.service patient-book-backup.service
+
+[Service]
+Type=oneshot
+ExecStart=__REPO_ROOT__/ops/deploy/pb-restore-drill.sh
+# Reads the compose file and .env from the checkout.
+WorkingDirectory=__REPO_ROOT__
+# The backup key is root-only.
+User=root
+TimeoutStartSec=3600
+Nice=10
+IOSchedulingClass=idle

@@ -98,6 +98,12 @@ fi
 # Old image layers accumulate quickly on a small VPS disk.
 docker image prune -f >/dev/null
 
+# Units are installed by install.sh, not here. A server set up before the
+# nightly restore test still backs up, but never tests a backup.
+if [[ ! -f /etc/systemd/system/patient-book-drill.service ]]; then
+  echo "!  backups here are not restore-tested yet. Run once: sudo ./ops/deploy/install.sh" >&2
+fi
+
 echo
 compose ps
 echo
