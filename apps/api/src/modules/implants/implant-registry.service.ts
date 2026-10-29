@@ -66,26 +66,16 @@ export class ImplantRegistryService extends RegistryService<ImplantCase> {
   }
 
   /**
-   * The patient's implant file, archived ones aside. Read under a lock on the
-   * patient, so two saves for them at once queue and the second sees the
-   * file the first opened.
-   *
-   * A patient linked to two files before they were kept to one gets the
-   * first opened, every time. The workbook import opened its files all at
-   * one moment, so among those it is the book's lower number.
+   * The patient's implant file, archived ones aside — one at most, which the
+   * database holds to (`idx_implant_one_per_patient`). Read under a lock on
+   * the patient, so two saves for them at once queue and the second sees the
+   * file the first opened rather than failing on the index.
    */
   private async fileOf(
     manager: EntityManager,
     patientId: string,
   ): Promise<ImplantCase | null> {
     await lockImplantFile(manager, patientId);
-    return manager
-      .getRepository(ImplantCase)
-      .createQueryBuilder('c')
-      .where('c."patientId" = :patientId', { patientId })
-      .orderBy('c."createdAt"', 'ASC')
-      .addOrderBy('length(c."registryNo")', 'ASC')
-      .addOrderBy('c."registryNo"', 'ASC')
-      .getOne();
+    return manager.getRepository(ImplantCase).findOne({ where: { patientId } });
   }
 }

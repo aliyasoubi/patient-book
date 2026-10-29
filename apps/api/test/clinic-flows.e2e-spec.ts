@@ -648,6 +648,14 @@ describeIfWritable('clinic flows (e2e)', () => {
         code: ErrorCode.ImplantCaseExists,
         params: { registryNo: other.registryNo },
       });
+
+      // The database holds to it too, whatever writes past the API.
+      await expect(
+        db.query(
+          `INSERT INTO implant_cases ("registryNo", "patientId") VALUES ($1, $2)`,
+          [nextNumber(), patientId],
+        ),
+      ).rejects.toThrow(/idx_implant_one_per_patient/);
     });
 
     it('edits, archives and restores a case through the same audited path', async () => {
