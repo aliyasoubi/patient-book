@@ -152,3 +152,22 @@ export function soldToPatientsByName(name: string | null | undefined): boolean {
   const key = loosePersianKey(name);
   return SOLD_TO_PATIENTS.some((word) => key.includes(word));
 }
+
+/** A membrane's name, folded and without spaces, in the ways the stock writes it. */
+const MEMBRANE = ['ممبران', 'ممبرین', 'membrane'];
+
+/**
+ * Whether taking one out of the stock is for one patient, who must be named:
+ * an implant, and a membrane — placed whole in one patient. Bone powder, on
+ * the same shelf, serves several and names nobody. A membrane is known by its
+ * name, as the stock writes it («ممبران», «ممبران خارجی»).
+ */
+export function usedPerPatient(
+  category: InventoryCategory,
+  name: string | null | undefined,
+): boolean {
+  if (category === InventoryCategory.Implant) return true;
+  if (category !== InventoryCategory.Regenerative) return false;
+  const key = loosePersianKey(name);
+  return MEMBRANE.some((word) => key.includes(word));
+}

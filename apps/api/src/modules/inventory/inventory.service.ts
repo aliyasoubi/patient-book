@@ -12,6 +12,7 @@ import {
   canonicalBrand,
   normalizeSpec,
   TRACEABLE,
+  usedPerPatient,
 } from './inventory-catalog';
 import { Patient } from '../patients/patient.entity';
 import { ImplantRegistryService } from '../implants/implant-registry.service';
@@ -72,6 +73,15 @@ function toothNumbers(written: string): number[] {
   return (written.match(/\d+/g) ?? [])
     .map(Number)
     .filter((n) => LAB_TOOTH_NUMBERS.includes(n));
+}
+
+/**
+ * Whether a use of the item names its patient, and must: an implant or a
+ * membrane, placed in one patient, and an item sold to one. Anything else —
+ * bone powder among it — names nobody.
+ */
+function namesPatient(item: InventoryItem): boolean {
+  return usedPerPatient(item.category, item.name) || item.soldToPatients;
 }
 
 /** Enough of an item's stock card for the screen; older lines stay in the table. */
@@ -341,14 +351,19 @@ export class InventoryService {
   ): Promise<unknown> {
     return this.items.manager.transaction(async (manager) => {
       const item = await this.lock(manager, id);
-      // An implant goes into someone, and into their implant file.
-      if (
-        dto.kind === InventoryMovementKind.Use &&
-        item.category === InventoryCategory.Implant &&
-        !dto.patientId &&
-        !dto.patientFileNo
-      ) {
-        throw AppException.badRequest(ErrorCode.InventoryPatientRequired);
+      // An implant, a membrane or an item sold to a patient goes to one
+      // patient, named on the use; an implant also into their implant file,
+      // by the tooth it goes into.
+      if (dto.kind === InventoryMovementKind.Use) {
+        if (namesPatient(item) && !dto.patientId && !dto.patientFileNo) {
+          throw AppException.badRequest(ErrorCode.InventoryPatientRequired);
+        }
+        if (
+          item.category === InventoryCategory.Implant &&
+          !toothNumbers(toLatinDigits(dto.tooth ?? '')).length
+        ) {
+          throw AppException.badRequest(ErrorCode.InventoryToothRequired);
+        }
       }
       const lots = await loadLots(manager, id);
       let changes: LotChange<InventoryLot | LotLevel>[];
@@ -838,6 +853,8 @@ export class InventoryService {
       expiryState: expiryState(i.expiresOn, i.quantity, now),
       notes: i.notes,
       soldToPatients: i.soldToPatients,
+      /** A use must name its patient: an implant, a membrane, or an item sold to patients. */
+      usedPerPatient: namesPatient(i),
       isArchived: i.deletedAt !== null,
       /** Optimistic-concurrency token; send back as `expectedVersion` on update. */
       version: i.version,

@@ -98,6 +98,11 @@ export enum ErrorCode {
    * their implant file, so the use has to say whose it is.
    */
   InventoryPatientRequired = 'ERR_INVENTORY_PATIENT_REQUIRED',
+  /**
+   * An implant used without the tooth it goes into: the follow-up and the
+   * patient's implant file are kept by tooth.
+   */
+  InventoryToothRequired = 'ERR_INVENTORY_TOOTH_REQUIRED',
   /** Undo on an item with no stock card line to take back. */
   InventoryNothingToUndo = 'ERR_INVENTORY_NOTHING_TO_UNDO',
   /**

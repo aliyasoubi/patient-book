@@ -27,6 +27,7 @@ import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
+import { TOOTH_RANGE } from '../../shared/ui/tooth-picker/teeth';
 
 import {
   PbBanner,
@@ -38,6 +39,20 @@ import {
   type TextFieldOption,
 } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
+
+/** The teeth an implant can go into, as the chart holds them: FDI 11–47, wisdom teeth aside. */
+const IMPLANT_TEETH: ReadonlySet<number> = new Set(
+  [1, 2, 3, 4].flatMap((quadrant) => TOOTH_RANGE.map((n) => quadrant * 10 + n)),
+);
+
+/** At least one tooth the chart can hold, in either digit script («36», «۳۶ ۳۷»). */
+const namesATooth = (control: AbstractControl<string>): ValidationErrors | null => {
+  const raw = toLatinDigits(control.value ?? '');
+  if (!raw.trim()) return null;
+  return (raw.match(/\d+/g) ?? []).some((n) => IMPLANT_TEETH.has(Number(n)))
+    ? null
+    : { tooth: true };
+};
 
 /** An expiry the API will read — said on the field, before it is sent. */
 const readableExpiry = (control: AbstractControl<string>): ValidationErrors | null =>
@@ -200,6 +215,7 @@ const COPY: Record<
               [control]="form.controls.tooth"
               [label]="'inventoryMove.tooth' | translate"
               [hint]="'inventoryMove.toothHint' | translate"
+              [errorMessages]="toothErrors"
               [maxlength]="60"
               [ltr]="true"
             />
@@ -276,13 +292,18 @@ export class InventoryMovementDialog {
   protected readonly traceable = TRACEABLE_CATEGORIES.includes(this.item.category);
   /** Sold to a patient to take home — switched on the item. */
   private readonly sold = this.item.soldToPatients;
-  /** A use of either kind can say whose it was. */
-  protected readonly namesPatient = this.kind === 'use' && (this.traceable || this.sold);
+  /**
+   * A use that goes to one patient names them, and must: an implant, a
+   * membrane, an item sold to patients. Anything else — bone powder among
+   * it — asks no one.
+   */
+  protected readonly namesPatient =
+    this.kind === 'use' &&
+    (this.item.usedPerPatient ?? (this.item.category === 'implant' || this.sold));
   private readonly mustTrace = this.kind === 'receive' && this.traceable;
-  /** An implant handed to a patient also goes into their implant file. */
+  /** An implant handed to a patient also goes into their implant file, by its tooth. */
   protected readonly isImplant = this.item.category === 'implant';
-  /** So an implant's use always names the patient: the file is theirs. */
-  private readonly mustName = this.kind === 'use' && this.isImplant;
+  private readonly mustTooth = this.kind === 'use' && this.isImplant;
   protected readonly faNum = formatPersianNumber;
   protected readonly itemLabel = [this.item.name, this.item.brand, this.item.spec]
     .filter(Boolean)
@@ -328,12 +349,17 @@ export class InventoryMovementDialog {
     patient: [
       '',
       [
-        ...(this.mustName ? [Validators.required] : []),
+        ...(this.namesPatient ? [Validators.required] : []),
         Validators.maxLength(160),
         (c: AbstractControl<string>) => this.pickedPatient(c),
       ],
     ],
-    tooth: ['', Validators.maxLength(60)],
+    tooth: [
+      '',
+      this.mustTooth
+        ? [Validators.required, Validators.maxLength(60), namesATooth]
+        : Validators.maxLength(60),
+    ],
     note: ['', Validators.maxLength(300)],
   });
 
@@ -360,6 +386,10 @@ export class InventoryMovementDialog {
     pick: this.i18n.instant('inventoryMove.patientPick'),
   };
   protected readonly lotErrors = { required: this.i18n.instant('inventoryMove.lotPick') };
+  protected readonly toothErrors = {
+    required: this.i18n.instant('inventoryMove.toothRequired'),
+    tooth: this.i18n.instant('inventoryMove.toothInvalid'),
+  };
 
   private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
     this.form.controls.patient.valueChanges.pipe(
