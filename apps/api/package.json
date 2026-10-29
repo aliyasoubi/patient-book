@@ -25,7 +25,8 @@
     "import": "ts-node -r tsconfig-paths/register src/modules/import/run-import.ts",
     "import:inventory": "ts-node -r tsconfig-paths/register src/modules/inventory/import/run-inventory-import.ts",
     "export": "ts-node -r tsconfig-paths/register src/modules/data-exchange/run-export.ts",
-    "reconcile": "ts-node -r tsconfig-paths/register src/modules/data-exchange/run-reconcile.ts"
+    "reconcile": "ts-node -r tsconfig-paths/register src/modules/data-exchange/run-reconcile.ts",
+    "implant-cleanup": "ts-node -r tsconfig-paths/register src/modules/implants/run-implant-cleanup.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

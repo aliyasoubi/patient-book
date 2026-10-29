@@ -62,6 +62,7 @@ import {
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
 import { ListReturn } from '../../core/services/list-return.service';
+import { placedImplantLine } from '../../shared/placed-implant';
 
 const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
   ['surgeryForm.recordedName', (s) => `${s.recordedName}|${s.patient?.id ?? ''}`],
@@ -237,6 +238,14 @@ export class SurgeryForm implements HasUnsavedChanges {
     const loaded = this.loaded();
     return loaded && !loaded.teethFdi.length ? loaded.toothPosition || null : null;
   });
+
+  /**
+   * The implants the stock handed out for this surgery, one line each: they
+   * are the stock card's, so the form shows them and leaves them be.
+   */
+  protected readonly placedImplants = computed(() =>
+    (this.loaded()?.implants ?? []).map(placedImplantLine),
+  );
 
   /**
    * The copy of the row an edit is saved against. Set on load; after a

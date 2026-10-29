@@ -403,18 +403,25 @@ export class InventoryService {
             : dto.patientFileNo
               ? await this.patientByFile(manager, dto.patientFileNo)
               : null;
+      // An implant's use keeps the teeth it went into, as the chart numbers them.
+      const teeth =
+        dto.kind === InventoryMovementKind.Use &&
+        item.category === InventoryCategory.Implant
+          ? toothNumbers(toLatinDigits(dto.tooth ?? '')).join(' ')
+          : null;
       const lines = await writeMovement(manager, item, dto.kind, changes, {
         userId,
         note: dto.note,
         patientId,
+        tooth: teeth,
       });
-      if (patientId && item.category === InventoryCategory.Implant) {
+      if (patientId && teeth) {
         await this.placeImplants(
           manager,
           item,
           lines,
           patientId,
-          dto.tooth,
+          teeth,
           userId,
         );
       }
@@ -467,11 +474,11 @@ export class InventoryService {
         if (lot.quantity === 0 && !elsewhere) await lots.delete(lot.id);
         else await lots.save(lot);
       }
-      // An implant handed to a patient wrote its surgery row: it goes too,
-      // unless another implant that day still stands on it.
+      // An implant handed to a patient is filed under the day's surgery row:
+      // its teeth leave it, and the row goes too once no implant stands on it.
       const withdrawn = await this.surgery.withdrawStockRows(
         manager,
-        lines.map((l) => l.id),
+        lines,
         userId,
       );
       await movements.delete(lines.map((l) => l.id));
@@ -716,18 +723,19 @@ export class InventoryService {
   /**
    * Implants handed to a patient go into the patient's implant file — the
    * one file they have, or a new one under the book's next number — as a
-   * surgery dated today with the prosthesis due, naming the system, the
-   * teeth and the boxes. The day's implants are one surgery with one
-   * follow-up, so a second use that day joins the first's row rather than
-   * writing another. The row keeps the stock card line it came from, so an
-   * undo takes it back.
+   * surgery dated today with the prosthesis due. The day's implants are one
+   * surgery with one follow-up, so a second use that day joins the first's
+   * row rather than writing another. Each stock card line names the row it
+   * is filed under, and the row lists its implants from those lines — the
+   * teeth, the box and its lot, what the use said — so an undo takes back
+   * exactly its own.
    */
   private async placeImplants(
     manager: EntityManager,
     item: InventoryItem,
     lines: InventoryMovement[],
     patientId: string,
-    tooth: string | null | undefined,
+    teeth: string,
     userId: string | null,
   ): Promise<void> {
     const used = lines.filter((line) => line.change < 0);
@@ -737,20 +745,7 @@ export class InventoryService {
       patientId,
       userId,
     );
-    const lotNumbers = new Map(
-      (await loadLots(manager, item.id)).map((l) => [l.id, l.lotNumber]),
-    );
-    // A use split across batches names each box it took.
-    const boxes = new Set(
-      used.map((line) => {
-        const lot = line.lotId ? lotNumbers.get(line.lotId) : null;
-        return [item.name, item.spec, lot ? `LOT ${lot}` : null]
-          .filter(Boolean)
-          .join(' · ');
-      }),
-    );
-    const written = toLatinDigits(tooth ?? '').trim();
-    await this.surgery.placeFromStock(
+    const row = await this.surgery.placeFromStock(
       manager,
       {
         kind: SurgeryKind.Implant,
@@ -758,15 +753,17 @@ export class InventoryService {
         patientId,
         recordedName: implantCase.recordedName,
         surgeryDate: JalaliDate.today().format(),
-        teethFdi: toothNumbers(written),
-        toothPosition: written,
+        teethFdi: toothNumbers(teeth),
+        toothPosition: teeth,
         implantBrand: extractImplantBrand(item.brand) ?? item.brand,
         followUpMonths: PROSTHESIS_AFTER_MONTHS,
-        notes: [...boxes].join('\n'),
       },
       userId,
       used[0].id,
     );
+    await manager
+      .getRepository(InventoryMovement)
+      .update({ id: In(used.map((line) => line.id)) }, { surgeryId: row.id });
   }
 
   /** The patient a use went into, picked by name. */

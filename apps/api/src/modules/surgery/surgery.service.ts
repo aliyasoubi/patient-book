@@ -7,6 +7,8 @@ import { SurgeryQueueItem } from './surgery-queue-item.entity';
 import { FollowUpContact } from './follow-up-contact.entity';
 import { namesDiffer, surgerySearchText } from './case-copy';
 import { ImplantCase } from '../implants/implant-case.entity';
+import { lockImplantFile } from '../implants/implant-file-lock';
+import type { InventoryMovement } from '../inventory/inventory-movement.entity';
 import { Patient } from '../patients/patient.entity';
 import {
   QuerySurgeryDto,
@@ -69,6 +71,25 @@ function joinNew(
     (part) => part && !have.has(part),
   );
   return [...(text ? [text] : []), ...added].join(separator);
+}
+
+/** The FDI numbers a stock card line names («36 37»). */
+function teethOf(tooth: string | null): number[] {
+  return (tooth?.match(/\d+/g) ?? []).map(Number);
+}
+
+/**
+ * One implant from the stock filed under a row: the teeth it went into, the
+ * box — item, system, size and lot — how many, and what the use said.
+ */
+export interface PlacedImplant {
+  teeth: number[];
+  name: string;
+  brand: string | null;
+  spec: string | null;
+  lotNumber: string | null;
+  quantity: number;
+  note: string | null;
 }
 
 @Injectable()
@@ -163,12 +184,13 @@ export class SurgeryService {
       );
     qb.addOrderBy('s.id', 'ASC');
     const [items, total] = await qb.getManyAndCount();
-    const last = await this.lastContacts(
-      this.queue.manager,
-      items.map((i) => i.id),
-    );
+    const ids = items.map((i) => i.id);
+    const last = await this.lastContacts(this.queue.manager, ids);
+    const implants = await this.implantsFiled(this.queue.manager, ids);
     return PageResult.of(
-      items.map((i) => this.toResponse(i, last.get(i.id) ?? null)),
+      items.map((i) =>
+        this.toResponse(i, last.get(i.id) ?? null, implants.get(i.id) ?? []),
+      ),
       total,
       dto,
     );
@@ -185,7 +207,8 @@ export class SurgeryService {
     });
     if (!item) throw AppException.notFound(ErrorCode.SurgeryItemNotFound);
     const last = await this.lastContacts(manager, [id]);
-    return this.toResponse(item, last.get(id) ?? null);
+    const implants = await this.implantsFiled(manager, [id]);
+    return this.toResponse(item, last.get(id) ?? null, implants.get(id) ?? []);
   }
 
   /** The calls made about a follow-up, newest first, with who made each. */
@@ -397,10 +420,12 @@ export class SurgeryService {
   /**
    * Implants out of the stock for a patient. The day's implants are one
    * surgery and one follow-up, however many uses they took: the day's row —
-   * the stock's, or one written by hand — takes the new teeth and boxes, and
-   * only a day without one gets a new row, naming the stock card line it
-   * came from. Runs under the lock the patient's implant file takes, so two
-   * uses at once queue and the second finds the first's row.
+   * the stock's, or one written by hand — takes the new teeth, and only a
+   * day without one gets a new row, naming the stock card line it came from.
+   * The boxes are not written on the row: the use's lines name it, and the
+   * row lists them (`implantsFiled`). Runs under the lock the patient's
+   * implant file takes, so two uses at once queue and the second finds the
+   * first's row.
    */
   async placeFromStock(
     manager: EntityManager,
@@ -427,7 +452,6 @@ export class SurgeryService {
     const changes = {
       teethFdi: [...new Set([...day.teethFdi, ...(dto.teethFdi ?? [])])],
       toothPosition: joinNew(day.toothPosition, dto.toothPosition, ' '),
-      notes: joinNew(day.notes, dto.notes, '\n') || null,
     };
     await this.assign(day, changes, manager.getRepository(ImplantCase));
     const saved = await queue.save(day);
@@ -445,60 +469,195 @@ export class SurgeryService {
   }
 
   /**
-   * The rows a use of the stock wrote, archived when that use is taken back:
-   * the implant did not go in after all. Archived, not erased, so a row
-   * someone has since filled in can still be restored. A row the day's other
-   * implants joined stays while one of them still stands, and names that
-   * use's line instead.
+   * What a use of the stock put on the follow-ups, taken back with it: the
+   * implant did not go in after all. Its lines leave the row's list of
+   * implants with them. A row the stock wrote loses the use's teeth — those
+   * no implant still filed under it names — and is archived once none
+   * stands on it, with the implant file opened alongside it when nothing
+   * else is filed there; while one stands, the row names that use's line
+   * instead. A row written by hand keeps its own teeth. Archived, not
+   * erased, so a row someone has since filled in can still be restored.
    */
   async withdrawStockRows(
     manager: EntityManager,
-    inventoryMovementIds: string[],
+    lines: InventoryMovement[],
     userId: string | null,
   ): Promise<number> {
-    if (!inventoryMovementIds.length) return 0;
+    if (!lines.length) return 0;
+    const undone = lines.map((l) => l.id);
+    const filed = [
+      ...new Set(lines.flatMap((l) => (l.surgeryId ? [l.surgeryId] : []))),
+    ];
     const queue = manager.getRepository(SurgeryQueueItem);
     const rows = await queue.find({
-      where: { inventoryMovementId: In(inventoryMovementIds) },
+      where: [
+        { inventoryMovementId: In(undone) },
+        ...(filed.length ? [{ id: In(filed) }] : []),
+      ],
     });
     let withdrawn = 0;
     for (const row of rows) {
-      const standing = await this.standingUse(
-        manager,
-        row,
-        inventoryMovementIds,
-      );
-      if (standing) {
-        await queue.update(row.id, { inventoryMovementId: standing });
-        await this.audit.recordRequired(
-          {
-            userId,
-            action: 'update',
-            entity: 'surgery_queue',
-            entityId: row.id,
-            changes: { inventoryMovementId: standing },
-          },
-          manager,
-        );
-        continue;
+      const remaining = await this.usesFiledUnder(manager, row.id, undone);
+      const changes: Partial<UpsertSurgeryDto> = {};
+      let standing: string | null = null;
+      if (row.inventoryMovementId && undone.includes(row.inventoryMovementId)) {
+        // Lines from before uses named their row stand on it by their day.
+        standing =
+          remaining[0]?.id ?? (await this.standingUse(manager, row, undone));
+        if (!standing) {
+          withdrawn++;
+          await queue.softDelete(row.id);
+          await this.audit.recordRequired(
+            {
+              userId,
+              action: 'delete',
+              entity: 'surgery_queue',
+              entityId: row.id,
+              changes: {
+                recordedName: row.recordedName,
+                inventoryMovementId: row.inventoryMovementId,
+              },
+            },
+            manager,
+          );
+          await this.withdrawOpenedFile(manager, row, userId);
+          continue;
+        }
+        row.inventoryMovementId = standing;
       }
-      withdrawn++;
-      await queue.softDelete(row.id);
+      if (row.inventoryMovementId) {
+        const named = new Set(remaining.flatMap((use) => teethOf(use.tooth)));
+        const gone = new Set(
+          lines
+            .filter((l) => l.surgeryId === row.id)
+            .flatMap((l) => teethOf(l.tooth))
+            .filter((tooth) => !named.has(tooth)),
+        );
+        if (gone.size) {
+          changes.teethFdi = row.teethFdi.filter((t) => !gone.has(t));
+          changes.toothPosition = row.toothPosition
+            .split(' ')
+            .filter((part) => !gone.has(Number(part)))
+            .join(' ');
+          await this.assign(row, changes, manager.getRepository(ImplantCase));
+        }
+      }
+      if (!standing && !Object.keys(changes).length) continue;
+      await queue.save(row);
       await this.audit.recordRequired(
         {
           userId,
-          action: 'delete',
+          action: 'update',
           entity: 'surgery_queue',
           entityId: row.id,
           changes: {
-            recordedName: row.recordedName,
-            inventoryMovementId: row.inventoryMovementId,
+            ...changes,
+            ...(standing ? { inventoryMovementId: standing } : {}),
           },
         },
         manager,
       );
     }
     return withdrawn;
+  }
+
+  /** The uses filed under a row, other than the lines being taken back. */
+  private usesFiledUnder(
+    manager: EntityManager,
+    rowId: string,
+    undone: string[],
+  ): Promise<Array<{ id: string; tooth: string | null }>> {
+    return manager.query(
+      `SELECT id, tooth FROM inventory_movements
+        WHERE "surgeryId" = $1 AND kind = $2 AND id <> ALL($3::uuid[])
+        ORDER BY seq`,
+      [rowId, InventoryMovementKind.Use, undone],
+    );
+  }
+
+  /**
+   * The implant file the stock opened along with `row` — in the same
+   * transaction, so at the same moment — archived with it when nothing else
+   * is filed there: a use for the wrong patient, taken back, leaves them no
+   * file. A file opened any other way, or holding anything else, stays.
+   */
+  private async withdrawOpenedFile(
+    manager: EntityManager,
+    row: SurgeryQueueItem,
+    userId: string | null,
+  ): Promise<void> {
+    if (!row.implantCaseId) return;
+    // Compared in SQL: a JS date keeps only milliseconds.
+    const [file] = await manager.query<
+      Array<{ id: string; registryNo: string }>
+    >(
+      `SELECT c.id, c."registryNo" FROM implant_cases c
+         JOIN surgery_queue s ON s.id = $2 AND s."createdAt" = c."createdAt"
+        WHERE c.id = $1 AND c."deletedAt" IS NULL
+          AND NOT EXISTS (SELECT 1 FROM surgery_queue o
+                           WHERE o."implantCaseId" = c.id AND o."deletedAt" IS NULL)`,
+      [row.implantCaseId, row.id],
+    );
+    if (!file) return;
+    await manager.getRepository(ImplantCase).softDelete(file.id);
+    await this.audit.recordRequired(
+      {
+        userId,
+        action: 'delete',
+        entity: 'implant_case',
+        entityId: file.id,
+        changes: { registryNo: file.registryNo, via: 'inventory_undo' },
+      },
+      manager,
+    );
+  }
+
+  /**
+   * The implants from the stock filed under each of `rowIds`, in the order
+   * they were used. Read from the stock card, so an undo — which takes its
+   * lines off the card — takes them off the list too.
+   */
+  private async implantsFiled(
+    manager: EntityManager,
+    rowIds: string[],
+  ): Promise<Map<string, PlacedImplant[]>> {
+    const filed = new Map<string, PlacedImplant[]>();
+    if (!rowIds.length) return filed;
+    const lines = await manager.query<
+      Array<{
+        surgeryId: string;
+        tooth: string | null;
+        change: number;
+        note: string | null;
+        lotNumber: string | null;
+        name: string;
+        brand: string | null;
+        spec: string | null;
+      }>
+    >(
+      `SELECT m."surgeryId", m.tooth, m.change, m.note, l."lotNumber",
+              i.name, i.brand, i.spec
+         FROM inventory_movements m
+         JOIN inventory_items i ON i.id = m."itemId"
+         LEFT JOIN inventory_lots l ON l.id = m."lotId"
+        WHERE m."surgeryId" = ANY($1::uuid[]) AND m.kind = $2
+        ORDER BY m.seq`,
+      [rowIds, InventoryMovementKind.Use],
+    );
+    for (const line of lines) {
+      const list = filed.get(line.surgeryId) ?? [];
+      list.push({
+        teeth: teethOf(line.tooth),
+        name: line.name,
+        brand: line.brand,
+        spec: line.spec,
+        lotNumber: line.lotNumber,
+        quantity: -line.change,
+        note: line.note,
+      });
+      filed.set(line.surgeryId, list);
+    }
+    return filed;
   }
 
   /**
@@ -764,6 +923,11 @@ export class SurgeryService {
       // patient's file when they have none yet — one file per patient —
       // and otherwise left for staff to link from the register screen.
       if (!implantCase && item.recordedName) {
+        // Under the lock the stock and the register take, so a file one of
+        // them opens meanwhile is seen here and not opened twice.
+        if (item.patientId) {
+          await lockImplantFile(implants.manager, item.patientId);
+        }
         const owner =
           item.patientId &&
           !(await implants.exists({ where: { patientId: item.patientId } }))
@@ -825,6 +989,7 @@ export class SurgeryService {
   private toResponse(
     item: SurgeryQueueItem,
     lastContact: Record<string, unknown> | null = null,
+    implants: PlacedImplant[] = [],
   ): Record<string, unknown> {
     return {
       id: item.id,
@@ -860,6 +1025,7 @@ export class SurgeryService {
         : null,
       teethFdi: item.teethFdi ?? [],
       toothPosition: item.toothPosition,
+      implants,
       implantBrand: item.implantBrand,
       abutmentType: item.abutmentType,
       abutmentRaw: item.abutmentRaw,

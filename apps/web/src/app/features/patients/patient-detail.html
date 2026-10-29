@@ -362,6 +362,10 @@
                           }}
                         }
                       </small>
+                      <!-- Which tooth took which implant, from the stock card. -->
+                      @for (implant of f.implants; track $index) {
+                        <small>{{ placedImplantLine(implant) }}</small>
+                      }
                     </span>
                     <pb-status-chip [tone]="followUpTone(f)">{{ followUpNote(f) }}</pb-status-chip>
                   </li>

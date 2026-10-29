@@ -517,7 +517,7 @@ describeIfWritable('inventory flows (e2e)', () => {
     );
   });
 
-  it('writes the day’s implants into the patient’s implant file as one follow-up, and takes them back on undo', async () => {
+  it('writes the day’s implants into the patient’s implant file as one follow-up, tooth by tooth, and takes each back on undo', async () => {
     const patient = await asStaff(http().post('/api/patients'))
       .send({ fileNo: `8${Date.now()}`, firstName: 'آزمون', lastName: 'کاشت' })
       .expect(201);
@@ -534,6 +534,7 @@ describeIfWritable('inventory flows (e2e)', () => {
     const other = await addItem({
       name: `placed-other-${runId}`,
       category: 'implant',
+      spec: '4.5x10',
       quantity: 1,
       lotNumber: 'P-2',
       expiry: printed(30),
@@ -546,7 +547,7 @@ describeIfWritable('inventory flows (e2e)', () => {
           teethFdi: number[];
           implantBrand: string;
           followUpMonths: number;
-          notes: string;
+          notes: string | null;
           inventoryMovementId: string | null;
         }>
       >(
@@ -557,6 +558,26 @@ describeIfWritable('inventory flows (e2e)', () => {
           WHERE c."patientId" = $1 AND s."deletedAt" IS NULL`,
         [patientId],
       );
+    /** The patient's follow-ups as the list and the patient page read them. */
+    const followUps = async () =>
+      (
+        (
+          await asStaff(http().get('/api/surgery-queue'))
+            .query({ patientId })
+            .expect(200)
+        ).body as {
+          items: Array<{ teethFdi: number[]; implants: unknown[] }>;
+        }
+      ).items;
+    const files = async () =>
+      (
+        await db.query<Array<{ active: number; all: number }>>(
+          `SELECT count(*) FILTER (WHERE "deletedAt" IS NULL)::int AS active,
+                  count(*)::int AS all
+             FROM implant_cases WHERE "patientId" = $1`,
+          [patientId],
+        )
+      )[0];
 
     const used = (
       await move(item.id, {
@@ -568,67 +589,188 @@ describeIfWritable('inventory flows (e2e)', () => {
     ).body as ItemBody;
     expect(used.movements[0]).toMatchObject({ kind: 'use', change: -2 });
 
-    // Two implants, one surgery: one row with both teeth, prosthesis due in three months.
+    // Two implants, one surgery: one row with both teeth, prosthesis due in
+    // three months, and the box listed from the stock card, not its notes.
     expect(await rows()).toEqual([
       expect.objectContaining({
         toothPosition: '36 37',
         teethFdi: [36, 37],
         implantBrand: 'دنتیوم',
         followUpMonths: 3,
-        notes: `placed-${runId} · 4x10 · LOT P-1`,
+        notes: null,
       }),
     ]);
+    const box = {
+      teeth: [36, 37],
+      name: `placed-${runId}`,
+      brand: 'Dentium',
+      spec: '4x10',
+      lotNumber: 'P-1',
+      quantity: 2,
+      note: null,
+    };
+    expect((await followUps())[0].implants).toEqual([box]);
 
-    // Another implant the same day joins that row rather than writing its own.
+    // Another implant the same day joins that row, and says which tooth took it.
     const usedOther = (
       await move(other.id, {
         kind: 'use',
         quantity: 1,
         patientId,
         tooth: '46',
+        note: 'بارگذاری فوری',
       }).expect(200)
     ).body as ItemBody;
     expect(await rows()).toEqual([
       expect.objectContaining({
         toothPosition: '36 37 46',
         teethFdi: [36, 37, 46],
-        notes: `placed-${runId} · 4x10 · LOT P-1\nplaced-other-${runId} · 4x10 · LOT P-2`,
       }),
     ]);
+    const otherBox = {
+      teeth: [46],
+      name: `placed-other-${runId}`,
+      brand: 'Dentium',
+      spec: '4.5x10',
+      lotNumber: 'P-2',
+      quantity: 1,
+      note: 'بارگذاری فوری',
+    };
+    expect((await followUps())[0].implants).toEqual([box, otherBox]);
 
-    // Taking back the use that wrote the row leaves it to the one still standing…
+    // Taking back the use that wrote the row takes its teeth and box off it,
+    // and leaves the row to the one still standing…
     await asStaff(http().post(`/api/inventory/items/${item.id}/movements/undo`))
       .send({ expectedVersion: used.version })
       .expect(200);
     const kept = await rows();
-    expect(kept).toHaveLength(1);
+    expect(kept).toEqual([
+      expect.objectContaining({ toothPosition: '46', teethFdi: [46] }),
+    ]);
     expect(kept[0].inventoryMovementId).toBe(usedOther.movements[0].id);
+    expect((await followUps())[0].implants).toEqual([otherBox]);
+    expect(await files()).toEqual({ active: 1, all: 1 });
 
-    // …and taking that one back too archives it.
+    // …and taking that one back too archives it, with the file the stock
+    // opened alongside it: the patient is left without one.
     await asStaff(
       http().post(`/api/inventory/items/${other.id}/movements/undo`),
     )
       .send({ expectedVersion: usedOther.version })
       .expect(200);
     expect(await rows()).toHaveLength(0);
+    expect(await files()).toEqual({ active: 0, all: 1 });
 
-    // The file stays, and is the one the next implant goes into.
+    // The next implant opens their file again.
     await move(item.id, {
       kind: 'use',
       quantity: 1,
       patientId,
       tooth: '36',
     }).expect(200);
-    const files = await db.query<Array<{ n: number; rows: number }>>(
-      `SELECT count(DISTINCT c.id)::int AS n, count(s.id)::int AS rows
-         FROM implant_cases c
-         LEFT JOIN surgery_queue s ON s."implantCaseId" = c.id AND s."deletedAt" IS NULL
-        WHERE c."patientId" = $1`,
-      [patientId],
-    );
-    expect(files[0]).toEqual({ n: 1, rows: 1 });
+    expect(await files()).toEqual({ active: 1, all: 2 });
+    expect(await rows()).toHaveLength(1);
     await archive(item.id);
     await archive(other.id);
+  });
+
+  it('keeps a follow-up written by hand, and a file opened before, when the day’s implant is taken back', async () => {
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({ fileNo: `5${Date.now()}`, firstName: 'آزمون', lastName: 'دستی' })
+      .expect(201);
+    const patientId = (patient.body as { id: string }).id;
+    patientIds.push(patientId);
+    implantCasePatients.push(patientId);
+    const file = (
+      await asStaff(http().post('/api/implant-cases'))
+        .send({ patientId })
+        .expect(201)
+    ).body as { id: string };
+    const written = (
+      await asStaff(http().post('/api/surgery-queue'))
+        .send({
+          kind: 'implant',
+          recordedName: 'آزمون دستی',
+          patientId,
+          implantCaseId: file.id,
+          surgeryDate: formatJalali(new Date(), 'yyyy/MM/dd'),
+          teethFdi: [36],
+        })
+        .expect(201)
+    ).body as { id: string };
+    const item = await addItem({
+      name: `by-hand-${runId}`,
+      category: 'implant',
+      quantity: 1,
+      lotNumber: 'H-1',
+      expiry: printed(30),
+    });
+
+    const used = (
+      await move(item.id, {
+        kind: 'use',
+        quantity: 1,
+        patientId,
+        tooth: '36',
+      }).expect(200)
+    ).body as ItemBody;
+    const joined = (
+      await asStaff(http().get(`/api/surgery-queue/${written.id}`)).expect(200)
+    ).body as { teethFdi: number[]; implants: Array<{ lotNumber: string }> };
+    expect(joined.teethFdi).toEqual([36]);
+    expect(joined.implants.map((i) => i.lotNumber)).toEqual(['H-1']);
+
+    await asStaff(http().post(`/api/inventory/items/${item.id}/movements/undo`))
+      .send({ expectedVersion: used.version })
+      .expect(200);
+    const after = (
+      await asStaff(http().get(`/api/surgery-queue/${written.id}`)).expect(200)
+    ).body as { teethFdi: number[]; implants: unknown[] };
+    expect(after).toMatchObject({ teethFdi: [36], implants: [] });
+    await asStaff(http().get(`/api/implant-cases/${file.id}`)).expect(200);
+    await archive(item.id);
+  });
+
+  it('files a patient’s implant in the first of two files they had, the book’s lower number among the imported', async () => {
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({
+        fileNo: `4${Date.now()}`,
+        firstName: 'آزمون',
+        lastName: 'دوپرونده',
+      })
+      .expect(201);
+    const patientId = (patient.body as { id: string }).id;
+    patientIds.push(patientId);
+    implantCasePatients.push(patientId);
+    // Two files opened in one statement, as the workbook import opens them:
+    // the same moment, so only the number tells them apart.
+    const lower = String(Date.now());
+    await db.query(
+      `INSERT INTO implant_cases ("registryNo", "patientId", "matchMethod")
+       VALUES ($1, $3, 'exact'), ($2, $3, 'exact')`,
+      [`${lower}0`, lower, patientId],
+    );
+    const item = await addItem({
+      name: `two-files-${runId}`,
+      category: 'implant',
+      quantity: 1,
+      lotNumber: 'T-1',
+      expiry: printed(30),
+    });
+    await move(item.id, {
+      kind: 'use',
+      quantity: 1,
+      patientId,
+      tooth: '21',
+    }).expect(200);
+    const [row] = await db.query<Array<{ registryNo: string }>>(
+      `SELECT c."registryNo" FROM surgery_queue s
+         JOIN implant_cases c ON c.id = s."implantCaseId"
+        WHERE c."patientId" = $1 AND s."deletedAt" IS NULL`,
+      [patientId],
+    );
+    expect(row.registryNo).toBe(lower);
+    await archive(item.id);
   });
 
   it('will not hand out an implant without the patient it goes into', async () => {

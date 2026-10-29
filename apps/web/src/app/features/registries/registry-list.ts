@@ -18,6 +18,7 @@ import {
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
+import { isHandledByCaller } from '../../core/interceptors/error.interceptor';
 import { AuthService } from '../../core/services/auth.service';
 import { RegistryKind, RegistryQuery, RegistryService } from '../../core/services/registry.service';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
@@ -286,9 +287,14 @@ export class RegistryList {
         );
         this.retry();
       },
-      // The patient has another implant file by now: one each.
-      error: (error: unknown) =>
-        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss')),
+      // The patient has another implant file by now: one each. Anything
+      // unexpected the interceptor has said already.
+      error: (error: unknown) => {
+        if (!isHandledByCaller(error)) return;
+        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
+          duration: 6000,
+        });
+      },
     });
   }
 }

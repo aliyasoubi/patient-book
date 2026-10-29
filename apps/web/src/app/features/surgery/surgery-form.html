@@ -86,6 +86,12 @@
               'surgeryForm.teethWritten' | translate: { text: written }
             }}</span>
           }
+          @if (placedImplants().length) {
+            <span class="form__hint">{{ 'surgeryForm.implantsFromStock' | translate }}</span>
+            @for (line of placedImplants(); track $index) {
+              <span class="form__hint">{{ line }}</span>
+            }
+          }
         </div>
 
         @if (isImplant()) {

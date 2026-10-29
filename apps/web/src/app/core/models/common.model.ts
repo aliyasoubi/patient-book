@@ -99,6 +99,8 @@ export interface SurgeryQueueItem {
   teethFdi: number[];
   /** Legacy phrase, shown only when there are no `teethFdi`. */
   toothPosition: string;
+  /** The implants taken from the stock for this surgery, in the order they were used. */
+  implants: PlacedImplant[];
   implantBrand: string | null;
   abutmentType: 'cover' | 'healing' | 'both' | 'other' | 'unknown';
   abutmentRaw: string | null;
@@ -119,6 +121,20 @@ export interface SurgeryQueueItem {
   notes: string | null;
   /** Optimistic-concurrency token; sent back as `expectedVersion` on an edit. */
   version: number;
+}
+
+/**
+ * One implant from the stock filed under a surgery: the teeth it went into,
+ * the box — item, system, size and lot — how many, and what the use said.
+ */
+export interface PlacedImplant {
+  teeth: number[];
+  name: string;
+  brand: string | null;
+  spec: string | null;
+  lotNumber: string | null;
+  quantity: number;
+  note: string | null;
 }
 
 /** What a call about a follow-up came to; the last two settle it. */
