@@ -25,8 +25,14 @@ import { SurgeryQueueItem } from '../surgery/surgery-queue-item.entity';
  * would have mislinked 97 patients. `registryNo` is therefore kept as its own
  * column and the link to `patient` is established by name, nullable so an
  * unmatched entry stays visible instead of being dropped or guessed at.
+ *
+ * A patient has one file: no two that are not archived name the same patient.
  */
 @Entity('implant_cases')
+@Index('idx_implant_one_per_patient', ['patientId'], {
+  unique: true,
+  where: '"patientId" IS NOT NULL AND "deletedAt" IS NULL',
+})
 export class ImplantCase {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

@@ -3,9 +3,9 @@ import { formatPersianNumber } from './pipes/persian-number.pipe';
 
 /**
  * One implant from the stock as one line: the teeth first, then the box as
- * the stock names it, its lot, how many when the teeth do not say, and what
- * the use said — «۳۶ ۳۷ — ایمپلنت · Dentium · ۴x۱۰ · LOT A-1». The lot is a
- * code read off the box, so its digits stay as printed.
+ * the stock names it, its lot, how many when more than one and the teeth do
+ * not say, and what the use said — «۳۶ ۳۷ — ایمپلنت · Dentium · ۴x۱۰ · LOT
+ * A-1». The lot is a code read off the box, so its digits stay as printed.
  */
 export function placedImplantLine(implant: PlacedImplant): string {
   // «ایمپلنت TRI» from TRI names its system once.
@@ -15,7 +15,9 @@ export function placedImplantLine(implant: PlacedImplant): string {
     named ? null : implant.brand,
     implant.spec ? formatPersianNumber(implant.spec) : null,
     implant.lotNumber ? `LOT ${implant.lotNumber}` : null,
-    implant.quantity !== implant.teeth.length
+    // One implant with no tooth written — a use from before the tooth was
+    // asked for — is one; only a count the teeth leave unsaid is shown.
+    implant.quantity > 1 && implant.quantity !== implant.teeth.length
       ? `× ${formatPersianNumber(implant.quantity)}`
       : null,
     implant.note,

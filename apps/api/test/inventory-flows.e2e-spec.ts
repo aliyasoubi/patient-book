@@ -731,48 +731,6 @@ describeIfWritable('inventory flows (e2e)', () => {
     await archive(item.id);
   });
 
-  it('files a patient’s implant in the first of two files they had, the book’s lower number among the imported', async () => {
-    const patient = await asStaff(http().post('/api/patients'))
-      .send({
-        fileNo: `4${Date.now()}`,
-        firstName: 'آزمون',
-        lastName: 'دوپرونده',
-      })
-      .expect(201);
-    const patientId = (patient.body as { id: string }).id;
-    patientIds.push(patientId);
-    implantCasePatients.push(patientId);
-    // Two files opened in one statement, as the workbook import opens them:
-    // the same moment, so only the number tells them apart.
-    const lower = String(Date.now());
-    await db.query(
-      `INSERT INTO implant_cases ("registryNo", "patientId", "matchMethod")
-       VALUES ($1, $3, 'exact'), ($2, $3, 'exact')`,
-      [`${lower}0`, lower, patientId],
-    );
-    const item = await addItem({
-      name: `two-files-${runId}`,
-      category: 'implant',
-      quantity: 1,
-      lotNumber: 'T-1',
-      expiry: printed(30),
-    });
-    await move(item.id, {
-      kind: 'use',
-      quantity: 1,
-      patientId,
-      tooth: '21',
-    }).expect(200);
-    const [row] = await db.query<Array<{ registryNo: string }>>(
-      `SELECT c."registryNo" FROM surgery_queue s
-         JOIN implant_cases c ON c.id = s."implantCaseId"
-        WHERE c."patientId" = $1 AND s."deletedAt" IS NULL`,
-      [patientId],
-    );
-    expect(row.registryNo).toBe(lower);
-    await archive(item.id);
-  });
-
   it('will not hand out an implant without the patient it goes into', async () => {
     const item = await addItem({
       name: `unnamed-${runId}`,

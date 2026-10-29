@@ -35,8 +35,15 @@ describe('placedImplantLine', () => {
   });
 
   it('leaves out what the box does not say', () => {
-    expect(placedImplantLine(implant({ teeth: [], quantity: 0, brand: null, lotNumber: null }))).toBe(
+    expect(placedImplantLine(implant({ teeth: [], brand: null, lotNumber: null }))).toBe(
       'SuperLine · ۴x۱۰',
+    );
+  });
+
+  it('counts a use from before the tooth was asked for only when it took more than one', () => {
+    expect(placedImplantLine(implant({ teeth: [] }))).toBe('SuperLine · Dentium · ۴x۱۰ · LOT A-1');
+    expect(placedImplantLine(implant({ teeth: [], quantity: 3 }))).toBe(
+      'SuperLine · Dentium · ۴x۱۰ · LOT A-1 · × ۳',
     );
   });
 });

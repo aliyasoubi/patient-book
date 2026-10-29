@@ -170,7 +170,9 @@ patients who share a name.
 A patient has **one implant file**. The API refuses opening, linking or
 restoring a second one for them (`ERR_IMPLANT_CASE_EXISTS`, naming the file
 they have), and the import leaves a second row its name matches unlinked, with
-a warning, for staff to settle. An archived file no longer counts.
+a warning, for staff to settle. An archived file no longer counts. The
+database holds to it as well: a unique index on `implant_cases."patientId"`
+over files that are not archived.
 
 ### The surgery list quotes register numbers, not patient files
 
