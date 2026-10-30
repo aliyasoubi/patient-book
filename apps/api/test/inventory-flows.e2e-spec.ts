@@ -333,16 +333,17 @@ describeIfWritable('inventory flows (e2e)', () => {
       patient: { fileNo },
     });
 
+    // An implant goes in one at a time, so a use asking for four is refused
+    // before the shelf is looked at.
     const tooMany = await move(item.id, {
       kind: 'use',
       quantity: 4,
       lotId: later.id,
       patientFileNo: fileNo,
       tooth: '36',
-    }).expect(409);
+    }).expect(400);
     expect(tooMany.body).toMatchObject({
-      code: ErrorCode.InventoryInsufficientStock,
-      params: { available: 3 },
+      code: ErrorCode.InventoryImplantOneTooth,
     });
 
     const unknown = await move(item.id, {
@@ -579,39 +580,64 @@ describeIfWritable('inventory flows (e2e)', () => {
         )
       )[0];
 
+    // One implant into one tooth: two in one use is refused, either way.
+    for (const twice of [
+      { quantity: 2, tooth: '36 37' },
+      { quantity: 1, tooth: '36 37' },
+      { quantity: 2, tooth: '36' },
+    ]) {
+      const res = await move(item.id, {
+        kind: 'use',
+        patientId,
+        ...twice,
+      }).expect(400);
+      expect((res.body as { code: string }).code).toBe(
+        ErrorCode.InventoryImplantOneTooth,
+      );
+    }
+
     const used = (
       await move(item.id, {
         kind: 'use',
-        quantity: 2,
+        quantity: 1,
         patientId,
-        tooth: '۳۶ 37',
+        tooth: '۳۶',
       }).expect(200)
     ).body as ItemBody;
-    expect(used.movements[0]).toMatchObject({ kind: 'use', change: -2 });
+    expect(used.movements[0]).toMatchObject({ kind: 'use', change: -1 });
 
-    // Two implants, one surgery: one row with both teeth, prosthesis due in
-    // three months, and the box listed from the stock card, not its notes.
+    // One implant, one surgery: prosthesis due in three months, and the box
+    // listed from the stock card, not written into the notes.
     expect(await rows()).toEqual([
       expect.objectContaining({
-        toothPosition: '36 37',
-        teethFdi: [36, 37],
+        toothPosition: '36',
+        teethFdi: [36],
         implantBrand: 'دنتیوم',
         followUpMonths: 3,
         notes: null,
       }),
     ]);
-    const box = {
-      teeth: [36, 37],
+    const box = (tooth: number) => ({
+      teeth: [tooth],
       name: `placed-${runId}`,
       brand: 'Dentium',
       spec: '4x10',
       lotNumber: 'P-1',
-      quantity: 2,
+      quantity: 1,
       note: null,
-    };
-    expect((await followUps())[0].implants).toEqual([box]);
+    });
+    expect((await followUps())[0].implants).toEqual([box(36)]);
 
-    // Another implant the same day joins that row, and says which tooth took it.
+    // The day's next implants are uses of their own, and join that row, each
+    // saying which tooth took which box.
+    const usedNext = (
+      await move(item.id, {
+        kind: 'use',
+        quantity: 1,
+        patientId,
+        tooth: '37',
+      }).expect(200)
+    ).body as ItemBody;
     const usedOther = (
       await move(other.id, {
         kind: 'use',
@@ -636,12 +662,28 @@ describeIfWritable('inventory flows (e2e)', () => {
       quantity: 1,
       note: 'بارگذاری فوری',
     };
-    expect((await followUps())[0].implants).toEqual([box, otherBox]);
+    expect((await followUps())[0].implants).toEqual([
+      box(36),
+      box(37),
+      otherBox,
+    ]);
 
-    // Taking back the use that wrote the row takes its teeth and box off it,
-    // and leaves the row to the one still standing…
+    // Taking back the day's second takes its tooth and box off the row…
+    const undoneNext = (
+      await asStaff(
+        http().post(`/api/inventory/items/${item.id}/movements/undo`),
+      )
+        .send({ expectedVersion: usedNext.version })
+        .expect(200)
+    ).body as ItemBody;
+    expect(await rows()).toEqual([
+      expect.objectContaining({ toothPosition: '36 46', teethFdi: [36, 46] }),
+    ]);
+    expect((await followUps())[0].implants).toEqual([box(36), otherBox]);
+
+    // …taking back the one that wrote it leaves it to the one still standing…
     await asStaff(http().post(`/api/inventory/items/${item.id}/movements/undo`))
-      .send({ expectedVersion: used.version })
+      .send({ expectedVersion: undoneNext.version })
       .expect(200);
     const kept = await rows();
     expect(kept).toEqual([

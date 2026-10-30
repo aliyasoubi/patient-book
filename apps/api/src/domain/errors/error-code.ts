@@ -103,6 +103,12 @@ export enum ErrorCode {
    * patient's implant file are kept by tooth.
    */
   InventoryToothRequired = 'ERR_INVENTORY_TOOTH_REQUIRED',
+  /**
+   * An implant's use naming more than one tooth, or taking more than one
+   * implant: each use is one implant into one tooth, and the day's others are
+   * uses of their own, joined on the patient's one follow-up.
+   */
+  InventoryImplantOneTooth = 'ERR_INVENTORY_IMPLANT_ONE_TOOTH',
   /** Undo on an item with no stock card line to take back. */
   InventoryNothingToUndo = 'ERR_INVENTORY_NOTHING_TO_UNDO',
   /**

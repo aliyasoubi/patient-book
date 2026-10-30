@@ -259,8 +259,9 @@ shelf is corrected by counting it, not by going negative.
   membranes the form names it — never an expired one unless picked by hand —
   and a use names the patient, picked by name: the line then links the batch
   to the patient, which is what a recall is traced through. An implant's use
-  must name the patient and the teeth — picked on the same tooth chart as a
-  follow-up and a lab case, the count following them — and goes into their implant file (a
+  is one implant into one tooth (`ERR_INVENTORY_IMPLANT_ONE_TOOTH` otherwise),
+  must name the patient and the tooth — picked on the same tooth chart as a
+  follow-up and a lab case — and goes into their implant file (a
   new one if they have none) as one surgery row for the day, with the teeth,
   the system and the prosthesis due in three months. Further implants for
   that patient the same day join the day's row rather than writing their
