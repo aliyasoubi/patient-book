@@ -1,6 +1,7 @@
 import type { TranslateService } from '@ngx-translate/core';
 
 import { formatPersianNumber } from '../../pipes/persian-number.pipe';
+import { toLatinDigits } from '../../validators';
 
 /**
  * Teeth as the lab and surgery forms and their cards know them: FDI numbers (ISO 3950).
@@ -131,4 +132,90 @@ export function teethSummary(teeth: readonly number[], i18n: TranslateService): 
       });
     })
     .join(i18n.instant('tooth.groupSeparator'));
+}
+
+/** The jaw and the side a phrase written before the chart names a tooth by. */
+const UPPER = /^(بالا|فوقانی|ماگزیلا|upper)$/;
+const LOWER = /^(پایین|پائین|تحتانی|مندیبل|lower)$/;
+const RIGHT = /^(راست|right)$/;
+const LEFT = /^(چپ|left)$/;
+
+/** Teeth a phrase names together: their positions, and the jaw and side they share. */
+interface PhraseGroup {
+  positions: number[];
+  upper?: boolean;
+  right?: boolean;
+  /** Named after its positions («۶ و ۷ راست پایین»): the next number starts another. */
+  closed?: boolean;
+}
+
+/**
+ * The teeth a phrase written before the chart names, as FDI numbers —
+ * «زیمر، ۶ و ۷ راست پایین» is 46 and 47 — or none when it cannot be read for
+ * certain: a position with no jaw or no side («۶ بالا»), a size («۴.۱»), a
+ * tooth the chart does not hold. A number already in FDI («۳۶») is taken as
+ * it is. The brand the books lead with, up to the first comma, is passed over.
+ */
+export function teethFromPhrase(phrase: string | null | undefined): number[] {
+  if (!phrase) return [];
+  let text = toLatinDigits(phrase)
+    // Arabic yeh and kaf, as Persian ones: by code, not as literal text.
+    .replace(/ي/g, String.fromCharCode(0x06cc))
+    .replace(/ك/g, String.fromCharCode(0x06a9))
+    .replace(/\u200c/g, ' ')
+    .toLowerCase();
+  const comma = text.search(/[,،]/);
+  if (comma !== -1 && !/\d/.test(text.slice(0, comma))) text = text.slice(comma + 1);
+  // «۴.۱» or «۳/۵» is an implant's size, and its numbers no tooth.
+  if (/\d\s*[./]\s*\d/.test(text)) return [];
+
+  const teeth = new Set<number>();
+  const groups: PhraseGroup[] = [];
+  let group: PhraseGroup | null = null;
+  const named = (g: PhraseGroup) => g.upper !== undefined && g.right !== undefined;
+  const start = (): PhraseGroup => {
+    const next: PhraseGroup = { positions: [] };
+    groups.push(next);
+    return next;
+  };
+
+  for (const token of text.match(/\d+|[^\s\d,،؛;:+\-–()]+/g) ?? []) {
+    if (/^\d+$/.test(token)) {
+      const n = Number(token);
+      if (n >= 10 && quadrantOf(n) >= 1 && quadrantOf(n) <= 4 && TOOTH_RANGE.includes(n % 10)) {
+        teeth.add(n);
+      } else if (TOOTH_RANGE.includes(n)) {
+        // Named first («راست پایین ۶ و ۷»), a group takes numbers until a word.
+        if (!group || group.closed) group = start();
+        group.positions.push(n);
+      } else {
+        return [];
+      }
+      continue;
+    }
+    const upper = UPPER.test(token) ? true : LOWER.test(token) ? false : undefined;
+    const right = RIGHT.test(token) ? true : LEFT.test(token) ? false : undefined;
+    // «و», a brand, «دندان»: nothing about where.
+    if (upper === undefined && right === undefined) continue;
+    // A word after a named group's positions names the next group.
+    if (!group || (group.positions.length && named(group))) group = start();
+    const g = group;
+    if (upper !== undefined) {
+      if (g.upper !== undefined && g.upper !== upper) return [];
+      g.upper = upper;
+    }
+    if (right !== undefined) {
+      if (g.right !== undefined && g.right !== right) return [];
+      g.right = right;
+    }
+    if (g.positions.length && named(g)) g.closed = true;
+  }
+
+  for (const g of groups) {
+    if (!g.positions.length) continue;
+    if (!named(g)) return [];
+    const quadrant = g.upper ? (g.right ? 1 : 2) : g.right ? 4 : 3;
+    for (const position of g.positions) teeth.add(quadrant * 10 + position);
+  }
+  return [...teeth].sort((a, b) => a - b);
 }

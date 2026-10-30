@@ -83,7 +83,8 @@
           />
           @if (legacyTeeth(); as written) {
             <span class="form__hint">{{
-              'surgeryForm.teethWritten' | translate: { text: written }
+              (teethRead() ? 'surgeryForm.teethRead' : 'surgeryForm.teethWritten')
+                | translate: { text: written }
             }}</span>
           }
           @if (placedImplants().length) {
