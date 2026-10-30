@@ -90,8 +90,9 @@ const COPY: Record<
  * it. A delivery reads its lot and expiry off the packs. A use or a discard
  * comes out of the first-expiring batch unless another is picked; an implant
  * or a graft names its batch and the patient it went into, which is what a
- * recall is traced through — an implant also its teeth, picked on the chart
- * the follow-ups and the lab use — and a toothbrush, floss or a home bleaching kit
+ * recall is traced through — an implant also its tooth, one implant into one
+ * tooth picked on the chart the follow-ups and the lab use, the day's others
+ * joining the same follow-up — and a toothbrush, floss or a home bleaching kit
  * names the patient it was sold to. What is taken out is checked against the shelf
  * here as well as by the API, which has the final word if someone else took
  * the last one meanwhile.
@@ -204,12 +205,15 @@ const COPY: Record<
               <span class="form__label">{{ 'inventoryMove.tooth' | translate }}</span>
               <pb-tooth-picker
                 [selected]="teeth()"
+                [single]="true"
                 (selectedChange)="setTeeth($event)"
                 [invalid]="toothError() !== null"
                 [ariaLabel]="'inventoryMove.tooth' | translate"
               />
               @if (toothError(); as message) {
                 <span class="form__error" role="alert">{{ message }}</span>
+              } @else {
+                <span class="form__label">{{ 'inventoryMove.toothOne' | translate }}</span>
               }
             </div>
           }
@@ -343,8 +347,12 @@ export class InventoryMovementDialog {
     // An empty choice is first-expiring first, across batches.
     lotId: [''],
     // A count starts from the record, to be corrected; anything else from one.
+    // An implant's use is one implant into one tooth: its count is not asked.
     quantity: [
-      this.kind === 'count' ? String(this.item.quantity) : '1',
+      {
+        value: this.kind === 'count' ? String(this.item.quantity) : '1',
+        disabled: this.mustTooth,
+      },
       [Validators.required, this.quantityValid, this.withinStock],
     ],
     // An implant's or a graft's lot and expiry are what a recall traces.
@@ -413,16 +421,10 @@ export class InventoryMovementDialog {
     );
   });
 
-  /**
-   * Each tooth picked is an implant going in, so the count follows the chart;
-   * it can still be changed by hand after.
-   */
+  /** The one tooth the implant goes into; the day's others are uses of their own. */
   protected setTeeth(teeth: number[]): void {
     this.form.controls.tooth.setValue(teeth);
     this.form.controls.tooth.markAsDirty();
-    if (teeth.length && this.mustTooth) {
-      this.form.controls.quantity.setValue(String(teeth.length));
-    }
   }
 
   private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
@@ -634,6 +636,7 @@ export class InventoryMovementDialog {
               ERR_INVENTORY_PATIENT_REQUIRED: 'patient',
               ERR_INVENTORY_LOT_EXPIRED: 'lotId',
               ERR_INVENTORY_TOOTH_REQUIRED: 'tooth',
+              ERR_INVENTORY_IMPLANT_ONE_TOOTH: 'tooth',
             }),
           );
         },

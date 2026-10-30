@@ -13,6 +13,10 @@ import { type QuadrantView, chartQuadrants, jawTeeth, positionOf, toothName } fr
  * from the midline. The chart is physically left-to-right whatever the page
  * direction — flipping it would put the patient's right on the wrong side.
  * Selected teeth travel as FDI numbers, sorted.
+ *
+ * `single` holds it to one tooth — an implant from the stock goes into one:
+ * a tap picks that tooth instead of adding it, and the whole-jaw shortcuts
+ * are not offered.
  */
 @Component({
   selector: 'pb-tooth-picker',
@@ -48,12 +52,14 @@ import { type QuadrantView, chartQuadrants, jawTeeth, positionOf, toothName } fr
       </div>
 
       <div class="chart__shortcuts">
-        <pb-button variant="text" (click)="toggleJaw('upper')">{{
-          'tooth.wholeUpper' | translate
-        }}</pb-button>
-        <pb-button variant="text" (click)="toggleJaw('lower')">{{
-          'tooth.wholeLower' | translate
-        }}</pb-button>
+        @if (!single()) {
+          <pb-button variant="text" (click)="toggleJaw('upper')">{{
+            'tooth.wholeUpper' | translate
+          }}</pb-button>
+          <pb-button variant="text" (click)="toggleJaw('lower')">{{
+            'tooth.wholeLower' | translate
+          }}</pb-button>
+        }
         <pb-button variant="text" [disabled]="!selected().length" (click)="clear()">{{
           'tooth.clear' | translate
         }}</pb-button>
@@ -68,6 +74,8 @@ export class PbToothPicker {
   readonly selected = input<readonly number[]>([]);
   readonly ariaLabel = input.required<string>();
   readonly invalid = input(false);
+  /** One tooth at most: a tap picks it in place of whatever was picked. */
+  readonly single = input(false);
   readonly selectedChange = output<number[]>();
 
   protected readonly position = positionOf;
@@ -87,11 +95,11 @@ export class PbToothPicker {
   }
 
   protected toggle(tooth: number): void {
-    this.emit(
-      this.isSelected(tooth)
-        ? this.selected().filter((t) => t !== tooth)
-        : [...this.selected(), tooth],
-    );
+    if (this.isSelected(tooth)) {
+      this.emit(this.selected().filter((t) => t !== tooth));
+    } else {
+      this.emit(this.single() ? [tooth] : [...this.selected(), tooth]);
+    }
   }
 
   /** The whole jaw; once every tooth of it is chosen, the same button lets it go. */

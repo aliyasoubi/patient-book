@@ -358,11 +358,15 @@ export class InventoryService {
         if (namesPatient(item) && !dto.patientId && !dto.patientFileNo) {
           throw AppException.badRequest(ErrorCode.InventoryPatientRequired);
         }
-        if (
-          item.category === InventoryCategory.Implant &&
-          !toothNumbers(toLatinDigits(dto.tooth ?? '')).length
-        ) {
-          throw AppException.badRequest(ErrorCode.InventoryToothRequired);
+        if (item.category === InventoryCategory.Implant) {
+          const teeth = toothNumbers(toLatinDigits(dto.tooth ?? ''));
+          if (!teeth.length) {
+            throw AppException.badRequest(ErrorCode.InventoryToothRequired);
+          }
+          // One implant into one tooth; the day's others are uses of their own.
+          if (teeth.length > 1 || dto.quantity !== 1) {
+            throw AppException.badRequest(ErrorCode.InventoryImplantOneTooth);
+          }
         }
       }
       const lots = await loadLots(manager, id);
