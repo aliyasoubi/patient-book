@@ -27,7 +27,6 @@ import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
-import { TOOTH_RANGE } from '../../shared/ui/tooth-picker/teeth';
 
 import {
   PbBanner,
@@ -35,24 +34,11 @@ import {
   PbIconButton,
   PbSelectField,
   PbTextField,
+  PbToothPicker,
   type SelectOption,
   type TextFieldOption,
 } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
-
-/** The teeth an implant can go into, as the chart holds them: FDI 11–47, wisdom teeth aside. */
-const IMPLANT_TEETH: ReadonlySet<number> = new Set(
-  [1, 2, 3, 4].flatMap((quadrant) => TOOTH_RANGE.map((n) => quadrant * 10 + n)),
-);
-
-/** At least one tooth the chart can hold, in either digit script («36», «۳۶ ۳۷»). */
-const namesATooth = (control: AbstractControl<string>): ValidationErrors | null => {
-  const raw = toLatinDigits(control.value ?? '');
-  if (!raw.trim()) return null;
-  return (raw.match(/\d+/g) ?? []).some((n) => IMPLANT_TEETH.has(Number(n)))
-    ? null
-    : { tooth: true };
-};
 
 /** An expiry the API will read — said on the field, before it is sent. */
 const readableExpiry = (control: AbstractControl<string>): ValidationErrors | null =>
@@ -104,7 +90,8 @@ const COPY: Record<
  * it. A delivery reads its lot and expiry off the packs. A use or a discard
  * comes out of the first-expiring batch unless another is picked; an implant
  * or a graft names its batch and the patient it went into, which is what a
- * recall is traced through, and a toothbrush, floss or a home bleaching kit
+ * recall is traced through — an implant also its teeth, picked on the chart
+ * the follow-ups and the lab use — and a toothbrush, floss or a home bleaching kit
  * names the patient it was sold to. What is taken out is checked against the shelf
  * here as well as by the API, which has the final word if someone else took
  * the last one meanwhile.
@@ -122,11 +109,12 @@ const COPY: Record<
     PbIconButton,
     PbSelectField,
     PbTextField,
+    PbToothPicker,
   ],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()">
       <h2 mat-dialog-title>{{ copy.title | translate }}</h2>
-      <mat-dialog-content class="form">
+      <mat-dialog-content class="form" [class.form--chart]="namesPatient && isImplant">
         <p class="form__item">
           <strong dir="auto">{{ itemLabel }}</strong>
           <span>{{
@@ -211,14 +199,19 @@ const COPY: Record<
             </div>
           }
           @if (isImplant) {
-            <pb-text-field
-              [control]="form.controls.tooth"
-              [label]="'inventoryMove.tooth' | translate"
-              [hint]="'inventoryMove.toothHint' | translate"
-              [errorMessages]="toothErrors"
-              [maxlength]="60"
-              [ltr]="true"
-            />
+            <!-- The teeth, picked on the chart the follow-ups and the lab use. -->
+            <div class="form__teeth">
+              <span class="form__label">{{ 'inventoryMove.tooth' | translate }}</span>
+              <pb-tooth-picker
+                [selected]="teeth()"
+                (selectedChange)="setTeeth($event)"
+                [invalid]="toothError() !== null"
+                [ariaLabel]="'inventoryMove.tooth' | translate"
+              />
+              @if (toothError(); as message) {
+                <span class="form__error" role="alert">{{ message }}</span>
+              }
+            </div>
           }
         }
         <pb-text-field
@@ -250,6 +243,25 @@ const COPY: Record<
       flex-direction: column;
       gap: var(--pb-space-1);
       width: min(440px, 80vw);
+    }
+    /* Room for the chart's two quadrants a row — as wide as a dialog goes; a
+       phone stacks them. */
+    .form--chart {
+      width: min(560px, 80vw);
+    }
+    .form__teeth {
+      display: flex;
+      flex-direction: column;
+      gap: var(--pb-space-2);
+      margin-block-end: var(--pb-space-3);
+    }
+    .form__label,
+    .form__error {
+      font: var(--mat-sys-body-small);
+      color: var(--mat-sys-on-surface-variant);
+    }
+    .form__error {
+      color: var(--mat-sys-error);
     }
     .form__linked {
       display: flex;
@@ -354,12 +366,7 @@ export class InventoryMovementDialog {
         (c: AbstractControl<string>) => this.pickedPatient(c),
       ],
     ],
-    tooth: [
-      '',
-      this.mustTooth
-        ? [Validators.required, Validators.maxLength(60), namesATooth]
-        : Validators.maxLength(60),
-    ],
+    tooth: this.fb.nonNullable.control<number[]>([], this.mustTooth ? Validators.required : null),
     note: ['', Validators.maxLength(300)],
   });
 
@@ -386,10 +393,37 @@ export class InventoryMovementDialog {
     pick: this.i18n.instant('inventoryMove.patientPick'),
   };
   protected readonly lotErrors = { required: this.i18n.instant('inventoryMove.lotPick') };
-  protected readonly toothErrors = {
-    required: this.i18n.instant('inventoryMove.toothRequired'),
-    tooth: this.i18n.instant('inventoryMove.toothInvalid'),
-  };
+  /** The teeth picked, as the chart shows them. */
+  protected readonly teeth = toSignal(this.form.controls.tooth.valueChanges, {
+    initialValue: this.form.controls.tooth.value,
+  });
+  private readonly toothStatus = toSignal(this.form.controls.tooth.statusChanges, {
+    initialValue: this.form.controls.tooth.status,
+  });
+  private readonly submitted = signal(false);
+
+  /** Said under the chart once a save was tried without a tooth, or the API refused one. */
+  protected readonly toothError = computed(() => {
+    this.teeth();
+    this.toothStatus();
+    const errors = this.submitted() ? this.form.controls.tooth.errors : null;
+    if (!errors) return null;
+    return (
+      (errors['server'] as string | undefined) ?? this.i18n.instant('inventoryMove.toothRequired')
+    );
+  });
+
+  /**
+   * Each tooth picked is an implant going in, so the count follows the chart;
+   * it can still be changed by hand after.
+   */
+  protected setTeeth(teeth: number[]): void {
+    this.form.controls.tooth.setValue(teeth);
+    this.form.controls.tooth.markAsDirty();
+    if (teeth.length && this.mustTooth) {
+      this.form.controls.quantity.setValue(String(teeth.length));
+    }
+  }
 
   private readonly patientMatches: Signal<PatientSuggestion[]> = toSignal(
     this.form.controls.patient.valueChanges.pipe(
@@ -562,6 +596,7 @@ export class InventoryMovementDialog {
 
   protected submit(): void {
     if (this.saving()) return;
+    this.submitted.set(true);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -583,7 +618,7 @@ export class InventoryMovementDialog {
         ...(this.namesPatient
           ? {
               patientId: this.linkedPatient()?.id ?? null,
-              tooth: (this.isImplant && toLatinDigits(raw.tooth).trim()) || null,
+              tooth: (this.isImplant && raw.tooth.join(' ')) || null,
             }
           : {}),
         note: raw.note.trim() || null,
@@ -598,6 +633,7 @@ export class InventoryMovementDialog {
               ERR_PATIENT_NOT_FOUND: 'patient',
               ERR_INVENTORY_PATIENT_REQUIRED: 'patient',
               ERR_INVENTORY_LOT_EXPIRED: 'lotId',
+              ERR_INVENTORY_TOOTH_REQUIRED: 'tooth',
             }),
           );
         },
