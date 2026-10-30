@@ -63,6 +63,7 @@ import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
 import { ListReturn } from '../../core/services/list-return.service';
 import { placedImplantLine } from '../../shared/placed-implant';
+import { teethFromPhrase } from '../../shared/ui/tooth-picker/teeth';
 
 const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
   ['surgeryForm.recordedName', (s) => `${s.recordedName}|${s.patient?.id ?? ''}`],
@@ -240,6 +241,12 @@ export class SurgeryForm implements HasUnsavedChanges {
   });
 
   /**
+   * Whether the chart came pre-picked from that phrase — «۶ و ۷ راست پایین»
+   * is 46 and 47 — to be checked before saving, which keeps the picks.
+   */
+  protected readonly teethRead = computed(() => teethFromPhrase(this.legacyTeeth()).length > 0);
+
+  /**
    * The implants the stock handed out for this surgery, one line each: they
    * are the stock card's, so the form shows them and leaves them be.
    */
@@ -407,7 +414,8 @@ export class SurgeryForm implements HasUnsavedChanges {
       recordedName: item.recordedName,
       implantRegistryNo: item.implantRegistryNo ?? '',
       surgeryDate: this.toDate(item.surgeryDate?.jalali),
-      teeth: item.teethFdi,
+      // A row from before the chart shows what its phrase plainly names.
+      teeth: item.teethFdi.length ? item.teethFdi : teethFromPhrase(item.toothPosition),
       implantBrand: item.implantBrand ?? '',
       abutmentType: item.abutmentType,
       followUpMonths: item.followUpMonths ? String(item.followUpMonths) : '',

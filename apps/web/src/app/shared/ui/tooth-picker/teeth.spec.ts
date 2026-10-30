@@ -6,6 +6,7 @@ import {
   jawTeeth,
   teethByQuadrant,
   teethByWork,
+  teethFromPhrase,
   teethSummary,
   toothRuns,
 } from './teeth';
@@ -97,5 +98,46 @@ describe('teethByWork', () => {
       { workType: 'implant_crown', teeth: [16] },
       { workType: 'laminate', teeth: [11, 21] },
     ]);
+  });
+});
+
+describe('teethFromPhrase', () => {
+  it('reads positions by the jaw and side named after them, past the brand', () => {
+    expect(teethFromPhrase('زیمر، ۶ و ۷ راست پایین')).toEqual([46, 47]);
+    expect(teethFromPhrase('۴ چپ بالا')).toEqual([24]);
+    expect(teethFromPhrase('۵ بالا راست')).toEqual([15]);
+  });
+
+  it('reads the jaw and side named first, and several groups in one phrase', () => {
+    expect(teethFromPhrase('راست پایین ۶ و ۷')).toEqual([46, 47]);
+    expect(teethFromPhrase('۶ راست پایین و ۴ چپ بالا')).toEqual([24, 46]);
+    expect(teethFromPhrase('راست پایین ۶ و ۷، چپ بالا ۴')).toEqual([24, 46, 47]);
+  });
+
+  it('takes numbers already in FDI as they are, in either digit script', () => {
+    expect(teethFromPhrase('۳۶')).toEqual([36]);
+    expect(teethFromPhrase('36 37')).toEqual([36, 37]);
+    expect(teethFromPhrase('اشترومن، ۲۱')).toEqual([21]);
+  });
+
+  it('folds Arabic letters and a zero-width joiner, as the books mix them', () => {
+    expect(teethFromPhrase('۶ راست پائين')).toEqual([46]);
+  });
+
+  it('reads nothing it cannot be sure of', () => {
+    // No side: 16 or 26.
+    expect(teethFromPhrase('۶ بالا')).toEqual([]);
+    // No jaw or side at all.
+    expect(teethFromPhrase('۶')).toEqual([]);
+    // A size, not a tooth.
+    expect(teethFromPhrase('زیمر ۴.۱ در ۱۲')).toEqual([]);
+    // A wisdom tooth the chart does not hold, and a number that is no tooth.
+    expect(teethFromPhrase('۸ راست پایین')).toEqual([]);
+    expect(teethFromPhrase('۵۲')).toEqual([]);
+    // Two jaws for one group.
+    expect(teethFromPhrase('۶ بالا پایین راست')).toEqual([]);
+    // Only the brand.
+    expect(teethFromPhrase('زیمر')).toEqual([]);
+    expect(teethFromPhrase('')).toEqual([]);
   });
 });
