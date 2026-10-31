@@ -5,15 +5,18 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { PersianCountPipe } from '../../pipes/persian-number.pipe';
 
-export type StatTileTone = 'neutral' | 'warn';
+export type StatTileTone = 'neutral' | 'caution' | 'warn';
 
 /**
  * One number with its icon and label — the dashboard's work tiles and the
  * statistics page's totals. With `link` set the whole tile opens the list
  * the number counts, so a tile should link to exactly those rows.
  *
- * `warn` is a request, not a colour: the tile turns to the error container
- * only while there is something to act on, so a zero never shouts.
+ * `warn` and `caution` are requests, not colours: the tile turns to the
+ * error or the warning container only while there is something to act on,
+ * so a zero never shouts. `warn` is for what is slipping (a patient past
+ * their follow-up); `caution` for routine work that is due (stock to order),
+ * so not every count on the dashboard looks like an alarm.
  */
 @Component({
   selector: 'pb-stat-tile',
@@ -38,7 +41,8 @@ export type StatTileTone = 'neutral' | 'warn';
   `,
   host: {
     class: 'pb-stat-tile',
-    '[class.pb-stat-tile--warn]': 'warn()',
+    '[class.pb-stat-tile--warn]': "active() && tone() === 'warn'",
+    '[class.pb-stat-tile--caution]': "active() && tone() === 'caution'",
   },
   styles: `
     @use '../../../../styles/surface';
@@ -85,17 +89,28 @@ export type StatTileTone = 'neutral' | 'warn';
       color: var(--mat-sys-on-surface-variant);
     }
 
-    :host(.pb-stat-tile--warn) {
-      .pb-stat-tile__body {
-        border-color: color-mix(in srgb, var(--mat-sys-error) 40%, transparent);
-        background: var(--mat-sys-error-container);
-        color: var(--mat-sys-on-error-container);
-      }
+    :host(.pb-stat-tile--warn) .pb-stat-tile__body {
+      border-color: color-mix(in srgb, var(--mat-sys-error) 40%, transparent);
+      background: var(--mat-sys-error-container);
+      color: var(--mat-sys-on-error-container);
 
       .pb-stat-tile__icon {
         color: var(--mat-sys-error);
       }
+    }
 
+    :host(.pb-stat-tile--caution) .pb-stat-tile__body {
+      border-color: color-mix(in srgb, var(--pb-on-warning-container) 30%, transparent);
+      background: var(--pb-warning-container);
+      color: var(--pb-on-warning-container);
+
+      .pb-stat-tile__icon {
+        color: inherit;
+      }
+    }
+
+    :host(.pb-stat-tile--warn),
+    :host(.pb-stat-tile--caution) {
       .pb-stat-tile__label {
         color: inherit;
         opacity: 0.85;
@@ -113,5 +128,5 @@ export class PbStatTile {
   readonly queryParams = input<Record<string, string> | null>(null);
   readonly tone = input<StatTileTone>('neutral');
 
-  protected readonly warn = computed(() => this.tone() === 'warn' && this.value() > 0);
+  protected readonly active = computed(() => this.tone() !== 'neutral' && this.value() > 0);
 }

@@ -130,7 +130,8 @@ export class Dashboard {
         link: '/labs',
         // The board, narrowed to exactly the cases the tile counts.
         queryParams: { toBook: 'true' },
-        tone: 'warn',
+        // Routine: the work is back and waits on a phone call, not late.
+        tone: 'caution',
       });
     }
     if (s.labsOverdue > 0) {
@@ -146,14 +147,15 @@ export class Dashboard {
     }
     // The stock's two questions, counted exactly as the inventory list's
     // own filters answer them. What to order opens the order list — the
-    // same items, with the quantity to ask the supplier for.
+    // same items, with the quantity to ask the supplier for. Both are
+    // routine upkeep, so amber: red is kept for a patient slipping.
     if (s.inventoryReorder > 0) {
       tiles.push({
         label: 'tile.inventoryReorder',
         value: s.inventoryReorder,
         icon: 'shopping_cart',
         link: '/inventory/order',
-        tone: 'warn',
+        tone: 'caution',
       });
     }
     if (s.inventoryExpiring > 0) {
@@ -163,7 +165,7 @@ export class Dashboard {
         icon: 'hourglass_bottom',
         link: '/inventory',
         queryParams: { filter: 'expiry' },
-        tone: 'warn',
+        tone: 'caution',
       });
     }
     // Who to ring today — the follow-up list's «تماس امروز», calls put off to

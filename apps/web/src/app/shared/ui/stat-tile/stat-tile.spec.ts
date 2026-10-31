@@ -19,6 +19,7 @@ import { PbStatTile } from './stat-tile';
       [value]="3"
     />
     <pb-stat-tile id="clear" label="Overdue" icon="schedule" tone="warn" link="/labs" [value]="0" />
+    <pb-stat-tile id="order" label="To order" icon="shopping_cart" tone="caution" [value]="2" />
     <pb-stat-tile id="figure" label="Active" icon="how_to_reg" [value]="12" />
   `,
 })
@@ -41,6 +42,12 @@ describe('PbStatTile', () => {
     const root = render();
     expect(root.querySelector('#due')?.classList).toContain('pb-stat-tile--warn');
     expect(root.querySelector('#clear')?.classList).not.toContain('pb-stat-tile--warn');
+  });
+
+  it('keeps routine work amber, not red', () => {
+    const classes = render().querySelector('#order')?.classList;
+    expect(classes).toContain('pb-stat-tile--caution');
+    expect(classes).not.toContain('pb-stat-tile--warn');
   });
 
   it('is a plain figure without a link', () => {
