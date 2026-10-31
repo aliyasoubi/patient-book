@@ -134,10 +134,44 @@ describe('teethFromPhrase', () => {
     // A wisdom tooth the chart does not hold, and a number that is no tooth.
     expect(teethFromPhrase('۸ راست پایین')).toEqual([]);
     expect(teethFromPhrase('۵۲')).toEqual([]);
-    // Two jaws for one group.
-    expect(teethFromPhrase('۶ بالا پایین راست')).toEqual([]);
+    // No jaw, for all its sides.
+    expect(teethFromPhrase('۵و۶ سمت راست')).toEqual([]);
+    // «دوتا»: a count, its sides only implied.
+    expect(teethFromPhrase('دوتا یک بالا')).toEqual([]);
     // Only the brand.
     expect(teethFromPhrase('زیمر')).toEqual([]);
     expect(teethFromPhrase('')).toEqual([]);
+  });
+});
+
+describe('teethFromPhrase, as the books wrote it', () => {
+  it('reads words glued to the number, to «سمت» or to a brand', () => {
+    expect(teethFromPhrase('۷پایین سمت چپTRI')).toEqual([37]);
+    expect(teethFromPhrase('۵بالاسمت راست')).toEqual([15]);
+    expect(teethFromPhrase('TRI۲بالا سمت چپ')).toEqual([22]);
+  });
+
+  it('reads the typos the books carry, and positions written out', () => {
+    expect(teethFromPhrase('۳ بلا سمت چپ')).toEqual([23]);
+    expect(teethFromPhrase('۵ پایی سمت چپ')).toEqual([35]);
+    expect(teethFromPhrase('دنتیوم، پنج چپ پایین')).toEqual([35]);
+  });
+
+  it('reads both sides, said either way', () => {
+    expect(teethFromPhrase('۵ های پایین هر دو طرف')).toEqual([35, 45]);
+    expect(teethFromPhrase('۳-۵ بالا سمت راست و چپ')).toEqual([13, 15, 23, 25]);
+    expect(teethFromPhrase('۶ پایین سمت راست وچپ')).toEqual([36, 46]);
+    expect(teethFromPhrase('۶ بالا و پایین راست')).toEqual([16, 46]);
+  });
+
+  it('passes over a count of implants, procedures and commas', () => {
+    expect(teethFromPhrase('یک واحد ایمپلنت ۵ پایین سمت چپ')).toEqual([35]);
+    expect(teethFromPhrase('زیمر، ۴ راست پایین، فرش ساکت')).toEqual([44]);
+    expect(teethFromPhrase('جراحی ریشه دندان ۷بالاسمت راست')).toEqual([17]);
+  });
+
+  it('reads numbers glued together as positions once a jaw or side is named', () => {
+    expect(teethFromPhrase('۴۵ پایین سمت چپ')).toEqual([34, 35]);
+    expect(teethFromPhrase('۴بالا سمت چپ ۵پایین سمت چپ')).toEqual([24, 35]);
   });
 });
