@@ -15,7 +15,7 @@
       [options]="searchOptions()"
       [heading]="heading()"
       [showEmpty]="displayEmpty()"
-      [emptyMessage]="'globalSearch.empty' | translate"
+      [emptyMessage]="emptyMessageKey() | translate"
       (optionSelected)="onSelect($event)"
       [placeholder]="'globalSearch.placeholder' | translate"
       [ariaLabel]="'globalSearch.aria' | translate"

@@ -44,6 +44,8 @@ const MATCH_KEYS: Readonly<Record<NonNullable<PatientSuggestion['match']>, strin
 interface SuggestionResult {
   q: string;
   items: PatientSuggestion[];
+  /** The lookup failed: no answer is not "nobody found", or a file gets opened twice. */
+  failed?: boolean;
 }
 
 @Component({
@@ -109,7 +111,7 @@ export class GlobalSearch {
           // has to keep working for the next keystroke.
           catchError(() => {
             this.loading.set(false);
-            return of<SuggestionResult>({ q, items: [] });
+            return of<SuggestionResult>({ q, items: [], failed: true });
           }),
         );
       }),
@@ -215,5 +217,10 @@ export class GlobalSearch {
   protected displayEmpty(): boolean {
     const q = this.query();
     return q.length >= MIN_QUERY_LENGTH && this.results().q === q;
+  }
+
+  /** A failed lookup says so, and points at the full search Enter runs. */
+  protected emptyMessageKey(): string {
+    return this.results().failed ? 'globalSearch.failed' : 'globalSearch.empty';
   }
 }
