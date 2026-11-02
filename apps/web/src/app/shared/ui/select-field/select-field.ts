@@ -1,10 +1,10 @@
 import { Component, inject, input, output } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule, type SubscriptSizing } from '@angular/material/form-field';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, subscriptSizing } from '../field-errors';
 
 export interface SelectOption {
   value: string;
@@ -31,10 +31,7 @@ export interface SelectOption {
   standalone: true,
   imports: [ReactiveFormsModule, MatFormFieldModule, MatSelectModule, TranslatePipe],
   template: `
-    <mat-form-field
-      appearance="outline"
-      [subscriptSizing]="subscript() === 'dynamic' || hint() || errorText() ? 'dynamic' : 'fixed'"
-    >
+    <mat-form-field appearance="outline" [subscriptSizing]="sizing()">
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -108,6 +105,10 @@ export class PbSelectField {
   protected errorText(): string | null {
     const ctrl = this.control();
     return ctrl ? firstErrorMessage(ctrl.errors, this.i18n, this.errorMessages()) : null;
+  }
+
+  protected sizing(): SubscriptSizing {
+    return subscriptSizing(this.control(), this.hint(), this.subscript());
   }
 
   protected onSelectionChange(event: MatSelectChange): void {
