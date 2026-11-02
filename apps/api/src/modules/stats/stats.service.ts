@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Patient } from '../patients/patient.entity';
+import { inactiveSql, lastSeenSql } from '../patients/patient-query.builder';
 import { SurgeryQueueItem } from '../surgery/surgery-queue-item.entity';
 import {
   callsTodayBounds,
@@ -133,12 +134,10 @@ export class StatsService {
           WHERE i."deletedAt" IS NULL AND ${reorderSql('i')})                         AS "inventoryReorder",
         (SELECT count(*) FROM inventory_items i
           WHERE i."deletedAt" IS NULL AND ${expirySoonSql('i', '$5')})                AS "inventoryExpiring",
-        -- The patient list's inactiveMonths=12 filter, which the tile opens,
-        -- so a record with no visit on file is on the recall list too.
-        (SELECT count(*) FROM patients
-          WHERE "deletedAt" IS NULL
-            AND ("lastVisitAt" IS NULL
-              OR "lastVisitAt" < now() - interval '12 months'))                       AS "inactiveOverYear"
+        -- The patient list's inactiveMonths=12 filter, which the tile opens.
+        (SELECT count(*) FROM patients p
+          WHERE p."deletedAt" IS NULL
+            AND ${inactiveSql('p', `now() - interval '12 months'`)})                AS "inactiveOverYear"
     `,
       [
         week.from,
@@ -176,9 +175,9 @@ export class StatsService {
           (SELECT count(*) FROM patients WHERE "deletedAt" IS NOT NULL)                AS archived,
           (SELECT count(*) FROM implant_cases WHERE "deletedAt" IS NULL)                 AS "implantCases",
           (SELECT count(*) FROM ortho_cases WHERE "deletedAt" IS NULL)                   AS "orthoCases",
-          (SELECT count(*) FROM patients
-            WHERE "deletedAt" IS NULL
-              AND "lastVisitAt" >= now() - interval '6 months')                         AS "recentlyActive"`),
+          (SELECT count(*) FROM patients p
+            WHERE p."deletedAt" IS NULL
+              AND ${lastSeenSql('p')} >= now() - interval '6 months')                 AS "recentlyActive"`),
         q<{ key: string; count: string }>(`
         SELECT gender AS key, count(*)::text AS count FROM patients
         WHERE "deletedAt" IS NULL GROUP BY gender ORDER BY count(*) DESC`),

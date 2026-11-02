@@ -119,12 +119,12 @@ export class UsersController {
         }
       }
 
-      const patch: Partial<User> = { ...dto };
-      // Disabling an account must end its live sessions, not just block new logins.
+      await users.update(id, dto);
+      // Disabling an account must end its live sessions, not just block new
+      // logins. Atomic increment avoids losing a concurrent logout bump.
       if (dto.isActive === false) {
-        patch.tokenVersion = current.tokenVersion + 1;
+        await users.increment({ id }, 'tokenVersion', 1);
       }
-      await users.update(id, patch);
       await this.audit.recordRequired(
         {
           userId: actorId,
@@ -150,15 +150,13 @@ export class UsersController {
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
     await this.users.manager.transaction(async (manager) => {
       const users = manager.getRepository(User);
-      const user = await users.findOne({ where: { id } });
-      if (!user) {
+      if (!(await users.exists({ where: { id } }))) {
         throw AppException.notFound(ErrorCode.NotFound, { entity: 'user' });
       }
-      await users.update(id, {
-        passwordHash,
-        tokenVersion: user.tokenVersion + 1,
-        mustChangePassword: true,
-      });
+      await users.update(id, { passwordHash, mustChangePassword: true });
+      // Ends their live sessions. Atomic increment avoids losing a concurrent
+      // logout bump.
+      await users.increment({ id }, 'tokenVersion', 1);
       await this.audit.recordRequired(
         {
           userId: actorId,
@@ -183,16 +181,13 @@ export class UsersController {
       throw AppException.forbidden(ErrorCode.CannotDeleteSelf);
     await this.users.manager.transaction(async (manager) => {
       const users = manager.getRepository(User);
-      const user = await users.findOne({ where: { id } });
-      if (!user) {
+      if (!(await users.exists({ where: { id } }))) {
         throw AppException.notFound(ErrorCode.NotFound, { entity: 'user' });
       }
       // Users are deactivated, never deleted — audit rows must keep pointing at
-      // a real person.
-      await users.update(id, {
-        isActive: false,
-        tokenVersion: user.tokenVersion + 1,
-      });
+      // a real person. Atomic increment avoids losing a concurrent logout bump.
+      await users.update(id, { isActive: false });
+      await users.increment({ id }, 'tokenVersion', 1);
       await this.audit.recordRequired(
         {
           userId: actorId,

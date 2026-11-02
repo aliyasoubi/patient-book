@@ -14,7 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { map, startWith } from 'rxjs';
+import { map, startWith, type Subscription } from 'rxjs';
 
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { type HasUnsavedChanges, warnBeforeUnload } from '../../core/guards/unsaved-changes.guard';
@@ -108,6 +108,8 @@ export class InventoryCount implements HasUnsavedChanges {
   protected readonly loading = signal(false);
   protected readonly failed = signal(false);
   protected readonly saving = signal(false);
+  /** The shelf on its way: a newer one picked meanwhile replaces it, not the reverse. */
+  private shelfLoad?: Subscription;
 
   protected readonly form = new FormRecord<RowGroup>({});
   private readonly values = toSignal(
@@ -168,9 +170,10 @@ export class InventoryCount implements HasUnsavedChanges {
   }
 
   protected load(): void {
+    this.shelfLoad?.unsubscribe();
     this.loading.set(true);
     this.failed.set(false);
-    this.inventory.list({ category: this.category() }).subscribe({
+    this.shelfLoad = this.inventory.list({ category: this.category() }).subscribe({
       next: (items) => {
         for (const id of Object.keys(this.form.controls)) this.form.removeControl(id);
         for (const item of items) {

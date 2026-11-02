@@ -467,10 +467,13 @@ export class InventoryService {
       }
       const lines = await movements.findBy({ id: In(rows.map((r) => r.id)) });
       const lots = manager.getRepository(InventoryLot);
+      // Read before an emptied batch goes below: the audit names its LOT.
+      const lotNumbers = new Map<string, string | null>();
       for (const line of lines) {
         if (!line.lotId) continue;
         const lot = await lots.findOneBy({ id: line.lotId });
         if (!lot) continue;
+        lotNumbers.set(line.id, lot.lotNumber);
         lot.quantity -= line.change;
         const elsewhere = await movements.exists({
           where: { lotId: lot.id, id: Not(In(lines.map((l) => l.id))) },
@@ -498,11 +501,23 @@ export class InventoryService {
           action: 'update',
           entity: 'inventory_item',
           entityId: id,
+          // The lines themselves are deleted, so this is what is left of
+          // them: which box went to whom, by whom and when, as they said it.
           changes: {
             undone: lines.map((l) => ({
+              id: l.id,
               kind: l.kind,
               change: l.change,
               lotId: l.lotId,
+              lotNumber: lotNumbers.get(l.id) ?? null,
+              expiry: l.expiryText,
+              patientId: l.patientId,
+              tooth: l.tooth,
+              note: l.note,
+              surgeryId: l.surgeryId,
+              userId: l.userId,
+              username: l.username,
+              createdAt: l.createdAt,
             })),
             ...(withdrawn ? { surgeryRowsWithdrawn: withdrawn } : {}),
           },
