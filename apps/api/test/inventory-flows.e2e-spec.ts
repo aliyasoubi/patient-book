@@ -460,6 +460,12 @@ describeIfWritable('inventory flows (e2e)', () => {
       })
       .expect(404);
     expect((await list({ q: shelf, filter: 'reorder' }))[0].quantity).toBe(3);
+
+    // A null count is not a count of nothing: refused, the shelf untouched.
+    await asStaff(http().post('/api/inventory/items/count'))
+      .send({ lines: [{ id: a.id, quantity: null }] })
+      .expect(400);
+    expect((await list({ q: shelf, filter: 'reorder' }))[0].quantity).toBe(3);
   });
 
   it('stores a brand and a size the standard way, however typed', async () => {
@@ -505,6 +511,24 @@ describeIfWritable('inventory flows (e2e)', () => {
     expect(undone.quantity).toBe(5);
     expect(undone.lots.map((l) => l.lotNumber)).toEqual([null]);
     expect(undone.movements.map((m) => m.kind)).toEqual(['count']);
+    // The lines are deleted, and the batch with them; the audit keeps both.
+    const [audit] = await db.query<
+      Array<{ changes: { undone: Array<Record<string, unknown>> } }>
+    >(
+      `SELECT changes FROM audit_logs
+        WHERE entity = 'inventory_item' AND "entityId" = $1
+          AND changes ? 'undone'`,
+      [item.id],
+    );
+    expect(audit.changes.undone).toEqual([
+      expect.objectContaining({
+        kind: 'receive',
+        change: 10,
+        lotNumber: 'U-1',
+        userId: expect.any(String),
+        createdAt: expect.any(String),
+      }),
+    ]);
 
     // A use split across batches is one movement, taken back whole.
     await move(item.id, { kind: 'use', quantity: 2 }).expect(200);

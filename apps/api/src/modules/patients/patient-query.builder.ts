@@ -31,6 +31,28 @@ const SORTABLE: Readonly<Record<string, string>> = {
   updatedAt: 'p.updatedAt',
 };
 
+/**
+ * SQL for the last day a patient was at the clinic, over `patients` aliased
+ * as `alias`: the last visit on file, else the first. A record registered
+ * here rather than imported was made the day they came in, so that day
+ * counts when neither is filled in. Null only for an imported record that
+ * names no visit at all.
+ */
+export function lastSeenSql(alias: string): string {
+  return `COALESCE(${alias}."lastVisitAt", ${alias}."firstVisitAt",
+    CASE WHEN NOT ${alias}."isImported" THEN ${alias}."createdAt"::date END)`;
+}
+
+/**
+ * SQL for "not seen since `since`" (a SQL timestamp), a record with no visit
+ * on file included. Shared so the list's filter and the dashboard's tile,
+ * which opens it, count the same patients.
+ */
+export function inactiveSql(alias: string, since: string): string {
+  const seen = lastSeenSql(alias);
+  return `(${seen} IS NULL OR ${seen} < ${since})`;
+}
+
 /** Which identifier a search matched exactly. */
 export type IdentifierMatch = 'fileNo' | 'nationalId' | 'mobile';
 
@@ -280,7 +302,7 @@ export class PatientQueryBuilder {
 
     if (dto.inactiveMonths) {
       qb.andWhere(
-        `(p."lastVisitAt" IS NULL OR p."lastVisitAt" < (now() - (:months || ' months')::interval))`,
+        inactiveSql('p', `now() - (:months || ' months')::interval`),
         { months: dto.inactiveMonths },
       );
     }

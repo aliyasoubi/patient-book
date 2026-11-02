@@ -22,6 +22,7 @@ import {
   MaxLength,
   Min,
   Validate,
+  ValidateIf,
   ValidateNested,
   ValidationArguments,
   ValidatorConstraint,
@@ -284,11 +285,15 @@ export class InventoryCountLineDto {
   @IsUUID()
   id!: string;
 
+  /**
+   * Left out, the shelf was not counted. Never `null`: that would read as a
+   * count of nothing and empty the shelf.
+   */
   @ApiPropertyOptional({ minimum: 0 })
   @IsInt()
   @Min(0)
   @Max(MAX_QUANTITY)
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   quantity?: number;
 
   /** `null` clears it: the item is no longer reordered by level. */

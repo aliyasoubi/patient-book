@@ -421,6 +421,39 @@ describeIfWritable('clinic flows (e2e)', () => {
       );
     });
 
+    it('puts a patient on the recall list once they have been away, not on the day they register', async () => {
+      const lastName = `recall-${runId}`;
+      const register = async (visit: { lastVisitAt?: string } = {}) => {
+        const res = await asAdmin(http().post('/api/patients'))
+          .send({
+            fileNo: nextNumber(),
+            firstName: 'آزمون',
+            lastName,
+            ...visit,
+          })
+          .expect(201);
+        const { id } = res.body as { id: string };
+        patientIds.push(id);
+        return id;
+      };
+      const registeredToday = await register();
+      const away = await register({ lastVisitAt: '1400/01/15' });
+      // An imported record naming no visit says nothing of when they came.
+      const imported = await register();
+      await db.query(`UPDATE patients SET "isImported" = true WHERE id = $1`, [
+        imported,
+      ]);
+
+      const res = await asAdmin(
+        http().get('/api/patients').query({ q: lastName, inactiveMonths: 12 }),
+      ).expect(200);
+      const ids = (res.body as { items: Array<{ id: string }> }).items.map(
+        (p) => p.id,
+      );
+      expect(ids).toEqual(expect.arrayContaining([away, imported]));
+      expect(ids).not.toContain(registeredToday);
+    });
+
     it('lets the front desk save a patient but not change clinical notes', async () => {
       const created = await asAdmin(http().post('/api/patients'))
         .send({
