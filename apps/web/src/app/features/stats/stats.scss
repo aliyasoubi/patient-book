@@ -118,7 +118,9 @@
     display: block;
     height: 100%;
     border-radius: var(--mat-sys-corner-full);
-    transition: width 500ms var(--pb-ease-standard);
+    // Twice the medium duration on purpose: a chart drawing itself in, read
+    // as it grows, not a control answering a touch.
+    transition: width calc(2 * var(--pb-duration-medium)) var(--pb-ease-standard);
 
     &--primary {
       background: var(--mat-sys-primary);

@@ -208,7 +208,7 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
 
     /* A light press-in gives tap feedback beyond Material's ripple alone. */
     .pb-btn {
-      transition: transform 120ms var(--pb-ease-spring);
+      transition: transform var(--pb-duration-short) var(--pb-ease-spring);
     }
     .pb-btn:active {
       transform: scale(0.96);

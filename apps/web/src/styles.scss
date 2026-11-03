@@ -93,6 +93,12 @@ html {
   --pb-ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
   // M3 "standard": colour and size changes that stay inside their own box.
   --pb-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  // Two durations, M3's short3 and medium1: `short` for a change that stays
+  // in its own box (a colour, a border, a press, a chevron turning), `medium`
+  // for something that moves or arrives (a page, a card gliding into its
+  // slot, the nav's indicator).
+  --pb-duration-short: 150ms;
+  --pb-duration-medium: 250ms;
   // Persian numerals are what staff read on paper charts; keep the app
   // consistent with the ledgers it replaces. The digits themselves come from
   // the Farsi-Digits build of Vazirmatn (`fonts/vazirmatn.css`), so every
@@ -360,11 +366,11 @@ body:has(.bottom-nav) .mat-mdc-snack-bar-handset .mat-mdc-snack-bar-container {
 }
 
 .pb-enter {
-  animation: pb-enter 220ms var(--pb-ease-emphasized) backwards;
+  animation: pb-enter var(--pb-duration-medium) var(--pb-ease-emphasized) backwards;
 }
 
 .pb-leave {
-  animation: pb-leave 120ms ease-in forwards;
+  animation: pb-leave var(--pb-duration-short) ease-in forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

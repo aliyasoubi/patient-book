@@ -70,7 +70,7 @@
 /* Let go: the card glides into its slot. The CDK animates the drop only when
    the dragged card has a transform transition; without one it jumps there. */
 .cdk-drag-animating {
-  transition: transform 250ms var(--pb-ease-emphasized);
+  transition: transform var(--pb-duration-medium) var(--pb-ease-emphasized);
 }
 
 .cdk-drop-list-receiving {

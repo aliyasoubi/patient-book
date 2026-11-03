@@ -141,7 +141,7 @@
   }
 
   &__row {
-    transition: background-color 140ms ease;
+    transition: background-color var(--pb-duration-short) var(--pb-ease-standard);
 
     &:hover {
       background: color-mix(in srgb, var(--mat-sys-primary) 6%, transparent);
@@ -254,7 +254,7 @@
 .card {
   position: relative;
   @include surface.outlined;
-  transition: border-color 140ms ease;
+  transition: border-color var(--pb-duration-short) var(--pb-ease-standard);
 
   &:active {
     border-color: var(--mat-sys-primary);
