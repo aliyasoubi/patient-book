@@ -304,7 +304,7 @@
     "atClinicShort": "در مطب",
     "atClinicEmpty": "همه کارهای برگشته نوبت دارند.",
     "booked": "در انتظار مراجعه بیمار",
-    "bookedHint": "نوبت دارد؛ منتظر روز نوبت",
+    "bookedHint": "منتظر تحویل",
     "bookedShort": "منتظر بیمار",
     "bookedEmpty": "کاری با نوبت ثبت‌شده نیست.",
     "delivered": "تحویل به بیمار",
