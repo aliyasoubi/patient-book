@@ -1,6 +1,13 @@
 <pb-page width="form">
+  <!-- On edit, whose work this is: its patient's file, or the name it was sent under. -->
+  @let row = loaded();
   <pb-page-header
     [title]="(isEdit() ? 'labForm.editTitle' : 'labForm.createTitle') | translate"
+    [subtitle]="
+      row?.patient
+        ? ('patient.named' | translate: { name: row.patient.fullName, fileNo: row.patient.fileNo })
+        : row?.recordedName || null
+    "
     [backLabel]="'common.back' | translate"
     (back)="cancel()"
   />

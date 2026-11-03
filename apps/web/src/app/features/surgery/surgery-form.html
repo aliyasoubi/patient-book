@@ -1,6 +1,13 @@
 <pb-page width="form">
+  <!-- On edit, whose follow-up this is: its patient's file, or the name the book wrote. -->
+  @let row = loaded();
   <pb-page-header
     [title]="title() | translate"
+    [subtitle]="
+      row?.patient
+        ? ('patient.named' | translate: { name: row.patient.fullName, fileNo: row.patient.fileNo })
+        : row?.recordedName || null
+    "
     [backLabel]="'common.back' | translate"
     (back)="cancel()"
   />

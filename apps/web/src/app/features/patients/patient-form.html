@@ -1,6 +1,18 @@
 <pb-page width="form">
+  <!-- On edit, whose record this is: the title alone does not say. -->
+  @let editing = original();
   <pb-page-header
     [title]="title() | translate"
+    [subtitle]="
+      editing
+        ? ('patient.named'
+          | translate
+            : {
+                name: editing.fullName || ('patient.unnamed' | translate),
+                fileNo: editing.fileNo,
+              })
+        : null
+    "
     [backLabel]="'common.back' | translate"
     (back)="cancel()"
   />

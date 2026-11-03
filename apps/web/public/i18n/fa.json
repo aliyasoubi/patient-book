@@ -1152,6 +1152,7 @@
   },
   "patient": {
     "unnamed": "بدون نام",
+    "named": "{{name}} · پرونده {{fileNo}}",
     "issueResolved": "هشدار بررسی و برداشته شد."
   },
   "audit": {

@@ -16,7 +16,11 @@ export interface FilterCounts {
   expiry: number;
 }
 
-/** A shelf's items that ask for attention; each item is in at most one stock count. */
+/**
+ * A shelf's items that ask for attention; each item is in at most one stock
+ * count. An empty item is one only when it has a reorder level: plenty of
+ * sizes are listed without being stocked, as the API's reorder rule says.
+ */
 export interface ShelfFlags {
   out: number;
   low: number;
@@ -37,8 +41,9 @@ export function filterCounts(items: readonly InventoryItem[]): FilterCounts {
 export function shelfFlags(items: readonly InventoryItem[]): ShelfFlags {
   const flags: ShelfFlags = { out: 0, low: 0, expired: 0, expiring: 0 };
   for (const item of items) {
-    if (item.stockState === 'out') flags.out++;
-    else if (item.stockState === 'low') flags.low++;
+    if (item.stockState === 'out') {
+      if (item.minQuantity !== null) flags.out++;
+    } else if (item.stockState === 'low') flags.low++;
     if (item.expiryState === 'expired') flags.expired++;
     else if (item.expiryState === 'expiring') flags.expiring++;
   }

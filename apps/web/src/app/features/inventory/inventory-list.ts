@@ -58,7 +58,7 @@ import {
   PbStatTile,
   PbStatusChip,
 } from '../../shared/ui';
-import type { FilterChipOption, SelectOption, StatusTone } from '../../shared/ui';
+import type { FilterChipOption, SelectOption, StatTileTone, StatusTone } from '../../shared/ui';
 import { filterCounts, shelfBrands, shelfFlags, type ShelfFlags } from './inventory-overview';
 import {
   InventoryItemDialog,
@@ -74,11 +74,31 @@ import { InventoryHistoryDialog } from './inventory-history-dialog';
 /**
  * The questions staff ask of their stock, one at a time. The API decides what
  * each means, and the dashboard counts the first and last the same way.
+ * Everything empty is not an alarm — most of it is never stocked — so that
+ * tile only lists; the reorder tile is the one that asks.
  */
-const FILTERS: readonly (FilterChipOption & { value: InventoryFilter })[] = [
-  { value: 'reorder', label: 'inventory.filterReorder', icon: 'shopping_cart', translate: true },
-  { value: 'out', label: 'inventory.filterOut', icon: 'remove_shopping_cart', translate: true },
-  { value: 'expiry', label: 'inventory.filterExpiry', icon: 'hourglass_bottom', translate: true },
+const FILTERS: readonly (FilterChipOption & { value: InventoryFilter; tone: StatTileTone })[] = [
+  {
+    value: 'reorder',
+    label: 'inventory.filterReorder',
+    icon: 'shopping_cart',
+    translate: true,
+    tone: 'warn',
+  },
+  {
+    value: 'out',
+    label: 'inventory.filterOut',
+    icon: 'remove_shopping_cart',
+    translate: true,
+    tone: 'neutral',
+  },
+  {
+    value: 'expiry',
+    label: 'inventory.filterExpiry',
+    icon: 'hourglass_bottom',
+    translate: true,
+    tone: 'warn',
+  },
 ];
 
 const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
@@ -382,6 +402,11 @@ export class InventoryList {
 
   protected expiryTone(item: InventoryItem): StatusTone {
     return EXPIRY_TONE[item.expiryState ?? 'ok'];
+  }
+
+  /** Red only for an item kept stocked — one with a reorder level; the rest just say so. */
+  protected outTone(item: InventoryItem): StatusTone {
+    return item.minQuantity !== null ? 'error' : 'neutral';
   }
 
   protected emptyHint(): string {
