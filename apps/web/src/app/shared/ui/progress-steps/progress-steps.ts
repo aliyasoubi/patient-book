@@ -105,7 +105,7 @@ export interface ProgressStep {
       height: 4px;
       border-radius: 2px;
       background: var(--_track);
-      transition: background-color 250ms var(--pb-ease-emphasized);
+      transition: background-color var(--pb-duration-medium) var(--pb-ease-emphasized);
     }
 
     .pb-steps__step[data-state='done'],
@@ -169,8 +169,8 @@ export interface ProgressStep {
         color: var(--_fg);
         font-size: var(--pb-icon-sm);
         transition:
-          background-color 250ms var(--pb-ease-emphasized),
-          box-shadow 250ms var(--pb-ease-emphasized);
+          background-color var(--pb-duration-medium) var(--pb-ease-emphasized),
+          box-shadow var(--pb-duration-medium) var(--pb-ease-emphasized);
       }
     }
 

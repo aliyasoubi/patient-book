@@ -63,8 +63,8 @@ export type StatTileTone = 'neutral' | 'caution' | 'warn';
       text-decoration: none;
       color: inherit;
       transition:
-        border-color 160ms ease,
-        transform 160ms ease;
+        border-color var(--pb-duration-short) var(--pb-ease-standard),
+        transform var(--pb-duration-short) var(--pb-ease-standard);
     }
 
     a.pb-stat-tile__body:hover {

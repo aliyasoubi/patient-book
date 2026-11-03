@@ -76,8 +76,8 @@
     font: var(--mat-sys-label-large);
     letter-spacing: var(--mat-sys-label-large-tracking);
     transition:
-      background-color 180ms var(--pb-ease-standard),
-      color 180ms var(--pb-ease-standard);
+      background-color var(--pb-duration-short) var(--pb-ease-standard),
+      color var(--pb-duration-short) var(--pb-ease-standard);
 
     &:hover {
       background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
@@ -97,7 +97,7 @@
 
   &__icon {
     font-size: var(--pb-icon-md);
-    transition: transform 200ms var(--pb-ease-spring);
+    transition: transform var(--pb-duration-medium) var(--pb-ease-spring);
   }
 
   &__link.is-active &__icon {
@@ -115,8 +115,11 @@
   gap: var(--pb-space-2);
   // Sized by content, not a fixed 64px: the 56px search pill then gets an equal
   // 8px above and below regardless of the 1px border (a fixed border-box height
-  // left it 3.5px on top and 4.5px underneath).
+  // left it 3.5px on top and 4.5px underneath). Never shorter than that, though:
+  // on the patient list the search folds to a 48px button, and the bar shrinking
+  // with it moved every page 8px on the way in and out.
   height: auto;
+  min-height: calc(var(--pb-search-height) + 2 * var(--pb-space-2) + 1px);
   padding: var(--pb-space-2) var(--pb-space-3);
   background: var(--pb-card);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
@@ -238,8 +241,8 @@
     border-radius: var(--mat-sys-corner-full);
     transform: scale(0.85);
     transition:
-      background-color 200ms var(--pb-ease-standard),
-      transform 250ms var(--pb-ease-spring);
+      background-color var(--pb-duration-short) var(--pb-ease-standard),
+      transform var(--pb-duration-medium) var(--pb-ease-spring);
 
     .material-symbols-rounded {
       font-size: var(--pb-icon-md);

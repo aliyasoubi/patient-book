@@ -155,7 +155,7 @@ export interface SearchFieldOption {
       border-radius: var(--mat-sys-corner-full);
       background: var(--mat-sys-surface-container-high);
       color: var(--mat-sys-on-surface);
-      transition: background-color 140ms ease;
+      transition: background-color var(--pb-duration-short) var(--pb-ease-standard);
 
       /* M3 state layer: on-surface at 8% over the container, no outline. */
       &:hover,

@@ -16,7 +16,8 @@
     display: block;
     box-sizing: border-box;
     cursor: pointer;
-    border-radius: var(--mat-sys-corner-medium);
+    // The tile's own card corner, so the ring drawn around it follows the card.
+    border-radius: var(--mat-sys-corner-large);
 
     &:focus-visible {
       outline: 2px solid var(--mat-sys-primary);
@@ -36,7 +37,7 @@
 
   pb-stat-tile {
     height: 100%;
-    transition: transform 160ms ease;
+    transition: transform var(--pb-duration-short) var(--pb-ease-standard);
   }
 }
 
@@ -91,7 +92,7 @@
   }
 
   &__chevron {
-    transition: transform 160ms ease;
+    transition: transform var(--pb-duration-short) var(--pb-ease-standard);
     color: var(--mat-sys-on-surface-variant);
   }
 
