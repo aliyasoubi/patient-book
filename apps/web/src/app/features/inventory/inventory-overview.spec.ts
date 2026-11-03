@@ -34,7 +34,8 @@ describe('filterCounts', () => {
 
 describe('shelfFlags', () => {
   it('counts each item once as out or low, and once as expired or expiring', () => {
-    expect(shelfFlags(items)).toEqual({ out: 2, low: 1, expired: 1, expiring: 1 });
+    // Two are empty, but only the one with a reorder level is kept stocked.
+    expect(shelfFlags(items)).toEqual({ out: 1, low: 1, expired: 1, expiring: 1 });
   });
 
   it('is quiet for a shelf with nothing to flag', () => {

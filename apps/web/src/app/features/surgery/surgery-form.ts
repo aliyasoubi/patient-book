@@ -259,7 +259,7 @@ export class SurgeryForm implements HasUnsavedChanges {
    * conflict it is the one someone else saved, so the retry is checked
    * against what the user has now been told about.
    */
-  private readonly loaded = signal<SurgeryQueueItem | null>(null);
+  protected readonly loaded = signal<SurgeryQueueItem | null>(null);
 
   /** What the chosen months resolve to, so the dentist sees the date, not just "3". */
   protected readonly followUpHint = computed(() => {
