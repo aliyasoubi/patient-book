@@ -5,12 +5,12 @@ import {
   type MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule, type SubscriptSizing } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, subscriptSizing } from '../field-errors';
 
 export interface TextFieldOption {
   /** What lands in the input when picked. Need not be unique — two patients can share a name. */
@@ -51,8 +51,9 @@ export interface TextFieldOption {
       blur doesn't push everything below the field down. A field repeated
       down a list row — a stocktake's counts — takes 'dynamic' instead, so a
       row is only as tall as its fields until one has something to say.
+      See subscriptSizing() for a message longer than the line.
     -->
-    <mat-form-field appearance="outline" [subscriptSizing]="subscript()">
+    <mat-form-field appearance="outline" [subscriptSizing]="sizing()">
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -178,6 +179,10 @@ export class PbTextField {
 
   protected errorText(): string | null {
     return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
+  }
+
+  protected sizing(): SubscriptSizing {
+    return subscriptSizing(this.control(), this.hint(), this.subscript());
   }
 
   /**

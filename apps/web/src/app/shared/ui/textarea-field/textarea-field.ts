@@ -1,11 +1,11 @@
 import { Component, inject, input } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule, type SubscriptSizing } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, subscriptSizing } from '../field-errors';
 
 /** Multi-line counterpart to {@link PbTextField} — addresses, notes, history. */
 @Component({
@@ -13,10 +13,7 @@ import { firstErrorMessage } from '../field-errors';
   standalone: true,
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
   template: `
-    <mat-form-field
-      appearance="outline"
-      [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'"
-    >
+    <mat-form-field appearance="outline" [subscriptSizing]="sizing()">
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -69,5 +66,9 @@ export class PbTextareaField {
 
   protected errorText(): string | null {
     return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
+  }
+
+  protected sizing(): SubscriptSizing {
+    return subscriptSizing(this.control(), this.hint());
   }
 }

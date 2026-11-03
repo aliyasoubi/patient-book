@@ -1,4 +1,5 @@
-import type { ValidationErrors } from '@angular/forms';
+import type { AbstractControl, ValidationErrors } from '@angular/forms';
+import type { SubscriptSizing } from '@angular/material/form-field';
 import type { TranslateService } from '@ngx-translate/core';
 
 /**
@@ -58,6 +59,24 @@ function defaultMessage(key: string, error: unknown, i18n: TranslateService): st
     default:
       return null;
   }
+}
+
+/**
+ * Room for a field's hint/error line. `sizing` is what the field keeps while
+ * nothing shows: a line (`fixed`), so an error appearing on blur does not push
+ * the form down, or none (`dynamic`), for a field down a list row. While a
+ * hint or an error is showing it is `dynamic`: the same height for one line,
+ * and a message too long for it wraps below rather than running over the
+ * field underneath. An error shows once its field is touched; a refused save
+ * marks every field touched.
+ */
+export function subscriptSizing(
+  control: AbstractControl | null,
+  hint: string | null,
+  sizing: SubscriptSizing = 'fixed',
+): SubscriptSizing {
+  const showing = !!hint || !!(control?.invalid && control.touched);
+  return showing ? 'dynamic' : sizing;
 }
 
 /**

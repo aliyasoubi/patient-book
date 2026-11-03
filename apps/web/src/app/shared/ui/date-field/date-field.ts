@@ -1,11 +1,11 @@
 import { Component, inject, input } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule, type SubscriptSizing } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, subscriptSizing } from '../field-errors';
 
 /**
  * The Jalali date input used on every date the practice records — birth date,
@@ -18,10 +18,7 @@ import { firstErrorMessage } from '../field-errors';
   standalone: true,
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatDatepickerModule],
   template: `
-    <mat-form-field
-      appearance="outline"
-      [subscriptSizing]="hint() || errorText() ? 'dynamic' : 'fixed'"
-    >
+    <mat-form-field appearance="outline" [subscriptSizing]="sizing()">
       @if (label()) {
         <mat-label>{{ label() }}</mat-label>
       }
@@ -62,5 +59,9 @@ export class PbDateField {
 
   protected errorText(): string | null {
     return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
+  }
+
+  protected sizing(): SubscriptSizing {
+    return subscriptSizing(this.control(), this.hint());
   }
 }
