@@ -51,6 +51,12 @@ export class InventoryController {
     return this.inventory.brands();
   }
 
+  @Get('suppliers')
+  @ApiOperation({ summary: 'Who deliveries have come from, latest first' })
+  suppliers() {
+    return this.inventory.suppliers();
+  }
+
   @Get('sold-to/:patientId')
   @ApiOperation({ summary: 'What a patient bought, newest first' })
   soldTo(@Param('patientId', ParseUUIDPipe) patientId: string) {

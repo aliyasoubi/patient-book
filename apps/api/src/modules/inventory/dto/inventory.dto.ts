@@ -282,7 +282,7 @@ export class InventoryMovementDto {
   @IsOptional()
   tooth?: string | null;
 
-  /** On a sale: what one went for, in rials. */
+  /** In rials: on a sale, what one went for; on a delivery, what one cost. */
   @ApiPropertyOptional({ minimum: 0, example: 1_250_000 })
   @IsInt()
   @Min(0)
@@ -290,7 +290,15 @@ export class InventoryMovementDto {
   @IsOptional()
   unitPrice?: number | null;
 
-  @ApiPropertyOptional({ description: 'Supplier, invoice, reason' })
+  /** On a delivery: who it came from. */
+  @ApiPropertyOptional()
+  @Transform(clean)
+  @IsString()
+  @MaxLength(120)
+  @IsOptional()
+  supplier?: string | null;
+
+  @ApiPropertyOptional({ description: 'Invoice, reason' })
   @Transform(clean)
   @IsString()
   @MaxLength(300)

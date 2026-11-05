@@ -39,6 +39,7 @@ import {
   type TextFieldOption,
 } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
+import { fold, MAX_SUGGESTIONS } from './inventory-item-dialog';
 
 /** An expiry the API will read — said on the field, before it is sent. */
 const readableExpiry = (control: AbstractControl<string>): ValidationErrors | null =>
@@ -87,7 +88,8 @@ const COPY: Record<
 /**
  * One delivery, use, discard or count, filled in already for the common case
  * — one used, one received, the count as recorded — so Enter alone records
- * it. A delivery reads its lot and expiry off the packs. A use or a discard
+ * it. A delivery reads its lot and expiry off the packs, and says who it came
+ * from and what it cost when that is to hand. A use or a discard
  * comes out of the first-expiring batch unless another is picked; an implant
  * or a graft names its batch and the patient it went into, which is what a
  * recall is traced through — an implant also its tooth, one implant into one
@@ -174,6 +176,12 @@ const COPY: Record<
             [maxlength]="20"
             [ltr]="true"
           />
+          <pb-text-field
+            [control]="form.controls.supplier"
+            [label]="'inventoryMove.supplier' | translate"
+            [options]="supplierOptions()"
+            [maxlength]="120"
+          />
         }
         @if (namesPatient) {
           <!-- Typing searches the patient book by name, mobile or file; the
@@ -219,10 +227,13 @@ const COPY: Record<
             </div>
           }
         }
-        @if (asksPrice) {
+        @if (asksPrice || kind === 'receive') {
           <pb-text-field
             [control]="form.controls.unitPrice"
-            [label]="'inventoryMove.unitPrice' | translate: { unit: unit() }"
+            [label]="
+              (asksPrice ? 'inventoryMove.unitPrice' : 'inventoryMove.buyPrice')
+                | translate: { unit: unit() }
+            "
             [hint]="priceHint()"
             inputmode="numeric"
             [ltr]="true"
@@ -388,9 +399,10 @@ export class InventoryMovementDialog {
     ],
     tooth: this.fb.nonNullable.control<number[]>([], this.mustTooth ? Validators.required : null),
     unitPrice: [
-      this.item.salePrice != null ? String(this.item.salePrice) : '',
-      this.asksPrice ? [Validators.required, digitString(1, 10)] : [],
+      this.asksPrice && this.item.salePrice != null ? String(this.item.salePrice) : '',
+      this.asksPrice ? [Validators.required, digitString(1, 10)] : digitString(1, 10),
     ],
+    supplier: ['', Validators.maxLength(120)],
     note: ['', Validators.maxLength(300)],
   });
 
@@ -407,7 +419,20 @@ export class InventoryMovementDialog {
     initialValue: this.form.controls.unitPrice.value,
   });
 
-  /** What the patient pays for all of them, so nobody has to multiply. */
+  /** Who deliveries have come from, offered as the name is typed. */
+  private readonly suppliers = signal<string[]>([]);
+  private readonly supplierTyped = toSignal(this.form.controls.supplier.valueChanges, {
+    initialValue: '',
+  });
+  protected readonly supplierOptions = computed<TextFieldOption[]>(() => {
+    const typed = fold(this.supplierTyped());
+    return this.suppliers()
+      .filter((name) => !typed || fold(name).includes(typed))
+      .slice(0, MAX_SUGGESTIONS)
+      .map((name) => ({ value: name, label: name }));
+  });
+
+  /** What they all come to, so nobody has to multiply. */
   protected readonly priceHint = computed(() => {
     const total =
       Number(toLatinDigits(this.unitPrice()).trim()) *
@@ -551,6 +576,13 @@ export class InventoryMovementDialog {
       this.linkedPatient.set(null),
     );
     this.destroyRef.onDestroy(() => retyped.unsubscribe());
+    if (this.kind === 'receive') {
+      // Suggestions are a convenience: without them the field still works.
+      this.inventory.suppliers().subscribe({
+        next: (names) => this.suppliers.set(names),
+        error: () => this.suppliers.set([]),
+      });
+    }
     if (!this.takesOut) return;
     this.form.controls.lotId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -633,6 +665,7 @@ export class InventoryMovementDialog {
       return;
     }
     const raw = this.form.getRawValue();
+    const price = toLatinDigits(raw.unitPrice).trim();
     this.saving.set(true);
     this.formError.set(null);
     this.inventory
@@ -643,6 +676,7 @@ export class InventoryMovementDialog {
           ? {
               lotNumber: raw.lotNumber.trim() || null,
               expiry: toLatinDigits(raw.expiry).trim() || null,
+              supplier: raw.supplier.trim() || null,
             }
           : {}),
         ...(this.takesOut ? { lotId: raw.lotId || null } : {}),
@@ -652,7 +686,7 @@ export class InventoryMovementDialog {
               tooth: (this.isImplant && raw.tooth.join(' ')) || null,
             }
           : {}),
-        ...(this.asksPrice ? { unitPrice: Number(toLatinDigits(raw.unitPrice).trim()) } : {}),
+        ...(price ? { unitPrice: Number(price) } : {}),
         note: raw.note.trim() || null,
       })
       .subscribe({

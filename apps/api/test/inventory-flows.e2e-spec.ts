@@ -64,6 +64,7 @@ interface ItemBody {
     lotNumber: string | null;
     patient: { id: string; fileNo: string; fullName: string } | null;
     unitPrice: number | null;
+    supplier: string | null;
     note: string | null;
     by: string | null;
   }>;
@@ -963,6 +964,46 @@ describeIfWritable('inventory flows (e2e)', () => {
       patientId,
       unitPrice: 20_000_000_000,
     }).expect(400);
+    await archive(item.id);
+  });
+
+  it('keeps who each delivery came from and what it cost', async () => {
+    const item = await addItem({ name: `supplied-${runId}`, quantity: 0 });
+    const first = `supplier-a-${runId}`;
+    const second = `supplier-b-${runId}`;
+    await move(item.id, {
+      kind: 'receive',
+      quantity: 10,
+      supplier: first,
+      unitPrice: 500_000,
+    }).expect(200);
+    const delivered = (
+      await move(item.id, {
+        kind: 'receive',
+        quantity: 5,
+        supplier: second,
+        unitPrice: 600_000,
+      }).expect(200)
+    ).body as ItemBody;
+    // One product, two suppliers, two prices.
+    expect(delivered.movements.slice(0, 2)).toMatchObject([
+      { supplier: second, unitPrice: 600_000 },
+      { supplier: first, unitPrice: 500_000 },
+    ]);
+
+    const suppliers = (
+      await asStaff(http().get('/api/inventory/items/suppliers')).expect(200)
+    ).body as string[];
+    expect(suppliers.indexOf(second)).toBeLessThan(suppliers.indexOf(first));
+
+    // Neither is asked of a delivery: stock still goes in without its invoice.
+    const plain = (
+      await move(item.id, { kind: 'receive', quantity: 1 }).expect(200)
+    ).body as ItemBody;
+    expect(plain.movements[0]).toMatchObject({
+      supplier: null,
+      unitPrice: null,
+    });
     await archive(item.id);
   });
 
