@@ -23,9 +23,9 @@ import type {
 import { PatientsService } from '../patients/data/patients.service';
 import type { PatientSuggestion } from '../patients/data/patient.model';
 import { dropPickOnRetype } from '../../shared/form-sync';
-import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
+import { formatPersianCount, formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
-import { toLatinDigits } from '../../shared/validators';
+import { digitString, toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
 
 import {
@@ -93,7 +93,8 @@ const COPY: Record<
  * recall is traced through — an implant also its tooth, one implant into one
  * tooth picked on the chart the follow-ups and the lab use, the day's others
  * joining the same follow-up — and a toothbrush, floss or a home bleaching kit
- * names the patient it was sold to. What is taken out is checked against the shelf
+ * names the patient it was sold to and what it went for, starting from the
+ * item's own price. What is taken out is checked against the shelf
  * here as well as by the API, which has the final word if someone else took
  * the last one meanwhile.
  */
@@ -218,6 +219,15 @@ const COPY: Record<
             </div>
           }
         }
+        @if (asksPrice) {
+          <pb-text-field
+            [control]="form.controls.unitPrice"
+            [label]="'inventoryMove.unitPrice' | translate: { unit: unit() }"
+            [hint]="priceHint()"
+            inputmode="numeric"
+            [ltr]="true"
+          />
+        }
         <pb-text-field
           [control]="form.controls.note"
           [label]="'inventoryMove.note' | translate"
@@ -316,6 +326,8 @@ export class InventoryMovementDialog {
   protected readonly namesPatient =
     this.kind === 'use' &&
     (this.item.usedPerPatient ?? (this.item.category === 'implant' || this.sold));
+  /** A sale says what it went for, starting from the item's price. */
+  protected readonly asksPrice = this.kind === 'use' && this.sold;
   private readonly mustTrace = this.kind === 'receive' && this.traceable;
   /** An implant handed to a patient also goes into their implant file, by its tooth. */
   protected readonly isImplant = this.item.category === 'implant';
@@ -375,6 +387,10 @@ export class InventoryMovementDialog {
       ],
     ],
     tooth: this.fb.nonNullable.control<number[]>([], this.mustTooth ? Validators.required : null),
+    unitPrice: [
+      this.item.salePrice != null ? String(this.item.salePrice) : '',
+      this.asksPrice ? [Validators.required, digitString(1, 10)] : [],
+    ],
     note: ['', Validators.maxLength(300)],
   });
 
@@ -386,6 +402,19 @@ export class InventoryMovementDialog {
   });
   private readonly lotPicked = toSignal(this.form.controls.lotId.valueChanges, {
     initialValue: '',
+  });
+  private readonly unitPrice = toSignal(this.form.controls.unitPrice.valueChanges, {
+    initialValue: this.form.controls.unitPrice.value,
+  });
+
+  /** What the patient pays for all of them, so nobody has to multiply. */
+  protected readonly priceHint = computed(() => {
+    const total =
+      Number(toLatinDigits(this.unitPrice()).trim()) *
+      Number(toLatinDigits(this.quantity()).trim());
+    return total
+      ? this.i18n.instant('inventoryMove.priceTotal', { amount: formatPersianCount(total) })
+      : null;
   });
 
   /** The patient picked from the book; a name typed and not picked links nothing. */
@@ -623,6 +652,7 @@ export class InventoryMovementDialog {
               tooth: (this.isImplant && raw.tooth.join(' ')) || null,
             }
           : {}),
+        ...(this.asksPrice ? { unitPrice: Number(toLatinDigits(raw.unitPrice).trim()) } : {}),
         note: raw.note.trim() || null,
       })
       .subscribe({

@@ -242,11 +242,49 @@ export class InventoryService {
                 fullName: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim(),
               }
             : null,
+        unitPrice: m.unitPrice,
         note: m.note,
         by: m.fullName?.trim() || m.account || m.username,
         at: formatJalali(new Date(m.createdAt), 'yyyy/MM/dd HH:mm'),
       })),
     };
+  }
+
+  /**
+   * What a patient bought, newest first: one row per sale, however many
+   * batches it came out of, since the lines of one movement share `createdAt`.
+   */
+  async soldTo(patientId: string): Promise<unknown[]> {
+    const rows = await this.items.query<
+      Array<{
+        name: string;
+        brand: string | null;
+        spec: string | null;
+        unit: InventoryUnit;
+        unitPrice: number | null;
+        quantity: number;
+        at: Date;
+      }>
+    >(
+      `SELECT i.name, i.brand, i.spec, i.unit, m."unitPrice",
+              (-sum(m.change))::int AS quantity, m."createdAt" AS at
+         FROM inventory_movements m
+         JOIN inventory_items i ON i.id = m."itemId"
+        WHERE m."patientId" = $1
+          AND m.kind = $2
+          AND (i."soldToPatients" OR m."unitPrice" IS NOT NULL)
+        GROUP BY i.id, m."createdAt", m."unitPrice"
+        ORDER BY m."createdAt" DESC
+        LIMIT ${HISTORY_LIMIT}`,
+      [patientId, InventoryMovementKind.Use],
+    );
+    return rows.map((r) => ({
+      name: [r.name, r.brand, r.spec].filter(Boolean).join(' · '),
+      unit: r.unit,
+      quantity: r.quantity,
+      unitPrice: r.unitPrice,
+      at: formatJalali(new Date(r.at), 'yyyy/MM/dd'),
+    }));
   }
 
   async create(
@@ -418,6 +456,7 @@ export class InventoryService {
         note: dto.note,
         patientId,
         tooth: teeth,
+        unitPrice: dto.unitPrice,
       });
       if (patientId && teeth) {
         await this.placeImplants(
@@ -513,6 +552,7 @@ export class InventoryService {
               expiry: l.expiryText,
               patientId: l.patientId,
               tooth: l.tooth,
+              unitPrice: l.unitPrice,
               note: l.note,
               surgeryId: l.surgeryId,
               userId: l.userId,
@@ -828,6 +868,7 @@ export class InventoryService {
     if (dto.soldToPatients !== undefined) {
       item.soldToPatients = dto.soldToPatients;
     }
+    if (dto.salePrice !== undefined) item.salePrice = dto.salePrice ?? null;
     // One spelling for a brand and one form for a size, however typed.
     item.brand = canonicalBrand(item.brand);
     item.spec = normalizeSpec(item.category, item.spec);
@@ -869,6 +910,7 @@ export class InventoryService {
       expiryState: expiryState(i.expiresOn, i.quantity, now),
       notes: i.notes,
       soldToPatients: i.soldToPatients,
+      salePrice: i.salePrice,
       /** A use must name its patient: an implant, a membrane, or an item sold to patients. */
       usedPerPatient: namesPatient(i),
       isArchived: i.deletedAt !== null,

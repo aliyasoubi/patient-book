@@ -51,6 +51,12 @@ export class InventoryController {
     return this.inventory.brands();
   }
 
+  @Get('sold-to/:patientId')
+  @ApiOperation({ summary: 'What a patient bought, newest first' })
+  soldTo(@Param('patientId', ParseUUIDPipe) patientId: string) {
+    return this.inventory.soldTo(patientId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'One item and its stock card, newest first' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {

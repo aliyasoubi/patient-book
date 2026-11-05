@@ -25,7 +25,7 @@ import {
   inventoryCategoryLabel,
   inventoryUnitLabel,
 } from '../../shared/labels';
-import { toLatinDigits } from '../../shared/validators';
+import { digitString, toLatinDigits } from '../../shared/validators';
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import {
   PbBanner,
@@ -242,6 +242,16 @@ const MAX_SUGGESTIONS = 8;
             </pb-checkbox-field>
             <span class="form__note">{{ 'inventoryForm.soldToPatientsHint' | translate }}</span>
           </div>
+          @if (soldToPatients()) {
+            <pb-text-field
+              class="pb-field-grid__full"
+              [control]="form.controls.salePrice"
+              [label]="'inventoryForm.salePrice' | translate"
+              [hint]="'inventoryForm.salePriceHint' | translate"
+              inputmode="numeric"
+              [ltr]="true"
+            />
+          }
           <pb-textarea-field
             class="pb-field-grid__full"
             [control]="form.controls.notes"
@@ -340,6 +350,7 @@ export class InventoryItemDialog {
     notes: [this.item?.notes ?? '', Validators.maxLength(2000)],
     // Another size of a toothbrush is a toothbrush too.
     soldToPatients: [this.base?.soldToPatients ?? false],
+    salePrice: [this.base?.salePrice != null ? String(this.base.salePrice) : '', digitString(1, 10)],
   });
 
   /** Everything on the shelves, for the suggestions. */
@@ -496,6 +507,7 @@ export class InventoryItemDialog {
       minQuantity: countValue(raw.minQuantity),
       notes: blank(raw.notes),
       soldToPatients: raw.soldToPatients,
+      salePrice: countValue(raw.salePrice),
     };
     this.saving.set(true);
     this.formError.set(null);

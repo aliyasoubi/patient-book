@@ -18,7 +18,7 @@ import type {
   InventoryLot,
 } from '../../core/models/common.model';
 import { LoadError } from '../../shared/components/load-error';
-import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import {
   expiryLabel,
   INVENTORY_MOVEMENT_ICONS,
@@ -39,8 +39,8 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
 /**
  * An item's stock card (کاردکس): the batches on the shelf, first-expiring
  * first, then every delivery, use, discard and count, newest first — which
- * batch each moved, the patient a use went into, who recorded it and the
- * balance it left. A line is never changed; a wrong one is put right by a
+ * batch each moved, the patient a use went into, what a sale went for, who
+ * recorded it and the balance it left. A line is never changed; a wrong one is put right by a
  * count. A batch's lot number or expiry typed wrong can be corrected here.
  */
 @Component({
@@ -52,6 +52,7 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
     MatProgressBarModule,
     TranslatePipe,
     LoadError,
+    PersianCountPipe,
     PersianNumberPipe,
     PbButton,
     PbIconButton,
@@ -138,6 +139,12 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
                         }}
                       }
                     </pb-status-chip>
+                  }
+                  @if (m.unitPrice !== null) {
+                    <span class="line__change">{{
+                      'inventoryHistory.price'
+                        | translate: { amount: (m.unitPrice * -m.change | faCount) }
+                    }}</span>
                   }
                 </span>
                 @if (m.note) {

@@ -10,6 +10,7 @@ import type {
   InventoryItemDetail,
   InventoryMovementKind,
   InventoryUnit,
+  PatientPurchase,
 } from '../models/common.model';
 import { toParams } from './http-params.util';
 
@@ -25,6 +26,8 @@ export interface InventoryItemInput {
   expiry?: string | null;
   notes?: string | null;
   soldToPatients?: boolean;
+  /** In rials. */
+  salePrice?: number | null;
   /** On creation only: what is on the shelf, as the first batch. */
   quantity?: number;
   lotNumber?: string | null;
@@ -43,6 +46,8 @@ export interface InventoryMovementInput {
   patientId?: string | null;
   /** An implant's tooth, or one tooth per implant («36 37»). */
   tooth?: string | null;
+  /** On a sale: what one went for, in rials. */
+  unitPrice?: number | null;
   note?: string | null;
 }
 
@@ -79,6 +84,11 @@ export class InventoryService {
   /** Brands to suggest: the standard list, as it spells them, and those in stock. */
   brands(): Observable<{ name: string; spellings: string[] }[]> {
     return this.http.get<{ name: string; spellings: string[] }[]>(`${this.items}/brands`);
+  }
+
+  /** What a patient bought, newest first. */
+  soldTo(patientId: string): Observable<PatientPurchase[]> {
+    return this.http.get<PatientPurchase[]>(`${this.items}/sold-to/${patientId}`);
   }
 
   /** One item with its stock card, newest first. */

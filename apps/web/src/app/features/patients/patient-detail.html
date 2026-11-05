@@ -186,6 +186,31 @@
               <p class="card__note">{{ p.notes }}</p>
             </pb-surface>
           }
+
+          @if (purchases().length) {
+            <pb-surface [title]="'patientDetail.purchases' | translate">
+              <ul class="registry">
+                @for (sale of purchases(); track $index) {
+                  <li>
+                    <mat-icon aria-hidden="true">shopping_cart</mat-icon>
+                    <span class="registry__lab">
+                      <span dir="auto">{{ sale.name }}</span>
+                      <small>
+                        {{ sale.quantity | faNum }} {{ unitLabel(sale.unit) | translate }} ·
+                        {{ sale.at | faNum }}
+                      </small>
+                    </span>
+                    @if (sale.unitPrice !== null) {
+                      <pb-status-chip>{{
+                        'inventoryHistory.price'
+                          | translate: { amount: (sale.unitPrice * sale.quantity | faCount) }
+                      }}</pb-status-chip>
+                    }
+                  </li>
+                }
+              </ul>
+            </pb-surface>
+          }
         </div>
       </mat-tab>
 

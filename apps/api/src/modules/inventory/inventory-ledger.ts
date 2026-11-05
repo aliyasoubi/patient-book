@@ -15,6 +15,8 @@ export interface LineMeta {
   patientId?: string | null;
   /** On an implant's use: the teeth it went into. */
   tooth?: string | null;
+  /** On a sale: what one went for, in rials. */
+  unitPrice?: number | null;
 }
 
 /** An item's batches, oldest delivery first. */
@@ -57,6 +59,7 @@ export async function writeMovement(
       patientId: meta.patientId ?? null,
       note: meta.note ?? null,
       tooth: meta.tooth ?? null,
+      unitPrice: meta.unitPrice ?? null,
       userId: meta.userId,
       username: meta.username ?? null,
     });
