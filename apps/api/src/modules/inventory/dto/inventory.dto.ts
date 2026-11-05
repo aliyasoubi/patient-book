@@ -51,6 +51,9 @@ const clean = ({ value }: { value: unknown }): unknown =>
 /** Far beyond any clinic's shelf; a typo of extra zeros is refused, not stocked. */
 const MAX_QUANTITY = 100_000;
 
+/** The same for a price, in rials: nearly all its int column can hold. */
+const MAX_PRICE = 2_000_000_000;
+
 /** An expiry as printed on the pack — see `parseExpiry` for what reads. */
 @ValidatorConstraint({ name: 'expiry', async: false })
 export class IsExpiryConstraint implements ValidatorConstraintInterface {
@@ -176,6 +179,14 @@ export class CreateInventoryItemDto {
   @IsOptional()
   soldToPatients?: boolean;
 
+  /** What it sells for today, in rials. */
+  @ApiPropertyOptional({ minimum: 0, nullable: true })
+  @IsInt()
+  @Min(0)
+  @Max(MAX_PRICE)
+  @IsOptional()
+  salePrice?: number | null;
+
   /**
    * What is on the shelf now, recorded as the item's first count. It opens
    * the item's first batch, with `expiry` and `lotNumber`.
@@ -270,6 +281,14 @@ export class InventoryMovementDto {
   @MaxLength(60)
   @IsOptional()
   tooth?: string | null;
+
+  /** On a sale: what one went for, in rials. */
+  @ApiPropertyOptional({ minimum: 0, example: 1_250_000 })
+  @IsInt()
+  @Min(0)
+  @Max(MAX_PRICE)
+  @IsOptional()
+  unitPrice?: number | null;
 
   @ApiPropertyOptional({ description: 'Supplier, invoice, reason' })
   @Transform(clean)

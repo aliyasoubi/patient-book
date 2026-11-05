@@ -61,6 +61,10 @@ export class InventoryMovement {
   @Column({ type: 'uuid', nullable: true })
   patientId!: string | null;
 
+  /** On a sale: what one went for, in rials. One sale can be two lines, one per batch. */
+  @Column({ type: 'int', nullable: true })
+  unitPrice!: number | null;
+
   /** Supplier and invoice, the patient's file, why it was thrown away. */
   @Column({ type: 'varchar', length: 300, nullable: true })
   note!: string | null;

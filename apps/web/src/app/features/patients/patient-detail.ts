@@ -15,12 +15,14 @@ import { PatientsService } from './data/patients.service';
 import { RecentPatientsService } from './data/recent-patients.service';
 import { PatientListContext } from './patient-list-context';
 import { AuthService } from '../../core/services/auth.service';
+import { InventoryService } from '../../core/services/inventory.service';
 import { RegistryKind, RegistryService } from '../../core/services/registry.service';
 import { LabService } from '../../core/services/lab.service';
 import { JalaliPipe, jalaliStamp } from '../../shared/pipes/jalali.pipe';
 import {
   formatPersianCount,
   formatPersianNumber,
+  PersianCountPipe,
   PersianNumberPipe,
 } from '../../shared/pipes/persian-number.pipe';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
@@ -34,6 +36,7 @@ import {
   genderIcon,
   genderLabel,
   contactOutcomeLabel,
+  inventoryUnitLabel,
   labStageLabel,
   labWorkTypeLabel,
   surgeryDoneLabel,
@@ -55,7 +58,12 @@ import {
   PbSurface,
 } from '../../shared/ui';
 import type { DataIssue, Patient, RegistryRef } from './data/patient.model';
-import type { AuditEntry, LabCase, SurgeryQueueItem } from '../../core/models/common.model';
+import type {
+  AuditEntry,
+  LabCase,
+  PatientPurchase,
+  SurgeryQueueItem,
+} from '../../core/models/common.model';
 import type { StatusTone } from '../../shared/ui';
 
 @Component({
@@ -68,6 +76,7 @@ import type { StatusTone } from '../../shared/ui';
     MatProgressBarModule,
     MatDialogModule,
     JalaliPipe,
+    PersianCountPipe,
     PersianNumberPipe,
     LoadError,
     PbButton,
@@ -88,6 +97,7 @@ export class PatientDetail {
   private readonly recent = inject(RecentPatientsService);
   private readonly registry = inject(RegistryService);
   private readonly labService = inject(LabService);
+  private readonly inventory = inject(InventoryService);
   private readonly listContext = inject(PatientListContext);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -158,6 +168,10 @@ export class PatientDetail {
   protected readonly surgeryDoneLabel = surgeryDoneLabel;
   protected readonly contactOutcomeLabel = contactOutcomeLabel;
   protected readonly placedImplantLine = placedImplantLine;
+
+  /** What the patient bought from the stock; the card is there only if they did. */
+  protected readonly purchases = signal<PatientPurchase[]>([]);
+  protected readonly unitLabel = inventoryUnitLabel;
 
   /** Where the follow-up stands, in the words and colours of its card on the list. */
   protected followUpNote(f: SurgeryQueueItem): string {
@@ -251,6 +265,9 @@ export class PatientDetail {
   /** And for the follow-ups. */
   private readonly followUps$ = new Subject<string>();
 
+  /** And for what they bought. */
+  private readonly purchases$ = new Subject<string>();
+
   constructor() {
     this.load$
       .pipe(
@@ -307,6 +324,20 @@ export class PatientDetail {
         this.followUpsState.set(failed ? 'failed' : 'loaded');
       });
 
+    this.purchases$
+      .pipe(
+        switchMap((id) =>
+          this.inventory.soldTo(id).pipe(
+            map((sales) => ({ id, sales })),
+            catchError(() => of({ id, sales: [] as PatientPurchase[] })),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ id, sales }) => {
+        if (id === this.id()) this.purchases.set(sales);
+      });
+
     this.labCases$
       .pipe(
         switchMap((id) =>
@@ -343,6 +374,8 @@ export class PatientDetail {
     this.load$.next(id);
     this.loadLabCases();
     this.loadFollowUps();
+    this.purchases.set([]);
+    this.purchases$.next(this.id());
   }
 
   protected loadFollowUps(): void {

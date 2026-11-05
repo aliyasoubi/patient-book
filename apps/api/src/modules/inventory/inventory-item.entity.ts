@@ -80,6 +80,10 @@ export class InventoryItem {
   @Column({ type: 'boolean', default: false })
   soldToPatients!: boolean;
 
+  /** What it sells for today, in rials: where a sale starts from. */
+  @Column({ type: 'int', nullable: true })
+  salePrice!: number | null;
+
   /**
    * Category, folded name, brand and spec — see `identityKey`. Unique among
    * active items, so one product's stock is never split across two rows.

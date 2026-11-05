@@ -49,6 +49,7 @@ interface ItemBody {
   version: number;
   isArchived: boolean;
   soldToPatients: boolean;
+  salePrice: number | null;
   lots: Array<{
     id: string;
     lotNumber: string | null;
@@ -62,6 +63,7 @@ interface ItemBody {
     quantityAfter: number;
     lotNumber: string | null;
     patient: { id: string; fileNo: string; fullName: string } | null;
+    unitPrice: number | null;
     note: string | null;
     by: string | null;
   }>;
@@ -919,6 +921,85 @@ describeIfWritable('inventory flows (e2e)', () => {
         .expect(200)
     ).body as ItemBody;
     expect(edited.soldToPatients).toBe(false);
+    await archive(item.id);
+  });
+
+  it('keeps what a sale went for, whatever the item costs later', async () => {
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({ fileNo: `8${Date.now()}`, firstName: 'آزمون', lastName: 'قیمت' })
+      .expect(201);
+    const patientId = (patient.body as { id: string }).id;
+    patientIds.push(patientId);
+    const item = await addItem({
+      name: `priced-${runId}`,
+      category: 'hygiene',
+      quantity: 5,
+      soldToPatients: true,
+      salePrice: 1_000_000,
+    });
+    expect(item.salePrice).toBe(1_000_000);
+    const sold = (
+      await move(item.id, {
+        kind: 'use',
+        quantity: 2,
+        patientId,
+        unitPrice: 900_000,
+      }).expect(200)
+    ).body as ItemBody;
+    expect(sold.movements[0].unitPrice).toBe(900_000);
+
+    const repriced = (
+      await asStaff(http().patch(`/api/inventory/items/${item.id}`))
+        .send({ salePrice: 2_000_000, expectedVersion: sold.version })
+        .expect(200)
+    ).body as ItemBody;
+    expect(repriced.salePrice).toBe(2_000_000);
+    expect(repriced.movements[0].unitPrice).toBe(900_000);
+
+    // A typo of extra zeros is refused, not stored.
+    await move(item.id, {
+      kind: 'use',
+      quantity: 1,
+      patientId,
+      unitPrice: 20_000_000_000,
+    }).expect(400);
+    await archive(item.id);
+  });
+
+  it('lists what a patient bought, one row per sale', async () => {
+    const patient = await asStaff(http().post('/api/patients'))
+      .send({ fileNo: `9${Date.now()}`, firstName: 'آزمون', lastName: 'خرید' })
+      .expect(201);
+    const patientId = (patient.body as { id: string }).id;
+    patientIds.push(patientId);
+    const item = await addItem({
+      name: `bought-${runId}`,
+      category: 'hygiene',
+      quantity: 1,
+      lotNumber: 'A',
+      expiry: printed(6),
+      soldToPatients: true,
+    });
+    await move(item.id, {
+      kind: 'receive',
+      quantity: 5,
+      lotNumber: 'B',
+      expiry: printed(12),
+    }).expect(200);
+    // Out of both batches: two stock card lines, one sale.
+    await move(item.id, {
+      kind: 'use',
+      quantity: 3,
+      patientId,
+      unitPrice: 90_000,
+    }).expect(200);
+
+    const bought = (
+      await asStaff(
+        http().get(`/api/inventory/items/sold-to/${patientId}`),
+      ).expect(200)
+    ).body as Array<{ quantity: number; unitPrice: number | null }>;
+    expect(bought).toMatchObject([{ quantity: 3, unitPrice: 90_000 }]);
     await archive(item.id);
   });
 

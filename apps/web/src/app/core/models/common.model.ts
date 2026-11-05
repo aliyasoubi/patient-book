@@ -313,6 +313,8 @@ export interface InventoryItem {
   /** A use must name its patient: an implant or a membrane. */
   usedPerPatient?: boolean;
   soldToPatients: boolean;
+  /** What it sells for today, in rials. */
+  salePrice: number | null;
   isArchived: boolean;
   /** Bumped by every edit and every movement; sent back on an edit. */
   version: number;
@@ -339,6 +341,8 @@ export interface InventoryMovement {
   expiry: string | null;
   /** The patient a use went into, or an item was sold to. */
   patient: { id: string; fileNo: string; fullName: string } | null;
+  /** On a sale: what one went for, in rials. */
+  unitPrice: number | null;
   note: string | null;
   /** Who recorded it, by the name staff know them by. */
   by: string | null;
@@ -351,6 +355,18 @@ export interface InventoryItemDetail extends InventoryItem {
   lots: InventoryLot[];
   /** Newest first. */
   movements: InventoryMovement[];
+}
+
+/** One sale to a patient, for their file. */
+export interface PatientPurchase {
+  /** Name, brand and size, as one line. */
+  name: string;
+  unit: InventoryUnit;
+  quantity: number;
+  /** In rials; null on a sale from before prices were kept. */
+  unitPrice: number | null;
+  /** Jalali `yyyy/MM/dd`. */
+  at: string;
 }
 
 /** The front desk's work: each count is a list the dashboard links to. */
