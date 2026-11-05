@@ -178,6 +178,18 @@ export class InventoryService {
     ].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
   }
 
+  /** Who deliveries have come from, latest first: what the delivery form suggests. */
+  async suppliers(): Promise<string[]> {
+    const rows = await this.items.query<Array<{ supplier: string }>>(
+      `SELECT m.supplier
+         FROM inventory_movements m
+        WHERE m.supplier IS NOT NULL
+        GROUP BY m.supplier
+        ORDER BY max(m."createdAt") DESC`,
+    );
+    return rows.map((r) => r.supplier);
+  }
+
   /**
    * One item, its batches on the shelf first-expiring first, and its stock
    * card newest first. Read through `manager` to see it as a transaction
@@ -243,6 +255,7 @@ export class InventoryService {
               }
             : null,
         unitPrice: m.unitPrice,
+        supplier: m.supplier,
         note: m.note,
         by: m.fullName?.trim() || m.account || m.username,
         at: formatJalali(new Date(m.createdAt), 'yyyy/MM/dd HH:mm'),
@@ -457,6 +470,7 @@ export class InventoryService {
         patientId,
         tooth: teeth,
         unitPrice: dto.unitPrice,
+        supplier: dto.supplier,
       });
       if (patientId && teeth) {
         await this.placeImplants(
@@ -553,6 +567,7 @@ export class InventoryService {
               patientId: l.patientId,
               tooth: l.tooth,
               unitPrice: l.unitPrice,
+              supplier: l.supplier,
               note: l.note,
               surgeryId: l.surgeryId,
               userId: l.userId,

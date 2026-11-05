@@ -16,6 +16,7 @@ import type {
   InventoryItem,
   InventoryItemDetail,
   InventoryLot,
+  InventoryMovement,
 } from '../../core/models/common.model';
 import { LoadError } from '../../shared/components/load-error';
 import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
@@ -39,8 +40,9 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
 /**
  * An item's stock card (کاردکس): the batches on the shelf, first-expiring
  * first, then every delivery, use, discard and count, newest first — which
- * batch each moved, the patient a use went into, what a sale went for, who
- * recorded it and the balance it left. A line is never changed; a wrong one is put right by a
+ * batch each moved, the patient a use went into, who a delivery came from,
+ * what a sale went for or a delivery cost, who recorded it and the balance it
+ * left. A line is never changed; a wrong one is put right by a
  * count. A batch's lot number or expiry typed wrong can be corrected here.
  */
 @Component({
@@ -140,10 +142,12 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
                       }
                     </pb-status-chip>
                   }
+                  @if (m.supplier) {
+                    <span class="line__meta" dir="auto">{{ m.supplier }}</span>
+                  }
                   @if (m.unitPrice !== null) {
                     <span class="line__change">{{
-                      'inventoryHistory.price'
-                        | translate: { amount: (m.unitPrice * -m.change | faCount) }
+                      'inventoryHistory.price' | translate: { amount: (amount(m) | faCount) }
                     }}</span>
                   }
                 </span>
@@ -337,6 +341,11 @@ export class InventoryHistoryDialog {
         this.detail.set(saved);
         this.changed = true;
       });
+  }
+
+  /** What the line came to, in rials, whichever way the stock went. */
+  protected amount(m: InventoryMovement): number {
+    return (m.unitPrice ?? 0) * Math.abs(m.change);
   }
 
   /** `+10`, `−3`: which way the stock went, read left to right. */

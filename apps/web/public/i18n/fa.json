@@ -547,7 +547,7 @@
   "inventoryMove": {
     "receiveTitle": "ورود به انبار",
     "receiveQuantity": "تعداد ورودی",
-    "receiveNote": "تأمین‌کننده یا شماره فاکتور",
+    "receiveNote": "مثلاً شماره فاکتور",
     "receiveConfirm": "ثبت ورود",
     "useTitle": "ثبت مصرف",
     "useQuantity": "تعداد مصرف",
@@ -582,7 +582,9 @@
     "patientSold": "پرونده {{fileNo}} — در کاردکس به نام این بیمار ثبت می‌شود",
     "patientImplantFile": "پرونده {{fileNo}} — در پرونده ایمپلنت بیمار هم ثبت می‌شود، با پیگیری پروتز سه ماه بعد",
     "unlinkPatient": "برداشتن بیمار",
+    "supplier": "تأمین‌کننده",
     "unitPrice": "قیمت هر {{unit}} (ریال)",
+    "buyPrice": "قیمت خرید هر {{unit}} (ریال)",
     "priceTotal": "جمع: {{amount}} ریال",
     "tooth": "دندان‌ها",
     "toothRequired": "دندانی را که ایمپلنت در آن گذاشته می‌شود روی چارت انتخاب کنید",

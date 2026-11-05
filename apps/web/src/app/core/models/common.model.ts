@@ -341,8 +341,10 @@ export interface InventoryMovement {
   expiry: string | null;
   /** The patient a use went into, or an item was sold to. */
   patient: { id: string; fileNo: string; fullName: string } | null;
-  /** On a sale: what one went for, in rials. */
+  /** In rials: on a sale, what one went for; on a delivery, what one cost. */
   unitPrice: number | null;
+  /** On a delivery: who it came from. */
+  supplier: string | null;
   note: string | null;
   /** Who recorded it, by the name staff know them by. */
   by: string | null;

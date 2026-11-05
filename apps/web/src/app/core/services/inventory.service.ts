@@ -46,8 +46,10 @@ export interface InventoryMovementInput {
   patientId?: string | null;
   /** An implant's tooth, or one tooth per implant («36 37»). */
   tooth?: string | null;
-  /** On a sale: what one went for, in rials. */
+  /** In rials: on a sale, what one went for; on a delivery, what one cost. */
   unitPrice?: number | null;
+  /** On a delivery: who it came from. */
+  supplier?: string | null;
   note?: string | null;
 }
 
@@ -84,6 +86,11 @@ export class InventoryService {
   /** Brands to suggest: the standard list, as it spells them, and those in stock. */
   brands(): Observable<{ name: string; spellings: string[] }[]> {
     return this.http.get<{ name: string; spellings: string[] }[]>(`${this.items}/brands`);
+  }
+
+  /** Who deliveries have come from, latest first. */
+  suppliers(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.items}/suppliers`);
   }
 
   /** What a patient bought, newest first. */

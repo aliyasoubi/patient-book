@@ -79,7 +79,7 @@ const countValue = (raw: string): number | null => {
 };
 const blank = (raw: string): string | null => raw.trim() || null;
 /** Typed text as compared: digits, Arabic letters and case all one way. */
-const fold = (s: string): string =>
+export const fold = (s: string): string =>
   toLatinDigits(s)
     .replace(/\u064a/g, String.fromCharCode(0x06cc)) // Arabic yeh → Persian yeh
     .replace(/\u0643/g, String.fromCharCode(0x06a9)) // Arabic kaf → keheh
@@ -93,7 +93,7 @@ const sizeKey = (s: string): string =>
     .replace(/(\d)[x×*-](?=\d)/g, '$1x');
 
 /** The fewest suggestions that still find a product in a long list. */
-const MAX_SUGGESTIONS = 8;
+export const MAX_SUGGESTIONS = 8;
 
 /**
  * Add an item, or correct one. Saves itself, so a refused save lands on the
