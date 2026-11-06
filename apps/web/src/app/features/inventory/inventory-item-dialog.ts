@@ -283,19 +283,12 @@ export const MAX_SUGGESTIONS = 8;
       display: flex;
       flex-direction: column;
       gap: var(--pb-space-3);
-      width: min(680px, 88vw);
     }
     .form__duplicate {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: var(--pb-space-2);
-    }
-    /* Room above a floating label: on the first row, which the scroll area
-       would clip, and under a hint, which it would run into. */
-    pb-field-grid {
-      padding-top: var(--pb-space-2);
-      row-gap: var(--pb-space-3);
     }
   `,
 })

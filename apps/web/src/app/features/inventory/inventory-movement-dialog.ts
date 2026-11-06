@@ -119,7 +119,7 @@ const COPY: Record<
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()">
       <h2 mat-dialog-title>{{ copy.title | translate }}</h2>
-      <mat-dialog-content class="form" [class.form--chart]="namesPatient && isImplant">
+      <mat-dialog-content class="form">
         <p class="form__item">
           <strong dir="auto">{{ itemLabel }}</strong>
           <span>{{
@@ -271,17 +271,6 @@ const COPY: Record<
       display: flex;
       flex-direction: column;
       gap: var(--pb-space-3);
-      width: min(440px, 80vw);
-    }
-    /* The last hint's line box runs past the scroll area by a pixel or two,
-       and would put a scrollbar on a dialog with nothing to scroll. */
-    pb-text-field:last-child {
-      padding-bottom: var(--pb-space-1);
-    }
-    /* Room for the chart's two quadrants a row — as wide as a dialog goes; a
-       phone stacks them. */
-    .form--chart {
-      width: min(560px, 80vw);
     }
     .form__teeth {
       display: flex;

@@ -55,10 +55,10 @@ export interface SurgeryBookResult {
     .form {
       display: flex;
       flex-direction: column;
-      min-width: min(360px, 80vw);
+      gap: var(--pb-space-3);
     }
     .form__who {
-      margin: 0 0 var(--pb-space-3);
+      margin: 0;
       color: var(--mat-sys-on-surface-variant);
     }
   `,

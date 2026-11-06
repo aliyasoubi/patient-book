@@ -66,21 +66,10 @@ export interface InventoryLotDialogData {
     </form>
   `,
   styles: `
-    /* Room above a floating label: on the first field, which the scroll area
-       would clip, and under a hint, which it would run into. */
     .form {
       display: flex;
       flex-direction: column;
       gap: var(--pb-space-3);
-      width: min(360px, 80vw);
-    }
-    pb-text-field:first-of-type {
-      padding-top: var(--pb-space-2);
-    }
-    /* The last hint's line box runs past the scroll area by a pixel or two,
-       and would put a scrollbar on a dialog with nothing to scroll. */
-    pb-text-field:last-child {
-      padding-bottom: var(--pb-space-1);
     }
   `,
 })
