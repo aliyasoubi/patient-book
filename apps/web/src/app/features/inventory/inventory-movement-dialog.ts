@@ -25,7 +25,8 @@ import type { PatientSuggestion } from '../patients/data/patient.model';
 import { dropPickOnRetype } from '../../shared/form-sync';
 import { formatPersianCount, formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
-import { digitString, toLatinDigits } from '../../shared/validators';
+import { rialInput, rialValid, rialValue } from '../../shared/rial';
+import { toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
 
 import {
@@ -236,6 +237,8 @@ const COPY: Record<
             "
             [hint]="priceHint()"
             inputmode="numeric"
+            [grouped]="true"
+            [maxlength]="13"
             [ltr]="true"
           />
         }
@@ -263,11 +266,17 @@ const COPY: Record<
     </form>
   `,
   styles: `
+    /* The gap keeps a field's floating label clear of the hint above it. */
     .form {
       display: flex;
       flex-direction: column;
-      gap: var(--pb-space-1);
+      gap: var(--pb-space-3);
       width: min(440px, 80vw);
+    }
+    /* The last hint's line box runs past the scroll area by a pixel or two,
+       and would put a scrollbar on a dialog with nothing to scroll. */
+    pb-text-field:last-child {
+      padding-bottom: var(--pb-space-1);
     }
     /* Room for the chart's two quadrants a row — as wide as a dialog goes; a
        phone stacks them. */
@@ -399,8 +408,8 @@ export class InventoryMovementDialog {
     ],
     tooth: this.fb.nonNullable.control<number[]>([], this.mustTooth ? Validators.required : null),
     unitPrice: [
-      this.asksPrice && this.item.salePrice != null ? String(this.item.salePrice) : '',
-      this.asksPrice ? [Validators.required, digitString(1, 10)] : digitString(1, 10),
+      this.asksPrice ? rialInput(this.item.salePrice) : '',
+      this.asksPrice ? [Validators.required, rialValid] : rialValid,
     ],
     supplier: ['', Validators.maxLength(120)],
     note: ['', Validators.maxLength(300)],
@@ -435,8 +444,7 @@ export class InventoryMovementDialog {
   /** What they all come to, so nobody has to multiply. */
   protected readonly priceHint = computed(() => {
     const total =
-      Number(toLatinDigits(this.unitPrice()).trim()) *
-      Number(toLatinDigits(this.quantity()).trim());
+      (rialValue(this.unitPrice()) ?? 0) * Number(toLatinDigits(this.quantity()).trim());
     return total
       ? this.i18n.instant('inventoryMove.priceTotal', { amount: formatPersianCount(total) })
       : null;
@@ -665,7 +673,7 @@ export class InventoryMovementDialog {
       return;
     }
     const raw = this.form.getRawValue();
-    const price = toLatinDigits(raw.unitPrice).trim();
+    const price = rialValue(raw.unitPrice);
     this.saving.set(true);
     this.formError.set(null);
     this.inventory
@@ -686,7 +694,7 @@ export class InventoryMovementDialog {
               tooth: (this.isImplant && raw.tooth.join(' ')) || null,
             }
           : {}),
-        ...(price ? { unitPrice: Number(price) } : {}),
+        ...(price !== null ? { unitPrice: price } : {}),
         note: raw.note.trim() || null,
       })
       .subscribe({
