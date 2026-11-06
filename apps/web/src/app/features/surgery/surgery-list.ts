@@ -480,7 +480,7 @@ export class SurgeryList {
     this.dialog
       .open<FollowUpContactDialog, FollowUpContactDialogData, RecordContactInput | undefined>(
         FollowUpContactDialog,
-        { data: { item }, width: '520px', maxWidth: '92vw', autoFocus: false },
+        { data: { item }, width: '480px', maxWidth: '92vw', autoFocus: false },
       )
       .afterClosed()
       .subscribe((result) => {

@@ -25,7 +25,8 @@ import {
   inventoryCategoryLabel,
   inventoryUnitLabel,
 } from '../../shared/labels';
-import { digitString, toLatinDigits } from '../../shared/validators';
+import { rialInput, rialValid, rialValue } from '../../shared/rial';
+import { toLatinDigits } from '../../shared/validators';
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import {
   PbBanner,
@@ -159,7 +160,7 @@ export const MAX_SUGGESTIONS = 8;
           <pb-text-field
             [control]="form.controls.name"
             [label]="'inventoryForm.name' | translate"
-            [hint]="'inventoryForm.nameHint' | translate"
+            [hint]="item ? null : ('inventoryForm.nameHint' | translate)"
             [options]="nameOptions()"
             (optionSelected)="pickKnown($event)"
             [maxlength]="120"
@@ -233,15 +234,13 @@ export const MAX_SUGGESTIONS = 8;
             />
           }
           <!-- A toothbrush or a home bleaching kit: its use asks who bought it. -->
-          <div class="pb-field-grid__full form__sold">
-            <pb-checkbox-field
-              [checked]="soldToPatients()"
-              (checkedChange)="form.controls.soldToPatients.setValue($event)"
-            >
-              {{ 'inventoryForm.soldToPatients' | translate }}
-            </pb-checkbox-field>
-            <span class="form__note">{{ 'inventoryForm.soldToPatientsHint' | translate }}</span>
-          </div>
+          <pb-checkbox-field
+            class="pb-field-grid__full"
+            [checked]="soldToPatients()"
+            (checkedChange)="form.controls.soldToPatients.setValue($event)"
+          >
+            {{ 'inventoryForm.soldToPatients' | translate }}
+          </pb-checkbox-field>
           @if (soldToPatients()) {
             <pb-text-field
               class="pb-field-grid__full"
@@ -249,6 +248,8 @@ export const MAX_SUGGESTIONS = 8;
               [label]="'inventoryForm.salePrice' | translate"
               [hint]="'inventoryForm.salePriceHint' | translate"
               inputmode="numeric"
+              [grouped]="true"
+              [maxlength]="13"
               [ltr]="true"
             />
           }
@@ -260,9 +261,6 @@ export const MAX_SUGGESTIONS = 8;
             [rows]="2"
           />
         </pb-field-grid>
-        @if (item) {
-          <p class="form__note">{{ 'inventoryForm.quantityNote' | translate }}</p>
-        }
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
@@ -285,26 +283,12 @@ export const MAX_SUGGESTIONS = 8;
       display: flex;
       flex-direction: column;
       gap: var(--pb-space-3);
-      width: min(680px, 88vw);
     }
     .form__duplicate {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: var(--pb-space-2);
-    }
-    .form__sold {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .form__sold .form__note {
-      padding-inline-start: var(--pb-space-3);
-    }
-    .form__note {
-      margin: 0;
-      font: var(--mat-sys-body-small);
-      color: var(--mat-sys-on-surface-variant);
     }
   `,
 })
@@ -350,7 +334,7 @@ export class InventoryItemDialog {
     notes: [this.item?.notes ?? '', Validators.maxLength(2000)],
     // Another size of a toothbrush is a toothbrush too.
     soldToPatients: [this.base?.soldToPatients ?? false],
-    salePrice: [this.base?.salePrice != null ? String(this.base.salePrice) : '', digitString(1, 10)],
+    salePrice: [rialInput(this.base?.salePrice), rialValid],
   });
 
   /** Everything on the shelves, for the suggestions. */
@@ -385,12 +369,17 @@ export class InventoryItemDialog {
     () => !!this.item && this.unitPicked() !== this.item.unit,
   );
 
-  /** «Supe Line (Dentium)»: picking one fills in the rest of what is known about it. */
+  /**
+   * «Supe Line (Dentium)»: picking one fills in the rest of what is known
+   * about it. Only once something is typed: the field has the focus when the
+   * dialog opens, and the list would open over the fields below it.
+   */
   protected readonly nameOptions = computed<TextFieldOption[]>(() => {
     const typed = fold(this.nameTyped());
+    if (this.item || !typed) return [];
     return this.known()
       .map((k, i) => ({ k, i }))
-      .filter(({ k }) => !typed || fold(k.name).includes(typed))
+      .filter(({ k }) => fold(k.name).includes(typed))
       .slice(0, MAX_SUGGESTIONS)
       .map(({ k, i }) => ({
         value: k.name,
@@ -507,7 +496,7 @@ export class InventoryItemDialog {
       minQuantity: countValue(raw.minQuantity),
       notes: blank(raw.notes),
       soldToPatients: raw.soldToPatients,
-      salePrice: countValue(raw.salePrice),
+      salePrice: rialValue(raw.salePrice),
     };
     this.saving.set(true);
     this.formError.set(null);

@@ -18,7 +18,7 @@ import { PbButton, PbTextField } from '../../shared/ui';
     <h2 mat-dialog-title>
       {{ (data ? 'settings.renameLab' : 'settings.addLab') | translate }}
     </h2>
-    <mat-dialog-content class="form">
+    <mat-dialog-content>
       <pb-text-field [control]="name" [label]="'settings.labName' | translate" [maxlength]="80" />
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -36,11 +36,6 @@ import { PbButton, PbTextField } from '../../shared/ui';
         {{ 'settings.saveLab' | translate }}
       </pb-button>
     </mat-dialog-actions>
-  `,
-  styles: `
-    .form {
-      min-width: min(360px, 80vw);
-    }
   `,
 })
 export class LabNameDialog {

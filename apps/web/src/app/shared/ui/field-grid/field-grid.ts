@@ -19,8 +19,9 @@ import { Component, ViewEncapsulation } from '@angular/core';
     pb-field-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
-      /* Row gap is small: each field reserves its own hint/error line. */
-      gap: var(--pb-space-1) var(--pb-space-4);
+      /* Each field reserves its own hint/error line; the row gap keeps the
+         floating label of the row below clear of it. */
+      gap: var(--pb-space-3) var(--pb-space-4);
     }
 
     pb-field-grid > .pb-field-grid__full {

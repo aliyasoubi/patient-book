@@ -169,8 +169,7 @@ const HISTORY_SHOWN = 5;
     .call {
       display: flex;
       flex-direction: column;
-      gap: var(--pb-space-2);
-      min-width: min(440px, 80vw);
+      gap: var(--pb-space-3);
     }
     .call__who {
       display: flex;

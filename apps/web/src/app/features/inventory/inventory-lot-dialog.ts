@@ -69,8 +69,7 @@ export interface InventoryLotDialogData {
     .form {
       display: flex;
       flex-direction: column;
-      gap: var(--pb-space-1);
-      width: min(360px, 80vw);
+      gap: var(--pb-space-3);
     }
   `,
 })

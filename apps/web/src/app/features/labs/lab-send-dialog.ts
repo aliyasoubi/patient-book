@@ -82,11 +82,10 @@ export function suggestedTripKind(c: Pick<LabCase, 'workTypes' | 'trips'>): LabT
     .form {
       display: flex;
       flex-direction: column;
-      gap: var(--pb-space-1);
-      min-width: min(400px, 80vw);
+      gap: var(--pb-space-3);
     }
     .form__who {
-      margin: 0 0 var(--pb-space-3);
+      margin: 0;
       color: var(--mat-sys-on-surface-variant);
     }
   `,

@@ -340,6 +340,16 @@ body:has(.bottom-nav) .mat-mdc-snack-bar-handset .mat-mdc-snack-bar-container {
   transition-timing-function: var(--pb-ease-emphasized) !important;
 }
 
+/**
+ * Room inside a dialog's scroll area: above, for the floating label of a first
+ * field, which it would clip; below, for a last hint's line box, which would
+ * put a scrollbar on a dialog with nothing to scroll. `html` lifts this over
+ * Material's own rule, which loads after this stylesheet.
+ */
+html .mat-mdc-dialog-container .mat-mdc-dialog-title + .mat-mdc-dialog-content {
+  padding-block: var(--pb-space-2) var(--pb-space-1);
+}
+
 .mat-snack-bar-container-animations-enabled.mat-snack-bar-container-enter {
   animation-timing-function: var(--pb-ease-emphasized) !important;
 }

@@ -75,10 +75,12 @@ const DEFAULT_PARTS_DAYS = '7';
     .body {
       display: flex;
       flex-direction: column;
-      min-width: min(400px, 80vw);
+      gap: var(--pb-space-3);
+    }
+    .body p {
+      margin: 0;
     }
     .body__who {
-      margin: 0 0 var(--pb-space-3);
       color: var(--mat-sys-on-surface-variant);
     }
   `,

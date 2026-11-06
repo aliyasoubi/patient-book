@@ -65,7 +65,7 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
       {{ 'inventoryHistory.title' | translate }}
       <small dir="auto">{{ label }}</small>
     </h2>
-    <mat-dialog-content class="card">
+    <mat-dialog-content>
       @if (loading()) {
         <mat-progress-bar mode="indeterminate" />
       }
@@ -183,9 +183,6 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
       display: block;
       font: var(--mat-sys-body-medium);
       color: var(--mat-sys-on-surface-variant);
-    }
-    .card {
-      width: min(600px, 84vw);
     }
     .card__heading {
       margin: var(--pb-space-3) 0 var(--pb-space-1);
@@ -334,7 +331,12 @@ export class InventoryHistoryDialog {
       traceable: TRACEABLE_CATEGORIES.includes(this.item.category),
     };
     this.dialog
-      .open(InventoryLotDialog, { data, autoFocus: 'first-tabbable' })
+      .open(InventoryLotDialog, {
+        data,
+        autoFocus: 'first-tabbable',
+        width: '420px',
+        maxWidth: '92vw',
+      })
       .afterClosed()
       .subscribe((saved) => {
         if (!saved) return;

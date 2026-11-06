@@ -81,7 +81,7 @@ export class Settings {
 
   private openLabDialog(lab: Lab | null): void {
     this.dialog
-      .open(LabNameDialog, { data: lab, width: '400px', maxWidth: '92vw' })
+      .open(LabNameDialog, { data: lab, width: '420px', maxWidth: '92vw' })
       .afterClosed()
       .subscribe((saved) => {
         if (!saved) return;

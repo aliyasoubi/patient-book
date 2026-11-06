@@ -432,7 +432,13 @@ export class InventoryList {
   protected move(item: InventoryItem, kind: InventoryMovementKind): void {
     const data: InventoryMovementDialogData = { item, kind };
     this.dialog
-      .open(InventoryMovementDialog, { data, autoFocus: 'first-tabbable' })
+      .open(InventoryMovementDialog, {
+        data,
+        autoFocus: 'first-tabbable',
+        // An implant's use picks its tooth on the chart, which needs the room.
+        width: kind === 'use' && item.category === 'implant' ? '720px' : '480px',
+        maxWidth: '92vw',
+      })
       .afterClosed()
       .subscribe((saved) => {
         if (!saved) return;
@@ -480,7 +486,11 @@ export class InventoryList {
   }
 
   protected history(item: InventoryItem): void {
-    const ref = this.dialog.open(InventoryHistoryDialog, { data: item, maxWidth: '96vw' });
+    const ref = this.dialog.open(InventoryHistoryDialog, {
+      data: item,
+      width: '720px',
+      maxWidth: '92vw',
+    });
     // A batch corrected there can move the item's expiry.
     ref.afterClosed().subscribe(() => {
       if (ref.componentInstance.changed) this.retry();
@@ -529,7 +539,8 @@ export class InventoryList {
           data,
           // A similar item is new in its size alone: start there.
           autoFocus: data.template ? '.item-form__spec input' : 'first-tabbable',
-          maxWidth: '96vw',
+          width: '720px',
+          maxWidth: '92vw',
         },
       )
       .afterClosed()

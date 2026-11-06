@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { regroup } from '../../rial';
 import { firstErrorMessage, subscriptSizing } from '../field-errors';
 
 export interface TextFieldOption {
@@ -103,6 +104,7 @@ export interface TextFieldOption {
           [attr.autocomplete]="nativeAutocomplete()"
           [class.ltr-input]="ltr()"
           [attr.dir]="ltr() ? 'ltr' : null"
+          (input)="groupDigits($event)"
         />
       }
 
@@ -164,6 +166,8 @@ export class PbTextField {
   readonly subscript = input<'fixed' | 'dynamic'>('fixed');
   /** Right-align as LTR — for phone numbers, file numbers, ids inside RTL text. */
   readonly ltr = input(false);
+  /** Keep the digits grouped in threes as they are typed: a price in rials. */
+  readonly grouped = input(false);
   /** Suggestions shown in a Material autocomplete panel as the user types. */
   readonly options = input<TextFieldOption[] | null>(null);
   /** Validator key → message, overriding the built-in default for that key. */
@@ -179,6 +183,15 @@ export class PbTextField {
 
   protected errorText(): string | null {
     return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
+  }
+
+  protected groupDigits(event: Event): void {
+    if (!this.grouped()) return;
+    const field = event.target as HTMLInputElement;
+    const { value, caret } = regroup(field.value, field.selectionStart ?? field.value.length);
+    if (value === field.value) return;
+    this.control().setValue(value);
+    field.setSelectionRange(caret, caret);
   }
 
   protected sizing(): SubscriptSizing {

@@ -29,11 +29,11 @@ pb-surface.hero-surface--archived {
 
     h1 {
       margin: 0 0 var(--pb-space-2);
-      font: var(--mat-sys-title-large);
+      font: var(--mat-sys-headline-small);
       font-weight: 700;
 
       @media (max-width: 700px) {
-        font-size: var(--mat-sys-title-medium-size);
+        font-size: var(--mat-sys-title-large-size);
       }
     }
   }
