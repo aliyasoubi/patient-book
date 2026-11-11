@@ -1,0 +1,161 @@
+/**
+ * The settings pages (settings, account): a column of white cards, each a
+ * section with a small icon tile, a title and a line of explanation at its
+ * head, and rows below divided by hairlines — the layout product settings
+ * pages share, so a page of options reads as a list, not a form.
+ */
+
+@keyframes settings-rise {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+@mixin sections {
+  .set {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pb-space-4);
+  }
+
+  .set__card {
+    padding: var(--pb-space-5);
+    border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: var(--pb-shadow-sm);
+    animation: settings-rise 460ms calc(var(--_i, 0) * 70ms) var(--pb-ease-emphasized) backwards;
+  }
+
+  .set__head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--pb-space-3);
+    margin-block-end: var(--pb-space-4);
+  }
+
+  .set__tile {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    inline-size: 40px;
+    block-size: 40px;
+    border-radius: 12px;
+    background: var(--pb-neutral-100);
+    color: var(--pb-neutral-600);
+  }
+
+  .set__titles {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-inline-size: 0;
+  }
+
+  .set__title {
+    margin: 0;
+    color: var(--pb-graphite);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .set__hint {
+    margin: 0;
+    color: var(--pb-neutral-500);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  /* A row: what it is on the start side, its control at the end. */
+  .set__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pb-space-3);
+    padding-block: var(--pb-space-3);
+    border-block-start: 1px solid var(--pb-neutral-100);
+
+    &:first-of-type {
+      border-block-start: 0;
+    }
+  }
+
+  .set__label {
+    color: var(--pb-neutral-600);
+    font-size: 0.875rem;
+  }
+
+  .set__value {
+    color: var(--pb-graphite);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  /* The person: a letter tile, the name, and who they are in the practice. */
+  .who {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-4);
+    min-inline-size: 0;
+  }
+
+  .who__avatar {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    inline-size: 56px;
+    block-size: 56px;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    color: var(--pb-brand-strong);
+    font-size: 1.375rem;
+    font-weight: 800;
+    line-height: 1;
+    text-box: trim-both cap alphabetic;
+  }
+
+  .who__name {
+    display: block;
+    color: var(--pb-graphite);
+    font-size: 1.0625rem;
+    font-weight: 700;
+  }
+
+  .who__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pb-space-2);
+    margin-block-start: var(--pb-space-1);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--pb-space-2);
+    border-radius: 999px;
+    background: var(--pb-neutral-100);
+    color: var(--pb-neutral-600);
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    &--latin {
+      font-family: var(--pb-font-latin);
+      letter-spacing: 0.01em;
+    }
+
+    &--brand {
+      background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+      color: var(--pb-brand-strong);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .set__card {
+      animation: none;
+    }
+  }
+}

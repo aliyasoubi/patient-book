@@ -1,27 +1,26 @@
 /*
- * Vazirmatn, Farsi-Digits build.
+ * Vazirmatn v33.003 (SIL Open Font License 1.1, © Saber Rastikerdar),
+ * self-hosted as WOFF2 from `fonts/vazirmatn/`, built from the standard TTF
+ * release by `scripts/build-vazirmatn.py`.
  *
- * The package's default face draws 0-9 as Latin digits and offers ۰-۹ only
- * through the `ss01` OpenType feature. That cannot be relied on here: Material
+ * That build bakes ۰-۹ in as the outlines for 0-9. The standard font keeps
+ * them behind the `ss01` feature, which cannot be relied on here: Material
  * sets component type with the `font:` shorthand, which resets
- * `font-feature-settings` on table cells, chips, list rows and calendar cells —
- * exactly where phone and file numbers live. The author's "FD" build instead
- * ships ۰-۹ as the outlines *for* 0-9, so every digit renders Persian no
- * matter what CSS an element ends up with, while the text itself stays ASCII
- * (`tel:` links, search, copy/paste and validation are untouched).
+ * `font-feature-settings` on table cells, chips and calendar cells — exactly
+ * where phone and file numbers live. Baked in, every digit renders Persian
+ * whatever CSS an element ends up with, while the text itself stays ASCII
+ * (`tel:` links, search, copy/paste and validation are untouched). Latin as
+ * typed — usernames, passwords — is set in Inter and keeps Latin digits.
  *
- * Registered under the plain family name so the theme, the brand SVGs and
- * every `font-family` in the app keep working unchanged. Static weights only —
- * the FD build has no variable file — and the browser fetches just the ones
- * the page actually uses.
+ * Static weights; the browser fetches only the ones a page uses.
  */
+
 @font-face {
   font-family: 'Vazirmatn';
   font-style: normal;
   font-weight: 100;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-Thin.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-Thin.woff2') format('woff2');
 }
 
 @font-face {
@@ -29,8 +28,7 @@
   font-style: normal;
   font-weight: 200;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-ExtraLight.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-ExtraLight.woff2') format('woff2');
 }
 
 @font-face {
@@ -38,8 +36,7 @@
   font-style: normal;
   font-weight: 300;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-Light.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-Light.woff2') format('woff2');
 }
 
 @font-face {
@@ -47,8 +44,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-Regular.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-Regular.woff2') format('woff2');
 }
 
 @font-face {
@@ -56,8 +52,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-Medium.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-Medium.woff2') format('woff2');
 }
 
 @font-face {
@@ -65,8 +60,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-SemiBold.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-SemiBold.woff2') format('woff2');
 }
 
 @font-face {
@@ -74,8 +68,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-Bold.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-Bold.woff2') format('woff2');
 }
 
 @font-face {
@@ -83,8 +76,7 @@
   font-style: normal;
   font-weight: 800;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-ExtraBold.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-ExtraBold.woff2') format('woff2');
 }
 
 @font-face {
@@ -92,6 +84,5 @@
   font-style: normal;
   font-weight: 900;
   font-display: swap;
-  src: url('../../../../node_modules/vazirmatn/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-Black.woff2')
-    format('woff2');
+  src: url('./vazirmatn/Vazirmatn-Black.woff2') format('woff2');
 }

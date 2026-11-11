@@ -1,0 +1,76 @@
+/**
+ * The Dentixo brand system, 60 / 30 / 10: fog grey for the ground,
+ * graphite for type and hairlines, electric orange only where the eye should
+ * land. Light mode only for now; screens adopt it one at a time, starting
+ * with sign-in.
+ */
+
+/** The palette, as custom properties. Included once, on `html` (styles.scss). */
+@mixin tokens {
+  --pb-brand: #ff6a00;
+  --pb-brand-strong: #e65f00;
+  --pb-graphite: #2f2f33;
+  --pb-fog: #e6e8eb;
+
+  --pb-neutral-50: #fafbfc;
+  --pb-neutral-100: #f5f6f8;
+  --pb-neutral-200: #e6e8eb;
+  --pb-neutral-300: #d1d5db;
+  --pb-neutral-400: #9ca3af;
+  --pb-neutral-600: #4b5563;
+  --pb-neutral-800: #2f2f33;
+  --pb-neutral-900: #1f1f23;
+
+  // Elevation: soft and clean — wide, faint, neutral, never coloured. Each
+  // step is a whisper of a contact shadow plus one wide diffuse one that sinks
+  // below the element (negative spread), so edges read as lifted without a
+  // dark rim. Each lifts a little further off the fog ground.
+  --pb-shadow-xs: 0 1px 2px rgb(31 31 35 / 0.03);
+  --pb-shadow-sm: 0 1px 2px rgb(31 31 35 / 0.03), 0 6px 16px -8px rgb(31 31 35 / 0.06);
+  --pb-shadow-md: 0 1px 3px rgb(31 31 35 / 0.03), 0 12px 28px -14px rgb(31 31 35 / 0.1);
+  --pb-shadow-lg: 0 2px 6px -2px rgb(31 31 35 / 0.04), 0 24px 56px -24px rgb(31 31 35 / 0.16);
+
+  // Latin as typed — usernames, passwords, ids — in Inter, with Latin digits
+  // (`fonts/inter.css`). Persian in the same element still falls to Vazirmatn.
+  --pb-font-latin: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/**
+ * The M3 roles the `pb-*` primitives and Material's own components read,
+ * pointed at the brand palette. On the root (styles.scss) so overlays — menus,
+ * dialogs, select panels, which render outside any screen — follow it too.
+ */
+@mixin roles {
+  --mat-sys-primary: var(--pb-brand);
+  --mat-sys-on-primary: #fff;
+  --mat-sys-primary-container: color-mix(in srgb, var(--pb-brand) 14%, #fff);
+  --mat-sys-on-primary-container: #7a3300;
+  --mat-sys-secondary-container: var(--pb-neutral-200);
+  --mat-sys-on-secondary-container: var(--pb-graphite);
+  --mat-sys-on-surface: var(--pb-graphite);
+  --mat-sys-on-surface-variant: var(--pb-neutral-600);
+  --mat-sys-outline: var(--pb-neutral-400);
+  --mat-sys-outline-variant: var(--pb-neutral-300);
+  --mat-sys-surface: var(--pb-neutral-50);
+  --mat-sys-surface-container-lowest: #fff;
+  --mat-sys-surface-container-low: #fff;
+  --mat-sys-surface-container: var(--pb-neutral-100);
+  --mat-sys-surface-container-high: var(--pb-neutral-200);
+  --mat-sys-surface-container-highest: var(--pb-neutral-200);
+  --mat-sys-level1: var(--pb-shadow-sm);
+  --mat-sys-level2: var(--pb-shadow-md);
+  --mat-sys-level3: var(--pb-shadow-lg);
+}
+
+/**
+ * A screen drawn in the brand: the light scheme, the brand roles, and the
+ * fog ground with graphite type, for everything inside the element.
+ */
+@mixin light-screen {
+  color-scheme: light;
+
+  @include roles;
+
+  background: var(--pb-fog);
+  color: var(--pb-graphite);
+}

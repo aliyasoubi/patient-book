@@ -1,0 +1,170 @@
+@use '@angular/material' as mat;
+
+/**
+ * Material's overlays — menus, dialogs, select and autocomplete panels,
+ * tooltips — and its tabs, drawn in the brand rather than stock M3: white
+ * cards with soft shadows and generous radii, rows inset from the panel's
+ * edge with their own rounded hover, graphite tooltips, an orange tab
+ * indicator. Through Material's own override mixins where it has a token,
+ * and plain CSS for the rest (they render in the CDK overlay container,
+ * outside every component's encapsulation, so this has to be global).
+ */
+@mixin material-overrides {
+  @include mat.menu-overrides(
+    (
+      container-shape: 16px,
+      container-color: #fff,
+      container-elevation-shadow: var(--pb-shadow-lg),
+      item-label-text-size: 0.875rem,
+      item-hover-state-layer-color: var(--pb-neutral-100),
+      item-icon-size: 20px,
+      item-leading-spacing: 12px,
+      item-trailing-spacing: 12px,
+    )
+  );
+  @include mat.dialog-overrides(
+    (
+      container-shape: 24px,
+      container-color: #fff,
+      container-elevation-shadow: var(--pb-shadow-lg),
+    )
+  );
+  @include mat.select-overrides(
+    (
+      panel-background-color: #fff,
+      container-elevation-shadow: var(--pb-shadow-lg),
+      enabled-arrow-color: var(--pb-neutral-400),
+      focused-arrow-color: var(--pb-brand),
+    )
+  );
+  @include mat.autocomplete-overrides(
+    (
+      background-color: #fff,
+      container-shape: 16px,
+      container-elevation-shadow: var(--pb-shadow-lg),
+    )
+  );
+  @include mat.tooltip-overrides(
+    (
+      container-color: var(--pb-graphite),
+      container-shape: 8px,
+      supporting-text-color: #fff,
+      supporting-text-size: 0.8125rem,
+    )
+  );
+  @include mat.tabs-overrides(
+    (
+      active-indicator-color: var(--pb-brand),
+      active-focus-indicator-color: var(--pb-brand),
+      active-hover-indicator-color: var(--pb-brand),
+      active-indicator-height: 2px,
+      active-label-text-color: var(--pb-graphite),
+      active-focus-label-text-color: var(--pb-graphite),
+      active-hover-label-text-color: var(--pb-graphite),
+      inactive-label-text-color: var(--pb-neutral-600),
+      divider-color: var(--pb-neutral-200),
+      label-text-weight: 600,
+    )
+  );
+}
+
+/** The parts Material has no token for. */
+@mixin material-panels {
+  // Menus: a hairline edge, rows inset with their own rounded hover.
+  .mat-mdc-menu-panel {
+    min-inline-size: 200px;
+    border: 1px solid var(--pb-neutral-200);
+  }
+
+  .mat-mdc-menu-content {
+    padding: 6px !important;
+  }
+
+  .mat-mdc-menu-item {
+    min-block-size: 40px;
+    border-radius: 10px;
+
+    .mat-icon {
+      color: var(--pb-neutral-600);
+    }
+  }
+
+  // A select drawn inside the app's field box (pb-select-field): the box
+  // draws the chevron and the focus, so the trigger is only its text.
+  .pb-select-box .mat-mdc-select-arrow-wrapper {
+    display: none;
+  }
+
+  // The trigger covers the box edge to edge, so a click anywhere opens it;
+  // its padding keeps the text clear of the box's chevron.
+  .pb-select-box .mat-mdc-select-trigger {
+    block-size: 100%;
+    padding-inline: var(--pb-space-4) calc(var(--pb-space-3) + 18px + var(--pb-space-3));
+  }
+
+  .pb-select-box .mat-mdc-select-value {
+    font: var(--mat-sys-body-large);
+    color: var(--mat-sys-on-surface);
+  }
+
+  .pb-select-box .mat-mdc-select-placeholder {
+    color: color-mix(in srgb, var(--mat-sys-on-surface-variant) 60%, transparent);
+  }
+
+  // Its panel opens a step clear of the box rather than flush on its edge.
+  .pb-select-panel {
+    margin-block: var(--pb-space-2);
+  }
+
+  // Select and autocomplete panels: a hairline edge, inset rounded rows.
+  .mat-mdc-select-panel,
+  .mat-mdc-autocomplete-panel {
+    padding: 6px !important;
+    border: 1px solid var(--pb-neutral-200);
+    border-radius: 16px !important;
+  }
+
+  .mat-mdc-select-panel .mat-mdc-option,
+  .mat-mdc-autocomplete-panel .mat-mdc-option {
+    min-block-size: 40px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+  }
+
+  .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+
+    .mdc-list-item__primary-text {
+      color: var(--pb-brand-strong);
+      font-weight: 600;
+    }
+  }
+
+  // The selected option's own check mark is redundant next to the tint.
+  .mat-mdc-option .mat-pseudo-checkbox-minimal {
+    display: none;
+  }
+
+  // Panels open with a soft rise rather than Material's scale-from-a-point.
+  .mat-mdc-select-panel-above,
+  .mat-mdc-autocomplete-panel {
+    transform-origin: top center;
+  }
+
+  // Dialogs: room around the title and actions on the 4-step scale.
+  .mat-mdc-dialog-container .mat-mdc-dialog-title {
+    padding-block-start: var(--pb-space-5);
+    font-weight: 800;
+  }
+
+  .mat-mdc-dialog-actions {
+    gap: var(--pb-space-2);
+    padding: var(--pb-space-3) var(--pb-space-5) var(--pb-space-5) !important;
+  }
+
+  // A dialog's backdrop blurs the app behind it, like the spotlight.
+  .cdk-overlay-dark-backdrop {
+    background: color-mix(in srgb, var(--pb-graphite) 22%, transparent);
+    backdrop-filter: blur(6px);
+  }
+}

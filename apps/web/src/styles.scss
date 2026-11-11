@@ -1,10 +1,12 @@
 @use '@angular/material' as mat;
 @use './styles/theme-colors' as theme;
+@use './styles/brand';
+@use './styles/overlays';
 
 // Font faces are registered in angular.json's `styles` array rather than
 // imported here: their @font-face rules use paths relative to their own
-// file, which Sass would flatten and break. `fonts/vazirmatn.css` picks the
-// Farsi-Digits build of the family; see the note there.
+// file, which Sass would flatten and break. `fonts/vazirmatn.css` registers
+// the app's Persian-digit build of the family; see the note there.
 
 /**
  * Material 3 theme for a Persian, right-to-left clinical app.
@@ -62,7 +64,7 @@ html {
   --pb-space-5: 24px;
   --pb-space-6: 32px;
   --pb-control-height: 48px;
-  --pb-search-height: 56px;
+  --pb-search-height: 48px;
   --pb-avatar-sm: 32px;
   --pb-avatar-md: 40px;
   --pb-avatar-lg: 56px;
@@ -88,7 +90,7 @@ html {
   // not, so these are hand-picked to match M3 Expressive's spatial-spring
   // feel. Spring is for small, playful feedback (nav selection, button
   // press) — a whole surface overshooting its own bounds reads as jittery,
-  // so dialogs/snackbars get the gentler M3 "emphasized decelerate" curve.
+  // so dialogs and toasts get the gentler M3 "emphasized decelerate" curve.
   --pb-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --pb-ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
   // M3 "standard": colour and size changes that stay inside their own box.
@@ -100,11 +102,11 @@ html {
   --pb-duration-short: 150ms;
   --pb-duration-medium: 250ms;
   // Persian numerals are what staff read on paper charts; keep the app
-  // consistent with the ledgers it replaces. The digits themselves come from
-  // the Farsi-Digits build of Vazirmatn (`fonts/vazirmatn.css`), so every
-  // number on screen — counts, dates, phone numbers, file numbers, and
-  // whatever is typed into an input — renders as ۰-۹ while the underlying
-  // text stays ASCII.
+  // consistent with the ledgers it replaces. The app's Vazirmatn build has
+  // ۰-۹ baked in as the outlines for 0-9 (`fonts/vazirmatn.css`), so every
+  // number on screen — counts, dates, phone and file numbers — renders
+  // Persian whatever CSS an element ends up with, while the text stays ASCII.
+  // Latin set in Inter (`--pb-font-latin`) keeps Latin digits.
   font-variant-numeric: normal;
   // Tabular Persian digits for ASCII text: 'ss01' maps 0-9 onto the ۰-۹
   // glyphs, then 'tnum' makes them one width. Use this wherever numbers line
@@ -172,11 +174,24 @@ html {
     color-mix(in srgb, var(--mat-sys-outline-variant) 60%, transparent)
   );
   --pb-card-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.05);
-  --pb-well: light-dark(
-    var(--mat-sys-surface-container),
-    var(--mat-sys-surface-container-lowest)
-  );
+  --pb-well: light-dark(var(--mat-sys-surface-container), var(--mat-sys-surface-container-lowest));
+
+  // The brand palette and its fonts (styles/_brand.scss).
+  @include brand.tokens;
+  // Material's overlays and tabs in the brand (styles/_overlays.scss).
+  @include overlays.material-overrides;
 }
+
+/**
+ * The brand's roles on the root while the redesign is light-only, so every
+ * screen and every overlay (rendered outside any screen) agrees. A dark pick
+ * keeps the M3 dark roles until the dark design lands.
+ */
+html:not([data-theme='dark']) {
+  @include brand.roles;
+}
+
+@include overlays.material-panels;
 
 /** Explicit dark/light override, used when the user picks one in settings. */
 html[data-theme='light'] {
@@ -214,9 +229,10 @@ body {
 
 /* ── Material Symbols ──────────────────────────────────────────────── */
 .material-symbols-rounded {
+  // A light stroke, so the Material glyphs still in use sit beside the line icons.
   font-variation-settings:
     'FILL' 0,
-    'wght' 400,
+    'wght' 300,
     'GRAD' 0,
     'opsz' 24;
   // Never let the ligature text flash before the font loads.
@@ -243,7 +259,7 @@ mat-icon.material-symbols-rounded {
 .material-symbols-rounded.is-filled {
   font-variation-settings:
     'FILL' 1,
-    'wght' 500,
+    'wght' 400,
     'GRAD' 0,
     'opsz' 24;
 }
@@ -260,9 +276,8 @@ mat-icon.material-symbols-rounded {
  * points, so for ASCII text we first map 0-9 onto those glyphs with 'ss01'
  * (an earlier lookup, so the two chain) and then 'tnum' makes them tabular.
  *
- * Never enable 'onum' with this font: the FD build inherited the standard
- * face's Latin old-style figures under that tag, so digits come out as a mix
- * of Latin and Persian shapes.
+ * Never enable 'onum' with this font: it maps digits to Latin old-style
+ * figures, so they come out as a mix of Latin and Persian shapes.
  */
 .ltr-nums {
   direction: ltr;
@@ -272,23 +287,39 @@ mat-icon.material-symbols-rounded {
 }
 
 /* ── Scrollbars ────────────────────────────────────────────────────── */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--mat-sys-outline-variant) transparent;
+/**
+ * The app's own scrollbar: a slim rounded thumb on no track, darkening a
+ * little under the pointer. Chromium and Safari draw it from the
+ * `::-webkit-scrollbar` rules; setting the standard `scrollbar-width` /
+ * `scrollbar-color` there would switch those off for the system bar, so the
+ * standard pair is given to Firefox alone.
+ */
+::-webkit-scrollbar {
+  inline-size: 12px;
+  block-size: 12px;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-extra-small);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pb-graphite, #2f2f33) 18%, transparent) padding-box;
+  transition: background-color 200ms;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--pb-graphite, #2f2f33) 32%, transparent);
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+@supports (-moz-appearance: none) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--pb-graphite, #2f2f33) 22%, transparent) transparent;
+  }
 }
 
 /* ── Search suggestions ────────────────────────────────────────────── */
@@ -317,24 +348,36 @@ pb-page > mat-progress-bar {
   margin-block-end: calc(-4px - var(--pb-page-gap));
 }
 
-/* ── Snackbars ─────────────────────────────────────────────────────── */
+/* ── Toasts ────────────────────────────────────────────────────────── */
 /**
- * On a phone the bottom navigation holds the bottom 72px, and a snackbar
- * there covered it for as long as the message was up. Material marks the
- * snackbar's pane `mat-mdc-snack-bar-handset` on the same CDK Handset
- * breakpoint the shell shows that bar at; the `:has` keeps the sign-in page,
- * which has no bar, as it was.
+ * On a phone the bottom navigation holds the bottom 72px; toasts sit above
+ * it rather than covering it. The sign-in page has no bar, so no offset.
  */
-body:has(.bottom-nav) .mat-mdc-snack-bar-handset .mat-mdc-snack-bar-container {
-  margin-bottom: calc(72px + env(safe-area-inset-bottom));
+body:has(.bottom-nav) {
+  --pb-toast-offset: calc(72px + env(safe-area-inset-bottom));
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+/**
+ * `pb-button` puts its icon and label in one face (button.html) inside
+ * Material's label wrapper. Inline, that wrapper aligns its content to the
+ * text baseline and leaves descender room below, so the face sat a few
+ * pixels high; as a flex row it centres the face on the button exactly.
+ * Here because the wrapper belongs to Material's template, out of reach of
+ * the component's own encapsulated styles.
+ */
+.pb-btn > .mdc-button__label {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
 }
 
 /* ── Motion ────────────────────────────────────────────────────────── */
 /**
- * Material's dialog/snackbar entrances ship the plain M2 "standard decelerate"
+ * Material's dialog entrances ship the plain M2 "standard decelerate"
  * curve baked into their compiled CSS, with no token to override it through —
  * so this reaches past the component boundary on purpose, scoped to exactly
- * the two selectors that carry the entrance transform.
+ * the selector that carries the entrance transform.
  */
 .mat-mdc-dialog-surface {
   transition-timing-function: var(--pb-ease-emphasized) !important;
@@ -348,10 +391,6 @@ body:has(.bottom-nav) .mat-mdc-snack-bar-handset .mat-mdc-snack-bar-container {
  */
 html .mat-mdc-dialog-container .mat-mdc-dialog-title + .mat-mdc-dialog-content {
   padding-block: var(--pb-space-2) var(--pb-space-1);
-}
-
-.mat-snack-bar-container-animations-enabled.mat-snack-bar-container-enter {
-  animation-timing-function: var(--pb-ease-emphasized) !important;
 }
 
 /**

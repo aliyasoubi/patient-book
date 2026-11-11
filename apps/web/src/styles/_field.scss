@@ -1,0 +1,223 @@
+/**
+ * The app's field look, shared by every input drawn in the new style
+ * (`pb-input`, `pb-date-field`): a label above, 12 in from the start edge; a
+ * 48-tall box with a quiet 1px outline that turns the accent colour on focus
+ * and lifts on a soft neutral shadow; a message that slides open below,
+ * lined up with the label, an error led by a small filled dot.
+ *
+ * Spacing on the 4-step scale. Colours from the M3 roles, so a screen that
+ * maps them (styles/_brand.scss) restyles its fields with it.
+ */
+
+@mixin label {
+  display: block;
+  margin-block-end: var(--pb-space-2);
+  margin-inline-start: var(--pb-space-3);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--mat-sys-on-surface);
+}
+
+@mixin box {
+  --_ring: var(--mat-sys-primary);
+
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  block-size: 48px;
+  padding-inline: var(--pb-space-4);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-lowest);
+  box-shadow: var(--pb-shadow-sm, 0 1px 2px rgb(16 24 40 / 0.05));
+  transition:
+    border-color 200ms var(--pb-ease-standard),
+    box-shadow 250ms var(--pb-ease-standard),
+    background-color 200ms var(--pb-ease-standard);
+
+  &:hover {
+    border-color: var(--mat-sys-outline);
+  }
+
+  // Focus: the hairline takes the accent and the box lifts on a soft,
+  // neutral shadow — no coloured halo around it.
+  &:focus-within {
+    border-color: var(--_ring);
+    box-shadow: var(--pb-shadow-md, 0 4px 12px -2px rgb(16 24 40 / 0.1));
+  }
+}
+
+@mixin box-invalid {
+  --_ring: var(--mat-sys-error);
+
+  border-color: var(--mat-sys-error);
+
+  &:hover {
+    border-color: var(--mat-sys-error);
+  }
+}
+
+/** The leading icon; follow with `icon-focused` under the box's :focus-within. */
+@mixin icon {
+  --pb-icon-size: 20px;
+
+  color: var(--mat-sys-on-surface-variant);
+  transition:
+    color 200ms var(--pb-ease-standard),
+    transform 300ms var(--pb-ease-spring);
+}
+
+@mixin icon-focused {
+  color: var(--_ring);
+  transform: scale(1.06);
+}
+
+@mixin control {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  block-size: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  // 16px: anything smaller makes iOS zoom the page on focus.
+  font: var(--mat-sys-body-large);
+  line-height: normal;
+  color: var(--mat-sys-on-surface);
+  caret-color: var(--_ring);
+
+  &::placeholder {
+    color: var(--mat-sys-on-surface-variant);
+    opacity: 0.6;
+  }
+
+  // Autofill paints its own background; keep the box's.
+  &:-webkit-autofill {
+    -webkit-text-fill-color: var(--mat-sys-on-surface);
+    transition: background-color 600000s 0s;
+  }
+}
+
+/** A small square button at the box's end: show password, open the calendar. */
+@mixin end-button {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 32px;
+  block-size: 32px;
+  margin-inline-end: calc(-1 * var(--pb-space-2));
+  padding: 0;
+  border: 0;
+  border-radius: var(--pb-space-2);
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--pb-ease-standard),
+    color 150ms var(--pb-ease-standard),
+    transform 150ms var(--pb-ease-standard);
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--_ring);
+    outline-offset: 1px;
+  }
+}
+
+/** Opens and closes on its own height: 0fr → 1fr. Add `.is-open` to open. */
+@mixin message-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 250ms var(--pb-ease-emphasized),
+    opacity 200ms var(--pb-ease-standard);
+
+  // The message's top gap opens with it, so a closed line takes no room.
+  > * {
+    transition: padding-block-start 250ms var(--pb-ease-emphasized);
+  }
+
+  &.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  &.is-open > * {
+    padding-block-start: var(--pb-space-2);
+  }
+}
+
+@mixin message {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pb-space-2);
+  min-block-size: 0;
+  overflow: hidden;
+  margin: 0;
+  padding-inline-start: var(--pb-space-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--mat-sys-on-surface-variant);
+  transition: color 200ms var(--pb-ease-standard);
+}
+
+/** An error leads with a small filled dot in the error colour. */
+@mixin message-error {
+  color: var(--mat-sys-error);
+
+  &::before {
+    content: '';
+    flex: 0 0 auto;
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    // Sit on the middle of the first line rather than its baseline.
+    align-self: flex-start;
+    margin-block-start: calc((1lh - 6px) / 2);
+  }
+}
+
+/** A disabled or read-only box: flat, quieter, no hover or focus lift. */
+@mixin box-quiet {
+  border-color: var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-low);
+  box-shadow: none;
+
+  &:hover {
+    border-color: var(--mat-sys-outline-variant);
+  }
+}
+
+/**
+ * The message line of a field in a form, where an error appearing must not
+ * push the field below it down: the line is always there, one line tall,
+ * and only its words fade in. A longer message still grows it, smoothly.
+ */
+@mixin message-slot-reserved {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  min-block-size: calc(var(--pb-space-2) + 0.8125rem * 1.6);
+
+  > * {
+    padding-block-start: var(--pb-space-2);
+    opacity: 0;
+    transition: opacity 200ms var(--pb-ease-standard);
+  }
+
+  &.is-open > * {
+    opacity: 1;
+  }
+}

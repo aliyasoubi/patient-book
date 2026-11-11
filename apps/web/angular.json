@@ -32,6 +32,7 @@
             ],
             "styles": [
               "src/fonts/vazirmatn.css",
+              "src/fonts/inter.css",
               "src/fonts/material-symbols-rounded.css",
               "src/styles.scss"
             ],

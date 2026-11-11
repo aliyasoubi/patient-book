@@ -1,0 +1,86 @@
+/**
+ * A dashboard-style panel: a white card on the page, lifted softly, with a
+ * heading row (title, and a link to the full list at its far end). And the
+ * placeholder shapes shown while its content loads — flat, pulsing gently,
+ * never a spinner.
+ */
+
+@keyframes panel-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@mixin panels {
+  .panel {
+    padding: var(--pb-space-5);
+    border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: var(--pb-shadow-sm);
+  }
+
+  .panel__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pb-space-3);
+    margin-block-end: var(--pb-space-4);
+  }
+
+  .panel__title {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--pb-graphite);
+  }
+
+  .panel__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pb-space-1);
+    padding: var(--pb-space-1) var(--pb-space-2);
+    border-radius: 8px;
+    color: var(--pb-brand-strong);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 160ms var(--pb-ease-standard);
+
+    &:hover {
+      background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    }
+  }
+}
+
+@mixin skeletons {
+  .skeleton {
+    display: block;
+    border-radius: 10px;
+    background: var(--pb-neutral-200);
+    animation: panel-pulse 1.4s ease-in-out infinite;
+
+    &--icon {
+      inline-size: 44px;
+      block-size: 44px;
+      border-radius: 14px;
+    }
+
+    &--number {
+      inline-size: 72px;
+      block-size: 36px;
+      margin-block-start: var(--pb-space-3);
+    }
+
+    &--text {
+      inline-size: 60%;
+      block-size: 14px;
+      margin-block-start: var(--pb-space-2);
+    }
+
+    &--row {
+      block-size: 44px;
+      margin-block-end: var(--pb-space-2);
+    }
+  }
+}

@@ -13,7 +13,6 @@ import { MatDatepickerIntl } from '@angular/material/datepicker';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_ICON_DEFAULT_OPTIONS } from '@angular/material/icon';
 import { MatPaginatorIntl } from '@angular/material/paginator';
-import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -73,10 +72,6 @@ export const appConfig: ApplicationConfig = {
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: { appearance: 'outline', subscriptSizing: 'dynamic' },
-    },
-    {
-      provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,
-      useValue: { duration: 4000, horizontalPosition: 'center', verticalPosition: 'bottom' },
     },
     {
       provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
