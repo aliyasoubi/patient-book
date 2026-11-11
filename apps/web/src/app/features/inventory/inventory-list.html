@@ -212,14 +212,19 @@
                   ) {
                     <div class="item__meta">
                       @if (item.minQuantity !== null) {
-                        <span>{{
-                          'inventory.minQuantity' | translate: { count: (item.minQuantity | faNum) }
-                        }}</span>
+                        <span class="item__fact">
+                          <pb-icon name="box" [size]="13" />
+                          {{
+                            'inventory.minQuantity'
+                              | translate: { count: (item.minQuantity | faNum) }
+                          }}
+                        </span>
                       }
                       @if (item.expiry && item.expiryState === 'ok') {
-                        <span>{{
-                          'inventory.expiresOn' | translate: { date: (item.expiry | faNum) }
-                        }}</span>
+                        <span class="item__fact">
+                          <pb-icon name="hourglass" [size]="13" />
+                          {{ 'inventory.expiresOn' | translate: { date: (item.expiry | faNum) } }}
+                        </span>
                       }
                       @if (item.notes) {
                         <span class="item__notes" dir="auto">{{ item.notes }}</span>
@@ -251,9 +256,51 @@
                   }
                 </div>
 
+                <!--
+                  The balance: on the store's own screen a stepper — use one,
+                  the count, receive one — with a bar under it for how the
+                  shelf stands against its minimum. The count pops when it moves.
+                -->
                 <div class="item__stock">
-                  <span class="item__quantity">{{ item.quantity | faNum }}</span>
-                  <span class="item__unit">{{ unitLabel(item.unit) | translate }}</span>
+                  @if (canEdit() && !archivedOnly()) {
+                    <div class="stepper">
+                      <button
+                        type="button"
+                        class="stepper__btn"
+                        [attr.aria-label]="'inventory.useOne' | translate: { name: item.name }"
+                        [matTooltip]="'inventoryMovement.use' | translate"
+                        [disabled]="item.quantity === 0"
+                        (click)="move(item, 'use')"
+                      >
+                        <pb-icon name="minus" [size]="16" [stroke]="2.2" />
+                      </button>
+                      <span class="stepper__value">
+                        @for (q of [item.quantity]; track q) {
+                          <strong class="stepper__qty">{{ q | faNum }}</strong>
+                        }
+                        <small>{{ unitLabel(item.unit) | translate }}</small>
+                      </span>
+                      <button
+                        type="button"
+                        class="stepper__btn stepper__btn--add"
+                        [attr.aria-label]="'inventory.receiveOne' | translate: { name: item.name }"
+                        [matTooltip]="'inventoryMovement.receive' | translate"
+                        (click)="move(item, 'receive')"
+                      >
+                        <pb-icon name="plus" [size]="16" [stroke]="2.2" />
+                      </button>
+                    </div>
+                  } @else {
+                    <span class="item__count">
+                      <strong class="stepper__qty">{{ item.quantity | faNum }}</strong>
+                      <small>{{ unitLabel(item.unit) | translate }}</small>
+                    </span>
+                  }
+                  @if (item.minQuantity !== null) {
+                    <span class="level" aria-hidden="true">
+                      <span class="level__fill" [style.inline-size.%]="levelOf(item)"></span>
+                    </span>
+                  }
                 </div>
 
                 <div class="item__actions">
@@ -272,22 +319,6 @@
                       (click)="restore(item)"
                     />
                   } @else {
-                    <!-- The two moves made all day, one tap each; the rest wait in the menu. -->
-                    <pb-icon-button
-                      icon="remove"
-                      variant="tonal"
-                      [ariaLabel]="'inventory.useOne' | translate: { name: item.name }"
-                      [tooltip]="'inventoryMovement.use' | translate"
-                      [disabled]="item.quantity === 0"
-                      (click)="move(item, 'use')"
-                    />
-                    <pb-icon-button
-                      icon="add"
-                      variant="tonal"
-                      [ariaLabel]="'inventory.receiveOne' | translate: { name: item.name }"
-                      [tooltip]="'inventoryMovement.receive' | translate"
-                      (click)="move(item, 'receive')"
-                    />
                     <pb-icon-button
                       icon="more_vert"
                       [menu]="rowMenu"

@@ -69,6 +69,7 @@ height
 history
 home
 home_health
+hourglass
 hourglass_bottom
 hourglass_empty
 how_to_reg
@@ -121,7 +122,6 @@ pin_drop
 post
 radio
 refresh
-remove
 remove_shopping_cart
 reorder
 save

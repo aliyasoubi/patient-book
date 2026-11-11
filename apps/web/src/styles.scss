@@ -348,6 +348,53 @@ pb-page > mat-progress-bar {
   margin-block-end: calc(-4px - var(--pb-page-gap));
 }
 
+/* Anywhere else on a page too: it takes no room, and it fades in and out. */
+.page mat-progress-bar:not(.list__progress) {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 5;
+  margin-block-end: -4px;
+  animation: pb-fade-in 240ms var(--pb-ease-standard) backwards;
+}
+
+.page pb-page > mat-progress-bar {
+  margin-block-end: calc(-4px - var(--pb-page-gap));
+}
+
+@keyframes pb-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ── Lists that change ─────────────────────────────────────────────── */
+/**
+ * A filter, a search, a sort or the next page brings in new rows: they fade
+ * and settle in rather than appearing at once. Rows that stay are kept (the
+ * tables track by id), so only what is new moves.
+ */
+@keyframes pb-row-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+tr.mat-mdc-row,
+.queue__item,
+pb-lab-case-card {
+  animation: pb-row-in 320ms var(--pb-ease-emphasized) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  tr.mat-mdc-row,
+  .queue__item,
+  pb-lab-case-card,
+  .page mat-progress-bar {
+    animation: none;
+  }
+}
+
 /* ── Toasts ────────────────────────────────────────────────────────── */
 /**
  * On a phone the bottom navigation holds the bottom 72px; toasts sit above

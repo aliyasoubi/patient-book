@@ -22,14 +22,14 @@
     }
   </pb-list-toolbar>
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
-
   @if (failed()) {
     <pb-load-error [message]="'consumption.loadFailed' | translate" (retry)="retry()" />
   } @else if (report(); as r) {
+    <!-- While a new answer is on its way the old one stays, dimmed, rather
+         than a bar pushing the table down; the new one then fades in. -->
     <pb-surface
+      class="consumption__surface"
+      [class.is-busy]="loading()"
       icon="outbox"
       [title]="'consumption.title' | translate"
       [description]="'consumption.description' | translate"
@@ -42,77 +42,84 @@
       }
 
       @if (groups().length) {
-        <!-- Scrolls sideways on a narrow screen, the item column staying put. -->
-        <div
-          #scroller
-          class="consumption__scroll"
-          tabindex="0"
-          [attr.aria-label]="'consumption.title' | translate"
-        >
-          <table class="usage">
-            <thead>
-              <tr>
-                <th scope="col" class="usage__item">{{ 'consumption.item' | translate }}</th>
-                <th scope="col" class="usage__unit">{{ 'consumption.unit' | translate }}</th>
-                @for (col of columns(); track col.month) {
-                  <th scope="col" class="usage__month">
-                    <span class="usage__month-name">{{ col.name }}</span>
-                    <span class="usage__month-year">{{ col.year }}</span>
-                    @if (col.note) {
-                      <span class="usage__month-note">{{ col.note }}</span>
-                    }
-                  </th>
-                }
-                <th scope="col" class="usage__average">{{ 'consumption.average' | translate }}</th>
-              </tr>
-            </thead>
-            @for (group of groups(); track group.category) {
-              <tbody>
-                <tr class="usage__group">
-                  <th scope="rowgroup" [attr.colspan]="columns().length + 3">
-                    <span class="usage__group-label">
-                      <mat-icon aria-hidden="true">{{ group.icon }}</mat-icon>
-                      {{ group.label | translate }}
-                    </span>
-                  </th>
-                </tr>
-                @for (row of group.rows; track row.id) {
-                  <tr>
-                    <th scope="row" class="usage__item">
-                      <span class="usage__name" dir="auto">{{ row.name }}</span>
-                      @if (row.detail) {
-                        <span class="usage__detail" dir="auto">{{ row.detail }}</span>
-                      }
-                      <!-- On a phone the unit column gives way to this line. -->
-                      <span class="usage__unit-inline">{{ row.unit }}</span>
-                      @if (row.archived) {
-                        <span class="usage__archived">{{
-                          'consumption.archived' | translate
-                        }}</span>
+        <!-- Scrolls sideways on a narrow screen, the item column staying put.
+             Drawn afresh for each answer (a new filter, a new period), so it
+             fades and rises in instead of changing in place. -->
+        @for (view of [groups()]; track view) {
+          <div
+            #scroller
+            class="consumption__scroll"
+            animate.enter="usage-in"
+            tabindex="0"
+            [attr.aria-label]="'consumption.title' | translate"
+          >
+            <table class="usage">
+              <thead>
+                <tr>
+                  <th scope="col" class="usage__item">{{ 'consumption.item' | translate }}</th>
+                  <th scope="col" class="usage__unit">{{ 'consumption.unit' | translate }}</th>
+                  @for (col of columns(); track col.month) {
+                    <th scope="col" class="usage__month">
+                      <span class="usage__month-name">{{ col.name }}</span>
+                      <span class="usage__month-year">{{ col.year }}</span>
+                      @if (col.note) {
+                        <span class="usage__month-note">{{ col.note }}</span>
                       }
                     </th>
-                    <td class="usage__unit">{{ row.unit }}</td>
-                    @for (cell of row.cells; track $index) {
-                      @if (cell === null) {
-                        <td class="usage__cell usage__cell--none">
-                          <span aria-hidden="true">—</span>
-                          <span class="cdk-visually-hidden">{{
-                            'consumption.notRecorded' | translate
-                          }}</span>
-                        </td>
-                      } @else {
-                        <td class="usage__cell" [class.usage__cell--zero]="cell === 0">
-                          {{ cell | faNum }}
-                        </td>
-                      }
-                    }
-                    <td class="usage__average">{{ row.average ?? '—' }}</td>
+                  }
+                  <th scope="col" class="usage__average">
+                    {{ 'consumption.average' | translate }}
+                  </th>
+                </tr>
+              </thead>
+              @for (group of groups(); track group.category) {
+                <tbody>
+                  <tr class="usage__group">
+                    <th scope="rowgroup" [attr.colspan]="columns().length + 3">
+                      <span class="usage__group-label">
+                        <mat-icon aria-hidden="true">{{ group.icon }}</mat-icon>
+                        {{ group.label | translate }}
+                      </span>
+                    </th>
                   </tr>
-                }
-              </tbody>
-            }
-          </table>
-        </div>
+                  @for (row of group.rows; track row.id; let i = $index) {
+                    <tr class="usage__row" [style.--_i]="i">
+                      <th scope="row" class="usage__item">
+                        <span class="usage__name" dir="auto">{{ row.name }}</span>
+                        @if (row.detail) {
+                          <span class="usage__detail" dir="auto">{{ row.detail }}</span>
+                        }
+                        <!-- On a phone the unit column gives way to this line. -->
+                        <span class="usage__unit-inline">{{ row.unit }}</span>
+                        @if (row.archived) {
+                          <span class="usage__archived">{{
+                            'consumption.archived' | translate
+                          }}</span>
+                        }
+                      </th>
+                      <td class="usage__unit">{{ row.unit }}</td>
+                      @for (cell of row.cells; track $index) {
+                        @if (cell === null) {
+                          <td class="usage__cell usage__cell--none">
+                            <span aria-hidden="true">—</span>
+                            <span class="cdk-visually-hidden">{{
+                              'consumption.notRecorded' | translate
+                            }}</span>
+                          </td>
+                        } @else {
+                          <td class="usage__cell" [class.usage__cell--zero]="cell === 0">
+                            {{ cell | faNum }}
+                          </td>
+                        }
+                      }
+                      <td class="usage__average">{{ row.average ?? '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              }
+            </table>
+          </div>
+        }
         <p class="consumption__footnote">{{ 'consumption.averageHint' | translate }}</p>
       } @else if (!loading()) {
         <p class="consumption__empty">
@@ -127,5 +134,8 @@
         </p>
       }
     </pb-surface>
+  } @else if (loading()) {
+    <!-- The first answer: the table's shape, pulsing, never a spinner. -->
+    <div class="consumption__skeleton" aria-hidden="true"></div>
   }
 </div>

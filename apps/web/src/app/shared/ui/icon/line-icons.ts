@@ -231,6 +231,18 @@ export const LINE_ICONS = {
     'M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0',
     'M16 12v1.5a2.5 2.5 0 0 0 5 0v-1.5a9 9 0 1 0 -5.5 8.28',
   ],
+  minus: ['M5 12l14 0'],
+  hourglass: [
+    'M6.5 7h11',
+    'M6.5 17h11',
+    'M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z',
+    'M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z',
+  ],
+  'dots-vertical': [
+    'M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
+    'M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
+    'M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
+  ],
 } as const satisfies Record<string, readonly string[]>;
 
 export type LineIconName = keyof typeof LINE_ICONS;

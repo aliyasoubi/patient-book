@@ -6,6 +6,7 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   catchError,
   debounceTime,
@@ -177,6 +178,7 @@ function readUrlFilters(params: ParamMap): {
     ReactiveFormsModule,
     MatIconModule,
     MatMenuModule,
+    MatTooltipModule,
     TranslatePipe,
     EmptyState,
     LoadError,
@@ -412,6 +414,16 @@ export class InventoryList {
       return this.i18n.instant('filters.changeThem');
     }
     return this.canEdit() ? this.i18n.instant('inventory.emptyHint') : '';
+  }
+
+  /**
+   * How the shelf stands, for the bar under its count: full at twice the
+   * minimum, empty at none, so "low" sits under halfway.
+   */
+  protected levelOf(item: InventoryItem): number {
+    const min = item.minQuantity ?? 0;
+    if (min <= 0) return 100;
+    return Math.max(0, Math.min(100, Math.round((item.quantity / (min * 2)) * 100)));
   }
 
   protected addItem(): void {

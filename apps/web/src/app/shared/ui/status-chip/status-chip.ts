@@ -15,7 +15,7 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
  * status colour carries the meaning), while a link is an **assist chip** —
  * outlined on the surface with its icon in primary. Tonal fill on something
  * tappable would read as a *selected* filter chip, not as "go there". Both
- * share M3's 32dp height and label-large type.
+ * share one 28px height.
  */
 @Component({
   selector: 'pb-status-chip',
@@ -55,21 +55,27 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
        * keeps the chip content-sized inside either kind of parent.
        */
       width: fit-content;
-      gap: var(--pb-space-2);
-      min-height: 32px;
-      padding-inline: var(--pb-space-3);
-      border: 1px solid transparent;
-      border-radius: var(--mat-sys-corner-small);
+      --_bg: var(--pb-neutral-100, var(--mat-sys-surface-container-high));
+      --_edge: transparent;
+
+      gap: 6px;
+      min-height: 28px;
+      padding-inline: 10px;
+      border: 1px solid var(--_edge);
+      border-radius: 9px;
       background: var(--_bg);
-      color: var(--mat-sys-on-surface-variant);
-      font: var(--mat-sys-label-large);
-      letter-spacing: var(--mat-sys-label-large-tracking);
+      color: var(--pb-neutral-600, var(--mat-sys-on-surface-variant));
+      font-size: 0.75rem;
+      font-weight: 600;
       line-height: 1;
       white-space: nowrap;
     }
 
     .pb-status-chip__icon {
-      font-size: var(--pb-icon-sm);
+      inline-size: 16px;
+      block-size: 16px;
+      font-size: 16px;
+      font-variation-settings: 'wght' 400;
     }
 
     /*
@@ -114,25 +120,30 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
       outline-offset: 2px;
     }
 
+    /* Tones are a soft tint with a hairline of the same hue: the meaning
+       reads at a glance without a block of colour in every row. */
     :host([data-tone='primary']) {
-      --_bg: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
+      --_bg: color-mix(in srgb, var(--pb-brand, #ff6a00) 9%, #fff);
+      --_edge: color-mix(in srgb, var(--pb-brand, #ff6a00) 22%, transparent);
+      color: var(--pb-brand-strong, var(--mat-sys-primary));
     }
 
-    /* Fixed-hue app tokens, not brand roles: see styles.scss. */
     :host([data-tone='success']) {
-      --_bg: var(--pb-success-container);
-      color: var(--pb-on-success-container);
+      --_bg: color-mix(in srgb, #1f9d55 9%, #fff);
+      --_edge: color-mix(in srgb, #1f9d55 22%, transparent);
+      color: #17703d;
     }
 
     :host([data-tone='warning']) {
-      --_bg: var(--pb-warning-container);
-      color: var(--pb-on-warning-container);
+      --_bg: color-mix(in srgb, #e08a00 10%, #fff);
+      --_edge: color-mix(in srgb, #e08a00 26%, transparent);
+      color: #8f5600;
     }
 
     :host([data-tone='error']) {
-      --_bg: var(--mat-sys-error-container);
-      color: var(--mat-sys-on-error-container);
+      --_bg: color-mix(in srgb, #e5484d 8%, #fff);
+      --_edge: color-mix(in srgb, #e5484d 22%, transparent);
+      color: #b4232a;
     }
   `,
 })

@@ -10,7 +10,6 @@ import {
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormControl } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   catchError,
@@ -96,7 +95,6 @@ interface CategoryGroup {
   standalone: true,
   imports: [
     MatIconModule,
-    MatProgressBarModule,
     TranslatePipe,
     PersianNumberPipe,
     LoadError,

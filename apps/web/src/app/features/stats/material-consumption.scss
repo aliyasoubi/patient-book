@@ -4,6 +4,57 @@
   display: block;
 }
 
+@keyframes usage-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+@keyframes usage-row-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.usage-in {
+  animation: usage-in 420ms var(--pb-ease-emphasized) backwards;
+}
+
+.usage__row {
+  animation: usage-row-in 360ms calc(80ms + min(var(--_i, 0), 12) * 25ms) var(--pb-ease-standard)
+    backwards;
+}
+
+.consumption__surface {
+  transition: opacity 240ms var(--pb-ease-standard);
+
+  &.is-busy {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+@keyframes usage-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.consumption__skeleton {
+  block-size: 320px;
+  border-radius: 20px;
+  background: var(--pb-neutral-200);
+  animation: usage-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usage-in,
+  .usage__row {
+    animation: none;
+  }
+}
+
 .consumption {
   display: flex;
   flex-direction: column;

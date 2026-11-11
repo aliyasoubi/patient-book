@@ -1,7 +1,5 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MatChipOption } from '@angular/material/chips';
-import { By } from '@angular/platform-browser';
 import { provideTranslateService } from '@ngx-translate/core';
 import { describe, expect, it } from 'vitest';
 
@@ -38,17 +36,20 @@ function setup(multiple: boolean, selected: string[] = []) {
   fixture.componentInstance.multiple.set(multiple);
   fixture.componentInstance.selected.set(selected);
   fixture.detectChanges();
-  const chips = fixture.debugElement
-    .queryAll(By.directive(MatChipOption))
-    .map((d) => d.componentInstance as MatChipOption);
+  const buttons = () =>
+    [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('button.chip'),
+    ] as HTMLButtonElement[];
+  const chips = buttons().map((b) => ({
+    get selected() {
+      return b.getAttribute('aria-pressed') === 'true';
+    },
+  }));
   const tap = (index: number) => {
-    chips[index].selectViaInteraction();
+    buttons()[index].click();
     fixture.detectChanges();
   };
-  const toggle = (index: number) => {
-    chips[index]._handlePrimaryActionInteraction();
-    fixture.detectChanges();
-  };
+  const toggle = tap;
   return { fixture, chips, tap, toggle, host: fixture.componentInstance };
 }
 

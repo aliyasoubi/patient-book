@@ -267,13 +267,29 @@
 }
 
 /* ── An item ───────────────────────────────────────────────────────── */
+/*
+ * One line per item: what it is (name, brand, size in a small pill, the
+ * minimum and expiry in quiet type), what needs a look (soft chips), and
+ * the balance as a stepper with a level bar under it.
+ */
+
+@keyframes stock-count {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
 
 .item {
+  --_tone: var(--pb-graphite);
+  --_level: color-mix(in srgb, var(--pb-graphite) 35%, transparent);
+
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--pb-space-3) var(--pb-space-4);
-  min-block-size: 60px;
-  padding: var(--pb-space-2) var(--pb-space-4);
+  min-block-size: 68px;
+  padding: var(--pb-space-3) var(--pb-space-4);
   transition: background-color 160ms var(--pb-ease-standard);
 
   & + & {
@@ -281,13 +297,22 @@
   }
 
   &:hover {
-    background: color-mix(in srgb, var(--pb-neutral-100) 50%, transparent);
+    background: color-mix(in srgb, var(--pb-neutral-100) 45%, transparent);
+  }
+
+  &[data-stock='low'] {
+    --_tone: #8f5600;
+    --_level: #e08a00;
+  }
+
+  &[data-stock='out'] {
+    --_tone: #b4232a;
+    --_level: #e5484d;
   }
 
   @media (max-width: 640px) {
     flex-wrap: wrap;
     gap: var(--pb-space-2) var(--pb-space-3);
-    padding-block: var(--pb-space-3);
   }
 }
 
@@ -295,7 +320,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-inline-size: 0;
 
   @media (max-width: 640px) {
@@ -306,34 +331,51 @@
 .item__name {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--pb-space-2);
+  align-items: center;
+  gap: 4px var(--pb-space-2);
 
   strong {
+    color: var(--pb-graphite);
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 700;
   }
 }
 
 .item__brand {
   color: var(--pb-neutral-500);
+  font-family: var(--pb-font-latin), inherit;
   font-size: 0.8125rem;
+  font-weight: 500;
 }
 
-/* The size is what tells one row of a line from the next: give it weight. */
+/* The size tells one row of a line from the next: a small pill of its own. */
 .item__spec {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-graphite);
+  font-size: 0.75rem;
+  font-weight: 700;
   font-feature-settings: var(--pb-font-numeric);
 }
 
 .item__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 var(--pb-space-3);
+  gap: 2px var(--pb-space-3);
   min-inline-size: 0;
   color: var(--pb-neutral-500);
   font-size: 0.75rem;
+}
+
+.item__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  pb-icon {
+    color: var(--pb-neutral-400);
+  }
 }
 
 .item__notes {
@@ -359,39 +401,121 @@
   }
 }
 
-/* A fixed-width column, so balances line up down the card. */
+/* The balance column: a fixed width, so the steppers line up down the card. */
 .item__stock {
   display: flex;
   flex: 0 0 auto;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: var(--pb-space-1);
-  min-inline-size: 72px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  inline-size: 148px;
 
   @media (max-width: 640px) {
-    min-inline-size: 0;
     margin-inline-end: auto;
   }
 }
 
-.item__quantity {
-  font-size: 1.125rem;
-  font-weight: 800;
-  font-feature-settings: var(--pb-font-numeric);
-  transition: color 220ms var(--pb-ease-standard);
+.stepper {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  block-size: 40px;
+  padding: 2px;
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 12px;
+  background: #fff;
+  transition:
+    border-color 200ms var(--pb-ease-standard),
+    box-shadow 220ms var(--pb-ease-standard);
 
-  [data-stock='out'] & {
-    color: var(--mat-sys-error);
-  }
-
-  [data-stock='low'] & {
-    color: var(--pb-on-warning-container);
+  .item:hover & {
+    box-shadow: var(--pb-shadow-sm);
   }
 }
 
-.item__unit {
-  color: var(--pb-neutral-500);
-  font-size: 0.75rem;
+.stepper__btn {
+  display: inline-grid;
+  place-items: center;
+  block-size: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--pb-neutral-600);
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--pb-ease-standard),
+    color 150ms var(--pb-ease-standard),
+    scale 150ms var(--pb-ease-standard);
+
+  &:hover:not(:disabled) {
+    background: var(--pb-neutral-100);
+    color: var(--pb-graphite);
+  }
+
+  &--add:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    color: var(--pb-brand-strong);
+  }
+
+  &:active:not(:disabled) {
+    scale: 0.88;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 1px;
+  }
+}
+
+.stepper__value,
+.item__count {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+
+  small {
+    color: var(--pb-neutral-500);
+    font-size: 0.6875rem;
+  }
+}
+
+.item__count {
+  justify-content: flex-end;
+}
+
+.stepper__qty {
+  display: inline-block;
+  color: var(--_tone);
+  font-size: 1.0625rem;
+  font-weight: 800;
+  font-feature-settings: var(--pb-font-numeric);
+  animation: stock-count 360ms var(--pb-ease-spring) backwards;
+}
+
+/* How the shelf stands against its minimum: full at twice it. */
+.level {
+  display: block;
+  block-size: 4px;
+  margin-inline: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--pb-neutral-100);
+}
+
+.level__fill {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--_level);
+  transition:
+    inline-size 600ms var(--pb-ease-emphasized),
+    background-color 300ms var(--pb-ease-standard);
 }
 
 .item__actions {
@@ -403,7 +527,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .shelf,
-  .shelf-skeleton {
+  .shelf-skeleton,
+  .stepper__qty {
     animation: none;
   }
 
