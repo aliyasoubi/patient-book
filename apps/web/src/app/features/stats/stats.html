@@ -66,37 +66,17 @@
             }
           </section>
 
-          <!-- ── Gender: one bar split in two, the rest a footnote ─── -->
+          <!-- ── Gender: a ring, with the records that have none ───── -->
           <section class="panel stats__panel--gender">
             <header class="panel__head">
               <h2 class="panel__title">{{ 'stats.genderTitle' | translate }}</h2>
             </header>
-            <div class="split" role="img" [attr.aria-label]="'stats.genderAria' | translate">
-              @for (g of genderColumns(); track g.key) {
-                <span
-                  class="split__part"
-                  [attr.data-gender]="g.key"
-                  [style.flex-grow]="g.count || 0.001"
-                ></span>
-              }
-            </div>
-            <ul class="legend">
-              @for (g of genderColumns(); track g.key) {
-                <li class="legend__row" [attr.data-gender]="g.key">
-                  <span class="legend__dot" aria-hidden="true"></span>
-                  <span class="legend__label">{{ genderLabel(g.key) | translate }}</span>
-                  <span class="legend__value">{{ g.count | faCount }}</span>
-                  <span class="legend__share"
-                    >{{ g.percent | faNum }}{{ 'common.percentSign' | translate }}</span
-                  >
-                </li>
-              }
-            </ul>
-            @if (genderUnknown(); as unknown) {
-              <p class="panel__foot">
-                {{ 'stats.genderUnknown' | translate: { count: (unknown | faCount) } }}
-              </p>
-            }
+            <pb-stats-donut
+              role="group"
+              [attr.aria-label]="'stats.genderAria' | translate"
+              [parts]="genderParts()"
+              totalLabel="stats.patientsWord"
+            />
           </section>
 
           <!-- ── Age ─────────────────────────────────────────────── -->
@@ -105,19 +85,7 @@
               <h2 class="panel__title">{{ 'stats.ageGroups' | translate }}</h2>
             </header>
             @if (ageBars().length) {
-              <ul class="bars">
-                @for (b of ageBars(); track b.band) {
-                  <ng-container
-                    [ngTemplateOutlet]="bar"
-                    [ngTemplateOutletContext]="{
-                      label: ageBandLabel(b.band) | translate,
-                      count: b.count,
-                      percent: b.percent,
-                      lead: b.count === ageMax(),
-                    }"
-                  />
-                }
-              </ul>
+              <pb-stats-columns [items]="ageColumns()" />
             } @else {
               <p class="panel__empty">{{ 'stats.noData' | translate }}</p>
             }

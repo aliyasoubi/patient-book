@@ -288,84 +288,6 @@
 
 /* ── Growth ────────────────────────────────────────────────────────── */
 
-/* ── Gender: one split bar and its legend ──────────────────────────── */
-
-.split {
-  display: flex;
-  gap: 3px;
-  block-size: 12px;
-  margin-block: var(--pb-space-2) var(--pb-space-5);
-}
-
-.split__part {
-  flex-basis: 0;
-  min-inline-size: 4px;
-  border-radius: 999px;
-  animation: split-in 800ms var(--pb-ease-emphasized) backwards;
-  transform-origin: inline-start;
-
-  &[data-gender='female'] {
-    background: var(--pb-brand);
-  }
-
-  &[data-gender='male'] {
-    background: color-mix(in srgb, var(--pb-graphite) 70%, transparent);
-  }
-}
-
-@keyframes split-in {
-  from {
-    scale: 0 1;
-  }
-}
-
-.legend {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.legend__row {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  align-items: center;
-  gap: var(--pb-space-2);
-  font-size: 0.875rem;
-
-  &[data-gender='female'] .legend__dot {
-    background: var(--pb-brand);
-  }
-
-  &[data-gender='male'] .legend__dot {
-    background: color-mix(in srgb, var(--pb-graphite) 70%, transparent);
-  }
-}
-
-.legend__dot {
-  inline-size: 10px;
-  block-size: 10px;
-  border-radius: 3px;
-}
-
-.legend__label {
-  color: var(--pb-graphite);
-  font-weight: 500;
-}
-
-.legend__value {
-  font-weight: 700;
-}
-
-.legend__share {
-  min-inline-size: 4ch;
-  color: var(--pb-neutral-500);
-  font-size: 0.75rem;
-  text-align: end;
-}
-
 /* ── Referrals: a ranked list, each row opening its patients ──────── */
 
 .ranks {
@@ -443,8 +365,7 @@
 @media (prefers-reduced-motion: reduce) {
   .stats__body,
   .kpi,
-  .bars__fill,
-  .split__part {
+  .bars__fill {
     animation: none;
   }
 

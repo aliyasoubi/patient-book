@@ -1,47 +1,50 @@
-<pb-page width="form">
+<pb-page width="wide">
   <pb-page-header
     [title]="'settings.title' | translate"
     [subtitle]="'settings.subtitle' | translate"
   />
 
-  <div class="set">
-    <!-- ── Who is signed in, and the way to their account ───────────── -->
-    <section class="set__card" style="--_i: 0">
-      <div class="who-row">
-        <div class="who">
-          <span class="who__avatar" aria-hidden="true">{{ initial() }}</span>
-          <div>
-            <span class="who__name">{{ auth.user()?.fullName }}</span>
-            <span class="who__meta">
-              <span class="chip chip--latin">{{ auth.user()?.username }}</span>
-              <span class="chip chip--brand">{{ roleLabel(auth.role()) | translate }}</span>
-            </span>
+  <!-- Wide: the person and the look in a side column, the labs beside them. -->
+  <div class="set set--split">
+    <div class="set">
+      <!-- ── Who is signed in, and the way to their account ───────────── -->
+      <section class="set__card" style="--_i: 0">
+        <div class="who-row">
+          <div class="who">
+            <span class="who__avatar" aria-hidden="true">{{ initial() }}</span>
+            <div>
+              <span class="who__name">{{ auth.user()?.fullName }}</span>
+              <span class="who__meta">
+                <span class="chip chip--latin">{{ auth.user()?.username }}</span>
+                <span class="chip chip--brand">{{ roleLabel(auth.role()) | translate }}</span>
+              </span>
+            </div>
           </div>
+          <pb-button variant="stroked" link="/settings/account" icon="user-circle">
+            {{ 'settings.openAccount' | translate }}
+          </pb-button>
         </div>
-        <pb-button variant="stroked" link="/settings/account" icon="user-circle">
-          {{ 'settings.openAccount' | translate }}
-        </pb-button>
-      </div>
-    </section>
+      </section>
 
-    <!-- ── Appearance: three choices on a sliding pill ──────────────── -->
-    <section class="set__card" style="--_i: 1">
-      <header class="set__head">
-        <span class="set__tile"><pb-icon name="palette" /></span>
-        <div class="set__titles">
-          <h2 class="set__title">{{ 'settings.appearance' | translate }}</h2>
-          <p class="set__hint">{{ 'settings.appearanceHint' | translate }}</p>
-        </div>
-      </header>
-      <pb-switcher
-        kind="radio"
-        [stretch]="true"
-        [options]="modes"
-        [value]="theme.mode()"
-        (valueChange)="setTheme($any($event))"
-        [ariaLabel]="'settings.displayMode' | translate"
-      />
-    </section>
+      <!-- ── Appearance: three choices on a sliding pill ──────────────── -->
+      <section class="set__card" style="--_i: 1">
+        <header class="set__head">
+          <span class="set__tile"><pb-icon name="palette" /></span>
+          <div class="set__titles">
+            <h2 class="set__title">{{ 'settings.appearance' | translate }}</h2>
+            <p class="set__hint">{{ 'settings.appearanceHint' | translate }}</p>
+          </div>
+        </header>
+        <pb-switcher
+          kind="radio"
+          [stretch]="true"
+          [options]="modes"
+          [value]="theme.mode()"
+          (valueChange)="setTheme($any($event))"
+          [ariaLabel]="'settings.displayMode' | translate"
+        />
+      </section>
+    </div>
 
     <!-- ── Labs: the ones the case form offers. A lab no longer used is
          switched off, not deleted: its old cases still name it. ──────── -->
@@ -74,11 +77,13 @@
                 <pb-icon name="pencil" [size]="16" />
               </button>
               <pb-switch
+                class="labs__switch"
                 [checked]="lab.isActive"
                 [disabled]="labBusy() === lab.id"
                 (checkedChange)="setLabActive(lab, $event)"
+                [attr.aria-label]="lab.name"
               >
-                {{ 'settings.labActive' | translate }}
+                {{ (lab.isActive ? 'settings.labActive' : 'settings.labInactive') | translate }}
               </pb-switch>
             } @else if (!lab.isActive) {
               <span class="chip">{{ 'settings.labInactive' | translate }}</span>

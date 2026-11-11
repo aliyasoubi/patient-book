@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of, Subject } from 'rxjs';
@@ -8,6 +9,7 @@ import { RegistryService } from '../../core/services/registry.service';
 import { PatientsService } from '../patients/data/patients.service';
 import type { PracticeStats } from '../../core/models/common.model';
 import { Stats } from './stats';
+import { StatsTrend } from './stats-trend';
 
 const stats = (over: Partial<PracticeStats> = {}): PracticeStats => ({
   totals: {
@@ -73,7 +75,7 @@ describe('Stats', () => {
   });
 
   it('charts twelve months to this one, with empty months as zero', () => {
-    const { fixture, el } = render();
+    const { fixture } = render();
     stats$.next(
       stats({
         newPatientsByMonth: [
@@ -85,12 +87,12 @@ describe('Stats', () => {
     );
     fixture.detectChanges();
 
-    const points = el.querySelector('.trend__line')!.getAttribute('d')!.split(' ');
-    expect(points).toHaveLength(12);
-    // Each month sits mid-way across its twelfth.
-    expect(points[0]).toBe('M4.2,16.0'); // 1404/08: 2 of a peak of 4.
-    expect(points[5]).toMatch(/,32\.0$/); // A month with none is a real zero.
-    expect(points[11]).toBe('L95.8,0.0'); // 1405/07, this month, the peak.
+    const chart = fixture.debugElement.query(By.directive(StatsTrend)).componentInstance;
+    const counts = (chart as StatsTrend).trend().months.map((m) => m.count);
+    expect(counts).toHaveLength(12);
+    expect(counts[0]).toBe(2); // 1404/08, the oldest in the window.
+    expect(counts[5]).toBe(0); // A month with none is a real zero.
+    expect(counts[11]).toBe(4); // 1405/07, this month.
   });
 
   it('says so when a panel has nothing to show', () => {

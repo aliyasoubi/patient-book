@@ -65,6 +65,7 @@ gate
 group
 hardware
 healing
+height
 history
 home
 home_health
@@ -142,6 +143,7 @@ stethoscope
 straighten
 stylus
 surgical
+switch
 syringe
 tab
 table

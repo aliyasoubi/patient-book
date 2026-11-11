@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { addMonths, format, startOfMonth } from 'date-fns-jalali';
 
 import { RegistryService } from '../../core/services/registry.service';
@@ -18,6 +18,8 @@ import type { PracticeStats } from '../../core/models/common.model';
 import type { TreatmentType } from '../patients/data/patient.model';
 import { MaterialConsumptionReport } from './material-consumption';
 import { StatsCatalogue } from './stats-catalogue';
+import { StatsColumns } from './stats-columns';
+import { StatsDonut, type DonutPart } from './stats-donut';
 import { StatsTrend } from './stats-trend';
 
 /** The page's tabs, as the `tab` query parameter names them; the first has none. */
@@ -52,6 +54,8 @@ interface TotalTile {
     PbSwitcher,
     StatsCatalogue,
     StatsTrend,
+    StatsDonut,
+    StatsColumns,
     LoadError,
     TranslatePipe,
   ],
@@ -63,6 +67,7 @@ export class Stats {
   private readonly patients = inject(PatientsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly i18n = inject(TranslateService);
 
   private readonly query = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
@@ -113,9 +118,6 @@ export class Stats {
     return list.map((b) => ({ ...b, percent: Math.round((b.count / max) * 100) }));
   });
 
-  /** The largest age band, drawn in the accent. */
-  protected readonly ageMax = computed(() => Math.max(0, ...this.ageBars().map((b) => b.count)));
-
   /**
    * Women and men as two fixed columns — always both, in this order, even
    * when one count is zero, so the panel keeps its shape as the register
@@ -130,6 +132,27 @@ export class Stats {
       return { key, count, percent: Math.round((count / total) * 100) };
     });
   });
+
+  /** Women, men and (when there are any) records with no gender, as a ring. */
+  protected readonly genderParts = computed<DonutPart[]>(() => {
+    const parts: DonutPart[] = this.genderColumns().map((g) => ({
+      key: g.key,
+      label: genderLabel(g.key),
+      count: g.count,
+    }));
+    const unknown = this.genderUnknown();
+    if (unknown) parts.push({ key: 'unknown', label: 'gender.unknown', count: unknown });
+    return parts;
+  });
+
+  /** The age bands as columns, youngest first. */
+  protected readonly ageColumns = computed(() =>
+    this.ageBars().map((b) => ({
+      key: b.band,
+      label: this.i18n.instant(ageBandLabel(b.band)),
+      count: b.count,
+    })),
+  );
 
   /** Records with no gender on file; shown only when there are any. */
   protected readonly genderUnknown = computed(
