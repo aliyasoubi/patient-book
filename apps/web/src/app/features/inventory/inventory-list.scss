@@ -1,158 +1,48 @@
 /*
- * The store: three filter tiles, the search, then a white card per shelf.
- * A shelf's head is one calm row — icon, name, how many, only the flags that
- * need a look — and its items open under it on their own height, so nothing
- * ever appears at full size in one frame.
+ * The store, laid out the way a stockroom is kept: four figures across the
+ * top that are also the filters, the categories down the side like labelled
+ * shelves, and the items on one sheet with ruled columns — what it is, how
+ * much is left against its minimum, its state, its expiry, and the moves.
  */
 
-@keyframes stock-rise {
+@keyframes store-rise {
   from {
     opacity: 0;
     translate: 0 8px;
   }
 }
 
-@keyframes stock-pulse {
+@keyframes store-pulse {
   50% {
     opacity: 0.45;
   }
 }
 
-/* ── Tiles: the three questions about the stock, each a filter ─────── */
+/* ── Summary ─────────────────────────────────────────────────────── */
 
-.tiles {
+.summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--pb-space-3);
-
-  @media (min-width: 641px) {
-    gap: var(--pb-space-4);
-  }
-}
-
-.tile {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-areas:
-    'icon .'
-    'value value'
-    'label label';
-  gap: var(--pb-space-1);
-  padding: var(--pb-space-4);
-  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: var(--pb-shadow-sm);
-  color: var(--pb-graphite);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-  transition:
-    border-color 220ms var(--pb-ease-standard),
-    box-shadow 260ms var(--pb-ease-standard),
-    translate 320ms var(--pb-ease-spring);
-
-  &:hover {
-    translate: 0 -2px;
-    box-shadow: var(--pb-shadow-md);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--pb-brand);
-    outline-offset: 2px;
-  }
-
-  /* The list on screen: an accent edge and a faint tint, not a new card. */
-  &.is-on {
-    border-color: var(--pb-brand);
-    background: color-mix(in srgb, var(--pb-brand) 4%, #fff);
-  }
-}
-
-.tile__icon {
-  grid-area: icon;
-  display: inline-grid;
-  place-items: center;
-  inline-size: 36px;
-  block-size: 36px;
-  margin-block-end: var(--pb-space-2);
-  border-radius: 11px;
-  background: var(--pb-neutral-100);
-  color: var(--pb-neutral-600);
-  transition:
-    background-color 220ms var(--pb-ease-standard),
-    color 220ms var(--pb-ease-standard);
-
-  .mat-icon {
-    inline-size: 20px;
-    block-size: 20px;
-    font-size: 20px;
-    font-variation-settings: 'wght' 300;
-  }
-
-  .is-due & {
-    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
-    color: var(--pb-brand-strong);
-  }
-}
-
-.tile__value {
-  grid-area: value;
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.tile__label {
-  grid-area: label;
-  overflow: hidden;
-  color: var(--pb-neutral-600);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* ── First load: the shape of the shelves ──────────────────────────── */
-
-.shelf-skeletons {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-3);
-}
-
-.shelf-skeleton {
-  block-size: 64px;
-  border-radius: 20px;
-  background: var(--pb-neutral-200);
-  animation: stock-pulse 1.4s ease-in-out infinite;
-}
-
-/* ── Shelves ───────────────────────────────────────────────────────── */
-
-.shelf {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 20px;
   background: #fff;
   box-shadow: var(--pb-shadow-sm);
-  animation: stock-rise 420ms calc(min(var(--_i, 0), 8) * 40ms) var(--pb-ease-emphasized) backwards;
+  animation: store-rise 420ms var(--pb-ease-emphasized) backwards;
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
-.shelf__title {
-  margin: 0;
-  font: inherit;
-}
-
-.shelf__head {
+.summary__cell {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--pb-space-2) var(--pb-space-3);
-  inline-size: 100%;
-  min-block-size: 64px;
-  padding: var(--pb-space-3) var(--pb-space-4);
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-4) var(--pb-space-5);
   border: 0;
+  border-inline-start: 1px solid var(--pb-neutral-100);
   background: transparent;
   color: var(--pb-graphite);
   font: inherit;
@@ -160,34 +50,49 @@
   cursor: pointer;
   transition: background-color 180ms var(--pb-ease-standard);
 
+  &:first-child {
+    border-inline-start: 0;
+  }
+
   &:hover {
-    background: color-mix(in srgb, var(--pb-neutral-100) 60%, transparent);
+    background: color-mix(in srgb, var(--pb-neutral-100) 50%, transparent);
   }
 
   &:focus-visible {
     outline: 2px solid var(--pb-brand);
     outline-offset: -2px;
-    border-radius: 20px;
+  }
+
+  /* The figure on screen: an accent rule along its foot. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: var(--pb-space-5);
+    inset-block-end: 0;
+    block-size: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--pb-brand);
+    scale: 0 1;
+    transition: scale 320ms var(--pb-ease-emphasized);
+  }
+
+  &.is-on::after {
+    scale: 1 1;
   }
 }
 
-.shelf__head--static {
-  cursor: default;
-
-  &:hover {
-    background: transparent;
-  }
-}
-
-.shelf__icon {
+.summary__icon {
   display: inline-grid;
   flex: 0 0 auto;
   place-items: center;
-  inline-size: 36px;
-  block-size: 36px;
-  border-radius: 11px;
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 12px;
   background: var(--pb-neutral-100);
   color: var(--pb-neutral-600);
+  transition:
+    background-color 200ms var(--pb-ease-standard),
+    color 200ms var(--pb-ease-standard);
 
   .mat-icon {
     inline-size: 20px;
@@ -195,347 +100,305 @@
     font-size: 20px;
     font-variation-settings: 'wght' 300;
   }
+
+  .is-due[data-filter='reorder'] &,
+  .is-due[data-filter='expiry'] & {
+    background: color-mix(in srgb, #e08a00 12%, #fff);
+    color: #8f5600;
+  }
+
+  .is-due[data-filter='out'] & {
+    background: color-mix(in srgb, #e5484d 10%, #fff);
+    color: #b4232a;
+  }
 }
 
-.shelf__name {
-  font-size: 0.9375rem;
-  font-weight: 700;
-}
-
-.shelf__count {
-  color: var(--pb-neutral-500);
-  font-size: 0.8125rem;
-}
-
-.shelf__flags {
+.summary__text {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--pb-space-2);
-  margin-inline-start: auto;
-
-  &:empty {
-    display: none;
-  }
-}
-
-.shelf__chevron {
-  flex: 0 0 auto;
-  color: var(--pb-neutral-500);
-  transition: rotate 340ms var(--pb-ease-spring);
-
-  .shelf__flags:empty + & {
-    margin-inline-start: auto;
-  }
-
-  .is-open & {
-    rotate: 180deg;
-  }
-}
-
-/* Opens on its own height: 0fr → 1fr, the rows fading in as it goes. */
-.shelf__body {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 380ms var(--pb-ease-emphasized);
-
-  .is-open > & {
-    grid-template-rows: 1fr;
-  }
-}
-
-.shelf__inner {
-  min-block-size: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 260ms var(--pb-ease-standard);
-
-  .is-open & {
-    opacity: 1;
-  }
-}
-
-.shelf__brands {
-  display: block;
-  padding: 0 var(--pb-space-4) var(--pb-space-3);
-}
-
-.shelf__items {
-  margin: 0;
-  padding: 0;
-  border-block-start: 1px solid var(--pb-neutral-100);
-  list-style: none;
-}
-
-/* ── An item ───────────────────────────────────────────────────────── */
-/*
- * One line per item: what it is (name, brand, size in a small pill, the
- * minimum and expiry in quiet type), what needs a look (soft chips), and
- * the balance as a stepper with a level bar under it.
- */
-
-@keyframes stock-count {
-  from {
-    opacity: 0;
-    scale: 0.6;
-  }
-}
-
-.item {
-  --_tone: var(--pb-graphite);
-  --_level: color-mix(in srgb, var(--pb-graphite) 35%, transparent);
-
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--pb-space-3) var(--pb-space-4);
-  min-block-size: 68px;
-  padding: var(--pb-space-3) var(--pb-space-4);
-  transition: background-color 160ms var(--pb-ease-standard);
-
-  & + & {
-    border-block-start: 1px solid var(--pb-neutral-100);
-  }
-
-  &:hover {
-    background: color-mix(in srgb, var(--pb-neutral-100) 45%, transparent);
-  }
-
-  &[data-stock='low'] {
-    --_tone: #8f5600;
-    --_level: #e08a00;
-  }
-
-  &[data-stock='out'] {
-    --_tone: #b4232a;
-    --_level: #e5484d;
-  }
-
-  @media (max-width: 640px) {
-    flex-wrap: wrap;
-    gap: var(--pb-space-2) var(--pb-space-3);
-  }
-}
-
-.item__what {
-  display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 4px;
   min-inline-size: 0;
-
-  @media (max-width: 640px) {
-    flex-basis: 100%;
-  }
 }
 
-.item__name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px var(--pb-space-2);
-
-  strong {
-    color: var(--pb-graphite);
-    font-size: 0.9375rem;
-    font-weight: 700;
-  }
+.summary__value {
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
-.item__brand {
-  color: var(--pb-neutral-500);
-  font-family: var(--pb-font-latin), inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
-}
-
-/* The size tells one row of a line from the next: a small pill of its own. */
-.item__spec {
-  padding: 1px 7px;
-  border-radius: 6px;
-  background: var(--pb-neutral-100);
-  color: var(--pb-graphite);
-  font-size: 0.75rem;
-  font-weight: 700;
-  font-feature-settings: var(--pb-font-numeric);
-}
-
-.item__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px var(--pb-space-3);
-  min-inline-size: 0;
-  color: var(--pb-neutral-500);
-  font-size: 0.75rem;
-}
-
-.item__fact {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-
-  pb-icon {
-    color: var(--pb-neutral-400);
-  }
-}
-
-.item__notes {
-  max-inline-size: 32ch;
+.summary__label {
   overflow: hidden;
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 600;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.item__alerts {
+/* ── Rail and panel ──────────────────────────────────────────────── */
+
+.store {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--pb-space-2);
+  flex-direction: column;
+  gap: var(--pb-space-4);
 
-  &:empty {
-    display: none;
-  }
-
-  @media (max-width: 640px) {
-    flex-basis: 100%;
-    justify-content: flex-start;
+  @media (min-width: 1000px) {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    align-items: start;
   }
 }
 
-/* The balance column: a fixed width, so the steppers line up down the card. */
-.item__stock {
+.rail {
+  display: flex;
+  gap: var(--pb-space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  animation: store-rise 420ms 60ms var(--pb-ease-emphasized) backwards;
+
+  @media (min-width: 1000px) {
+    position: sticky;
+    inset-block-start: var(--pb-space-4);
+    flex-direction: column;
+    overflow: visible;
+  }
+}
+
+.rail__title {
+  display: none;
+  margin: 0 var(--pb-space-3) var(--pb-space-2);
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  @media (min-width: 1000px) {
+    display: block;
+  }
+}
+
+.rail__item {
   display: flex;
   flex: 0 0 auto;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  inline-size: 148px;
-
-  @media (max-width: 640px) {
-    margin-inline-end: auto;
-  }
-}
-
-.stepper {
-  display: grid;
-  grid-template-columns: 36px 1fr 36px;
   align-items: center;
-  block-size: 40px;
-  padding: 2px;
-  border: 1px solid var(--pb-neutral-200);
+  gap: var(--pb-space-2);
+  min-block-size: 40px;
+  padding: var(--pb-space-1) var(--pb-space-2);
+  border: 1px solid transparent;
   border-radius: 12px;
-  background: #fff;
-  transition:
-    border-color 200ms var(--pb-ease-standard),
-    box-shadow 220ms var(--pb-ease-standard);
-
-  .item:hover & {
-    box-shadow: var(--pb-shadow-sm);
-  }
-}
-
-.stepper__btn {
-  display: inline-grid;
-  place-items: center;
-  block-size: 34px;
-  border: 0;
-  border-radius: 9px;
   background: transparent;
   color: var(--pb-neutral-600);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: start;
+  white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 150ms var(--pb-ease-standard),
-    color 150ms var(--pb-ease-standard),
-    scale 150ms var(--pb-ease-standard);
+    background-color 180ms var(--pb-ease-standard),
+    color 180ms var(--pb-ease-standard),
+    box-shadow 220ms var(--pb-ease-standard);
 
-  &:hover:not(:disabled) {
-    background: var(--pb-neutral-100);
+  &:hover {
+    background: color-mix(in srgb, #fff 70%, transparent);
     color: var(--pb-graphite);
-  }
-
-  &--add:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
-    color: var(--pb-brand-strong);
-  }
-
-  &:active:not(:disabled) {
-    scale: 0.88;
-  }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: default;
   }
 
   &:focus-visible {
     outline: 2px solid var(--pb-brand);
     outline-offset: 1px;
   }
-}
 
-.stepper__value,
-.item__count {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px;
-
-  small {
-    color: var(--pb-neutral-500);
-    font-size: 0.6875rem;
+  &.is-on {
+    border-color: color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+    background: #fff;
+    box-shadow: var(--pb-shadow-sm);
+    color: var(--pb-graphite);
   }
 }
 
-.item__count {
-  justify-content: flex-end;
+.rail__icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 30px;
+  block-size: 30px;
+  border-radius: 9px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-500);
+  transition:
+    background-color 200ms var(--pb-ease-standard),
+    color 200ms var(--pb-ease-standard);
+
+  .mat-icon {
+    inline-size: 17px;
+    block-size: 17px;
+    font-size: 17px;
+    font-variation-settings: 'wght' 300;
+  }
+
+  .is-on & {
+    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    color: var(--pb-brand-strong);
+  }
 }
 
-.stepper__qty {
-  display: inline-block;
-  color: var(--_tone);
-  font-size: 1.0625rem;
-  font-weight: 800;
-  font-feature-settings: var(--pb-font-numeric);
-  animation: stock-count 360ms var(--pb-ease-spring) backwards;
-}
-
-/* How the shelf stands against its minimum: full at twice it. */
-.level {
-  display: block;
-  block-size: 4px;
-  margin-inline: 6px;
+.rail__name {
+  flex: 1 1 auto;
+  min-inline-size: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rail__alert {
+  flex: 0 0 auto;
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 50%;
+  background: #e08a00;
+
+  &[data-tone='out'] {
+    background: #e5484d;
+  }
+}
+
+.rail__count {
+  min-inline-size: 22px;
+  padding: 1px 6px;
   border-radius: 999px;
   background: var(--pb-neutral-100);
+  color: var(--pb-neutral-500);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-align: center;
 }
 
-.level__fill {
-  display: block;
-  block-size: 100%;
-  border-radius: inherit;
-  background: var(--_level);
-  transition:
-    inline-size 600ms var(--pb-ease-emphasized),
-    background-color 300ms var(--pb-ease-standard);
+/* The sheet of items. */
+.panel {
+  --stock-columns: minmax(220px, 2.4fr) minmax(150px, 1.3fr) minmax(110px, 0.9fr)
+    minmax(100px, 0.8fr) auto;
+
+  container: stock / inline-size;
+  min-inline-size: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  transition: opacity 240ms var(--pb-ease-standard);
+  animation: store-rise 420ms 120ms var(--pb-ease-emphasized) backwards;
+
+  /* A new answer on its way: the old one stays, dimmed. */
+  &.is-busy {
+    opacity: 0.6;
+  }
 }
 
-.item__actions {
+.panel__head {
   display: flex;
-  flex: 0 0 auto;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--pb-space-1);
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-4) var(--pb-space-5);
+}
+
+.panel__titles {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pb-space-2);
+  margin-inline-end: auto;
+}
+
+.panel__title {
+  margin: 0;
+  color: var(--pb-graphite);
+  font-size: 1.0625rem;
+  font-weight: 800;
+}
+
+.panel__count {
+  color: var(--pb-neutral-500);
+  font-size: 0.8125rem;
+}
+
+.panel__search {
+  flex: 0 1 320px;
+  min-inline-size: 200px;
+}
+
+.panel__brands {
+  padding: 0 var(--pb-space-5) var(--pb-space-3);
+}
+
+.panel__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+  padding: var(--pb-space-3) var(--pb-space-5) var(--pb-space-5);
+}
+
+.skeleton-row {
+  block-size: 56px;
+  border-radius: 12px;
+  background: var(--pb-neutral-100);
+  animation: store-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── The grid ────────────────────────────────────────────────────── */
+
+.grid__head {
+  display: grid;
+  grid-template-columns: var(--stock-columns);
+  gap: var(--pb-space-4);
+  padding: var(--pb-space-2) var(--pb-space-5);
+  border-block-start: 1px solid var(--pb-neutral-100);
+  background: var(--pb-neutral-50);
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  @container stock (max-width: 760px) {
+    display: none;
+  }
+}
+
+.grid__group {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+  padding: var(--pb-space-2) var(--pb-space-5);
+  border-block-start: 1px solid var(--pb-neutral-100);
+  background: var(--pb-neutral-50);
+  color: var(--pb-graphite);
+  font-size: 0.8125rem;
+  font-weight: 700;
+
+  .mat-icon {
+    inline-size: 16px;
+    block-size: 16px;
+    color: var(--pb-neutral-500);
+    font-size: 16px;
+    font-variation-settings: 'wght' 300;
+  }
+
+  small {
+    color: var(--pb-neutral-400);
+    font-weight: 600;
+  }
+}
+
+pb-stock-row {
+  animation: store-rise 360ms calc(min(var(--_i, 0), 10) * 25ms) var(--pb-ease-emphasized) backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shelf,
-  .shelf-skeleton,
-  .stepper__qty {
+  .summary,
+  .rail,
+  .panel,
+  pb-stock-row,
+  .skeleton-row {
     animation: none;
   }
 
-  .tile,
-  .shelf__body,
-  .shelf__inner,
-  .shelf__chevron {
+  .summary__cell::after {
     transition-duration: 0ms;
   }
 }

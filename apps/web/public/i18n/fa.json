@@ -536,7 +536,21 @@
     "restored": "کالا بازگردانده شد.",
     "undo": "برگرداندن",
     "undone": "برگردانده شد؛ موجودی: {{count}}",
-    "archiveMessageStock": "«{{name}}» با {{count}} {{unit}} موجودی از فهرست انبار برداشته می‌شود؛ کاردکس آن می‌ماند و از «فقط بایگانی‌شده‌ها» قابل بازگردانی است."
+    "archiveMessageStock": "«{{name}}» با {{count}} {{unit}} موجودی از فهرست انبار برداشته می‌شود؛ کاردکس آن می‌ماند و از «فقط بایگانی‌شده‌ها» قابل بازگردانی است.",
+    "allItems": "همه کالاها",
+    "categoriesTitle": "دسته‌ها",
+    "colItem": "کالا",
+    "colStock": "موجودی",
+    "colStatus": "وضعیت",
+    "colExpiry": "انقضا",
+    "stateOk": "موجود",
+    "stateNoMin": "بدون حداقل",
+    "minMark": "حداقل {{count}}",
+    "noExpiry": "بدون تاریخ",
+    "summaryAll": "همه اقلام",
+    "summaryAria": "خلاصه انبار",
+    "categoryAria": "دسته‌های انبار",
+    "needsLook": "نیاز به بررسی"
   },
   "inventoryForm": {
     "createTitle": "کالای جدید",

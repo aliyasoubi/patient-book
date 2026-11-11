@@ -1,0 +1,136 @@
+<!-- ── Item ─────────────────────────────────────────────────────── -->
+<div class="cell cell--item">
+  <span class="thumb" aria-hidden="true">
+    <mat-icon>{{ categoryIcons[item().category] }}</mat-icon>
+  </span>
+  <span class="what">
+    <span class="what__name" dir="auto">{{ item().name }}</span>
+    <span class="what__line">
+      @if (item().brand) {
+        <span class="what__brand" dir="auto">{{ item().brand }}</span>
+      }
+      @if (item().spec) {
+        <span class="what__spec" dir="auto">{{ item().spec }}</span>
+      }
+      @if (item().notes) {
+        <span class="what__notes" dir="auto" [title]="item().notes">{{ item().notes }}</span>
+      }
+    </span>
+  </span>
+</div>
+
+<!-- ── Stock: the count over a gauge with the minimum marked ───────── -->
+<div class="cell cell--stock">
+  <span class="count">
+    @for (q of [item().quantity]; track q) {
+      <strong class="count__value">{{ q | faNum }}</strong>
+    }
+    <small>{{ unitLabel(item().unit) | translate }}</small>
+  </span>
+  @if (gauge(); as g) {
+    <span class="gauge" aria-hidden="true">
+      <span class="gauge__fill" [style.inline-size.%]="g.fill"></span>
+      <span class="gauge__mark" [style.inset-inline-start.%]="g.mark"></span>
+    </span>
+    <span class="gauge__caption">{{
+      'inventory.minMark' | translate: { count: (item().minQuantity | faNum) }
+    }}</span>
+  }
+</div>
+
+<!-- ── Status ───────────────────────────────────────────────────── -->
+<div class="cell cell--status">
+  <span class="state" [attr.data-tone]="status().tone">
+    <span class="state__dot" aria-hidden="true"></span>
+    {{ status().key | translate }}
+  </span>
+</div>
+
+<!-- ── Expiry ───────────────────────────────────────────────────── -->
+<div class="cell cell--expiry">
+  @if (item().expiry) {
+    <span class="expiry" [attr.data-state]="item().expiryState">
+      <pb-icon name="hourglass" [size]="14" />
+      <span class="ltr-nums">{{ item().expiry | faNum }}</span>
+    </span>
+  } @else {
+    <span class="expiry expiry--none">{{ 'inventory.noExpiry' | translate }}</span>
+  }
+</div>
+
+<!-- ── Actions ──────────────────────────────────────────────────── -->
+<div class="cell cell--actions">
+  @if (!canEdit()) {
+    <pb-icon-button
+      icon="history"
+      [ariaLabel]="'inventory.history' | translate"
+      [tooltip]="'inventory.history' | translate"
+      (click)="history.emit()"
+    />
+  } @else if (archived()) {
+    <pb-icon-button
+      icon="unarchive"
+      [ariaLabel]="'inventory.restore' | translate"
+      [tooltip]="'inventory.restore' | translate"
+      (click)="restore.emit()"
+    />
+  } @else {
+    <!-- The two moves made all day, one tap each; the rest wait in the menu. -->
+    <span class="stepper">
+      <button
+        type="button"
+        class="stepper__btn"
+        [attr.aria-label]="'inventory.useOne' | translate: { name: item().name }"
+        [matTooltip]="'inventoryMovement.use' | translate"
+        [disabled]="item().quantity === 0"
+        (click)="moved.emit('use')"
+      >
+        <pb-icon name="minus" [size]="16" [stroke]="2.2" />
+      </button>
+      <span class="stepper__rule" aria-hidden="true"></span>
+      <button
+        type="button"
+        class="stepper__btn stepper__btn--add"
+        [attr.aria-label]="'inventory.receiveOne' | translate: { name: item().name }"
+        [matTooltip]="'inventoryMovement.receive' | translate"
+        (click)="moved.emit('receive')"
+      >
+        <pb-icon name="plus" [size]="16" [stroke]="2.2" />
+      </button>
+    </span>
+    <pb-icon-button
+      icon="more_vert"
+      [menu]="rowMenu"
+      [ariaLabel]="'inventory.rowActions' | translate"
+    />
+    <mat-menu #rowMenu="matMenu" xPosition="before">
+      @for (kind of menuMoves; track kind) {
+        <button
+          mat-menu-item
+          type="button"
+          [disabled]="kind === 'discard' && item().quantity === 0"
+          (click)="moved.emit(kind)"
+        >
+          <mat-icon aria-hidden="true">{{ moveIcons[kind] }}</mat-icon>
+          <span>{{ moveLabel(kind) | translate }}</span>
+        </button>
+      }
+      <button mat-menu-item type="button" (click)="history.emit()">
+        <mat-icon aria-hidden="true">history</mat-icon>
+        <span>{{ 'inventory.history' | translate }}</span>
+      </button>
+      <button mat-menu-item type="button" (click)="addSimilar.emit()">
+        <mat-icon aria-hidden="true">library_add</mat-icon>
+        <span>{{ 'inventory.addSimilar' | translate }}</span>
+      </button>
+      <button mat-menu-item type="button" (click)="edit.emit()">
+        <mat-icon aria-hidden="true">edit</mat-icon>
+        <span>{{ 'common.edit' | translate }}</span>
+      </button>
+      <button mat-menu-item type="button" (click)="archive.emit()">
+        <mat-icon aria-hidden="true">archive</mat-icon>
+        <span>{{ 'inventory.archive' | translate }}</span>
+      </button>
+    </mat-menu>
+  }
+</div>

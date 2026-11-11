@@ -5,7 +5,6 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   catchError,
@@ -22,7 +21,6 @@ import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { AuthService } from '../../core/services/auth.service';
 import { InventoryQuery, InventoryService } from '../../core/services/inventory.service';
 import type {
-  ExpiryState,
   InventoryCategory,
   InventoryFilter,
   InventoryItem,
@@ -37,10 +35,8 @@ import {
   PersianNumberPipe,
 } from '../../shared/pipes/persian-number.pipe';
 import {
-  expiryLabel,
   INVENTORY_CATEGORIES,
   INVENTORY_CATEGORY_ICONS,
-  INVENTORY_MOVEMENT_ICONS,
   inventoryCategoryLabel,
   inventoryMovementLabel,
   inventoryUnitLabel,
@@ -48,17 +44,14 @@ import {
 import {
   PbButton,
   PbFilterChips,
-  PbIconButton,
   PbPage,
   PbPageHeader,
-  PbListToolbar,
   PbSearchField,
-  PbSelectField,
   PbIcon,
-  PbStatusChip,
   ToastService,
 } from '../../shared/ui';
-import type { FilterChipOption, SelectOption, StatTileTone, StatusTone } from '../../shared/ui';
+import type { FilterChipOption, StatTileTone } from '../../shared/ui';
+import { StockRow } from './stock-row';
 import { filterCounts, shelfBrands, shelfFlags, type ShelfFlags } from './inventory-overview';
 import {
   InventoryItemDialog,
@@ -101,15 +94,6 @@ const FILTERS: readonly (FilterChipOption & { value: InventoryFilter; tone: Stat
   },
 ];
 
-const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
-  ok: 'neutral',
-  expiring: 'warning',
-  expired: 'error',
-};
-
-/** The rarer moves; use and receive have their own buttons on the row. */
-const MENU_MOVES: readonly InventoryMovementKind[] = ['discard', 'count'];
-
 /** A run of one category's items, under its heading. */
 interface Shelf {
   category: InventoryCategory | null;
@@ -121,26 +105,6 @@ interface Shelf {
   brand: string | null;
   /** What is listed: its items, or that brand's alone. */
   rows: InventoryItem[];
-}
-
-/** The shelves left open, for the rest of the visit: nothing about a patient. */
-const OPEN_KEY = 'pb.inventory.open';
-
-function readOpen(): Set<InventoryCategory> {
-  try {
-    const stored: unknown = JSON.parse(sessionStorage.getItem(OPEN_KEY) ?? '[]');
-    return new Set(Array.isArray(stored) ? stored.filter(isCategory) : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function writeOpen(open: ReadonlySet<InventoryCategory>): void {
-  try {
-    sessionStorage.setItem(OPEN_KEY, JSON.stringify([...open]));
-  } catch {
-    // Private mode or a full store: the shelves simply close on the next visit.
-  }
 }
 
 function isFilter(value: unknown): value is InventoryFilter {
@@ -177,7 +141,6 @@ function readUrlFilters(params: ParamMap): {
   imports: [
     ReactiveFormsModule,
     MatIconModule,
-    MatMenuModule,
     MatTooltipModule,
     TranslatePipe,
     EmptyState,
@@ -187,13 +150,10 @@ function readUrlFilters(params: ParamMap): {
     PbButton,
     PbFilterChips,
     PbIcon,
-    PbIconButton,
     PbPage,
     PbPageHeader,
-    PbListToolbar,
     PbSearchField,
-    PbSelectField,
-    PbStatusChip,
+    StockRow,
   ],
   templateUrl: './inventory-list.html',
   styleUrl: './inventory-list.scss',
@@ -208,18 +168,8 @@ export class InventoryList {
   protected readonly auth = inject(AuthService);
 
   protected readonly filters = FILTERS;
-  protected readonly menuMoves = MENU_MOVES;
-  protected readonly moveIcons = INVENTORY_MOVEMENT_ICONS;
   protected readonly categoryIcons = INVENTORY_CATEGORY_ICONS;
   protected readonly categoryLabel = inventoryCategoryLabel;
-  protected readonly unitLabel = inventoryUnitLabel;
-  protected readonly moveLabel = inventoryMovementLabel;
-  protected readonly expiryLabel = expiryLabel;
-  protected readonly categoryOptions: SelectOption[] = INVENTORY_CATEGORIES.map((c) => ({
-    value: c,
-    label: inventoryCategoryLabel(c),
-    translate: true,
-  }));
   protected readonly archiveFilter: FilterChipOption[] = [
     { value: 'archived', label: 'inventory.archivedOnly', icon: 'inventory_2', translate: true },
   ];
@@ -289,15 +239,33 @@ export class InventoryList {
     return runs.map((run) => shelf(run.category, run.items));
   });
 
+  /** One category on screen (picked, or all a search left): its brand chips sit over the grid. */
+  protected readonly singleShelf = computed(() => {
+    const shelves = this.shelves();
+    return shelves.length === 1 && shelves[0].category ? shelves[0] : null;
+  });
+
   /**
-   * With nothing narrowed, the shelves are closed headings to open one at a
-   * time. A search, a filter, a category or the archive is a question about
-   * what is inside them, so their answers are shown open.
+   * The rail: every category that holds anything, with its count and the
+   * worst thing on it — red for stock run out or expired, amber for low or
+   * expiring. Counted from every active item, so it holds still while a
+   * filter or a search narrows the grid.
    */
-  protected readonly collapsible = computed(
-    () => !this.query() && !this.filter() && !this.category() && !this.archivedOnly(),
-  );
-  private readonly open = signal(readOpen());
+  protected readonly categoryStats = computed(() => {
+    const all = this.all() ?? [];
+    return INVENTORY_CATEGORIES.map((category) => {
+      const items = all.filter((i) => i.category === category);
+      const flags = shelfFlags(items);
+      const alert: 'out' | 'low' | null =
+        flags.out || flags.expired ? 'out' : flags.low || flags.expiring ? 'low' : null;
+      return { category, count: items.length, alert };
+    }).filter((c) => c.count > 0 || c.category === this.category());
+  });
+
+  protected readonly panelTitle = computed(() => {
+    const category = this.category();
+    return category ? inventoryCategoryLabel(category) : 'inventory.allItems';
+  });
 
   private readonly query = toSignal(
     this.search.valueChanges.pipe(
@@ -372,19 +340,6 @@ export class InventoryList {
     this.filter.update((current) => (current === value ? '' : value));
   }
 
-  protected isOpen(category: InventoryCategory): boolean {
-    return !this.collapsible() || this.open().has(category);
-  }
-
-  protected toggleShelf(category: InventoryCategory): void {
-    this.open.update((open) => {
-      const next = new Set(open);
-      if (!next.delete(category)) next.add(category);
-      writeOpen(next);
-      return next;
-    });
-  }
-
   /** Tapping the chosen brand again lists the whole shelf. */
   protected setBrand(shelf: Shelf, selected: string[]): void {
     const category = shelf.category;
@@ -400,30 +355,11 @@ export class InventoryList {
     this.archivedOnly.set(checked);
   }
 
-  protected expiryTone(item: InventoryItem): StatusTone {
-    return EXPIRY_TONE[item.expiryState ?? 'ok'];
-  }
-
-  /** Red only for an item kept stocked — one with a reorder level; the rest just say so. */
-  protected outTone(item: InventoryItem): StatusTone {
-    return item.minQuantity !== null ? 'error' : 'neutral';
-  }
-
   protected emptyHint(): string {
     if (this.search.value || this.filter() || this.category() || this.archivedOnly()) {
       return this.i18n.instant('filters.changeThem');
     }
     return this.canEdit() ? this.i18n.instant('inventory.emptyHint') : '';
-  }
-
-  /**
-   * How the shelf stands, for the bar under its count: full at twice the
-   * minimum, empty at none, so "low" sits under halfway.
-   */
-  protected levelOf(item: InventoryItem): number {
-    const min = item.minQuantity ?? 0;
-    if (min <= 0) return 100;
-    return Math.max(0, Math.min(100, Math.round((item.quantity / (min * 2)) * 100)));
   }
 
   protected addItem(): void {

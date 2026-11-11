@@ -24,342 +24,182 @@
     }
   </pb-page-header>
 
-  <!-- What needs doing, at a glance. Each tile is the filter that lists exactly those items;
-       tapping the one on screen shows everything again. -->
-  @if (tiles(); as counts) {
-    @if (!archivedOnly()) {
-      <section class="tiles" [attr.aria-label]="'inventory.filtersAria' | translate">
-        @for (f of filters; track f.value) {
-          <button
-            type="button"
-            class="tile"
-            [class.is-on]="filter() === f.value"
-            [class.is-due]="f.tone === 'warn' && counts[f.value] > 0"
-            [attr.aria-pressed]="filter() === f.value"
-            (click)="toggleFilter(f.value)"
-          >
-            <span class="tile__icon"
-              ><mat-icon aria-hidden="true">{{ f.icon }}</mat-icon></span
-            >
-            <span class="tile__value">{{ counts[f.value] | faCount }}</span>
-            <span class="tile__label">{{ f.label | translate }}</span>
-          </button>
-        }
-      </section>
-    }
-  }
-
-  <pb-list-toolbar>
-    <pb-search-field
-      [control]="search"
-      [placeholder]="'inventory.searchPlaceholder' | translate"
-      [ariaLabel]="'inventory.searchAria' | translate"
-    />
-    <pb-select-field
-      subscript="dynamic"
-      [value]="category()"
-      (valueChange)="setCategory($event)"
-      [options]="categoryOptions"
-      [anyLabel]="'inventory.allCategories' | translate"
-      [label]="'inventory.category' | translate"
-    />
-    @if (canEdit()) {
-      <pb-filter-chips
-        multiple
-        [options]="archiveFilter"
-        [selected]="archivedOnly() ? ['archived'] : []"
-        (selectedChange)="toggleArchived($event.length > 0)"
-        [ariaLabel]="'common.filters' | translate"
-      />
-    }
-  </pb-list-toolbar>
-
-  @if (loading() && items().length === 0 && !failed()) {
-    <div class="shelf-skeletons" aria-hidden="true">
-      @for (i of [1, 2, 3]; track i) {
-        <span class="shelf-skeleton"></span>
-      }
-    </div>
-  }
-
-  @if (failed()) {
-    <pb-load-error
-      [message]="
-        (items().length > 0 ? 'inventory.loadFailedStale' : 'inventory.loadFailed') | translate
-      "
-      (retry)="retry()"
-    />
-  }
-
-  @if (!loading() && !failed() && items().length === 0) {
-    <pb-empty-state
-      icon="inventory"
-      [title]="'inventory.emptyTitle' | translate"
-      [hint]="emptyHint()"
-    >
-      @if (canEdit() && !archivedOnly()) {
-        <pb-button variant="stroked" icon="add" (click)="addItem()">
-          {{ 'inventory.new' | translate }}
-        </pb-button>
-      }
-    </pb-empty-state>
-  }
-
-  @for (shelf of shelves(); track shelf.category; let i = $index) {
-    <section
-      class="shelf"
-      [class.is-open]="!shelf.category || isOpen(shelf.category)"
-      [style.--_i]="i"
-    >
-      @if (shelf.category; as category) {
-        @if (collapsible()) {
-          <h2 class="shelf__title">
-            <button
-              type="button"
-              class="shelf__head"
-              [attr.aria-expanded]="isOpen(category)"
-              [attr.aria-controls]="'shelf-' + category"
-              (click)="toggleShelf(category)"
-            >
-              <span class="shelf__icon"
-                ><mat-icon aria-hidden="true">{{ categoryIcons[category] }}</mat-icon></span
-              >
-              <span class="shelf__name">{{ categoryLabel(category) | translate }}</span>
-              <span class="shelf__count">{{
-                'count.items' | translate: { count: (shelf.items.length | faCount) }
-              }}</span>
-              <span class="shelf__flags">
-                @if (shelf.flags.out) {
-                  <pb-status-chip tone="error" icon="remove_shopping_cart">
-                    {{ 'inventory.flagOut' | translate: { count: (shelf.flags.out | faCount) } }}
-                  </pb-status-chip>
-                }
-                @if (shelf.flags.low) {
-                  <pb-status-chip tone="warning" icon="shopping_cart">
-                    {{ 'inventory.flagLow' | translate: { count: (shelf.flags.low | faCount) } }}
-                  </pb-status-chip>
-                }
-                @if (shelf.flags.expired) {
-                  <pb-status-chip tone="error" icon="event_busy">
-                    {{
-                      'inventory.flagExpired'
-                        | translate: { count: (shelf.flags.expired | faCount) }
-                    }}
-                  </pb-status-chip>
-                }
-                @if (shelf.flags.expiring) {
-                  <pb-status-chip tone="warning" icon="hourglass_bottom">
-                    {{
-                      'inventory.flagExpiring'
-                        | translate: { count: (shelf.flags.expiring | faCount) }
-                    }}
-                  </pb-status-chip>
-                }
-              </span>
-              <pb-icon class="shelf__chevron" name="chevron-down" [size]="18" />
-            </button>
-          </h2>
-        } @else {
-          <h2 class="shelf__title">
-            <span class="shelf__head shelf__head--static">
-              <span class="shelf__icon"
-                ><mat-icon aria-hidden="true">{{ categoryIcons[category] }}</mat-icon></span
-              >
-              <span class="shelf__name">{{ categoryLabel(category) | translate }}</span>
-            </span>
-          </h2>
-        }
-      }
-
-      <!--
-        Always in the page, opened and closed on its own height (0fr → 1fr),
-        so a shelf eases open rather than appearing at full size. A closed
-        one is inert: out of the tab order and hidden from screen readers.
-      -->
-      <div
-        class="shelf__body"
-        [attr.inert]="!shelf.category || isOpen(shelf.category) ? null : ''"
-        [id]="shelf.category ? 'shelf-' + shelf.category : null"
+  <!-- ── Summary: the store in four figures, each the list it counts ── -->
+  @if (!archivedOnly()) {
+    <section class="summary" [attr.aria-label]="'inventory.summaryAria' | translate">
+      <button
+        type="button"
+        class="summary__cell"
+        [class.is-on]="!filter()"
+        [attr.aria-pressed]="!filter()"
+        (click)="filter.set('')"
       >
-        <div class="shelf__inner">
-          <!-- A long shelf of several brands, as implants are: one tap to one brand's rows. -->
-          @if (shelf.brands.length) {
-            <pb-filter-chips
-              class="shelf__brands"
-              [options]="shelf.brands"
-              [selected]="shelf.brand ? [shelf.brand] : []"
-              (selectedChange)="setBrand(shelf, $event)"
-              [ariaLabel]="'inventory.brandsAria' | translate"
-            />
-          }
-          <ul class="shelf__items">
-            @for (item of shelf.rows; track item.id) {
-              <li class="item" [attr.data-stock]="item.stockState">
-                <div class="item__what">
-                  <div class="item__name">
-                    <strong dir="auto">{{ item.name }}</strong>
-                    @if (item.brand) {
-                      <span class="item__brand" dir="auto">{{ item.brand }}</span>
-                    }
-                    @if (item.spec) {
-                      <span class="item__spec" dir="auto">{{ item.spec }}</span>
-                    }
-                  </div>
-                  @if (
-                    item.minQuantity !== null ||
-                    (item.expiry && item.expiryState === 'ok') ||
-                    item.notes
-                  ) {
-                    <div class="item__meta">
-                      @if (item.minQuantity !== null) {
-                        <span class="item__fact">
-                          <pb-icon name="box" [size]="13" />
-                          {{
-                            'inventory.minQuantity'
-                              | translate: { count: (item.minQuantity | faNum) }
-                          }}
-                        </span>
-                      }
-                      @if (item.expiry && item.expiryState === 'ok') {
-                        <span class="item__fact">
-                          <pb-icon name="hourglass" [size]="13" />
-                          {{ 'inventory.expiresOn' | translate: { date: (item.expiry | faNum) } }}
-                        </span>
-                      }
-                      @if (item.notes) {
-                        <span class="item__notes" dir="auto">{{ item.notes }}</span>
-                      }
-                    </div>
-                  }
-                </div>
-
-                <!-- Only what asks for attention: an item that is fine says nothing. -->
-                <div class="item__alerts">
-                  @if (item.stockState === 'out') {
-                    <pb-status-chip [tone]="outTone(item)" icon="remove_shopping_cart">
-                      {{ 'inventory.stateOut' | translate }}
-                    </pb-status-chip>
-                  } @else if (item.stockState === 'low') {
-                    <pb-status-chip tone="warning" icon="shopping_cart">
-                      {{ 'inventory.stateLow' | translate }}
-                    </pb-status-chip>
-                  }
-                  @if (item.expiryState === 'expired' || item.expiryState === 'expiring') {
-                    <pb-status-chip
-                      [tone]="expiryTone(item)"
-                      [icon]="item.expiryState === 'expired' ? 'event_busy' : 'hourglass_bottom'"
-                    >
-                      {{
-                        expiryLabel(item.expiryState) | translate: { date: (item.expiry | faNum) }
-                      }}
-                    </pb-status-chip>
-                  }
-                </div>
-
-                <!--
-                  The balance: on the store's own screen a stepper — use one,
-                  the count, receive one — with a bar under it for how the
-                  shelf stands against its minimum. The count pops when it moves.
-                -->
-                <div class="item__stock">
-                  @if (canEdit() && !archivedOnly()) {
-                    <div class="stepper">
-                      <button
-                        type="button"
-                        class="stepper__btn"
-                        [attr.aria-label]="'inventory.useOne' | translate: { name: item.name }"
-                        [matTooltip]="'inventoryMovement.use' | translate"
-                        [disabled]="item.quantity === 0"
-                        (click)="move(item, 'use')"
-                      >
-                        <pb-icon name="minus" [size]="16" [stroke]="2.2" />
-                      </button>
-                      <span class="stepper__value">
-                        @for (q of [item.quantity]; track q) {
-                          <strong class="stepper__qty">{{ q | faNum }}</strong>
-                        }
-                        <small>{{ unitLabel(item.unit) | translate }}</small>
-                      </span>
-                      <button
-                        type="button"
-                        class="stepper__btn stepper__btn--add"
-                        [attr.aria-label]="'inventory.receiveOne' | translate: { name: item.name }"
-                        [matTooltip]="'inventoryMovement.receive' | translate"
-                        (click)="move(item, 'receive')"
-                      >
-                        <pb-icon name="plus" [size]="16" [stroke]="2.2" />
-                      </button>
-                    </div>
-                  } @else {
-                    <span class="item__count">
-                      <strong class="stepper__qty">{{ item.quantity | faNum }}</strong>
-                      <small>{{ unitLabel(item.unit) | translate }}</small>
-                    </span>
-                  }
-                  @if (item.minQuantity !== null) {
-                    <span class="level" aria-hidden="true">
-                      <span class="level__fill" [style.inline-size.%]="levelOf(item)"></span>
-                    </span>
-                  }
-                </div>
-
-                <div class="item__actions">
-                  @if (!canEdit()) {
-                    <pb-icon-button
-                      icon="history"
-                      [ariaLabel]="'inventory.history' | translate"
-                      [tooltip]="'inventory.history' | translate"
-                      (click)="history(item)"
-                    />
-                  } @else if (archivedOnly()) {
-                    <pb-icon-button
-                      icon="unarchive"
-                      [ariaLabel]="'inventory.restore' | translate"
-                      [tooltip]="'inventory.restore' | translate"
-                      (click)="restore(item)"
-                    />
-                  } @else {
-                    <pb-icon-button
-                      icon="more_vert"
-                      [menu]="rowMenu"
-                      [ariaLabel]="'inventory.rowActions' | translate"
-                    />
-                    <mat-menu #rowMenu="matMenu" xPosition="before">
-                      @for (kind of menuMoves; track kind) {
-                        <button
-                          mat-menu-item
-                          type="button"
-                          [disabled]="kind === 'discard' && item.quantity === 0"
-                          (click)="move(item, kind)"
-                        >
-                          <mat-icon aria-hidden="true">{{ moveIcons[kind] }}</mat-icon>
-                          <span>{{ moveLabel(kind) | translate }}</span>
-                        </button>
-                      }
-                      <button mat-menu-item type="button" (click)="history(item)">
-                        <mat-icon aria-hidden="true">history</mat-icon>
-                        <span>{{ 'inventory.history' | translate }}</span>
-                      </button>
-                      <button mat-menu-item type="button" (click)="addSimilar(item)">
-                        <mat-icon aria-hidden="true">library_add</mat-icon>
-                        <span>{{ 'inventory.addSimilar' | translate }}</span>
-                      </button>
-                      <button mat-menu-item type="button" (click)="edit(item)">
-                        <mat-icon aria-hidden="true">edit</mat-icon>
-                        <span>{{ 'common.edit' | translate }}</span>
-                      </button>
-                      <button mat-menu-item type="button" (click)="archive(item)">
-                        <mat-icon aria-hidden="true">archive</mat-icon>
-                        <span>{{ 'inventory.archive' | translate }}</span>
-                      </button>
-                    </mat-menu>
-                  }
-                </div>
-              </li>
-            }
-          </ul>
-        </div>
-      </div>
+        <span class="summary__icon"><pb-icon name="packages" [size]="18" /></span>
+        <span class="summary__text">
+          <strong class="summary__value">{{ all()?.length ?? 0 | faCount }}</strong>
+          <span class="summary__label">{{ 'inventory.summaryAll' | translate }}</span>
+        </span>
+      </button>
+      @for (f of filters; track f.value) {
+        <button
+          type="button"
+          class="summary__cell"
+          [attr.data-filter]="f.value"
+          [class.is-on]="filter() === f.value"
+          [class.is-due]="(tiles()?.[f.value] ?? 0) > 0"
+          [attr.aria-pressed]="filter() === f.value"
+          (click)="toggleFilter(f.value)"
+        >
+          <span class="summary__icon"
+            ><mat-icon aria-hidden="true">{{ f.icon }}</mat-icon></span
+          >
+          <span class="summary__text">
+            <strong class="summary__value">{{ tiles()?.[f.value] ?? 0 | faCount }}</strong>
+            <span class="summary__label">{{ f.label | translate }}</span>
+          </span>
+        </button>
+      }
     </section>
   }
+
+  <div class="store">
+    <!-- ── Categories: the shelves, down the side ──────────────────── -->
+    <nav class="rail" [attr.aria-label]="'inventory.categoryAria' | translate">
+      <span class="rail__title">{{ 'inventory.categoriesTitle' | translate }}</span>
+      <button
+        type="button"
+        class="rail__item"
+        [class.is-on]="!category()"
+        [attr.aria-current]="!category() ? 'true' : null"
+        (click)="setCategory('')"
+      >
+        <span class="rail__icon"><pb-icon name="layout-dashboard" [size]="16" /></span>
+        <span class="rail__name">{{ 'inventory.allItems' | translate }}</span>
+        <span class="rail__count">{{ all()?.length ?? 0 | faNum }}</span>
+      </button>
+      @for (c of categoryStats(); track c.category) {
+        <button
+          type="button"
+          class="rail__item"
+          [class.is-on]="category() === c.category"
+          [attr.aria-current]="category() === c.category ? 'true' : null"
+          (click)="setCategory(c.category)"
+        >
+          <span class="rail__icon"
+            ><mat-icon aria-hidden="true">{{ categoryIcons[c.category] }}</mat-icon></span
+          >
+          <span class="rail__name">{{ categoryLabel(c.category) | translate }}</span>
+          @if (c.alert) {
+            <span
+              class="rail__alert"
+              [attr.data-tone]="c.alert"
+              [matTooltip]="'inventory.needsLook' | translate"
+            ></span>
+          }
+          <span class="rail__count">{{ c.count | faNum }}</span>
+        </button>
+      }
+    </nav>
+
+    <!-- ── The items: one panel, a grid with a header ──────────────── -->
+    <section class="panel" [class.is-busy]="loading() && items().length > 0">
+      <header class="panel__head">
+        <div class="panel__titles">
+          <h2 class="panel__title">
+            {{ panelTitle() | translate }}
+          </h2>
+          @if (countLabel(); as count) {
+            <span class="panel__count">{{ count }}</span>
+          }
+        </div>
+        <pb-search-field
+          class="panel__search"
+          [control]="search"
+          [placeholder]="'inventory.searchPlaceholder' | translate"
+          [ariaLabel]="'inventory.searchAria' | translate"
+        />
+        @if (canEdit()) {
+          <pb-filter-chips
+            multiple
+            [options]="archiveFilter"
+            [selected]="archivedOnly() ? ['archived'] : []"
+            (selectedChange)="toggleArchived($event.length > 0)"
+            [ariaLabel]="'common.filters' | translate"
+          />
+        }
+      </header>
+
+      @if (singleShelf(); as shelf) {
+        @if (shelf.brands.length) {
+          <pb-filter-chips
+            class="panel__brands"
+            [options]="shelf.brands"
+            [selected]="shelf.brand ? [shelf.brand] : []"
+            (selectedChange)="setBrand(shelf, $event)"
+            [ariaLabel]="'inventory.brandsAria' | translate"
+          />
+        }
+      }
+
+      @if (failed()) {
+        <pb-load-error
+          [message]="
+            (items().length > 0 ? 'inventory.loadFailedStale' : 'inventory.loadFailed') | translate
+          "
+          (retry)="retry()"
+        />
+      } @else if (loading() && items().length === 0) {
+        <div class="panel__skeleton" aria-hidden="true">
+          @for (i of [1, 2, 3, 4, 5]; track i) {
+            <span class="skeleton-row"></span>
+          }
+        </div>
+      } @else if (items().length === 0) {
+        <pb-empty-state
+          icon="inventory"
+          [title]="'inventory.emptyTitle' | translate"
+          [hint]="emptyHint()"
+        >
+          @if (canEdit() && !archivedOnly()) {
+            <pb-button variant="stroked" icon="add" (click)="addItem()">
+              {{ 'inventory.new' | translate }}
+            </pb-button>
+          }
+        </pb-empty-state>
+      } @else {
+        <div class="grid" role="list">
+          <div class="grid__head" aria-hidden="true">
+            <span>{{ 'inventory.colItem' | translate }}</span>
+            <span>{{ 'inventory.colStock' | translate }}</span>
+            <span>{{ 'inventory.colStatus' | translate }}</span>
+            <span>{{ 'inventory.colExpiry' | translate }}</span>
+            <span></span>
+          </div>
+          @for (shelf of shelves(); track shelf.category ?? 'all') {
+            @if (shelf.category && shelves().length > 1) {
+              <div class="grid__group" role="presentation">
+                <mat-icon aria-hidden="true">{{ categoryIcons[shelf.category] }}</mat-icon>
+                <span>{{ categoryLabel(shelf.category) | translate }}</span>
+                <small>{{ shelf.items.length | faNum }}</small>
+              </div>
+            }
+            @for (item of shelf.rows; track item.id; let i = $index) {
+              <pb-stock-row
+                [item]="item"
+                [canEdit]="canEdit()"
+                [archived]="archivedOnly()"
+                [style.--_i]="i"
+                (moved)="move(item, $event)"
+                (history)="history(item)"
+                (restore)="restore(item)"
+                (edit)="edit(item)"
+                (archive)="archive(item)"
+                (addSimilar)="addSimilar(item)"
+              />
+            }
+          }
+        </div>
+      }
+    </section>
+  </div>
 </pb-page>

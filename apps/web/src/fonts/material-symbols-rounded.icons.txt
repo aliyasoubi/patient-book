@@ -140,6 +140,7 @@ star_shine
 start
 step
 stethoscope
+store
 straighten
 stylus
 surgical
