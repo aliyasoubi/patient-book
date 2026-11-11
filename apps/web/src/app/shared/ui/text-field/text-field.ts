@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { regroup } from '../../rial';
+import { errorsRevealed } from '../form-submitted';
 import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 import { lineIconFor } from '../icon/line-icons';
@@ -75,6 +76,8 @@ export class PbTextField {
 
   protected readonly id = `pb-text-field-${nextId++}`;
   protected readonly messageId = `${this.id}-message`;
+  /** Errors wait for the form's first submit. */
+  private readonly errorsShown = errorsRevealed(() => this.control());
   protected readonly lineIcon = computed(() => lineIconFor(this.prefixIcon()));
   protected readonly revealed = signal(false);
   protected readonly visibleType = computed(() =>
@@ -88,7 +91,7 @@ export class PbTextField {
   /** An error shows once the field has been left; a refused save marks every field touched. */
   protected showError(): boolean {
     const control = this.control();
-    return control.touched && control.invalid && this.errorText() !== null;
+    return this.errorsShown() && control.invalid && this.errorText() !== null;
   }
 
   /** The hint, as the placeholder while empty and an in-box note after. */

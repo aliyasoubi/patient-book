@@ -11,6 +11,7 @@ import { roleLabel } from '../../shared/labels';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { PbButton, PbIcon, PbInput, PbPage, PbPageHeader, ToastService } from '../../shared/ui';
 import { PasswordGate } from './password-gate';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 /**
  * The two new-password fields must agree. Rather than surface this as a
@@ -101,7 +102,7 @@ export class Account {
   protected submit(): void {
     this.tried.set(true);
     if (this.form.invalid || this.rules().some((rule) => !rule.met) || this.saving()) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
     this.saving.set(true);

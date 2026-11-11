@@ -22,6 +22,7 @@ import { PbButton, PbIconButton, PbTextField, ToastService } from '../ui';
 import type { TextFieldOption } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
 import type { PatientSuggestion } from '../../features/patients/data/patient.model';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 /** The patient a case is, or is about to be, linked to. */
 /**
@@ -263,7 +264,7 @@ export class RegistryCaseDialog {
 
   protected submit(): void {
     if (this.form.invalid || this.saving()) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
 
@@ -345,7 +346,7 @@ export class RegistryCaseDialog {
         const failure = failures[0];
         if (!control || !failure) continue;
         control.setErrors({ server: this.errors.field(path, failure.code, failure.params) });
-        control.markAsTouched();
+        markSubmitted(control);
       }
     }
 
@@ -358,7 +359,7 @@ export class RegistryCaseDialog {
 
     if (target) {
       this.form.controls[target].setErrors({ server: message });
-      this.form.controls[target].markAsTouched();
+      markSubmitted(this.form.controls[target]);
     }
     this.toast.error(message);
   }

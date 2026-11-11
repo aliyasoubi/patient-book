@@ -2,6 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { errorsRevealed } from '../form-submitted';
 import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 import type { LineIconName } from '../icon/line-icons';
@@ -63,6 +64,8 @@ export class PbInput {
 
   protected readonly id = `pb-input-${nextId++}`;
   protected readonly messageId = `${this.id}-message`;
+  /** Errors wait for the form's first submit. */
+  private readonly errorsShown = errorsRevealed(() => this.control());
   protected readonly revealed = signal(false);
   protected readonly visibleType = computed(() =>
     this.type() === 'password' && this.revealed() ? 'text' : this.type(),
@@ -73,7 +76,7 @@ export class PbInput {
 
   protected showError(): boolean {
     const control = this.control();
-    const allowed = this.showErrors() ?? control.touched;
+    const allowed = this.showErrors() ?? this.errorsShown();
     return allowed && control.invalid && this.errorText() !== null;
   }
 

@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import type { SurgeryQueueItem } from '../../core/models/common.model';
 import { PbButton, PbDateField } from '../../shared/ui';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 export interface SurgeryBookDialogData {
   item: SurgeryQueueItem;
@@ -81,7 +82,7 @@ export class SurgeryBookDialog {
     // Left empty is a booking with no day; typed but not a date is a mistake
     // to correct, not that — and on a booked row it would wipe the day it had.
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
     const date = this.form.controls.date.value;

@@ -3,6 +3,7 @@ import type { AbstractControl } from '@angular/forms';
 
 import type { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 /**
  * Put a refused save where the person is looking: a field the API named goes
@@ -25,13 +26,13 @@ export function showOnFields(
     control.setErrors({
       server: errors.field(field, failures[0].code, failures[0].params),
     });
-    control.markAsTouched();
+    markSubmitted(control);
     shown = true;
   }
   const pinned = body?.code ? fields[codeFields[body.code] ?? ''] : undefined;
   if (pinned) {
     pinned.setErrors({ server: errors.translate(error) });
-    pinned.markAsTouched();
+    markSubmitted(pinned);
     shown = true;
   }
   return shown ? null : errors.translate(error);

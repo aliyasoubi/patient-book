@@ -3,6 +3,7 @@ import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { errorsRevealed } from '../form-submitted';
 import { firstErrorMessage, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 
@@ -63,12 +64,14 @@ export class PbSelectField {
   protected readonly open = signal(false);
   protected readonly labelId = `pb-select-${nextId++}-label`;
   protected readonly messageId = `${this.labelId}-message`;
+  /** Errors wait for the form's first submit. */
+  private readonly errorsShown = errorsRevealed(() => this.control());
   private lastMessage = '';
   private lastWasError = false;
 
   protected showError(): boolean {
     const ctrl = this.control();
-    return !!ctrl && ctrl.touched && ctrl.invalid && this.errorText() !== null;
+    return !!ctrl && this.errorsShown() && ctrl.invalid && this.errorText() !== null;
   }
 
   /** Errors only: the hint sits inside the box, beside the chosen value. */

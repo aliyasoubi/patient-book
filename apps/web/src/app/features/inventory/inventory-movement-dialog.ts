@@ -41,6 +41,7 @@ import {
 } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
 import { fold, MAX_SUGGESTIONS } from './inventory-item-dialog';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 /** An expiry the API will read — said on the field, before it is sent. */
 const readableExpiry = (control: AbstractControl<string>): ValidationErrors | null =>
@@ -658,7 +659,7 @@ export class InventoryMovementDialog {
     if (this.saving()) return;
     this.submitted.set(true);
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
     const raw = this.form.getRawValue();

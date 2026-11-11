@@ -9,6 +9,13 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 const DEFAULT_MODE: ThemeMode = 'light';
 
 /**
+ * Off until the dark screens are designed: the brand is drawn light only,
+ * and Material's dark tokens under it read as pale text on white panels.
+ * The choice made in Settings is still kept, and takes effect once this is on.
+ */
+const DARK_READY = false;
+
+/**
  * Versioned: until now the default was 'system' and every visit stored it,
  * so the old key would keep everyone on 'system'. A new key gives everyone
  * the current default once; a choice made in Settings is kept from then on.
@@ -31,7 +38,8 @@ export class ThemeService {
     effect(() => {
       const mode = this._mode();
       const root = document.documentElement;
-      if (mode === 'system') root.removeAttribute('data-theme');
+      if (!DARK_READY) root.setAttribute('data-theme', 'light');
+      else if (mode === 'system') root.removeAttribute('data-theme');
       else root.setAttribute('data-theme', mode);
       localStorage.setItem(STORAGE_KEY, mode);
     });

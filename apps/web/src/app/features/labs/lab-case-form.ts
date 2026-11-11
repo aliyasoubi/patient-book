@@ -76,6 +76,7 @@ import {
   labWaitOptions,
   labWorkTypeOptions,
 } from './lab-options';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 interface LinkedPatient {
   id: string;
@@ -489,7 +490,7 @@ export class LabCaseForm implements HasUnsavedChanges {
   protected submit(): void {
     if (this.loading()) return;
     if (this.form.invalid || this.saving()) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       const firstInvalid = document.querySelector<HTMLElement>(
         '.form input.ng-invalid, .form textarea.ng-invalid, .form mat-select.ng-invalid, .form [aria-invalid="true"]',
       );
@@ -579,7 +580,7 @@ export class LabCaseForm implements HasUnsavedChanges {
       const failure = failures[0];
       if (!control || !failure) continue;
       control.setErrors({ server: this.errors.field(path, failure.code, failure.params) });
-      control.markAsTouched();
+      markSubmitted(control);
     }
     this.toast.error(this.errors.translate(error));
   }

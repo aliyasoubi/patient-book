@@ -64,6 +64,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ListReturn } from '../../core/services/list-return.service';
 import { placedImplantLine } from '../../shared/placed-implant';
 import { teethFromPhrase } from '../../shared/ui/tooth-picker/teeth';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 const SURGERY_FIELDS: readonly FieldReader<SurgeryQueueItem>[] = [
   ['surgeryForm.recordedName', (s) => `${s.recordedName}|${s.patient?.id ?? ''}`],
@@ -511,7 +512,7 @@ export class SurgeryForm implements HasUnsavedChanges {
     // previous record and whatever has been patched in so far.
     if (this.loading()) return;
     if (this.form.invalid || this.saving()) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       // Works regardless of whether a field binds via `formControlName` or the
       // design-system atoms' `[formControl]` — both apply the same NgControl
       // status classes to the control's own host element.
@@ -654,7 +655,7 @@ export class SurgeryForm implements HasUnsavedChanges {
         const failure = failures[0];
         if (!control || !failure) continue;
         control.setErrors({ server: this.errors.field(path, failure.code, failure.params) });
-        control.markAsTouched();
+        markSubmitted(control);
       }
     }
 

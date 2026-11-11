@@ -16,6 +16,7 @@ import { contactOutcomeLabel } from '../../shared/labels';
 import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { PbButton, PbDateField, PbFilterChips, PbTextareaField } from '../../shared/ui';
 import type { FilterChipOption } from '../../shared/ui';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 export interface FollowUpContactDialogData {
   item: SurgeryQueueItem;
@@ -306,7 +307,7 @@ export class FollowUpContactDialog {
     const outcome = this.outcome();
     if (!outcome) return;
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
     const { nextContactAt, appointmentAt, note } = this.form.getRawValue();

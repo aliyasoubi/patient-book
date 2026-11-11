@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import type { LabCase } from '../../core/models/common.model';
 import { PbButton, PbDateField } from '../../shared/ui';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 export interface LabBookDialogData {
   labCase: LabCase;
@@ -72,7 +73,7 @@ export class LabBookDialog {
   protected submit(): void {
     const date = this.form.controls.date.value;
     if (this.form.invalid || !date) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
     this.ref.close(this.dateAdapter.toIso8601(date));

@@ -16,6 +16,7 @@ import { type FormControl, type ValidationErrors } from '@angular/forms';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { errorsRevealed } from '../form-submitted';
 import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 import { PbShamsiCalendar, type CalendarView } from '../calendar/shamsi-calendar';
@@ -70,6 +71,8 @@ export class PbDateField {
 
   protected readonly id = `pb-date-${nextId++}`;
   protected readonly messageId = `${this.id}-message`;
+  /** Errors wait for the form's first submit. */
+  private readonly errorsShown = errorsRevealed(() => this.control());
   protected readonly open = signal(false);
   protected readonly above = signal(false);
   /** What the box shows: the formatted value, or what is being typed. */
@@ -118,7 +121,7 @@ export class PbDateField {
   protected showError(): boolean {
     this.tick();
     const control = this.control();
-    return control.invalid && control.touched && this.errorText() !== null;
+    return control.invalid && this.errorsShown() && this.errorText() !== null;
   }
 
   /** The hint, after the example date, as the placeholder while empty. */

@@ -11,6 +11,7 @@ import type { LabSendInput } from '../../core/services/lab.service';
 import { labWaitOptions, labTripKindOptions } from './lab-options';
 import { defaultLabWaitDays } from '../../shared/labels';
 import { PbButton, PbDateField, PbSelectField, PbTextField } from '../../shared/ui';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 export interface LabSendDialogData {
   labCase: LabCase;
@@ -126,7 +127,7 @@ export class LabSendDialog {
 
   protected submit(): void {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
     const raw = this.form.getRawValue();

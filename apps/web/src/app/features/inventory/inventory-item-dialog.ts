@@ -40,6 +40,7 @@ import {
   type TextFieldOption,
 } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 export interface InventoryItemDialogData {
   /** The item being corrected; absent when adding one. */
@@ -483,7 +484,7 @@ export class InventoryItemDialog {
   protected submit(): void {
     if (this.saving()) return;
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
     const raw = this.form.getRawValue();

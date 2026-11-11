@@ -8,6 +8,7 @@ import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import { LabService } from '../../core/services/lab.service';
 import type { Lab } from '../../core/models/common.model';
 import { PbButton, PbTextField } from '../../shared/ui';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 /** Add a lab, or rename one. Saves itself, so a taken name is shown on the field. */
 @Component({
@@ -54,7 +55,7 @@ export class LabNameDialog {
   protected submit(): void {
     const name = this.name.value.trim();
     if (this.name.invalid || !name || this.saving()) {
-      this.name.markAsTouched();
+      markSubmitted(this.name);
       return;
     }
     if (name === this.data?.name) {
@@ -71,7 +72,7 @@ export class LabNameDialog {
         this.saving.set(false);
         if (error instanceof HttpErrorResponse) {
           this.name.setErrors({ server: this.errors.translate(error) });
-          this.name.markAsTouched();
+          markSubmitted(this.name);
         }
       },
     });

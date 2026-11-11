@@ -3,6 +3,7 @@ import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateService } from '@ngx-translate/core';
 
+import { errorsRevealed } from '../form-submitted';
 import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 import { lineIconFor } from '../icon/line-icons';
@@ -39,13 +40,15 @@ export class PbTextareaField {
 
   protected readonly id = `pb-textarea-${nextId++}`;
   protected readonly messageId = `${this.id}-message`;
+  /** Errors wait for the form's first submit. */
+  private readonly errorsShown = errorsRevealed(() => this.control());
   protected readonly lineIcon = computed(() => lineIconFor(this.prefixIcon()));
   private lastMessage = '';
   private lastWasError = false;
 
   protected showError(): boolean {
     const control = this.control();
-    return control.touched && control.invalid && this.errorText() !== null;
+    return this.errorsShown() && control.invalid && this.errorText() !== null;
   }
 
   /** The hint, as the placeholder while empty and an in-box note after. */

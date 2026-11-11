@@ -4,6 +4,7 @@ import { FormControl, Validators } from '@angular/forms';
 import { provideTranslateService } from '@ngx-translate/core';
 import { describe, expect, it } from 'vitest';
 
+import { markSubmitted } from '../form-submitted';
 import { PbInput } from './input';
 
 @Component({
@@ -38,7 +39,12 @@ describe('PbInput', () => {
     expect(message()?.textContent?.trim()).toBe('');
     expect(input.getAttribute('aria-invalid')).toBeNull();
 
+    // Leaving the field says nothing; a save attempt does.
     fixture.componentInstance.control.markAsTouched();
+    fixture.detectChanges();
+    expect(message()?.classList).not.toContain('pb-input__message--error');
+
+    markSubmitted(fixture.componentInstance.control);
     fixture.detectChanges();
     expect(message()?.classList).toContain('pb-input__message--error');
     expect(input.getAttribute('aria-invalid')).toBe('true');

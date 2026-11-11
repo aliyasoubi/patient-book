@@ -41,6 +41,7 @@ import {
   ToastService,
 } from '../../shared/ui';
 import { changedLines, type CountRow } from './stock-sheets';
+import { markSubmitted } from '../../shared/ui/form-submitted';
 
 type RowGroup = FormGroup<{ counted: FormControl<string>; min: FormControl<string> }>;
 
@@ -216,7 +217,7 @@ export class InventoryCount implements HasUnsavedChanges {
   protected save(): void {
     if (this.saving()) return;
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      markSubmitted(this.form);
       return;
     }
     const lines = this.changes();
