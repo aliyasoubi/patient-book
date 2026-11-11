@@ -1087,6 +1087,26 @@ describeIfWritable('clinic flows (e2e)', () => {
       expect(await list({ patientId })).toEqual([id]);
       expect(await list({ q: fileNo, unlinkedOnly: 'true' })).toEqual([]);
 
+      // A namesake: the name finds both rows, the id only the one meant.
+      const namesake = await asAdmin(http().post('/api/surgery-queue'))
+        .send({
+          kind: 'extraction',
+          recordedName: 'پیگیری پرونده‌دار',
+          surgeryDate: monthsAgo(1),
+          followUpMonths: 2,
+        })
+        .expect(201);
+      const namesakeId = (namesake.body as { id: string }).id;
+      surgeryIds.push(namesakeId);
+      const byName = await list({ q: 'پیگیری پرونده‌دار' });
+      expect(byName).toEqual(expect.arrayContaining([id, namesakeId]));
+      expect(await list({ q: 'پیگیری پرونده‌دار', id: namesakeId })).toEqual([
+        namesakeId,
+      ]);
+      await asAdmin(http().get('/api/surgery-queue'))
+        .query({ id: 'not-an-id' })
+        .expect(400);
+
       // Unlinked on the form: the row keeps its name and loses the file.
       const unlinked = await asAdmin(http().patch(`/api/surgery-queue/${id}`))
         .send({

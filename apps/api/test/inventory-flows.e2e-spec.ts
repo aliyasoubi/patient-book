@@ -899,8 +899,23 @@ describeIfWritable('inventory flows (e2e)', () => {
       ErrorCode.InventoryPatientRequired,
     );
 
+    // And what it went for: a sale with no price is refused, a gift is zero.
+    const unpriced = await move(item.id, {
+      kind: 'use',
+      quantity: 2,
+      patientId,
+    }).expect(400);
+    expect((unpriced.body as { code: string }).code).toBe(
+      ErrorCode.InventoryPriceRequired,
+    );
+
     const sold = (
-      await move(item.id, { kind: 'use', quantity: 2, patientId }).expect(200)
+      await move(item.id, {
+        kind: 'use',
+        quantity: 2,
+        patientId,
+        unitPrice: 0,
+      }).expect(200)
     ).body as ItemBody;
     expect(sold.quantity).toBe(3);
     expect(sold.movements[0]).toMatchObject({

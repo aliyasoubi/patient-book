@@ -82,6 +82,12 @@ export class QuerySurgeryDto extends PaginationDto {
   @IsOptional()
   archivedOnly?: boolean;
 
+  /** That one row, for a link that must not open a namesake's. */
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  id?: string;
+
   /** One patient's follow-ups, for their file. */
   @ApiPropertyOptional()
   @IsUUID()

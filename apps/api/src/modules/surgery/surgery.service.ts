@@ -126,6 +126,7 @@ export class SurgeryService {
         );
       }
     }
+    if (dto.id) qb.andWhere('s.id = :id', { id: dto.id });
     if (dto.patientId) {
       qb.andWhere('s."patientId" = :patientId', { patientId: dto.patientId });
     }

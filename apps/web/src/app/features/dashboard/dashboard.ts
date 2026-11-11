@@ -126,7 +126,7 @@ export class Dashboard {
       tiles.push({
         label: 'tile.labsToBook',
         value: s.labsToBook,
-        icon: 'event_busy',
+        icon: 'edit_calendar',
         link: '/labs',
         // The board, narrowed to exactly the cases the tile counts.
         queryParams: { toBook: 'true' },

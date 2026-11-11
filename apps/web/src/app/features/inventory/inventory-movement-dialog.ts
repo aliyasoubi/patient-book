@@ -238,7 +238,6 @@ const COPY: Record<
             [hint]="priceHint()"
             inputmode="numeric"
             [grouped]="true"
-            [maxlength]="13"
             [ltr]="true"
           />
         }
@@ -695,6 +694,7 @@ export class InventoryMovementDialog {
               ERR_INVENTORY_INSUFFICIENT_STOCK: 'quantity',
               ERR_PATIENT_NOT_FOUND: 'patient',
               ERR_INVENTORY_PATIENT_REQUIRED: 'patient',
+              ERR_INVENTORY_PRICE_REQUIRED: 'unitPrice',
               ERR_INVENTORY_LOT_EXPIRED: 'lotId',
               ERR_INVENTORY_TOOTH_REQUIRED: 'tooth',
               ERR_INVENTORY_IMPLANT_ONE_TOOTH: 'tooth',

@@ -409,6 +409,10 @@ export class InventoryService {
         if (namesPatient(item) && !dto.patientId && !dto.patientFileNo) {
           throw AppException.badRequest(ErrorCode.InventoryPatientRequired);
         }
+        // A sale says what it went for; the form asks, and so does this.
+        if (item.soldToPatients && (dto.unitPrice ?? null) === null) {
+          throw AppException.badRequest(ErrorCode.InventoryPriceRequired);
+        }
         if (item.category === InventoryCategory.Implant) {
           const teeth = toothNumbers(toLatinDigits(dto.tooth ?? ''));
           if (!teeth.length) {

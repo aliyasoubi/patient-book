@@ -17,11 +17,9 @@
 
   @if (summary()) {
     <!-- ── Work tiles ──────────────────────────────────────────── -->
-    <section
-      class="tiles"
-      animate.enter="pb-enter"
-      [attr.aria-label]="'dashboard.workAria' | translate"
-    >
+    <!-- No entrance of its own: the page's plays as this arrives, and two
+         rises at once read as a stutter. -->
+    <section class="tiles" [attr.aria-label]="'dashboard.workAria' | translate">
       @for (tile of tiles(); track tile.label) {
         <pb-stat-tile
           [label]="tile.label | translate"
@@ -60,7 +58,7 @@
         <ul class="upcoming">
           @for (item of followUps(); track item.id) {
             <li>
-              <a [routerLink]="['/surgery']" [queryParams]="{ q: item.recordedName }">
+              <a [routerLink]="['/surgery']" [queryParams]="{ q: item.recordedName, id: item.id }">
                 <mat-icon
                   class="upcoming__icon"
                   [class.upcoming__icon--warn]="item.hasNameMismatch"

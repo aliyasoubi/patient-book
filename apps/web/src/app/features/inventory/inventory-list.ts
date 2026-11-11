@@ -83,7 +83,7 @@ const FILTERS: readonly (FilterChipOption & { value: InventoryFilter; tone: Stat
     label: 'inventory.filterReorder',
     icon: 'shopping_cart',
     translate: true,
-    tone: 'warn',
+    tone: 'caution',
   },
   {
     value: 'out',
@@ -97,7 +97,7 @@ const FILTERS: readonly (FilterChipOption & { value: InventoryFilter; tone: Stat
     label: 'inventory.filterExpiry',
     icon: 'hourglass_bottom',
     translate: true,
-    tone: 'warn',
+    tone: 'caution',
   },
 ];
 
