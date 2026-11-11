@@ -16,10 +16,10 @@ import { PbButton, PbTextField } from '../../shared/ui';
   imports: [ReactiveFormsModule, MatDialogModule, TranslatePipe, PbButton, PbTextField],
   template: `
     <h2 mat-dialog-title>
-      {{ (data ? 'settings.renameLab' : 'settings.addLab') | translate }}
+      {{ (data ? 'labs.renameLab' : 'labs.addLab') | translate }}
     </h2>
     <mat-dialog-content>
-      <pb-text-field [control]="name" [label]="'settings.labName' | translate" [maxlength]="80" />
+      <pb-text-field [control]="name" [label]="'labs.labName' | translate" [maxlength]="80" />
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <pb-button variant="text" type="button" (click)="ref.close()" [disabled]="saving()">
@@ -33,7 +33,7 @@ import { PbButton, PbTextField } from '../../shared/ui';
         [loading]="saving()"
         [loadingText]="'common.saving' | translate"
       >
-        {{ 'settings.saveLab' | translate }}
+        {{ 'labs.saveLab' | translate }}
       </pb-button>
     </mat-dialog-actions>
   `,

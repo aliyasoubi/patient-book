@@ -1,6 +1,10 @@
 <pb-page class="labs" width="wide">
   <pb-page-header [title]="'labs.title' | translate" [subtitle]="'labs.subtitle' | translate">
     @if (canEdit) {
+      <!-- The labs the case form offers: added, renamed or switched off here. -->
+      <pb-button variant="stroked" icon="tune" (click)="manageLabs()" [collapseBelow]="900">
+        {{ 'labs.manage' | translate }}
+      </pb-button>
       <!-- Icon-only on the narrowest screens; the label crowds the title. -->
       <pb-button link="/labs/new" icon="add" [collapseBelow]="560">
         {{ 'labs.new' | translate }}
