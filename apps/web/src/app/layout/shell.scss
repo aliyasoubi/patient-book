@@ -177,10 +177,18 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+  // A field reached with Tab scrolls clear of a form's sticky Save bar
+  // (72px) rather than coming to rest underneath it.
+  --page-focus-clearance: 88px;
+  scroll-padding-block-end: var(--page-focus-clearance);
 
   &--with-bottom-nav {
     // Clear the bottom bar plus the home indicator on notched phones.
     padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    // The scrollport runs under that bar, so a focused field clears both.
+    scroll-padding-block-end: calc(
+      72px + env(safe-area-inset-bottom) + var(--page-focus-clearance)
+    );
   }
 }
 
