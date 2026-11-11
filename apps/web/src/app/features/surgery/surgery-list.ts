@@ -111,6 +111,8 @@ function isFollowUpFilter(value: unknown): value is FollowUpFilter {
  */
 interface UrlFilters {
   q: string;
+  /** The one row a dashboard link means; a name alone can be two patients. */
+  id: string;
   followUp: FollowUpFilter | '';
   unlinked: boolean;
   archived: boolean;
@@ -124,10 +126,14 @@ function countParam(value: string | null, fallback: number, max: number): number
   return Number.isInteger(n) && n >= 1 && n <= max ? n : fallback;
 }
 
+const UUID = /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+
 function readUrlFilters(params: ParamMap): UrlFilters {
   const followUp = params.get('followUp');
+  const id = params.get('id') ?? '';
   return {
     q: params.get('q')?.trim() ?? '',
+    id: UUID.test(id) ? id : '',
     followUp: isFollowUpFilter(followUp) ? followUp : '',
     unlinked: params.get('unlinked') === 'true',
     archived: params.get('archived') === 'true',
@@ -194,6 +200,11 @@ export class SurgeryList {
   // and a form opened from the list comes back to the same one.
   private readonly urlFilters = readUrlFilters(this.route.snapshot.queryParamMap);
   protected readonly search = new FormControl(this.urlFilters.q, { nonNullable: true });
+  /**
+   * The single row the list was opened for. It stands only until the search
+   * or a filter is touched: from then on the list answers what was asked.
+   */
+  private readonly onlyId = signal(this.urlFilters.id);
   protected readonly followUp = signal<FollowUpFilter | ''>(this.urlFilters.followUp);
   /** Rows with no patient file yet, to be linked one by one. */
   protected readonly unlinkedOnly = signal(this.urlFilters.unlinked);
@@ -239,7 +250,10 @@ export class SurgeryList {
       debounceTime(300),
       map((v) => v.trim()),
       distinctUntilChanged(),
-      tap(() => this.page.set(1)),
+      tap(() => {
+        this.onlyId.set('');
+        this.page.set(1);
+      }),
     ),
     { initialValue: this.urlFilters.q },
   );
@@ -280,6 +294,7 @@ export class SurgeryList {
       this.reloadTick();
       const query: SurgeryQuery = {
         q: this.query() || undefined,
+        id: this.onlyId() || undefined,
         followUp: this.followUp() || undefined,
         unlinkedOnly: this.unlinkedOnly() || undefined,
         archivedOnly: this.archivedOnly() || undefined,
@@ -301,6 +316,7 @@ export class SurgeryList {
     effect(() => {
       const queryParams = {
         q: this.query() || null,
+        id: this.onlyId() || null,
         followUp: this.followUp() || null,
         unlinked: this.unlinkedOnly() ? 'true' : null,
         archived: this.archivedOnly() ? 'true' : null,
@@ -446,12 +462,14 @@ export class SurgeryList {
   protected setRowFilters(selected: string[]): void {
     this.unlinkedOnly.set(selected.includes('unlinked'));
     this.archivedOnly.set(selected.includes('archived'));
+    this.onlyId.set('');
     this.page.set(1);
   }
 
   /** The one follow-up question asked of the list, or `undefined` once the chip is cleared. */
   protected setFollowUp(value: unknown): void {
     this.followUp.set(isFollowUpFilter(value) ? value : '');
+    this.onlyId.set('');
     this.page.set(1);
   }
 

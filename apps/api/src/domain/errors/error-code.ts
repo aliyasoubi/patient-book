@@ -99,6 +99,11 @@ export enum ErrorCode {
    */
   InventoryPatientRequired = 'ERR_INVENTORY_PATIENT_REQUIRED',
   /**
+   * An item sold to patients taken out without what it went for: the sale
+   * shows in the patient's file by its price. Zero is a price; none is not.
+   */
+  InventoryPriceRequired = 'ERR_INVENTORY_PRICE_REQUIRED',
+  /**
    * An implant used without the tooth it goes into: the follow-up and the
    * patient's implant file are kept by tooth.
    */

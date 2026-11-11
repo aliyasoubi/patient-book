@@ -29,6 +29,8 @@ export interface RegistryQuery {
 }
 
 export interface SurgeryQuery extends RegistryQuery {
+  /** That one row: two patients can share a name. */
+  id?: string;
   /** One patient's follow-ups, for their file. */
   patientId?: string;
   mismatchedOnly?: boolean;

@@ -233,7 +233,7 @@ export class LabBoard {
 
   protected readonly focusFilter: FilterChipOption[] = [
     { value: 'overdue', label: 'labs.filterOverdue', icon: 'schedule', translate: true },
-    { value: 'toBook', label: 'labs.filterToBook', icon: 'event_busy', translate: true },
+    { value: 'toBook', label: 'labs.filterToBook', icon: 'edit_calendar', translate: true },
   ];
   protected readonly archiveFilter: FilterChipOption[] = [
     { value: 'archived', label: 'labs.archivedOnly', icon: 'inventory_2', translate: true },

@@ -249,7 +249,6 @@ export const MAX_SUGGESTIONS = 8;
               [hint]="'inventoryForm.salePriceHint' | translate"
               inputmode="numeric"
               [grouped]="true"
-              [maxlength]="13"
               [ltr]="true"
             />
           }

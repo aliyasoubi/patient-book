@@ -11,6 +11,14 @@ describe('rialValue', () => {
     expect(rialValue('۱۲٬۵۰۰٬۰۰۰')).toBe(12_500_000);
   });
 
+  // Why a price field carries no maxlength: the browser would cut this paste
+  // short before it is read, and a shorter price is still a valid one.
+  it('reads a pasted price whole, however it was spaced', () => {
+    expect(rialValue('1, 250, 000, 000')).toBe(1_250_000_000);
+    expect(regroup('1, 250, 000, 000', 16).value).toBe('1,250,000,000');
+    expect(rialValue('12,500,000,000')).toBeNull();
+  });
+
   it('takes 0 as a price', () => {
     expect(rialValue('0')).toBe(0);
   });
