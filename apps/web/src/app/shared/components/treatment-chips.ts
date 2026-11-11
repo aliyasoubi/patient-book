@@ -6,7 +6,7 @@ import type { PatientTreatment } from '../../core/models/common.model';
 import { TranslateService } from '@ngx-translate/core';
 
 /**
- * The treatments a patient has had, as labelled, coloured chips.
+ * The treatments a patient has had, as labelled chips with a coloured icon.
  *
  * A patient can carry up to thirteen; showing all of them turns a table row
  * into three lines, so the list truncates and reports the remainder. The full
@@ -63,28 +63,37 @@ import { TranslateService } from '@ngx-translate/core';
       gap: var(--pb-space-1);
       align-items: center;
     }
-    /* Sized like pb-status-chip (M3's 32dp, label-large) so the two chip
-       kinds read as one family. */
+    /* Calm by default: a white chip on a hairline, graphite text, and only
+       the icon in the treatment's colour, so a row of several reads as a
+       list rather than a row of coloured blocks. */
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: var(--pb-space-2);
-      min-height: 32px;
-      padding-inline: var(--pb-space-3);
-      border-radius: var(--mat-sys-corner-small);
-      background: var(--chip-bg, var(--mat-sys-secondary-container));
-      color: var(--chip-fg, var(--mat-sys-on-secondary-container));
-      font: var(--mat-sys-label-large);
-      letter-spacing: var(--mat-sys-label-large-tracking);
+      gap: 6px;
+      min-height: 28px;
+      padding-inline: var(--pb-space-2) 10px;
+      border: 1px solid var(--pb-neutral-200, var(--mat-sys-outline-variant));
+      border-radius: 9px;
+      background: #fff;
+      color: var(--pb-graphite, var(--mat-sys-on-surface));
+      font-size: 0.8125rem;
+      font-weight: 500;
       white-space: nowrap;
       cursor: default;
     }
     .chip__icon {
-      font-size: var(--pb-icon-sm);
+      inline-size: 16px;
+      block-size: 16px;
+      font-size: 16px;
+      color: var(--chip-fg, var(--mat-sys-on-surface-variant));
+      font-variation-settings: 'wght' 400;
     }
     .chip--more {
-      background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
-      color: var(--mat-sys-on-surface-variant);
+      padding-inline: var(--pb-space-2);
+      border-color: transparent;
+      background: var(--pb-neutral-100, var(--mat-sys-surface-container));
+      color: var(--pb-neutral-600, var(--mat-sys-on-surface-variant));
+      font-weight: 700;
       font-feature-settings: var(--pb-font-numeric);
     }
   `,

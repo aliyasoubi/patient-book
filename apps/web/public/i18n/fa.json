@@ -131,7 +131,9 @@
     "catalogueShow": "نمایش فهرست",
     "catalogueHide": "بستن فهرست",
     "tabsAria": "بخش‌های آمار",
-    "newThisMonth": "{{count}} بیمار جدید در این ماه"
+    "newThisMonth": "{{count}} بیمار جدید در این ماه",
+    "patientsWord": "بیمار",
+    "newThisMonthShort": "بیمار جدید در این ماه"
   },
   "consumption": {
     "title": "مصرف ماهانه مواد",
@@ -722,7 +724,9 @@
     "referralFilter": "نحوه آشنایی: {{name}}",
     "clearReferralFilter": "حذف فیلتر نحوه آشنایی",
     "loadFailed": "فهرست بیماران بارگذاری نشد.",
-    "loadFailedStale": "فهرست به‌روزرسانی نشد؛ نتایج قبلی نمایش داده می‌شود."
+    "loadFailedStale": "فهرست به‌روزرسانی نشد؛ نتایج قبلی نمایش داده می‌شود.",
+    "yearsShort": "{{age}} ساله",
+    "noVisit": "بدون مراجعه"
   },
   "patientForm": {
     "editTitle": "ویرایش پرونده بیمار",
@@ -830,7 +834,10 @@
     "addFollowUp": "پیگیری جدید",
     "followUpOn": "پیگیری {{date}}",
     "lastCall": "آخرین تماس {{when}}: {{outcome}}",
-    "teeth": "دندان {{teeth}}"
+    "teeth": "دندان {{teeth}}",
+    "glanceAria": "خلاصه پرونده",
+    "glanceFollowUps": "پیگیری ثبت‌شده",
+    "glanceLab": "کار لابراتوار"
   },
   "registryForm": {
     "editImplant": "ویرایش پرونده ایمپلنت",
@@ -1301,5 +1308,12 @@
     "noteHint": "اختیاری؛ برای کسی که بعداً تماس می‌گیرد",
     "save": "ثبت تماس",
     "saved": "تماس ثبت شد."
+  },
+  "time": {
+    "today": "امروز",
+    "yesterday": "دیروز",
+    "daysAgo": "{{count}} روز پیش",
+    "monthsAgo": "{{count}} ماه پیش",
+    "yearsAgo": "{{count}} سال پیش"
   }
 }

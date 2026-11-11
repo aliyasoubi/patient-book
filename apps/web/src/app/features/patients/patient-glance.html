@@ -1,0 +1,28 @@
+<section class="glance" [attr.aria-label]="'patientDetail.glanceAria' | translate">
+  <div class="glance__item" style="--_i: 0">
+    <span class="glance__icon"><pb-icon name="history" [size]="18" /></span>
+    <span class="glance__label">{{ 'patientDetail.lastVisit' | translate }}</span>
+    <strong class="glance__value">{{
+      patient().lastVisitAt ? (patient().lastVisitAt | ago) : ('patients.noVisit' | translate)
+    }}</strong>
+    <span class="glance__sub">{{ patient().lastVisitAt | jalali: 'long' }}</span>
+  </div>
+  <div class="glance__item" style="--_i: 1">
+    <span class="glance__icon"><pb-icon name="dental" [size]="18" /></span>
+    <span class="glance__label">{{ 'patientDetail.treatmentsTab' | translate }}</span>
+    <strong class="glance__value">{{ patient().treatments.length | faNum }}</strong>
+    <span class="glance__sub">{{ treatmentNames() }}</span>
+  </div>
+  <div class="glance__item" style="--_i: 2">
+    <span class="glance__icon"><pb-icon name="calendar-check" [size]="18" /></span>
+    <span class="glance__label">{{ 'patientDetail.followUps' | translate }}</span>
+    <strong class="glance__value">{{ followUps() | faNum }}</strong>
+    <span class="glance__sub">{{ 'patientDetail.glanceFollowUps' | translate }}</span>
+  </div>
+  <div class="glance__item" style="--_i: 3">
+    <span class="glance__icon"><pb-icon name="flask" [size]="18" /></span>
+    <span class="glance__label">{{ 'patientDetail.labWork' | translate }}</span>
+    <strong class="glance__value">{{ labCases() | faNum }}</strong>
+    <span class="glance__sub">{{ 'patientDetail.glanceLab' | translate }}</span>
+  </div>
+</section>

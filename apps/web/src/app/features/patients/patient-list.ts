@@ -69,6 +69,8 @@ import type { FilterChipOption, SelectOption } from '../../shared/ui';
 import type { Patient, ReferralSource, TreatmentType } from './data/patient.model';
 import type { EducationLevel, Gender } from '../../core/models/common.model';
 import { PhonePipe } from '../../shared/pipes/phone.pipe';
+import { AgoPipe } from '../../shared/pipes/ago.pipe';
+import { PbIcon } from '../../shared/ui/icon/icon';
 
 /**
  * File number, newest first — matches the registry and surgery lists'
@@ -218,6 +220,8 @@ function sameFilters(a: Filters, b: Filters): boolean {
   standalone: true,
   imports: [
     PhonePipe,
+    AgoPipe,
+    PbIcon,
     ReactiveFormsModule,
     RouterLink,
     MatTableModule,
@@ -688,6 +692,11 @@ export class PatientList {
    */
   protected readonly genderLabel = genderLabel;
   protected readonly genderIcon = genderIcon;
+
+  /** The letter on a patient's tile: the first of their name. */
+  protected initialOf(name: string | null): string {
+    return (name ?? '').trim().charAt(0);
+  }
 
   /**
    * Bound to the table so a refetch that returns the same patients updates

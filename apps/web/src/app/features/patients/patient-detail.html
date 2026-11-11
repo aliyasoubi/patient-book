@@ -3,7 +3,7 @@
 }
 
 @if (patient(); as p) {
-  <pb-page>
+  <pb-page width="wide">
     <!-- ── Hero ──────────────────────────────────────────────────── -->
     <!-- A card like the panels below it: the record's header, not a well. -->
     <pb-surface class="hero-surface" [class.hero-surface--archived]="p.isArchived">
@@ -14,7 +14,9 @@
           [ariaLabel]="'patientDetail.backAria' | translate"
         />
 
-        <pb-avatar size="large" [tone]="p.gender" [name]="p.fullName" />
+        <span class="hero__avatar" [attr.data-gender]="p.gender" aria-hidden="true">{{
+          initialOf(p.fullName)
+        }}</span>
 
         <div class="hero__identity">
           <h1>{{ p.fullName || ('patient.unnamed' | translate) }}</h1>
@@ -85,6 +87,14 @@
       </header>
     </pb-surface>
 
+    <!-- ── At a glance: what the chair needs before the folder is opened ── -->
+    <pb-patient-glance
+      [patient]="p"
+      [treatmentNames]="treatmentNames()"
+      [followUps]="followUps().length"
+      [labCases]="labCases().length"
+    />
+
     <!-- ── Alerts ────────────────────────────────────────────────── -->
     <!-- Medical history is the thing a dentist must not miss before treating —
          caution, not a broken record — so it gets the warning tone, not error. -->
@@ -134,400 +144,407 @@
       </pb-banner>
     }
 
-    <!-- ── Tabs ──────────────────────────────────────────────────── -->
-    <mat-tab-group
-      class="detail__tabs"
-      animationDuration="200ms"
-      [mat-stretch-tabs]="isCompact()"
-      mat-align-tabs="start"
-      (selectedTabChange)="loadHistory()"
-    >
-      <mat-tab [label]="'patientDetail.informationTab' | translate">
-        <div class="tab">
-          <pb-surface [title]="'patientDetail.details' | translate">
-            @if (detailRows().length === 0) {
-              <p class="card__empty">{{ 'patientDetail.noAdditionalInfo' | translate }}</p>
-            } @else {
-              <dl class="facts">
-                @for (row of detailRows(); track row.label) {
-                  <div class="facts__row">
-                    <dt>
-                      <mat-icon aria-hidden="true">{{ row.icon }}</mat-icon>
-                      {{ row.label }}
-                    </dt>
-                    <dd [class.ltr-nums]="row.ltr">{{ row.value }}</dd>
-                  </div>
-                }
-              </dl>
-            }
-          </pb-surface>
-
-          <pb-surface [title]="'patientDetail.visits' | translate">
-            <dl class="facts">
-              <div class="facts__row">
-                <dt>
-                  <mat-icon aria-hidden="true">event_available</mat-icon>
-                  {{ 'patientDetail.firstVisit' | translate }}
-                </dt>
-                <dd>{{ p.firstVisitAt | jalali: 'long' }}</dd>
-              </div>
-              <div class="facts__row">
-                <dt>
-                  <mat-icon aria-hidden="true">event</mat-icon>
-                  {{ 'patientDetail.lastVisit' | translate }}
-                </dt>
-                <dd>{{ p.lastVisitAt | jalali: 'long' }}</dd>
-              </div>
-            </dl>
-          </pb-surface>
-
-          @if (p.notes) {
-            <pb-surface [title]="'patientDetail.notes' | translate">
-              <p class="card__note">{{ p.notes }}</p>
-            </pb-surface>
-          }
-
-          @if (purchases().length) {
-            <pb-surface [title]="'patientDetail.purchases' | translate">
-              <ul class="registry">
-                @for (sale of purchases(); track $index) {
-                  <li>
-                    <mat-icon aria-hidden="true">shopping_cart</mat-icon>
-                    <span class="registry__lab">
-                      <span dir="auto">{{ sale.name }}</span>
-                      <small>
-                        {{ sale.quantity | faNum }} {{ unitLabel(sale.unit) | translate }} ·
-                        {{ sale.at | faNum }}
-                      </small>
-                    </span>
-                    @if (sale.unitPrice !== null) {
-                      <pb-status-chip>{{
-                        'inventoryHistory.price'
-                          | translate: { amount: (sale.unitPrice * sale.quantity | faCount) }
-                      }}</pb-status-chip>
-                    }
-                  </li>
-                }
-              </ul>
-            </pb-surface>
-          }
-        </div>
-      </mat-tab>
-
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <span>{{ 'patientDetail.treatmentsTab' | translate }}</span>
-          @if (p.treatments.length) {
-            <span class="tab__badge">{{ p.treatments.length | faNum }}</span>
-          }
-        </ng-template>
-        <div class="tab">
-          @if (p.treatments.length === 0) {
-            <pb-surface>
-              <p class="card__empty">{{ 'patientDetail.noTreatments' | translate }}</p>
-            </pb-surface>
-          } @else {
-            <ul class="treatments">
-              @for (t of p.treatments; track t.id) {
-                <li
-                  class="treatments__item"
-                  [style.--tx-bg]="color(t.color).bg"
-                  [style.--tx-fg]="color(t.color).fg"
-                >
-                  <mat-icon class="treatments__icon" aria-hidden="true">{{ t.icon }}</mat-icon>
-                  <div class="treatments__body">
-                    <strong>{{ t.nameFa }}</strong>
-                    <span class="treatments__meta">
-                      @if (t.performedAt) {
-                        {{ t.performedAt | jalali: 'long' }}
-                      } @else {
-                        {{ 'patientDetail.treatmentDateMissing' | translate }}
-                      }
-                    </span>
-                    @if (t.notes) {
-                      <p class="treatments__note">{{ t.notes }}</p>
-                    }
-                  </div>
-                </li>
+    <!-- ── Who they are, at the side; their care in the main column ── -->
+    <div class="detail">
+      <div class="detail__main">
+        <!-- ── Tabs ──────────────────────────────────────────────────── -->
+        <mat-tab-group
+          class="detail__tabs"
+          animationDuration="200ms"
+          [mat-stretch-tabs]="isCompact()"
+          mat-align-tabs="start"
+          (selectedTabChange)="loadHistory()"
+        >
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <span>{{ 'patientDetail.treatmentsTab' | translate }}</span>
+              @if (p.treatments.length) {
+                <span class="tab__badge">{{ p.treatments.length | faNum }}</span>
               }
-            </ul>
-          }
-        </div>
-      </mat-tab>
-
-      <mat-tab [label]="'patientDetail.specializedTab' | translate">
-        <div class="tab">
-          <pb-surface [title]="'patientDetail.implantBook' | translate">
-            @if (p.implantCases?.length) {
-              <ul class="registry">
-                @for (c of p.implantCases; track c.id) {
-                  <li>
-                    <mat-icon aria-hidden="true">deployed_code</mat-icon>
-                    <span>{{
-                      'patientDetail.implantRegistryNumber' | translate: { number: c.registryNo }
-                    }}</span>
-                    @if (auth.can('editRegistry') && !p.isArchived) {
-                      <pb-icon-button
-                        class="registry__edit"
-                        icon="edit"
-                        size="compact"
-                        (click)="editCase('implant', c)"
-                        [ariaLabel]="'registry.editRecord' | translate"
-                      />
-                    }
-                  </li>
-                }
-              </ul>
-              <p class="card__hint">{{ 'patientDetail.implantNumberHint' | translate }}</p>
-            } @else {
-              <p class="card__empty">{{ 'patientDetail.noImplant' | translate }}</p>
-            }
-            @if (auth.can('editRegistry') && !p.isArchived && !p.implantCases?.length) {
-              <pb-button
-                variant="text"
-                icon="add"
-                [loading]="openingCase() === 'implant'"
-                [disabled]="!!openingCase()"
-                (click)="addCase('implant')"
-              >
-                {{ 'patientDetail.addImplantCase' | translate }}
-              </pb-button>
-            }
-          </pb-surface>
-
-          <pb-surface [title]="'patientDetail.orthoBook' | translate">
-            @if (p.orthoCases?.length) {
-              <ul class="registry">
-                @for (c of p.orthoCases; track c.id) {
-                  <li>
-                    <mat-icon aria-hidden="true">straighten</mat-icon>
-                    <span>{{
-                      'patientDetail.orthoRegistryNumber' | translate: { number: c.registryNo }
-                    }}</span>
-                    @if (auth.can('editRegistry') && !p.isArchived) {
-                      <pb-icon-button
-                        class="registry__edit"
-                        icon="edit"
-                        size="compact"
-                        (click)="editCase('ortho', c)"
-                        [ariaLabel]="'registry.editRecord' | translate"
-                      />
-                    }
-                  </li>
-                }
-              </ul>
-              <p class="card__hint">{{ 'patientDetail.orthoNumberHint' | translate }}</p>
-            } @else {
-              <p class="card__empty">{{ 'patientDetail.noOrtho' | translate }}</p>
-            }
-            @if (auth.can('editRegistry') && !p.isArchived && !p.orthoCases?.length) {
-              <pb-button
-                variant="text"
-                icon="add"
-                [loading]="openingCase() === 'ortho'"
-                [disabled]="!!openingCase()"
-                (click)="addCase('ortho')"
-              >
-                {{ 'patientDetail.addOrthoCase' | translate }}
-              </pb-button>
-            }
-          </pb-surface>
-        </div>
-      </mat-tab>
-
-      <!-- What each surgery still owes the patient: the same rows as the
-           follow-up list, filtered to this file. -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <span>{{ 'patientDetail.followUpsTab' | translate }}</span>
-          @if (followUps().length) {
-            <span class="tab__badge">{{ followUps().length | faNum }}</span>
-          }
-        </ng-template>
-        <div class="tab">
-          <pb-surface [title]="'patientDetail.followUps' | translate">
-            @if (followUpsState() === 'failed') {
-              <pb-load-error
-                [message]="'patientDetail.followUpsFailed' | translate"
-                (retry)="loadFollowUps()"
-              />
-            } @else if (followUpsState() === 'loading') {
-              <p class="card__empty">{{ 'patientDetail.followUpsLoading' | translate }}</p>
-            } @else if (followUps().length) {
-              <ul class="registry">
-                @for (f of followUps(); track f.id) {
-                  <li>
-                    <mat-icon aria-hidden="true">{{ surgeryKindIcon(f.kind) }}</mat-icon>
-                    <span class="registry__lab">
-                      @if (auth.can('editSurgery')) {
-                        <a [routerLink]="['/surgery', f.id, 'edit']">{{
-                          surgeryKindLabel(f.kind) | translate
-                        }}</a>
-                      } @else {
-                        {{ surgeryKindLabel(f.kind) | translate }}
-                      }
-                      <small>
-                        @if (f.surgeryDate; as done) {
-                          {{
-                            surgeryDoneLabel(f.kind) | translate: { date: (done.jalali | faNum) }
-                          }}
-                        }
-                        @if (f.teethFdi.length) {
-                          · {{ 'patientDetail.teeth' | translate: { teeth: followUpTeeth(f) } }}
-                        }
-                        @if (f.lastContact; as last) {
-                          ·
-                          {{
-                            'patientDetail.lastCall'
-                              | translate
-                                : {
-                                    when: (last.at | faNum),
-                                    outcome: (contactOutcomeLabel(last.outcome) | translate),
-                                  }
-                          }}
-                        }
-                      </small>
-                      <!-- Which tooth took which implant, from the stock card. -->
-                      @for (implant of f.implants; track $index) {
-                        <small>{{ placedImplantLine(implant) }}</small>
-                      }
-                    </span>
-                    <pb-status-chip [tone]="followUpTone(f)">{{ followUpNote(f) }}</pb-status-chip>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="card__empty">{{ 'patientDetail.noFollowUps' | translate }}</p>
-            }
-            @if (auth.can('editSurgery') && !p.isArchived) {
-              <pb-button
-                variant="text"
-                icon="add"
-                link="/surgery/new"
-                [queryParams]="{ patientId: p.id }"
-              >
-                {{ 'patientDetail.addFollowUp' | translate }}
-              </pb-button>
-            }
-          </pb-surface>
-        </div>
-      </mat-tab>
-
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <span>{{ 'patientDetail.labTab' | translate }}</span>
-          @if (labCases().length) {
-            <span class="tab__badge">{{ labCases().length | faNum }}</span>
-          }
-        </ng-template>
-        <div class="tab">
-          <pb-surface [title]="'patientDetail.labWork' | translate">
-            @if (labState() === 'failed') {
-              <pb-load-error
-                [message]="'patientDetail.labWorkFailed' | translate"
-                (retry)="loadLabCases()"
-              />
-            } @else if (labState() === 'loading') {
-              <p class="card__empty">{{ 'patientDetail.labWorkLoading' | translate }}</p>
-            } @else if (labCases().length) {
-              <ul class="registry">
-                @for (c of labCases(); track c.id) {
-                  <li>
-                    <mat-icon aria-hidden="true">science</mat-icon>
-                    <span class="registry__lab">
-                      @if (auth.can('editLabs')) {
-                        <a [routerLink]="['/labs', c.id, 'edit']">{{ labWorkTypes(c) }}</a>
-                      } @else {
-                        {{ labWorkTypes(c) }}
-                      }
-                      @if (c.lab) {
-                        <small
-                          ><strong>{{ c.lab.name }}</strong> ·
-                          {{ c.trips[0]?.sentAt | faNum }}</small
-                        >
-                      }
-                    </span>
-                    <pb-status-chip [tone]="labStageTone(c)">
-                      {{ labStageLabel(c.stage) | translate }}
-                    </pb-status-chip>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="card__empty">{{ 'patientDetail.noLabWork' | translate }}</p>
-            }
-            @if (auth.can('editLabs') && !p.isArchived) {
-              <pb-button
-                variant="text"
-                icon="send"
-                link="/labs/new"
-                [queryParams]="{ patientId: p.id }"
-              >
-                {{ 'patientDetail.sendToLab' | translate }}
-              </pb-button>
-            }
-          </pb-surface>
-        </div>
-      </mat-tab>
-
-      @if (auth.can('viewHistory')) {
-        <mat-tab [label]="'patientDetail.historyTab' | translate">
-          <div class="tab">
-            <pb-surface>
-              @if (historyState() === 'failed') {
-                <pb-load-error
-                  [message]="'patientDetail.historyFailed' | translate"
-                  (retry)="retryHistory()"
-                />
-              } @else if (historyState() !== 'loaded') {
-                <p class="card__empty">{{ 'patientDetail.historyLoading' | translate }}</p>
-              } @else if (history().length === 0) {
-                <p class="card__empty">{{ 'patientDetail.noHistory' | translate }}</p>
+            </ng-template>
+            <div class="tab">
+              @if (p.treatments.length === 0) {
+                <pb-surface>
+                  <p class="card__empty">{{ 'patientDetail.noTreatments' | translate }}</p>
+                </pb-surface>
               } @else {
-                <ol class="timeline">
-                  @for (entry of history(); track entry.id) {
-                    <li class="timeline__item">
-                      <span class="timeline__dot" [attr.data-action]="entry.action"></span>
-                      <div class="timeline__body">
-                        <div class="timeline__head">
-                          <strong>{{ actionLabel(entry.action) }}</strong>
-                          <span class="timeline__who">{{
-                            entry.fullName ??
-                              entry.username ??
-                              ((entry.userId ? 'audit.deletedUser' : 'audit.systemUser')
-                                | translate)
-                          }}</span>
-                          <time class="timeline__when" [attr.datetime]="entry.createdAt">{{
-                            stamp(entry.createdAt)
-                          }}</time>
-                        </div>
-                        @for (change of changeEntries(entry.changes); track change[0]) {
-                          <div class="timeline__change">
-                            <span class="timeline__field">{{ changeLabel(change[0]) }}</span>
-                            @if (asChange(change[1]); as diff) {
-                              <span class="timeline__from">{{
-                                formatValue(diff.from, change[0])
-                              }}</span>
-                              <mat-icon aria-hidden="true">arrow_back</mat-icon>
-                              <span class="timeline__to">{{
-                                formatValue(diff.to, change[0])
-                              }}</span>
-                            } @else {
-                              <span class="timeline__to">{{
-                                formatValue(change[1], change[0])
-                              }}</span>
-                            }
-                          </div>
+                <ul class="treatments">
+                  @for (t of p.treatments; track t.id) {
+                    <li
+                      class="treatments__item"
+                      [style.--tx-bg]="color(t.color).bg"
+                      [style.--tx-fg]="color(t.color).fg"
+                    >
+                      <mat-icon class="treatments__icon" aria-hidden="true">{{ t.icon }}</mat-icon>
+                      <div class="treatments__body">
+                        <strong>{{ t.nameFa }}</strong>
+                        <span class="treatments__meta">
+                          @if (t.performedAt) {
+                            {{ t.performedAt | jalali: 'long' }}
+                          } @else {
+                            {{ 'patientDetail.treatmentDateMissing' | translate }}
+                          }
+                        </span>
+                        @if (t.notes) {
+                          <p class="treatments__note">{{ t.notes }}</p>
                         }
                       </div>
                     </li>
                   }
-                </ol>
+                </ul>
               }
-            </pb-surface>
-          </div>
-        </mat-tab>
-      }
-    </mat-tab-group>
+            </div>
+          </mat-tab>
+
+          <mat-tab [label]="'patientDetail.specializedTab' | translate">
+            <div class="tab">
+              <pb-surface [title]="'patientDetail.implantBook' | translate">
+                @if (p.implantCases?.length) {
+                  <ul class="registry">
+                    @for (c of p.implantCases; track c.id) {
+                      <li>
+                        <mat-icon aria-hidden="true">deployed_code</mat-icon>
+                        <span>{{
+                          'patientDetail.implantRegistryNumber'
+                            | translate: { number: c.registryNo }
+                        }}</span>
+                        @if (auth.can('editRegistry') && !p.isArchived) {
+                          <pb-icon-button
+                            class="registry__edit"
+                            icon="edit"
+                            size="compact"
+                            (click)="editCase('implant', c)"
+                            [ariaLabel]="'registry.editRecord' | translate"
+                          />
+                        }
+                      </li>
+                    }
+                  </ul>
+                  <p class="card__hint">{{ 'patientDetail.implantNumberHint' | translate }}</p>
+                } @else {
+                  <p class="card__empty">{{ 'patientDetail.noImplant' | translate }}</p>
+                }
+                @if (auth.can('editRegistry') && !p.isArchived && !p.implantCases?.length) {
+                  <pb-button
+                    variant="text"
+                    icon="add"
+                    [loading]="openingCase() === 'implant'"
+                    [disabled]="!!openingCase()"
+                    (click)="addCase('implant')"
+                  >
+                    {{ 'patientDetail.addImplantCase' | translate }}
+                  </pb-button>
+                }
+              </pb-surface>
+
+              <pb-surface [title]="'patientDetail.orthoBook' | translate">
+                @if (p.orthoCases?.length) {
+                  <ul class="registry">
+                    @for (c of p.orthoCases; track c.id) {
+                      <li>
+                        <mat-icon aria-hidden="true">straighten</mat-icon>
+                        <span>{{
+                          'patientDetail.orthoRegistryNumber' | translate: { number: c.registryNo }
+                        }}</span>
+                        @if (auth.can('editRegistry') && !p.isArchived) {
+                          <pb-icon-button
+                            class="registry__edit"
+                            icon="edit"
+                            size="compact"
+                            (click)="editCase('ortho', c)"
+                            [ariaLabel]="'registry.editRecord' | translate"
+                          />
+                        }
+                      </li>
+                    }
+                  </ul>
+                  <p class="card__hint">{{ 'patientDetail.orthoNumberHint' | translate }}</p>
+                } @else {
+                  <p class="card__empty">{{ 'patientDetail.noOrtho' | translate }}</p>
+                }
+                @if (auth.can('editRegistry') && !p.isArchived && !p.orthoCases?.length) {
+                  <pb-button
+                    variant="text"
+                    icon="add"
+                    [loading]="openingCase() === 'ortho'"
+                    [disabled]="!!openingCase()"
+                    (click)="addCase('ortho')"
+                  >
+                    {{ 'patientDetail.addOrthoCase' | translate }}
+                  </pb-button>
+                }
+              </pb-surface>
+            </div>
+          </mat-tab>
+
+          <!-- What each surgery still owes the patient: the same rows as the
+             follow-up list, filtered to this file. -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <span>{{ 'patientDetail.followUpsTab' | translate }}</span>
+              @if (followUps().length) {
+                <span class="tab__badge">{{ followUps().length | faNum }}</span>
+              }
+            </ng-template>
+            <div class="tab">
+              <pb-surface [title]="'patientDetail.followUps' | translate">
+                @if (followUpsState() === 'failed') {
+                  <pb-load-error
+                    [message]="'patientDetail.followUpsFailed' | translate"
+                    (retry)="loadFollowUps()"
+                  />
+                } @else if (followUpsState() === 'loading') {
+                  <p class="card__empty">{{ 'patientDetail.followUpsLoading' | translate }}</p>
+                } @else if (followUps().length) {
+                  <ul class="registry">
+                    @for (f of followUps(); track f.id) {
+                      <li>
+                        <mat-icon aria-hidden="true">{{ surgeryKindIcon(f.kind) }}</mat-icon>
+                        <span class="registry__lab">
+                          @if (auth.can('editSurgery')) {
+                            <a [routerLink]="['/surgery', f.id, 'edit']">{{
+                              surgeryKindLabel(f.kind) | translate
+                            }}</a>
+                          } @else {
+                            {{ surgeryKindLabel(f.kind) | translate }}
+                          }
+                          <small>
+                            @if (f.surgeryDate; as done) {
+                              {{
+                                surgeryDoneLabel(f.kind)
+                                  | translate: { date: (done.jalali | faNum) }
+                              }}
+                            }
+                            @if (f.teethFdi.length) {
+                              · {{ 'patientDetail.teeth' | translate: { teeth: followUpTeeth(f) } }}
+                            }
+                            @if (f.lastContact; as last) {
+                              ·
+                              {{
+                                'patientDetail.lastCall'
+                                  | translate
+                                    : {
+                                        when: (last.at | faNum),
+                                        outcome: (contactOutcomeLabel(last.outcome) | translate),
+                                      }
+                              }}
+                            }
+                          </small>
+                          <!-- Which tooth took which implant, from the stock card. -->
+                          @for (implant of f.implants; track $index) {
+                            <small>{{ placedImplantLine(implant) }}</small>
+                          }
+                        </span>
+                        <pb-status-chip [tone]="followUpTone(f)">{{
+                          followUpNote(f)
+                        }}</pb-status-chip>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="card__empty">{{ 'patientDetail.noFollowUps' | translate }}</p>
+                }
+                @if (auth.can('editSurgery') && !p.isArchived) {
+                  <pb-button
+                    variant="text"
+                    icon="add"
+                    link="/surgery/new"
+                    [queryParams]="{ patientId: p.id }"
+                  >
+                    {{ 'patientDetail.addFollowUp' | translate }}
+                  </pb-button>
+                }
+              </pb-surface>
+            </div>
+          </mat-tab>
+
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <span>{{ 'patientDetail.labTab' | translate }}</span>
+              @if (labCases().length) {
+                <span class="tab__badge">{{ labCases().length | faNum }}</span>
+              }
+            </ng-template>
+            <div class="tab">
+              <pb-surface [title]="'patientDetail.labWork' | translate">
+                @if (labState() === 'failed') {
+                  <pb-load-error
+                    [message]="'patientDetail.labWorkFailed' | translate"
+                    (retry)="loadLabCases()"
+                  />
+                } @else if (labState() === 'loading') {
+                  <p class="card__empty">{{ 'patientDetail.labWorkLoading' | translate }}</p>
+                } @else if (labCases().length) {
+                  <ul class="registry">
+                    @for (c of labCases(); track c.id) {
+                      <li>
+                        <mat-icon aria-hidden="true">science</mat-icon>
+                        <span class="registry__lab">
+                          @if (auth.can('editLabs')) {
+                            <a [routerLink]="['/labs', c.id, 'edit']">{{ labWorkTypes(c) }}</a>
+                          } @else {
+                            {{ labWorkTypes(c) }}
+                          }
+                          @if (c.lab) {
+                            <small
+                              ><strong>{{ c.lab.name }}</strong> ·
+                              {{ c.trips[0]?.sentAt | faNum }}</small
+                            >
+                          }
+                        </span>
+                        <pb-status-chip [tone]="labStageTone(c)">
+                          {{ labStageLabel(c.stage) | translate }}
+                        </pb-status-chip>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="card__empty">{{ 'patientDetail.noLabWork' | translate }}</p>
+                }
+                @if (auth.can('editLabs') && !p.isArchived) {
+                  <pb-button
+                    variant="text"
+                    icon="send"
+                    link="/labs/new"
+                    [queryParams]="{ patientId: p.id }"
+                  >
+                    {{ 'patientDetail.sendToLab' | translate }}
+                  </pb-button>
+                }
+              </pb-surface>
+            </div>
+          </mat-tab>
+
+          @if (auth.can('viewHistory')) {
+            <mat-tab [label]="'patientDetail.historyTab' | translate">
+              <div class="tab">
+                <pb-surface>
+                  @if (historyState() === 'failed') {
+                    <pb-load-error
+                      [message]="'patientDetail.historyFailed' | translate"
+                      (retry)="retryHistory()"
+                    />
+                  } @else if (historyState() !== 'loaded') {
+                    <p class="card__empty">{{ 'patientDetail.historyLoading' | translate }}</p>
+                  } @else if (history().length === 0) {
+                    <p class="card__empty">{{ 'patientDetail.noHistory' | translate }}</p>
+                  } @else {
+                    <ol class="timeline">
+                      @for (entry of history(); track entry.id) {
+                        <li class="timeline__item">
+                          <span class="timeline__dot" [attr.data-action]="entry.action"></span>
+                          <div class="timeline__body">
+                            <div class="timeline__head">
+                              <strong>{{ actionLabel(entry.action) }}</strong>
+                              <span class="timeline__who">{{
+                                entry.fullName ??
+                                  entry.username ??
+                                  ((entry.userId ? 'audit.deletedUser' : 'audit.systemUser')
+                                    | translate)
+                              }}</span>
+                              <time class="timeline__when" [attr.datetime]="entry.createdAt">{{
+                                stamp(entry.createdAt)
+                              }}</time>
+                            </div>
+                            @for (change of changeEntries(entry.changes); track change[0]) {
+                              <div class="timeline__change">
+                                <span class="timeline__field">{{ changeLabel(change[0]) }}</span>
+                                @if (asChange(change[1]); as diff) {
+                                  <span class="timeline__from">{{
+                                    formatValue(diff.from, change[0])
+                                  }}</span>
+                                  <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                                  <span class="timeline__to">{{
+                                    formatValue(diff.to, change[0])
+                                  }}</span>
+                                } @else {
+                                  <span class="timeline__to">{{
+                                    formatValue(change[1], change[0])
+                                  }}</span>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </li>
+                      }
+                    </ol>
+                  }
+                </pb-surface>
+              </div>
+            </mat-tab>
+          }
+        </mat-tab-group>
+      </div>
+
+      <aside class="detail__aside">
+        <pb-surface [title]="'patientDetail.details' | translate">
+          @if (detailRows().length === 0) {
+            <p class="card__empty">{{ 'patientDetail.noAdditionalInfo' | translate }}</p>
+          } @else {
+            <dl class="facts">
+              @for (row of detailRows(); track row.label) {
+                <div class="facts__row">
+                  <dt>
+                    <mat-icon aria-hidden="true">{{ row.icon }}</mat-icon>
+                    {{ row.label }}
+                  </dt>
+                  <dd [class.ltr-nums]="row.ltr">{{ row.value }}</dd>
+                </div>
+              }
+            </dl>
+          }
+        </pb-surface>
+
+        <pb-surface [title]="'patientDetail.visits' | translate">
+          <dl class="facts">
+            <div class="facts__row">
+              <dt>
+                <mat-icon aria-hidden="true">event_available</mat-icon>
+                {{ 'patientDetail.firstVisit' | translate }}
+              </dt>
+              <dd>{{ p.firstVisitAt | jalali: 'long' }}</dd>
+            </div>
+            <div class="facts__row">
+              <dt>
+                <mat-icon aria-hidden="true">event</mat-icon>
+                {{ 'patientDetail.lastVisit' | translate }}
+              </dt>
+              <dd>{{ p.lastVisitAt | jalali: 'long' }}</dd>
+            </div>
+          </dl>
+        </pb-surface>
+
+        @if (p.notes) {
+          <pb-surface [title]="'patientDetail.notes' | translate">
+            <p class="card__note">{{ p.notes }}</p>
+          </pb-surface>
+        }
+
+        @if (purchases().length) {
+          <pb-surface [title]="'patientDetail.purchases' | translate">
+            <ul class="registry">
+              @for (sale of purchases(); track $index) {
+                <li>
+                  <mat-icon aria-hidden="true">shopping_cart</mat-icon>
+                  <span class="registry__lab">
+                    <span dir="auto">{{ sale.name }}</span>
+                    <small>
+                      {{ sale.quantity | faNum }} {{ unitLabel(sale.unit) | translate }} ·
+                      {{ sale.at | faNum }}
+                    </small>
+                  </span>
+                  @if (sale.unitPrice !== null) {
+                    <pb-status-chip>{{
+                      'inventoryHistory.price'
+                        | translate: { amount: (sale.unitPrice * sale.quantity | faCount) }
+                    }}</pb-status-chip>
+                  }
+                </li>
+              }
+            </ul>
+          </pb-surface>
+        }
+      </aside>
+    </div>
   </pb-page>
 }

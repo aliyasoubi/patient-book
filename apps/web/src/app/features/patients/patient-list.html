@@ -248,7 +248,7 @@
               {{ 'patients.fileNumber' | translate }}
             </th>
             <td mat-cell *matCellDef="let p">
-              <a class="ltr-nums table__file" [routerLink]="['/patients', p.id]">{{ p.fileNo }}</a>
+              <a class="table__file" [routerLink]="['/patients', p.id]">{{ p.fileNo }}</a>
             </td>
           </ng-container>
 
@@ -258,7 +258,9 @@
             </th>
             <td mat-cell *matCellDef="let p">
               <a class="table__identity" [routerLink]="['/patients', p.id]">
-                <pb-avatar size="small" [tone]="p.gender" [icon]="genderIcon(p.gender)" />
+                <span class="table__avatar" [attr.data-gender]="p.gender" aria-hidden="true">{{
+                  initialOf(p.fullName)
+                }}</span>
                 <div class="table__name-block">
                   <span class="table__name">{{
                     p.fullName || ('patient.unnamed' | translate)
@@ -289,11 +291,15 @@
             <th mat-header-cell *matHeaderCellDef>{{ 'patients.contact' | translate }}</th>
             <td mat-cell *matCellDef="let p">
               @if (p.mobile) {
-                <a class="table__phone ltr-nums" [href]="'tel:' + p.mobile">
-                  {{ p.mobile | phone }}
+                <a class="table__phone" [href]="'tel:' + p.mobile">
+                  <pb-icon name="phone" [size]="15" />
+                  <span class="ltr-nums">{{ p.mobile | phone }}</span>
                 </a>
               } @else if (p.homePhone) {
-                <span class="ltr-nums table__phone--muted">{{ p.homePhone | phone }}</span>
+                <span class="table__phone table__phone--muted">
+                  <pb-icon name="phone" [size]="15" />
+                  <span class="ltr-nums">{{ p.homePhone | phone }}</span>
+                </span>
               } @else {
                 <span class="table__muted">—</span>
               }
@@ -306,7 +312,7 @@
             </th>
             <td mat-cell *matCellDef="let p">
               @if (p.age !== null) {
-                <span>{{ p.age | faNum }}</span>
+                <span class="table__age">{{ p.age | faNum }}</span>
               } @else {
                 <span class="table__muted">—</span>
               }
@@ -325,7 +331,14 @@
               {{ 'patients.lastVisit' | translate }}
             </th>
             <td mat-cell *matCellDef="let p">
-              <span class="table__date">{{ p.lastVisitAt | jalali }}</span>
+              @if (p.lastVisitAt) {
+                <span class="table__visit">
+                  <span class="table__ago">{{ p.lastVisitAt | ago }}</span>
+                  <span class="table__date">{{ p.lastVisitAt | jalali }}</span>
+                </span>
+              } @else {
+                <span class="table__muted">{{ 'patients.noVisit' | translate }}</span>
+              }
             </td>
           </ng-container>
 
@@ -335,7 +348,17 @@
               *matHeaderCellDef
               [attr.aria-label]="'patients.operations' | translate"
             ></th>
-            <td mat-cell *matCellDef="let p">
+            <td mat-cell *matCellDef="let p" class="table__actions">
+              <!-- The call is one tap on the row; the rest wait in the menu. -->
+              @if (p.mobile) {
+                <a
+                  class="table__quick"
+                  [href]="'tel:' + p.mobile"
+                  [attr.aria-label]="callLabel(p.fullName)"
+                >
+                  <pb-icon name="phone" [size]="16" />
+                </a>
+              }
               <pb-icon-button
                 icon="more_vert"
                 [menu]="rowMenu"

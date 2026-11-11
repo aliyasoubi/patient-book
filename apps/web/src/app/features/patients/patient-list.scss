@@ -114,12 +114,21 @@
 }
 
 /* ── Desktop table ─────────────────────────────────────────────────── */
+/*
+ * A white card, rows on hairlines. Each row reads from the start: the file
+ * number, then the patient — a letter tile, the name in weight, who they
+ * are in small type — then how to reach them, their treatments, and when
+ * they were last seen, as "3 months ago" over the date.
+ */
 .table-wrap {
   // Its own stacking context: the sticky header cells carry Material's
   // z-index and would otherwise paint over the progress bar laid above.
   position: relative;
   z-index: 0;
-  @include surface.outlined;
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
 }
 
 .table {
@@ -127,24 +136,33 @@
   background: transparent;
 
   th {
-    background: var(--mat-sys-surface-container-low);
-    font: var(--mat-sys-label-large);
+    block-size: 48px;
+    border-bottom-color: var(--pb-neutral-200);
+    background: color-mix(in srgb, #fff 92%, transparent);
+    backdrop-filter: blur(8px);
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: var(--mat-sys-label-large-tracking);
-    color: var(--mat-sys-on-surface-variant);
+    letter-spacing: 0.01em;
     white-space: nowrap;
   }
 
   td {
-    font: var(--mat-sys-body-medium);
-    border-bottom-color: var(--mat-sys-outline-variant);
+    block-size: 64px;
+    border-bottom-color: var(--pb-neutral-100);
+    color: var(--pb-graphite);
+    font-size: 0.875rem;
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
   }
 
   &__row {
-    transition: background-color var(--pb-duration-short) var(--pb-ease-standard);
+    transition: background-color 160ms var(--pb-ease-standard);
 
     &:hover {
-      background: color-mix(in srgb, var(--mat-sys-primary) 6%, transparent);
+      background: color-mix(in srgb, var(--pb-neutral-100) 55%, transparent);
     }
 
     &--archived {
@@ -157,72 +175,165 @@
     align-items: center;
     gap: var(--pb-space-3);
     min-width: 0;
-    padding-block: var(--pb-space-1);
     color: inherit;
     text-decoration: none;
     cursor: pointer;
 
     &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: -2px;
+      outline: 2px solid var(--pb-brand);
+      outline-offset: 2px;
+      border-radius: 10px;
+    }
+  }
+
+  &__avatar {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    inline-size: 36px;
+    block-size: 36px;
+    border-radius: 12px;
+    background: var(--pb-neutral-100);
+    color: var(--pb-neutral-600);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    transition: scale 260ms var(--pb-ease-spring);
+
+    &[data-gender='female'] {
+      background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+      color: var(--pb-brand-strong);
+    }
+
+    .table__row:hover & {
+      scale: 1.06;
     }
   }
 
   &__name-block {
     display: flex;
     flex-direction: column;
+    gap: 1px;
     line-height: 1.4;
     min-width: 0;
   }
 
   &__name {
-    font-weight: 500;
-    white-space: nowrap;
     overflow: hidden;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   &__sub {
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
-    white-space: nowrap;
     overflow: hidden;
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
+    white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   &__file {
-    font-weight: 600;
+    display: inline-block;
+    padding: 2px var(--pb-space-2);
+    border-radius: 8px;
+    background: var(--pb-neutral-100);
+    color: var(--pb-neutral-600);
+    font-size: 0.8125rem;
+    font-weight: 700;
     font-feature-settings: var(--pb-font-numeric);
-    color: inherit;
     text-decoration: none;
-    cursor: pointer;
 
     &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: -2px;
+      outline: 2px solid var(--pb-brand);
+      outline-offset: 1px;
     }
   }
 
   &__phone {
-    color: var(--mat-sys-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    color: var(--pb-graphite);
     text-decoration: none;
+    white-space: nowrap;
+    transition: color 160ms var(--pb-ease-standard);
 
-    &:hover {
-      text-decoration: underline;
+    pb-icon {
+      color: var(--pb-neutral-400);
+      transition: color 160ms var(--pb-ease-standard);
+    }
+
+    &:is(a):hover,
+    &:is(a):hover pb-icon {
+      color: var(--pb-brand-strong);
     }
 
     &--muted {
-      color: var(--mat-sys-on-surface-variant);
+      color: var(--pb-neutral-500);
     }
   }
 
+  &__age {
+    color: var(--pb-neutral-600);
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
+  &__visit {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1.4;
+  }
+
+  &__ago {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
   &__date {
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
     white-space: nowrap;
     font-feature-settings: var(--pb-font-numeric);
   }
 
+  &__actions {
+    white-space: nowrap;
+    text-align: end;
+  }
+
+  /* The row's call, shown on hover (always on touch). */
+  &__quick {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 36px;
+    block-size: 36px;
+    margin-inline-end: var(--pb-space-1);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    color: var(--pb-brand-strong);
+    vertical-align: middle;
+    opacity: 0;
+    scale: 0.85;
+    transition:
+      opacity 160ms var(--pb-ease-standard),
+      scale 260ms var(--pb-ease-spring);
+
+    .table__row:hover &,
+    &:focus-visible {
+      opacity: 1;
+      scale: 1;
+    }
+
+    @media (hover: none) {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
   &__muted {
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--pb-neutral-400);
   }
 
   &__flag {

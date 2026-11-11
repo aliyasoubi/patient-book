@@ -1,3 +1,5 @@
+import { PatientGlance } from './patient-glance';
+import { formatPhone } from '../../shared/pipes/phone.pipe';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -48,7 +50,6 @@ import { isHandledByCaller } from '../../core/interceptors/error.interceptor';
 import { placedImplantLine } from '../../shared/placed-implant';
 import { LoadError } from '../../shared/components/load-error';
 import {
-  PbAvatar,
   PbBanner,
   PbButton,
   PbIconButton,
@@ -70,6 +71,7 @@ import type { StatusTone } from '../../shared/ui';
   selector: 'pb-patient-detail',
   standalone: true,
   imports: [
+    PatientGlance,
     RouterLink,
     MatMenuModule,
     MatTabsModule,
@@ -84,7 +86,6 @@ import type { StatusTone } from '../../shared/ui';
     PbBanner,
     PbIconButton,
     PbPage,
-    PbAvatar,
     PbStatusChip,
     MatIconModule,
     TranslatePipe,
@@ -221,6 +222,19 @@ export class PatientDetail {
   }
 
   /** Grouped for the "details" tab, skipping anything the record does not hold. */
+  /** The treatments on file, by name, for the at-a-glance row. */
+  protected readonly treatmentNames = computed(() =>
+    (this.patient()?.treatments ?? [])
+      .slice(0, 3)
+      .map((t) => t.nameFa)
+      .join(this.i18n.instant('list.separator')),
+  );
+
+  /** The letter on the patient's tile. */
+  protected initialOf(name: string | null): string {
+    return (name ?? '').trim().charAt(0);
+  }
+
   protected readonly detailRows = computed(() => {
     this.i18n.currentLang();
     const p = this.patient();
@@ -238,8 +252,8 @@ export class PatientDetail {
       this.i18n.instant('field.education'),
       p.education !== 'unknown' ? this.i18n.instant(educationLabel(p.education)) : p.educationRaw,
     );
-    push('smartphone', this.i18n.instant('field.mobile'), p.mobile, true);
-    push('call', this.i18n.instant('field.homePhone'), p.homePhone, true);
+    push('smartphone', this.i18n.instant('field.mobile'), formatPhone(p.mobile), true);
+    push('call', this.i18n.instant('field.homePhone'), formatPhone(p.homePhone), true);
     push('home', this.i18n.instant('field.homeAddress'), p.homeAddress);
     push('apartment', this.i18n.instant('field.workAddress'), p.workAddress);
     push('share', this.i18n.instant('field.referralSource'), p.referralSource?.name ?? null);
