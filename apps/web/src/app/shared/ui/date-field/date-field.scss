@@ -1,0 +1,168 @@
+@use '../../../../styles/field';
+
+@keyframes date-pop-in {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+    scale: 0.97;
+  }
+}
+
+@keyframes date-pop-out {
+  to {
+    opacity: 0;
+    translate: 0 -4px;
+    scale: 0.98;
+  }
+}
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.date__label {
+  @include field.label;
+}
+
+.date__anchor {
+  position: relative;
+}
+
+.date__box {
+  @include field.box;
+
+  /* Open: the box stays marked as the one the calendar belongs to. */
+  &.is-open {
+    border-color: var(--_ring);
+    box-shadow: var(--pb-shadow-md, 0 4px 12px -2px rgb(16 24 40 / 0.1));
+  }
+}
+
+.date__box--invalid {
+  @include field.box-invalid;
+}
+
+.date__icon {
+  @include field.icon;
+}
+
+.date__box:focus-within .date__icon,
+.date__box.is-open .date__icon {
+  @include field.icon-focused;
+}
+
+.date__control {
+  @include field.control;
+
+  /* Dates read left to right — ۱۴۰۵/۰۸/۲۰ — inside the RTL page. */
+  direction: ltr;
+  text-align: right;
+  letter-spacing: 0.02em;
+}
+
+.date__toggle {
+  @include field.end-button;
+
+  pb-icon {
+    transition: rotate 300ms var(--pb-ease-spring);
+  }
+
+  &.is-on pb-icon {
+    rotate: 180deg;
+  }
+}
+
+/* ── The calendar under (or over) the field ─────────────────────────── */
+
+.date__popover {
+  position: absolute;
+  z-index: 50;
+  inset-block-start: calc(100% + var(--pb-space-2));
+  inset-inline-start: 0;
+  inline-size: 320px;
+  max-inline-size: calc(100vw - 2 * var(--pb-space-4));
+  padding: var(--pb-space-4);
+  border: 1px solid var(--pb-neutral-200, var(--mat-sys-outline-variant));
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-lg, 0 12px 32px -12px rgb(16 24 40 / 0.28));
+  transform-origin: top center;
+
+  &.is-above {
+    inset-block-start: auto;
+    inset-block-end: calc(100% + var(--pb-space-2));
+    transform-origin: bottom center;
+  }
+}
+
+.date__popover--in {
+  animation: date-pop-in 240ms var(--pb-ease-spring);
+}
+
+.date__popover--out {
+  animation: date-pop-out 140ms var(--pb-ease-standard) forwards;
+}
+
+.date__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--pb-space-2);
+  margin-block-start: var(--pb-space-3);
+  padding-block-start: var(--pb-space-3);
+  border-block-start: 1px solid var(--pb-neutral-200, var(--mat-sys-outline-variant));
+}
+
+.date__chip {
+  padding: var(--pb-space-1) var(--pb-space-3);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms var(--pb-ease-standard);
+
+  &:hover {
+    background: var(--pb-neutral-100, var(--mat-sys-surface-container));
+  }
+
+  &--primary {
+    background: color-mix(in srgb, var(--mat-sys-primary) 12%, #fff);
+    color: var(--mat-sys-primary);
+
+    &:hover {
+      background: color-mix(in srgb, var(--mat-sys-primary) 18%, #fff);
+    }
+  }
+}
+
+/* ── Message ───────────────────────────────────────────────────────── */
+
+.date__message-slot {
+  @include field.message-slot;
+}
+
+.date__message {
+  @include field.message;
+}
+
+.date__message--error {
+  @include field.message-error;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .date__box,
+  .date__icon,
+  .date__toggle pb-icon,
+  .date__message-slot {
+    transition-duration: 0ms;
+  }
+
+  .date__popover--in,
+  .date__popover--out {
+    animation-duration: 1ms;
+  }
+}

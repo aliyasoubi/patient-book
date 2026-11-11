@@ -1,0 +1,303 @@
+:host {
+  position: fixed;
+  z-index: 1100;
+  inset-block-end: calc(var(--pb-space-5) + var(--pb-toast-offset, 0px));
+  inset-inline-end: var(--pb-space-5);
+  inline-size: min(380px, calc(100vw - 2 * var(--pb-space-5)));
+  pointer-events: none;
+
+  @media (max-width: 599px) {
+    inset-block-end: calc(var(--pb-space-3) + var(--pb-toast-offset, 0px));
+    inset-inline: var(--pb-space-3);
+    inline-size: auto;
+  }
+}
+
+.toasts {
+  position: relative;
+  transition: height 400ms var(--pb-ease-emphasized);
+  pointer-events: auto;
+
+  &.is-empty {
+    pointer-events: none;
+  }
+}
+
+.toast-slot {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  transform-origin: 50% 100%;
+  transition:
+    transform 450ms var(--pb-ease-emphasized),
+    height 400ms var(--pb-ease-emphasized),
+    opacity 300ms var(--pb-ease-standard);
+
+  /* In an expanded stack, the gap between two toasts still counts as hovering it. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 100%;
+    block-size: 10px; /* GAP */
+  }
+
+  &.is-buried {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.toast-slot--leaving {
+  animation: pb-toast-leave 260ms var(--pb-ease-standard) forwards;
+  pointer-events: none;
+}
+
+.toast {
+  --_tone: var(--mat-sys-on-surface-variant);
+  --_tone-bg: var(--mat-sys-surface-container-high);
+
+  position: relative;
+  overflow: hidden;
+  block-size: 100%;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 70%, transparent);
+  border-radius: 16px;
+  background: var(--mat-sys-surface-container-lowest);
+  color: var(--mat-sys-on-surface);
+  box-shadow:
+    0 1px 2px rgb(16 24 40 / 0.05),
+    0 12px 32px -12px rgb(16 24 40 / 0.28);
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &[data-tone='success'] {
+    --_tone: var(--pb-on-success-container);
+    --_tone-bg: var(--pb-success-container);
+  }
+
+  &[data-tone='warning'] {
+    --_tone: var(--pb-on-warning-container);
+    --_tone-bg: var(--pb-warning-container);
+  }
+
+  &[data-tone='error'] {
+    --_tone: var(--mat-sys-error);
+    --_tone-bg: var(--mat-sys-error-container);
+  }
+
+  &.is-dragging {
+    transition: none;
+  }
+
+  &.is-settling {
+    transition:
+      transform 400ms var(--pb-ease-spring),
+      opacity 300ms var(--pb-ease-standard);
+  }
+
+  &.is-flung {
+    transition:
+      transform 260ms var(--pb-ease-standard),
+      opacity 220ms var(--pb-ease-standard);
+  }
+}
+
+.toast--entering {
+  animation: pb-toast-enter 520ms var(--pb-ease-spring) both;
+}
+
+.bump-a {
+  animation: pb-toast-bump-a 380ms var(--pb-ease-spring);
+}
+
+.bump-b {
+  animation: pb-toast-bump-b 380ms var(--pb-ease-spring);
+}
+
+.toast__inner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pb-space-3);
+  padding: 14px 14px 16px;
+  transition: opacity 250ms var(--pb-ease-standard);
+}
+
+/* Collapsed, the toasts behind show only their edge, not their words. */
+.toasts:not(.is-expanded) .toast-slot:not(.is-front) .toast__inner {
+  opacity: 0;
+}
+
+.toast__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 10px;
+  background: var(--_tone-bg);
+  color: var(--_tone);
+}
+
+.toast__body {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding-block-start: 5px;
+}
+
+.toast__title {
+  display: block;
+  font: var(--mat-sys-title-small);
+  font-weight: 700;
+}
+
+.toast__message {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.toast__action,
+.toast__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--pb-ease-standard),
+    color 150ms var(--pb-ease-standard),
+    transform 150ms var(--pb-ease-standard);
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 1px;
+  }
+}
+
+.toast__action {
+  gap: 6px;
+  block-size: 32px;
+  padding-inline: 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+  font-weight: 600;
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-primary) 18%, transparent);
+  }
+}
+
+.toast__close {
+  inline-size: 28px;
+  block-size: 28px;
+  margin-block-start: 2px;
+  border-radius: 8px;
+  color: var(--mat-sys-on-surface-variant);
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+/* The clock: drains toward the inline start (right, in this RTL app). */
+.toast__progress {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 2px;
+  background: var(--_tone);
+  opacity: 0.35;
+  transform-origin: right;
+  animation: pb-toast-clock-a linear forwards;
+}
+
+/*
+ * A repeated message restarts the clock by switching to an identical
+ * keyframe set: a new name is the one thing that makes CSS start over.
+ * Classes, not an inline name: Angular renames component keyframes.
+ */
+.toast__progress--restarted {
+  animation-name: pb-toast-clock-b;
+}
+
+.toasts.is-paused .toast__progress {
+  animation-play-state: paused;
+}
+
+@keyframes pb-toast-enter {
+  from {
+    opacity: 0;
+    translate: 0 110%;
+    scale: 0.94;
+  }
+}
+
+@keyframes pb-toast-leave {
+  to {
+    opacity: 0;
+    translate: 0 24px;
+    scale: 0.94;
+  }
+}
+
+@keyframes pb-toast-bump-a {
+  40% {
+    scale: 1.035;
+  }
+}
+
+@keyframes pb-toast-bump-b {
+  40% {
+    scale: 1.035;
+  }
+}
+
+@keyframes pb-toast-clock-a {
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes pb-toast-clock-b {
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toasts,
+  .toast-slot,
+  .toast.is-settling,
+  .toast.is-flung {
+    transition-duration: 0ms;
+  }
+
+  .toast--entering,
+  .toast-slot--leaving,
+  .bump-a,
+  .bump-b {
+    animation-name: pb-toast-fade;
+    animation-duration: 150ms;
+  }
+
+  @keyframes pb-toast-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}

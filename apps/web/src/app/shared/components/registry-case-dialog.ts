@@ -5,7 +5,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 
@@ -19,7 +18,7 @@ import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import { digitString, toLatinDigits } from '../validators';
 import { adoptUntouched, changedFields, type FieldReader } from '../form-sync';
-import { PbButton, PbIconButton, PbTextField } from '../ui';
+import { PbButton, PbIconButton, PbTextField, ToastService } from '../ui';
 import type { TextFieldOption } from '../ui';
 import type { RegistryCase } from '../../core/models/common.model';
 import type { PatientSuggestion } from '../../features/patients/data/patient.model';
@@ -185,7 +184,7 @@ export class RegistryCaseDialog {
   private readonly patients = inject(PatientsService);
   private readonly errors = inject(ApiErrorTranslator);
   private readonly i18n = inject(TranslateService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
 
   protected readonly saving = signal(false);
 
@@ -328,13 +327,11 @@ export class RegistryCaseDialog {
         const message = changed
           ? this.i18n.instant('registryForm.conflict', { fields: changed })
           : this.i18n.instant('registryForm.conflictNoFields');
-        this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
+        this.toast.warning(message, { duration: 15000 });
       },
       // Most likely deleted meanwhile — a 404 the interceptor leaves to us.
       error: (error: unknown) =>
-        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-          duration: 15000,
-        }),
+        this.toast.error(this.errors.translate(error), { duration: 15000 }),
     });
   }
 
@@ -363,6 +360,6 @@ export class RegistryCaseDialog {
       this.form.controls[target].setErrors({ server: message });
       this.form.controls[target].markAsTouched();
     }
-    this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 6000 });
+    this.toast.error(message);
   }
 }

@@ -1,0 +1,80 @@
+@if (link() !== null) {
+  <a
+    [matButton]="appearance()"
+    [routerLink]="isDisabled() ? null : link()"
+    [queryParams]="queryParams()"
+    class="pb-btn"
+    [class.pb-btn--full]="fullWidth()"
+    [class.pb-btn--disabled]="isDisabled()"
+    [attr.aria-disabled]="isDisabled() ? 'true' : null"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-expanded]="ariaExpanded()"
+    [attr.tabindex]="isDisabled() ? -1 : null"
+    [matTooltip]="tooltip()"
+    (click)="isDisabled() && $event.preventDefault()"
+  >
+    <ng-container [ngTemplateOutlet]="body" />
+  </a>
+} @else if (href() !== null) {
+  <a
+    [matButton]="appearance()"
+    [attr.href]="isDisabled() ? null : href()"
+    class="pb-btn"
+    [class.pb-btn--full]="fullWidth()"
+    [class.pb-btn--disabled]="isDisabled()"
+    [attr.aria-disabled]="isDisabled() ? 'true' : null"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-expanded]="ariaExpanded()"
+    [attr.tabindex]="isDisabled() ? -1 : null"
+    [matTooltip]="tooltip()"
+    (click)="isDisabled() && $event.preventDefault()"
+  >
+    <ng-container [ngTemplateOutlet]="body" />
+  </a>
+} @else {
+  <button
+    [matButton]="appearance()"
+    [type]="type()"
+    [disabled]="isDisabled()"
+    class="pb-btn"
+    [class.pb-btn--full]="fullWidth()"
+    [class.pb-btn--busy]="loading() && !disabled()"
+    [attr.aria-busy]="loading() || null"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-expanded]="ariaExpanded()"
+    [matTooltip]="tooltip()"
+  >
+    <ng-container [ngTemplateOutlet]="body" />
+  </button>
+}
+
+<!--
+  The face (icon + label) and the loader share one cell. While loading, the
+  face slides up and fades out as three dots slide up into its place, and
+  back again after; the cell keeps the wider of the two, so the button never
+  changes size mid-click. Loading, the face is hidden from screen readers and
+  `loadingText` names the button instead.
+-->
+<ng-template #body>
+  <span class="pb-btn__stack">
+    <span class="pb-btn__face" [class.is-away]="loading()" [attr.aria-hidden]="loading() || null">
+      @if (lineIcon(); as name) {
+        <pb-icon class="pb-btn__icon" [name]="name" [size]="20" [stroke]="2" />
+      } @else if (icon()) {
+        <mat-icon class="pb-btn__icon" aria-hidden="true">{{ icon() }}</mat-icon>
+      }
+      <!-- Collapsed, the label is clipped rather than removed, so it still
+           names the button for a screen reader; the icon is aria-hidden. -->
+      <span [class.visually-hidden]="collapsed()"><ng-content /></span>
+      @if (badge(); as count) {
+        <span class="pb-btn__badge">{{ count }}</span>
+      }
+    </span>
+    <span class="pb-btn__dots" [class.is-here]="loading()" aria-hidden="true">
+      <i><b></b></i><i><b></b></i><i><b></b></i>
+    </span>
+  </span>
+  @if (loading() && loadingText()) {
+    <span class="visually-hidden">{{ loadingText() }}</span>
+  }
+</ng-template>

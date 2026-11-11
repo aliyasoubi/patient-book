@@ -1,0 +1,88 @@
+@use '../../../../styles/field';
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.sf__label {
+  @include field.label;
+}
+
+.sf__box {
+  @include field.box;
+
+  position: relative;
+  padding-inline-end: var(--pb-space-3);
+  cursor: pointer;
+}
+
+/* Open reads as focused: the panel belongs to this box. */
+.sf__box--open {
+  border-color: var(--_ring);
+  box-shadow: var(--pb-shadow-md);
+}
+
+.sf__box--invalid {
+  @include field.box-invalid;
+}
+
+.sf__box--quiet {
+  @include field.box-quiet;
+
+  cursor: not-allowed;
+}
+
+/*
+ * The select covers the whole box, so a click anywhere on it opens the panel
+ * and the panel comes out at the box's full width. Its text keeps the box's
+ * padding; the chevron sits over its end.
+ */
+.sf__select {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  border-radius: inherit;
+  outline: 0;
+}
+
+.sf__chevron {
+  position: relative;
+  margin-inline-start: auto;
+  flex: 0 0 auto;
+  color: var(--mat-sys-on-surface-variant);
+  pointer-events: none;
+  transition:
+    rotate 320ms var(--pb-ease-spring),
+    color 200ms var(--pb-ease-standard);
+}
+
+.sf__box--open .sf__chevron {
+  rotate: 180deg;
+  color: var(--_ring);
+}
+
+.sf__message-slot {
+  @include field.message-slot;
+}
+
+.sf__message-slot--reserved {
+  @include field.message-slot-reserved;
+}
+
+.sf__message {
+  @include field.message;
+}
+
+.sf__message--error {
+  @include field.message-error;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf__box,
+  .sf__chevron,
+  .sf__message-slot {
+    transition-duration: 0ms;
+  }
+}

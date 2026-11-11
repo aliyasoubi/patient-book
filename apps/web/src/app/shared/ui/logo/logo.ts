@@ -5,8 +5,7 @@ import { Component, computed, input } from '@angular/core';
  *
  * Inlined as SVG rather than loaded from `public/brand/dentixo-mark.svg`:
  * an `<img>` can't inherit `currentColor`, and the mark has to follow
- * `--mat-sys-primary` in both light and dark mode and invert on the login
- * screen's coloured panel. The paths here are the same geometry the
+ * `--mat-sys-primary` in both light and dark mode. The paths here are the same geometry the
  * files in `public/brand/` carry — that directory stays the source of truth
  * for anything outside the app (favicon, app icons, documents).
  *
@@ -17,37 +16,12 @@ import { Component, computed, input } from '@angular/core';
   selector: 'pb-logo',
   standalone: true,
   host: {
+    '[class.pb-logo--draw]': 'drawIn()',
     '[style.width.px]': 'size()',
     '[style.height.px]': 'size()',
   },
-  template: `
-    <svg
-      viewBox="0 0 48 48"
-      [attr.width]="size()"
-      [attr.height]="size()"
-      fill="none"
-      stroke="currentColor"
-      [attr.stroke-width]="small() ? 5.5 : 4"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      [attr.role]="label() ? 'img' : 'presentation'"
-      [attr.aria-label]="label()"
-      [attr.aria-hidden]="label() ? null : 'true'"
-    >
-      <path [attr.d]="toothPath()" />
-      <path [attr.d]="sparkPath()" fill="currentColor" [attr.stroke-width]="small() ? 3 : 2" />
-    </svg>
-  `,
-  styles: `
-    :host {
-      display: inline-flex;
-      flex: 0 0 auto;
-      color: var(--mat-sys-primary);
-    }
-    svg {
-      display: block;
-    }
-  `,
+  templateUrl: './logo.html',
+  styleUrl: './logo.scss',
 })
 export class PbLogo {
   /** Rendered size in px, both axes. Under 24 switches to the heavier drawing. */
@@ -57,6 +31,8 @@ export class PbLogo {
    * wherever the wordmark sits next to it as real text.
    */
   readonly label = input('');
+  /** Trace the mark on arrival — for the one place it introduces the app. */
+  readonly drawIn = input(false);
 
   protected readonly small = computed(() => this.size() < 24);
 

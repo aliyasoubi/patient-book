@@ -1,0 +1,105 @@
+<div class="sch" [class.sch--busy]="loading()">
+  <pb-icon class="sch__icon" name="search" />
+  <input
+    #searchInput
+    class="sch__input"
+    type="search"
+    [formControl]="control()"
+    [matAutocomplete]="autocomplete"
+    [placeholder]="placeholder()"
+    [attr.aria-label]="ariaLabel() || placeholder()"
+    autocomplete="off"
+    enterkeyhint="search"
+  />
+
+  <!--
+    One slot at the end that trades between "searching" and "clear" with a
+    fade and a small scale, so neither pops in or shoves the text.
+  -->
+  <span class="sch__end">
+    <span
+      class="sch__dots"
+      [class.is-on]="loading()"
+      role="status"
+      [attr.aria-label]="loading() ? ('common.searching' | translate) : null"
+    >
+      <i></i><i></i><i></i>
+    </span>
+    <button
+      class="sch__clear"
+      type="button"
+      [class.is-on]="!loading() && !!control().value"
+      [attr.tabindex]="!loading() && control().value ? null : -1"
+      [attr.aria-hidden]="!loading() && control().value ? null : 'true'"
+      (click)="clear()"
+      [attr.aria-label]="'action.clearSearch' | translate"
+    >
+      <pb-icon name="x" [size]="16" [stroke]="2" />
+    </button>
+  </span>
+</div>
+
+<mat-autocomplete
+  #autocomplete="matAutocomplete"
+  panelClass="pb-search-panel"
+  (optionSelected)="selectOption($event)"
+>
+  <!-- Options sit directly under the autocomplete, never inside a template
+       outlet: its keyboard handling finds them by query. Only their body is
+       shared. -->
+  @if (heading(); as heading) {
+    <mat-optgroup [label]="heading">
+      @for (option of options(); track option.value) {
+        <mat-option [value]="option.value">
+          <ng-container
+            [ngTemplateOutlet]="optionBody"
+            [ngTemplateOutletContext]="{ $implicit: option }"
+          />
+        </mat-option>
+      }
+    </mat-optgroup>
+  } @else {
+    @for (option of options(); track option.value) {
+      <mat-option [value]="option.value">
+        <ng-container
+          [ngTemplateOutlet]="optionBody"
+          [ngTemplateOutletContext]="{ $implicit: option }"
+        />
+      </mat-option>
+    }
+  }
+  @if (showEmpty() && options().length === 0 && !loading()) {
+    <mat-option disabled>{{ emptyMessage() }}</mat-option>
+  }
+</mat-autocomplete>
+
+<ng-template #optionBody let-option>
+  <div class="sch-option">
+    <span class="sch-option__tile">
+      @if (iconFor(option.icon); as line) {
+        <pb-icon [name]="line" [size]="18" />
+      } @else {
+        <mat-icon class="sch-option__glyph" aria-hidden="true">{{ option.icon }}</mat-icon>
+      }
+    </span>
+    <span class="sch-option__body">
+      <span class="sch-option__label">{{ option.label }}</span>
+      @if (option.meta || option.supporting || option.tag) {
+        <span class="sch-option__meta">
+          @if (option.meta) {
+            <span class="ltr-nums">{{ option.meta }}</span>
+          }
+          @if (option.meta && option.supporting) {
+            <span aria-hidden="true">·</span>
+          }
+          @if (option.supporting) {
+            <span class="ltr-nums">{{ option.supporting }}</span>
+          }
+          @if (option.tag) {
+            <span class="sch-option__tag">{{ option.tag }}</span>
+          }
+        </span>
+      }
+    </span>
+  </div>
+</ng-template>

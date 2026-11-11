@@ -1,0 +1,71 @@
+@if (label()) {
+  <label class="date__label" [for]="id">{{ label() }}</label>
+}
+<div class="date__anchor">
+  <div class="date__box" [class.date__box--invalid]="showError()" [class.is-open]="open()">
+    <pb-icon class="date__icon" name="calendar" />
+    <input
+      #field
+      class="date__control"
+      type="text"
+      inputmode="numeric"
+      autocomplete="off"
+      [id]="id"
+      [value]="text()"
+      [placeholder]="placeholder() || ('calendar.placeholder' | translate)"
+      [attr.aria-invalid]="showError() || null"
+      [attr.aria-describedby]="message() ? messageId : null"
+      [attr.aria-expanded]="open()"
+      aria-haspopup="dialog"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+      (blur)="onBlur()"
+    />
+    <button
+      type="button"
+      class="date__toggle"
+      [class.is-on]="open()"
+      tabindex="-1"
+      (click)="toggle()"
+      [attr.aria-label]="'calendar.open' | translate"
+    >
+      <pb-icon name="chevron-down" [size]="18" />
+    </button>
+  </div>
+
+  @if (open()) {
+    <div
+      class="date__popover"
+      [class.is-above]="above()"
+      role="dialog"
+      [attr.aria-label]="label() || ('calendar.open' | translate)"
+      animate.enter="date__popover--in"
+      animate.leave="date__popover--out"
+    >
+      <pb-shamsi-calendar
+        [selected]="value()"
+        [startView]="calendarView()"
+        [showToday]="false"
+        (dateChange)="pick($event)"
+      />
+      <footer class="date__foot">
+        <button type="button" class="date__chip" (click)="clear()">
+          {{ 'calendar.clear' | translate }}
+        </button>
+        <button type="button" class="date__chip date__chip--primary" (click)="pickToday()">
+          {{ 'calendar.today' | translate }}
+        </button>
+      </footer>
+    </div>
+  }
+</div>
+<div class="date__message-slot" [class.is-open]="!!message()">
+  <p
+    class="date__message"
+    [class.date__message--error]="messageIsError()"
+    [id]="messageId"
+    [attr.aria-hidden]="message() ? null : 'true'"
+  >
+    {{ messageText() }}
+  </p>
+</div>

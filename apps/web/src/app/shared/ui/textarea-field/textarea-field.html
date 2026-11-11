@@ -1,0 +1,40 @@
+@if (label()) {
+  <label class="ta__label" [for]="id">{{ label() }}</label>
+}
+<div
+  class="ta__box"
+  [class.ta__box--invalid]="showError()"
+  [class.ta__box--quiet]="readonly() || control().disabled"
+>
+  @if (prefixIcon(); as icon) {
+    @if (lineIcon(); as line) {
+      <pb-icon class="ta__icon" [name]="line" />
+    } @else {
+      <mat-icon class="ta__icon ta__icon--glyph" aria-hidden="true">{{ icon }}</mat-icon>
+    }
+  }
+  <textarea
+    class="ta__control"
+    [id]="id"
+    [formControl]="control()"
+    [rows]="rows()"
+    [placeholder]="readonly() ? '' : placeholder()"
+    [readonly]="readonly()"
+    [attr.maxlength]="maxlength()"
+    [attr.aria-invalid]="showError() || null"
+    [attr.aria-describedby]="message() ? messageId : null"
+  ></textarea>
+  @if (readonly()) {
+    <pb-icon class="ta__lock" name="lock" [size]="18" />
+  }
+</div>
+<div class="ta__message-slot" [class.is-open]="!!message()">
+  <p
+    class="ta__message"
+    [class.ta__message--error]="messageIsError()"
+    [id]="messageId"
+    [attr.aria-hidden]="message() ? null : 'true'"
+  >
+    {{ messageText() }}
+  </p>
+</div>

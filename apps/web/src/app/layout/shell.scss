@@ -1,272 +1,324 @@
+@use '../../styles/brand';
+
+/*
+ * The signed-in frame, in the brand (styles/_brand.scss) rather than
+ * Material. Three depths, each a step lighter and nearer:
+ *   1. the fog ground the sidebar sits on;
+ *   2. the page panel — near-white, rounded, inset, softly lifted;
+ *   3. the cards inside a page — white, lifted a little more.
+ * The page primitives read `--pb-canvas`, `--pb-card` and `--pb-well`, so
+ * they are pointed at these depths here and every page follows.
+ *
+ * Spacing on the 4-step scale. Motion as on the sign-in page: the sidebar's
+ * width and every label move together on one curve; menus pop from where
+ * they were opened; nothing appears in a single frame.
+ */
+
+$rail: 76px;
+$wide: 256px;
+$gutter: var(--pb-space-3);
+
+/* ── Keyframes (used by animate.enter / animate.leave classes) ───── */
+
+@keyframes shell-sheet-in {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+}
+
+@keyframes shell-sheet-out {
+  to {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+
+@keyframes shell-topbar-in {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+
+.sheet-in {
+  animation: shell-sheet-in 320ms var(--pb-ease-emphasized) backwards;
+}
+
+.sheet-out {
+  animation: shell-sheet-out 180ms var(--pb-ease-standard) forwards;
+}
+
+.topbar-in {
+  animation: shell-topbar-in 320ms var(--pb-ease-emphasized) backwards;
+}
+
+/* ── Frame ─────────────────────────────────────────────────────────── */
+
 :host {
   display: block;
-  height: 100%;
+  block-size: 100%;
 }
 
 .shell {
-  height: 100%;
-  // The page ground is the canvas; cards sit on it a tone lighter (see
-  // styles/_surface.scss). The rail, top bar and bottom bar are the card
-  // tone, so the canvas reads as the work area they frame.
-  background: var(--pb-canvas);
+  @include brand.light-screen;
 
-  &__nav {
-    width: 264px;
-    border-inline-end: 1px solid var(--mat-sys-outline-variant);
-    background: var(--pb-card);
+  // The page primitives' depths, pointed at the brand's.
+  --pb-canvas: var(--pb-neutral-50);
+  --pb-card: #fff;
+  --pb-card-border: color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  --pb-card-shadow: var(--pb-shadow-sm);
+  --pb-well: var(--pb-neutral-100);
+  --mat-sys-surface: var(--pb-neutral-50);
+  --mat-sys-surface-container-low: #fff;
+  --mat-sys-surface-container: var(--pb-neutral-100);
+  --mat-sys-primary-container: color-mix(in srgb, var(--pb-brand) 14%, #fff);
+  --mat-sys-on-primary-container: #7a3300;
+  --mat-sys-secondary-container: var(--pb-neutral-200);
+  --mat-sys-on-secondary-container: var(--pb-graphite);
+
+  --sidebar: #{$wide};
+
+  display: grid;
+  grid-template-columns: var(--sidebar) minmax(0, 1fr);
+  block-size: 100dvh;
+  transition: grid-template-columns 420ms var(--pb-ease-emphasized);
+
+  &.is-collapsed {
+    --sidebar: #{$rail};
   }
 
-  &__content {
-    display: flex;
-    flex-direction: column;
-    // The container handles scrolling; the page below owns its own overflow.
-    overflow: hidden;
+  &.is-handset {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-/* ── Side navigation ───────────────────────────────────────────────── */
-.nav {
+/* ── Stage: the page panel ─────────────────────────────────────────── */
+
+.stage {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: var(--pb-space-3);
-  gap: var(--pb-space-1);
+  min-inline-size: 0;
+  min-block-size: 0;
+  margin: $gutter;
+  margin-inline-start: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 20px;
+  background: var(--pb-neutral-50);
+  box-shadow: var(--pb-shadow-sm);
 
-  &__brand {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-3);
-    padding: var(--pb-space-3) var(--pb-space-3) var(--pb-space-4);
-    text-decoration: none;
-    color: inherit;
-  }
-
-  &__brand-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.35;
-
-    strong {
-      font: var(--mat-sys-title-medium);
-      font-weight: 700;
-      color: var(--mat-sys-on-surface);
-    }
-
-    small {
-      font: var(--mat-sys-body-small);
-      color: var(--mat-sys-on-surface-variant);
-    }
-  }
-
-  &__links {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-  }
-
-  &__link {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-4);
-    padding: var(--pb-space-3) var(--pb-space-4);
-    border-radius: var(--mat-sys-corner-full);
-    text-decoration: none;
-    color: var(--mat-sys-on-surface-variant);
-    font: var(--mat-sys-label-large);
-    letter-spacing: var(--mat-sys-label-large-tracking);
-    transition:
-      background-color var(--pb-duration-short) var(--pb-ease-standard),
-      color var(--pb-duration-short) var(--pb-ease-standard);
-
-    &:hover {
-      background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
-      color: var(--mat-sys-on-surface);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: 2px;
-    }
-
-    &.is-active {
-      background: var(--mat-sys-secondary-container);
-      color: var(--mat-sys-on-secondary-container);
-    }
-  }
-
-  &__icon {
-    font-size: var(--pb-icon-md);
-    transition: transform var(--pb-duration-medium) var(--pb-ease-spring);
-  }
-
-  &__link.is-active &__icon {
-    transform: scale(1.1);
+  .is-handset & {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 
-/* ── Top bar ───────────────────────────────────────────────────────── */
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  gap: var(--pb-space-2);
-  // Sized by content, not a fixed 64px: the 56px search pill then gets an equal
-  // 8px above and below regardless of the 1px border (a fixed border-box height
-  // left it 3.5px on top and 4.5px underneath). Never shorter than that, though:
-  // on the patient list the search folds to a 48px button, and the bar shrinking
-  // with it moved every page 8px on the way in and out.
-  height: auto;
-  min-height: calc(var(--pb-search-height) + 2 * var(--pb-space-2) + 1px);
-  padding: var(--pb-space-2) var(--pb-space-3);
-  background: var(--pb-card);
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-  // Sits above the page; the shadow only appears once content scrolls under it.
-  box-shadow: none;
+  justify-content: center;
+  gap: var(--pb-space-3);
+  block-size: 64px;
+  padding-inline: var(--pb-space-5);
+  border-block-end: 1px solid var(--pb-neutral-200);
+  background: color-mix(in srgb, #fff 70%, transparent);
 
-  &__logo {
-    margin-inline-end: var(--pb-space-1);
-  }
-
-  &__search {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 560px;
-  }
-
-  // The icon button assumes a 24px glyph and pads to it, so the 32px avatar
-  // overflowed its content box and sat off-centre inside the state layer.
-  // Size the slot to the avatar and give the hover ring an 8px band around it.
-  &__avatar-btn {
-    --mat-icon-button-icon-size: var(--pb-avatar-sm);
-    --mat-icon-button-state-layer-size: var(--pb-control-height);
+  .is-handset & {
+    justify-content: flex-start;
+    block-size: 56px;
+    padding-inline: var(--pb-space-4);
   }
 }
 
-.user-menu__header {
+.topbar__brand {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+/* A field in look only: the typing happens in the spotlight it opens. */
+.topbar__search {
   display: flex;
+  flex: 0 1 440px;
   align-items: center;
   gap: var(--pb-space-3);
-  min-width: 240px;
-  padding: var(--pb-space-3) var(--pb-space-4);
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-  line-height: 1.4;
+  min-inline-size: 0;
+  block-size: 40px;
+  padding-inline: var(--pb-space-4) var(--pb-space-2);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-xs);
+  color: var(--pb-neutral-400);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: start;
+  cursor: text;
+  transition:
+    border-color 180ms var(--pb-ease-standard),
+    box-shadow 220ms var(--pb-ease-standard);
 
-  strong {
-    font: var(--mat-sys-title-medium);
+  &:hover {
+    border-color: var(--pb-neutral-300);
+    box-shadow: var(--pb-shadow-sm);
   }
 
-  small {
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
+  .is-handset & {
+    flex: 1 1 auto;
   }
 }
 
-.user-menu__identity {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.topbar__placeholder {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* ── Page area ─────────────────────────────────────────────────────── */
+.topbar__kbd {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border: 1px solid var(--pb-neutral-300);
+  border-radius: 6px;
+  box-shadow: 0 1px 0 var(--pb-neutral-300);
+  font-family: var(--pb-font-latin);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--pb-neutral-600);
+
+  .is-handset & {
+    display: none;
+  }
+}
+
 .page {
-  flex: 1;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-block-size: 0;
   overflow-y: auto;
-  overscroll-behavior-y: contain;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 
   &--with-bottom-nav {
-    // Clear the bottom bar plus the home indicator on notched phones.
-    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    padding-block-end: calc(72px + env(safe-area-inset-bottom));
   }
 }
 
-/* ── Bottom navigation (phones) ────────────────────────────────────── */
+/* ── Phone ─────────────────────────────────────────────────────────── */
+
 .bottom-nav {
   position: fixed;
+  z-index: 30;
   inset-inline: 0;
-  bottom: 0;
-  z-index: 10;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  inset-block-end: 0;
+  display: flex;
+  justify-content: space-around;
+  block-size: calc(64px + env(safe-area-inset-bottom));
+  padding-block-end: env(safe-area-inset-bottom);
+  border-block-start: 1px solid var(--pb-neutral-200);
+  background: color-mix(in srgb, #fff 88%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.bottom-nav__item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
-  padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
-  background: var(--pb-card);
-  border-top: 1px solid var(--mat-sys-outline-variant);
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--pb-neutral-600);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
 
-  &__item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--pb-space-1);
-    padding: 0;
-    border: 0;
-    background: none;
-    text-decoration: none;
-    color: var(--mat-sys-on-surface-variant);
-    font: var(--mat-sys-label-small);
-    letter-spacing: var(--mat-sys-label-small-tracking);
-    cursor: pointer;
+.bottom-nav__pill {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 52px;
+  block-size: 30px;
+  border-radius: 999px;
+  transition:
+    background-color 220ms var(--pb-ease-standard),
+    color 220ms var(--pb-ease-standard),
+    transform 300ms var(--pb-ease-spring);
 
-    &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: 2px;
-      border-radius: var(--mat-sys-corner-medium);
-    }
-
-    &.is-active {
-      color: var(--mat-sys-on-secondary-container);
-
-      .bottom-nav__pill {
-        background: var(--mat-sys-secondary-container);
-      }
-
-      .bottom-nav__label {
-        font-weight: 700;
-      }
-    }
-  }
-
-  /** The M3 "active indicator" — a pill that grows behind the selected icon. */
-  &__pill {
-    display: grid;
-    place-items: center;
-    width: 56px;
-    height: 30px;
-    border-radius: var(--mat-sys-corner-full);
-    transform: scale(0.85);
-    transition:
-      background-color var(--pb-duration-short) var(--pb-ease-standard),
-      transform var(--pb-duration-medium) var(--pb-ease-spring);
-
-    .material-symbols-rounded {
-      font-size: var(--pb-icon-md);
-    }
-  }
-
-  &__item.is-active &__pill {
-    transform: scale(1);
-  }
-
-  &__label {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .is-active & {
+    background: color-mix(in srgb, var(--pb-brand) 14%, #fff);
+    color: var(--pb-brand);
+    transform: scale(1.04);
   }
 }
 
-/* The section on screen, inside «more»: M3's selected menu item. */
-.more-menu__item.is-active {
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
+.bottom-nav__label {
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
 
-  mat-icon {
-    color: inherit;
+  .is-active & {
+    color: var(--pb-graphite);
+    font-weight: 600;
+  }
+}
+
+.more-sheet {
+  position: fixed;
+  z-index: 31;
+  inset-inline: var(--pb-space-3);
+  inset-block-end: calc(72px + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--pb-space-1);
+  padding: var(--pb-space-2);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-lg);
+}
+
+.more-sheet__item {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  block-size: 48px;
+  padding-inline: var(--pb-space-3);
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--pb-graphite);
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover,
+  &.is-active {
+    background: var(--pb-neutral-100);
+  }
+
+  &.is-active pb-icon {
+    color: var(--pb-brand);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell {
+    transition-duration: 0ms;
+  }
+
+  .sheet-in,
+  .sheet-out,
+  .topbar-in {
+    animation-duration: 1ms;
   }
 }

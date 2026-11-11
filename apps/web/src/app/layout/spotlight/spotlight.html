@@ -1,0 +1,91 @@
+@if (spotlight.isOpen()) {
+  <div class="spotlight" animate.leave="spotlight--out">
+    <!-- The blurred app behind; a press on it closes (see onScrim). -->
+    <div class="spotlight__scrim" aria-hidden="true"></div>
+
+    <div
+      class="spotlight__panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'globalSearch.aria' | translate"
+    >
+      <div class="spotlight__field">
+        <pb-icon class="spotlight__glass" name="search" [size]="22" />
+        <input
+          #field
+          class="spotlight__input"
+          type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="spotlight-list"
+          [attr.aria-expanded]="rows().length > 0"
+          [attr.aria-activedescendant]="rows().length ? 'spotlight-row-' + active() : null"
+          [attr.aria-label]="'globalSearch.aria' | translate"
+          [placeholder]="'globalSearch.placeholder' | translate"
+          [value]="query()"
+          (input)="onInput($event)"
+          (keydown)="onKeydown($event)"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <span class="spotlight__loading" [class.is-on]="loading()" aria-hidden="true">
+          <i></i><i></i><i></i>
+        </span>
+        <kbd class="spotlight__esc">{{ 'keys.esc' | translate }}</kbd>
+      </div>
+
+      <div #list id="spotlight-list" class="spotlight__list" role="listbox">
+        @for (group of groups(); track group.group) {
+          <section class="spotlight__group">
+            <h3 class="spotlight__title">{{ group.title | translate }}</h3>
+            @for (item of group.rows; track item.row.id) {
+              <button
+                type="button"
+                role="option"
+                class="spotlight__row"
+                [id]="'spotlight-row-' + item.index"
+                [attr.data-active]="item.index === active()"
+                [attr.aria-selected]="item.index === active()"
+                [style.--i]="item.index"
+                tabindex="-1"
+                (mousemove)="active.set(item.index)"
+                (click)="item.row.run()"
+              >
+                <span class="spotlight__icon"><pb-icon [name]="item.row.icon" [size]="18" /></span>
+                <span class="spotlight__label">{{ item.row.label }}</span>
+                @if (item.row.tag) {
+                  <span class="spotlight__tag">{{ item.row.tag }}</span>
+                }
+                @if (item.row.supporting) {
+                  <span class="spotlight__supporting" dir="ltr">{{ item.row.supporting }}</span>
+                }
+                @if (item.row.meta) {
+                  <span class="spotlight__meta">{{ item.row.meta }}</span>
+                }
+                <pb-icon class="spotlight__enter" name="corner-down-left" [size]="16" />
+              </button>
+            }
+          </section>
+        }
+
+        @if (answered() && !rows().length) {
+          <div class="spotlight__empty">
+            <pb-icon name="file-search" [size]="32" [stroke]="1.5" />
+            <p>{{ (failed() ? 'globalSearch.failed' : 'globalSearch.empty') | translate }}</p>
+            <button type="button" class="spotlight__search-all" (click)="searchAll()">
+              {{ 'spotlight.searchAll' | translate: { q: query().trim() } }}
+            </button>
+          </div>
+        }
+      </div>
+
+      <footer class="spotlight__footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> {{ 'spotlight.hintMove' | translate }}</span>
+        <span><kbd>↵</kbd> {{ 'spotlight.hintOpen' | translate }}</span>
+        <span
+          ><kbd>{{ 'keys.esc' | translate }}</kbd> {{ 'spotlight.hintClose' | translate }}</span
+        >
+      </footer>
+    </div>
+  </div>
+}

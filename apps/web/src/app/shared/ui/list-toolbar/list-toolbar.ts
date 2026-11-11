@@ -3,7 +3,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
 /**
  * The controls above a list, laid out the same on every list page:
  *
- * 1. a row of 56dp controls — the search bar, and beside it whatever the page
+ * 1. a row of 48px controls — the search bar, and beside it whatever the page
  *    needs: a dropdown (`pb-select-field subscript="dynamic"`) or a button —
  *    every one the same height, on one top and bottom edge;
  * 2. a row of 32dp filter chips (`pb-filter-chips`) under it.
@@ -32,10 +32,12 @@ import { Component, ViewEncapsulation } from '@angular/core';
       min-width: 0;
     }
 
+    /* Bottom edges in line: a dropdown's label sits above its box, so the
+       boxes, not the labels, share one line with the search. */
     pb-list-toolbar > .pb-list-toolbar__bar {
       display: flex;
       flex-wrap: wrap;
-      align-items: flex-start;
+      align-items: flex-end;
       gap: var(--pb-space-3);
     }
 

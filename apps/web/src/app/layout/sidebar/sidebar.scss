@@ -1,0 +1,435 @@
+/*
+ * The sidebar: the brand, the sections grouped by purpose, and who is
+ * signed in. Expanded it carries labels; collapsed (`.is-collapsed` on the
+ * host) it is a 72px rail of icons with tooltips. The width itself animates
+ * in the shell's grid; here the labels fade with it while the icons hold
+ * still (fixed inline padding), so nothing jumps sideways.
+ */
+
+$gutter: var(--pb-space-3);
+
+@keyframes sidebar-pop-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+    scale: 0.96;
+  }
+}
+
+@keyframes sidebar-pop-out {
+  to {
+    opacity: 0;
+    translate: 0 4px;
+    scale: 0.98;
+  }
+}
+
+.pop-in {
+  transform-origin: bottom center;
+  animation: sidebar-pop-in 260ms var(--pb-ease-spring) backwards;
+}
+
+.pop-out {
+  animation: sidebar-pop-out 140ms var(--pb-ease-standard) forwards;
+}
+
+:host {
+  display: flex;
+  min-inline-size: 0;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────── */
+
+.sidebar {
+  flex: 1 1 auto;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-4);
+  min-inline-size: 0;
+  padding: $gutter;
+  padding-block-start: var(--pb-space-4);
+}
+
+/* Labels fade with the width; the icons never move (fixed inline padding). */
+.sidebar__fade {
+  white-space: nowrap;
+  transition:
+    opacity 220ms var(--pb-ease-standard),
+    translate 320ms var(--pb-ease-emphasized);
+
+  :host(.is-collapsed) & {
+    opacity: 0;
+    translate: 8px 0;
+    pointer-events: none;
+  }
+}
+
+.sidebar__head {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-1);
+  min-block-size: 40px;
+
+  :host(.is-collapsed) & {
+    flex-direction: column;
+    gap: var(--pb-space-2);
+  }
+}
+
+.sidebar__brand {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--pb-space-3);
+  min-inline-size: 0;
+  padding-inline: var(--pb-space-1);
+  color: var(--pb-graphite);
+  text-decoration: none;
+  border-radius: 12px;
+
+  :host(.is-collapsed) & {
+    flex: 0 0 auto;
+    padding: 0;
+  }
+}
+
+.sidebar__mark {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  transition:
+    transform 400ms var(--pb-ease-spring),
+    box-shadow 250ms var(--pb-ease-standard);
+
+  .sidebar__brand:hover & {
+    transform: rotate(-6deg);
+    box-shadow: var(--pb-shadow-md);
+  }
+}
+
+.sidebar__name {
+  overflow: hidden;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+
+  :host(.is-collapsed) & {
+    display: none;
+  }
+}
+
+.sidebar__tool {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 36px;
+  block-size: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pb-neutral-600);
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--pb-ease-standard),
+    color 160ms var(--pb-ease-standard),
+    transform 160ms var(--pb-ease-standard);
+
+  &:hover {
+    background: color-mix(in srgb, #fff 60%, transparent);
+    color: var(--pb-graphite);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+.sidebar__nav {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--pb-space-4);
+  min-block-size: 0;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+/*
+ * The selection: one card behind the active link, moved (not redrawn) when
+ * the page changes, on a slight spring. Its first placing and a change of
+ * width are instant, so it never sweeps in from the top.
+ */
+.sidebar__pill {
+  position: absolute;
+  z-index: 0;
+  inset-inline: 0;
+  inset-block-start: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    translate 460ms var(--pb-ease-spring),
+    block-size 300ms var(--pb-ease-emphasized),
+    opacity 200ms var(--pb-ease-standard);
+
+  &.is-shown {
+    opacity: 1;
+  }
+
+  &.is-instant {
+    transition: none;
+  }
+}
+
+.sidebar__group {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  /* Room between items, so a hovered one never touches the selected one. */
+  gap: var(--pb-space-1);
+}
+
+.sidebar__group-label {
+  padding: 0 var(--pb-space-4) var(--pb-space-1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pb-neutral-400);
+
+  :host(.is-collapsed) & {
+    block-size: 0;
+    padding-block: 0;
+    overflow: hidden;
+  }
+}
+
+.sidebar__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  block-size: 40px;
+  padding-inline: 16px;
+  border-radius: 12px;
+  color: var(--pb-neutral-600);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 180ms var(--pb-ease-standard),
+    color 180ms var(--pb-ease-standard),
+    box-shadow 220ms var(--pb-ease-standard);
+
+  &:hover {
+    background: color-mix(in srgb, #fff 55%, transparent);
+    color: var(--pb-graphite);
+  }
+
+  /* The white card is the pill behind it; the link itself only changes ink. */
+  &.is-active {
+    background: transparent;
+    color: var(--pb-graphite);
+    font-weight: 600;
+  }
+}
+
+.sidebar__icon {
+  transition:
+    color 180ms var(--pb-ease-standard),
+    transform 300ms var(--pb-ease-spring);
+
+  .sidebar__link:hover & {
+    transform: scale(1.08);
+  }
+
+  .is-active & {
+    color: var(--pb-brand);
+  }
+}
+
+.sidebar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * A tooltip for whatever carries `data-tip` — the rail's links and the
+ * sidebar's tools. It opens to the left of the sidebar (a physical side: the
+ * sidebar is always on the right in this RTL app), after a short wait so a
+ * pointer passing over does not set off a flicker of labels.
+ */
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 10;
+  top: 50%;
+  right: calc(100% + 12px);
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--pb-graphite);
+  box-shadow: var(--pb-shadow-md);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  translate: 6px -50%;
+  transition:
+    opacity 160ms var(--pb-ease-standard),
+    translate 260ms var(--pb-ease-spring);
+}
+
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after {
+  opacity: 1;
+  translate: 0 -50%;
+  transition-delay: 350ms;
+}
+
+/* The expanded sidebar's own tools sit at its far edge: their tip goes below. */
+:host(:not(.is-collapsed)) .sidebar__tool[data-tip]::after {
+  top: calc(100% + 8px);
+  right: 50%;
+  translate: 50% -4px;
+}
+
+:host(:not(.is-collapsed)) .sidebar__tool[data-tip]:hover::after {
+  translate: 50% 0;
+}
+
+/* ── Who is signed in ──────────────────────────────────────────────── */
+
+.sidebar__foot {
+  position: relative;
+}
+
+.shell__user {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  inline-size: 100%;
+  padding: var(--pb-space-2);
+  padding-inline-start: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--pb-graphite);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 180ms var(--pb-ease-standard),
+    box-shadow 220ms var(--pb-ease-standard);
+
+  &:hover,
+  &.is-open {
+    background: #fff;
+    box-shadow: var(--pb-shadow-sm);
+  }
+}
+
+.shell__identity {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-inline-size: 0;
+  overflow: hidden;
+  line-height: 1.5;
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  small {
+    font-size: 0.75rem;
+    color: var(--pb-neutral-600);
+  }
+}
+
+.shell__chevron {
+  color: var(--pb-neutral-400);
+  transition: rotate 300ms var(--pb-ease-spring);
+
+  .is-open & {
+    rotate: 180deg;
+  }
+}
+
+.user-menu {
+  position: absolute;
+  z-index: 20;
+  inset-block-end: calc(100% + var(--pb-space-2));
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--pb-space-1);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-lg);
+
+  // On the rail, it opens beside it rather than above a 52px button.
+  :host(.is-collapsed) & {
+    inset-block-end: 0;
+    inset-inline: auto;
+    right: calc(100% + var(--pb-space-3));
+    min-inline-size: 200px;
+  }
+}
+
+.user-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  block-size: 40px;
+  padding-inline: var(--pb-space-3);
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pb-graphite);
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms var(--pb-ease-standard);
+
+  &:hover {
+    background: var(--pb-neutral-100);
+  }
+
+  pb-icon {
+    color: var(--pb-neutral-600);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar__fade,
+  .sidebar__pill,
+  .sidebar__link,
+  .sidebar__icon,
+  [data-tip]::after {
+    transition-duration: 0ms;
+  }
+
+  .pop-in,
+  .pop-out {
+    animation-duration: 1ms;
+  }
+}

@@ -1,7 +1,7 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import {
   Component,
   ElementRef,
+  HostListener,
   computed,
   effect,
   inject,
@@ -10,92 +10,36 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { filter, map, startWith } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
+import { filter, map, startWith } from 'rxjs';
 
 import { AuthService } from '../core/services/auth.service';
 import { PageScroll } from '../core/services/page-scroll.service';
 import { ThemeService } from '../core/services/theme.service';
-import { GlobalSearch } from './global-search';
-import { roleLabel } from '../shared/labels';
-import type { UserRole } from '../core/models/common.model';
-import { PbAvatar, PbIconButton, PbLogo } from '../shared/ui';
+import { PbIcon, PbLogo } from '../shared/ui';
+import { SHELL_NAV } from './shell-nav';
+import { Sidebar } from './sidebar/sidebar';
+import { Spotlight } from './spotlight/spotlight';
+import { SpotlightService } from './spotlight/spotlight.service';
 
-export interface NavItem {
-  path: string;
-  label: string;
-  icon: string;
-  /** Shown in the mobile bottom bar; the rest live behind the menu. */
-  primary: boolean;
-  roles?: UserRole[];
-}
+/** A per-device convenience, not patient data — so `localStorage` is fine here. */
+const COLLAPSED_KEY = 'pb.sidebar.collapsed';
 
 /**
- * Stable translation keys are resolved by the template at runtime.
+ * The frame every signed-in page sits in, drawn in the brand rather than
+ * Material: a sidebar on the fog ground (the right, in RTL) and the page in
+ * one white panel beside it, inset and softly lifted.
+ *
+ * - Desktop: the sidebar expands to labels or collapses to a 72px rail; the
+ *   choice is remembered on this device. Expanded, search is an icon in the
+ *   sidebar; collapsed, it becomes a field in the toolbar. Both open the
+ *   spotlight, as does Ctrl+Space.
+ * - Tablet: always the rail.
+ * - Phone: no sidebar — a toolbar on top and a bottom bar for the main
+ *   sections, with the rest in a sheet behind «more».
  */
-function navItems(): NavItem[] {
-  return [
-    {
-      path: '/dashboard',
-      label: 'nav.dashboard',
-      icon: 'dashboard',
-      primary: true,
-    },
-    { path: '/patients', label: 'nav.patients', icon: 'groups', primary: true },
-    {
-      path: '/surgery',
-      label: 'nav.surgery',
-      icon: 'event_available',
-      primary: true,
-    },
-    // Behind "more" on a phone: the bottom bar already holds four.
-    {
-      path: '/labs',
-      label: 'nav.labs',
-      icon: 'science',
-      primary: false,
-    },
-    {
-      path: '/implants',
-      label: 'nav.implants',
-      icon: 'deployed_code',
-      primary: true,
-    },
-    {
-      path: '/ortho',
-      label: 'nav.ortho',
-      icon: 'straighten',
-      primary: false,
-    },
-    {
-      path: '/inventory',
-      label: 'nav.inventory',
-      icon: 'inventory',
-      primary: false,
-    },
-    // The practice's numbers: looked at now and then, not worked from, so
-    // it sits at the end with settings rather than among the registers.
-    {
-      path: '/stats',
-      label: 'nav.stats',
-      icon: 'bar_chart',
-      primary: false,
-    },
-    {
-      path: '/settings',
-      label: 'nav.settings',
-      icon: 'settings',
-      primary: false,
-    },
-  ];
-}
-
 @Component({
   selector: 'pb-shell',
   standalone: true,
@@ -103,16 +47,11 @@ function navItems(): NavItem[] {
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatListModule,
-    MatMenuModule,
-    GlobalSearch,
-    PbAvatar,
-    PbLogo,
-    MatIconModule,
     TranslatePipe,
-    PbIconButton,
+    PbIcon,
+    PbLogo,
+    Spotlight,
+    Sidebar,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
@@ -122,28 +61,26 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly pageScroll = inject(PageScroll);
   protected readonly auth = inject(AuthService);
-  // Injected only to apply the stored preference on boot — its constructor is
-  // what stamps the theme onto the document. The shell never reads it; display
-  // mode is picked in settings, so there is exactly one place in the app that
-  // changes how it looks.
+  protected readonly spotlight = inject(SpotlightService);
+  // Injected only to apply the stored preference on boot: its constructor
+  // stamps the theme onto the document. Display mode is picked in Settings.
   private readonly theme = inject(ThemeService);
 
-  /**
-   * Three layouts, not two: a phone gets a bottom bar, a tablet gets a
-   * collapsible drawer, and a desktop gets a permanent rail. Driven off the CDK
-   * so it tracks the same breakpoints the stylesheet does.
-   */
   protected readonly isHandset = toSignal(
     this.breakpoints.observe([Breakpoints.Handset]).pipe(map((r) => r.matches)),
     { initialValue: false },
   );
-
   protected readonly isDesktop = toSignal(
     this.breakpoints.observe('(min-width: 1024px)').pipe(map((r) => r.matches)),
     { initialValue: true },
   );
 
-  protected readonly drawerOpen = signal(false);
+  /** What the user chose on a desktop; a tablet always gets the rail. */
+  private readonly chosenCollapsed = signal(this.readCollapsed());
+  protected readonly collapsed = computed(() => !this.isDesktop() || this.chosenCollapsed());
+  protected readonly canCollapse = computed(() => this.isDesktop());
+
+  protected readonly moreOpen = signal(false);
 
   /** The page on screen, without its query. */
   private readonly path = toSignal(
@@ -155,33 +92,10 @@ export class Shell {
     { initialValue: '' },
   );
 
-  /**
-   * The patient register carries a search of its own that does everything
-   * the top bar's does and more, so there the top bar's folds to a button.
-   * The registry and surgery lists search their own books, not patients, and
-   * keep the full field. The list itself, at any query — not a patient's page
-   * beneath it.
-   */
-  protected readonly onPatientList = computed(() => this.path() === '/patients');
-
   private readonly page = viewChild<ElementRef<HTMLElement>>('page');
 
-  constructor() {
-    effect(() => this.pageScroll.attach(this.page()?.nativeElement ?? null));
-
-    // A new page opens at its top. The router's own reset moves the window,
-    // which never scrolls here, so without this a page opened at the offset
-    // the last one was left at. A new query on the same page — a search, a
-    // filter — keeps its place; the patient list puts its saved offset back
-    // after this, once its rows are in.
-    effect(() => {
-      this.path();
-      untracked(() => this.pageScroll.scrollTo(0));
-    });
-  }
-
   protected readonly navItems = computed(() =>
-    navItems().filter((item) => {
+    SHELL_NAV.filter((item) => {
       if (!item.roles) return true;
       const role = this.auth.role();
       return role !== null && item.roles.includes(role);
@@ -189,30 +103,62 @@ export class Shell {
   );
 
   protected readonly primaryNav = computed(() => this.navItems().filter((i) => i.primary));
+  protected readonly moreNav = computed(() => this.navItems().filter((i) => !i.primary));
 
-  /**
-   * On a phone, whether the page on screen is one of the sections behind
-   * «more» — so the bar still marks where you are on the lab board, in the
-   * stock or in settings, rather than nothing at all.
-   */
+  /** On a phone, «more» is marked while a section behind it is on screen. */
   protected readonly moreActive = computed(() => {
     const path = this.path();
-    return this.navItems().some(
-      (item) => !item.primary && (path === item.path || path.startsWith(`${item.path}/`)),
-    );
+    return this.moreNav().some((item) => path === item.path || path.startsWith(`${item.path}/`));
   });
 
-  protected readonly roleLabel = computed(() => roleLabel(this.auth.role()));
+  constructor() {
+    effect(() => this.pageScroll.attach(this.page()?.nativeElement ?? null));
 
-  protected toggleDrawer(): void {
-    this.drawerOpen.update((open) => !open);
+    // A new page opens at its top and closes whatever menu led to it. A new
+    // query on the same page keeps its place.
+    effect(() => {
+      this.path();
+      untracked(() => {
+        this.pageScroll.scrollTo(0);
+        this.moreOpen.set(false);
+      });
+    });
+
+    effect(() => {
+      const collapsed = this.chosenCollapsed();
+      try {
+        localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
+      } catch {
+        // Storage refused (private mode): the choice lasts this visit only.
+      }
+    });
   }
 
-  protected closeDrawer(): void {
-    this.drawerOpen.set(false);
+  protected toggleCollapsed(): void {
+    this.chosenCollapsed.update((c) => !c);
   }
 
   protected logout(): void {
     this.auth.logout();
+  }
+
+  /** Menus close on a press anywhere outside them, and on Escape. */
+  @HostListener('document:pointerdown', ['$event'])
+  protected onPointerDown(event: PointerEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.more-sheet, .bottom-nav__more')) this.moreOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    this.moreOpen.set(false);
+  }
+
+  private readCollapsed(): boolean {
+    try {
+      return localStorage.getItem(COLLAPSED_KEY) === '1';
+    } catch {
+      return false;
+    }
   }
 }

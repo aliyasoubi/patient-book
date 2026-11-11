@@ -1,0 +1,203 @@
+@use '../../../../styles/field';
+
+/*
+ * The search above a list, drawn as the app's field so it sits level with
+ * the selects and buttons beside it: the same 48-tall outlined box, a line
+ * search icon that takes the accent on focus, and one end slot that trades
+ * between three soft dots while searching and a small clear button.
+ */
+
+@keyframes sch-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    translate: 0 0;
+  }
+  40% {
+    opacity: 1;
+    translate: 0 -3px;
+  }
+}
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.sch {
+  @include field.box;
+
+  block-size: var(--pb-search-height);
+  padding-inline: var(--pb-space-4) var(--pb-space-2);
+
+  &:has(input:disabled) {
+    @include field.box-quiet;
+
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+.sch__icon {
+  @include field.icon;
+
+  flex: 0 0 auto;
+}
+
+.sch:focus-within .sch__icon {
+  @include field.icon-focused;
+}
+
+.sch__input {
+  @include field.control;
+
+  font-family: inherit;
+
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-decoration {
+    appearance: none;
+    display: none;
+  }
+}
+
+.sch__end {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+.sch__dots {
+  display: inline-flex;
+  gap: 4px;
+  opacity: 0;
+  scale: 0.6;
+  transition:
+    opacity 180ms var(--pb-ease-standard),
+    scale 300ms var(--pb-ease-spring);
+
+  i {
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 50%;
+    background: var(--mat-sys-primary);
+  }
+
+  &.is-on {
+    opacity: 1;
+    scale: 1;
+
+    i {
+      animation: sch-dot 1s var(--pb-ease-standard) infinite;
+    }
+
+    i:nth-child(2) {
+      animation-delay: 120ms;
+    }
+
+    i:nth-child(3) {
+      animation-delay: 240ms;
+    }
+  }
+}
+
+.sch__clear {
+  @include field.end-button;
+
+  inline-size: 28px;
+  block-size: 28px;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--mat-sys-surface-container-high);
+  opacity: 0;
+  scale: 0.6;
+  pointer-events: none;
+  transition:
+    opacity 180ms var(--pb-ease-standard),
+    scale 300ms var(--pb-ease-spring),
+    background-color 150ms var(--pb-ease-standard),
+    color 150ms var(--pb-ease-standard);
+
+  &.is-on {
+    opacity: 1;
+    scale: 1;
+    pointer-events: auto;
+  }
+
+  &:hover {
+    background: var(--mat-sys-surface-container-highest);
+  }
+}
+
+/* An option: a small tile for its kind, its name, and a quiet line of ids. */
+.sch-option {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.sch-option__tile {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.sch-option__glyph {
+  inline-size: 18px;
+  block-size: 18px;
+  font-size: 18px;
+  font-variation-settings: 'wght' 300;
+}
+
+.sch-option__body {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  line-height: 1.4;
+}
+
+.sch-option__label {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sch-option__meta {
+  display: inline-flex;
+  gap: var(--pb-space-2);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.sch-option__tag {
+  color: var(--mat-sys-primary);
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sch,
+  .sch__icon,
+  .sch__dots,
+  .sch__clear {
+    transition-duration: 0ms;
+  }
+
+  .sch__dots.is-on i {
+    animation: none;
+    opacity: 0.7;
+  }
+}

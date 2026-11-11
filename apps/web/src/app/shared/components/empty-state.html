@@ -1,0 +1,18 @@
+<div class="empty">
+  <div class="empty__art" aria-hidden="true">
+    <span class="empty__ring empty__ring--outer"></span>
+    <span class="empty__ring empty__ring--inner"><i></i></span>
+    <span class="empty__tile">
+      @if (lineIcon(); as name) {
+        <pb-icon [name]="name" [size]="28" [stroke]="1.6" />
+      } @else {
+        <mat-icon>{{ icon() }}</mat-icon>
+      }
+    </span>
+  </div>
+  <p class="empty__title">{{ title() }}</p>
+  @if (hint()) {
+    <p class="empty__hint">{{ hint() }}</p>
+  }
+  <div class="empty__actions"><ng-content /></div>
+</div>

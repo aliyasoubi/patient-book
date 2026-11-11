@@ -1,0 +1,91 @@
+@use '../../../../styles/field';
+
+:host {
+  display: block;
+  /* Never wider than its container, however long the value typed into it. */
+  min-inline-size: 0;
+}
+
+.pb-input__label {
+  @include field.label;
+}
+
+.pb-input__box {
+  @include field.box;
+}
+
+.pb-input__box--invalid {
+  @include field.box-invalid;
+}
+
+.pb-input__icon {
+  @include field.icon;
+}
+
+.pb-input__box:focus-within .pb-input__icon {
+  @include field.icon-focused;
+}
+
+.pb-input__control {
+  @include field.control;
+}
+
+/*
+ * Credentials and ids are Latin inside an RTL page, typed in Inter with
+ * Latin digits, not the Persian ones Vazirmatn draws. A Persian placeholder
+ * falls back to Vazirmatn by itself (Inter covers Latin ranges only).
+ */
+.pb-input__control--ltr {
+  direction: ltr;
+  text-align: left;
+  font-family: var(--pb-font-latin);
+  letter-spacing: 0.01em;
+
+  /* Until something is typed, its Persian placeholder reads from the right. */
+  &:placeholder-shown {
+    direction: rtl;
+    text-align: right;
+  }
+}
+
+.pb-input__toggle {
+  @include field.end-button;
+}
+
+/* The two eyes share a cell and trade places with a small turn. */
+.pb-input__eye {
+  --pb-icon-size: 20px;
+
+  grid-area: 1 / 1;
+  opacity: 0;
+  transform: scale(0.6) rotate(-35deg);
+  transition:
+    opacity 180ms var(--pb-ease-standard),
+    transform 320ms var(--pb-ease-spring);
+
+  &.is-on {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pb-input__message-slot {
+  @include field.message-slot;
+}
+
+.pb-input__message {
+  @include field.message;
+}
+
+.pb-input__message--error {
+  @include field.message-error;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-input__box,
+  .pb-input__icon,
+  .pb-input__eye,
+  .pb-input__message-slot {
+    transition-duration: 0ms;
+  }
+}

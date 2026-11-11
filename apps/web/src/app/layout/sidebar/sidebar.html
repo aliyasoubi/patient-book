@@ -1,0 +1,96 @@
+<aside class="sidebar">
+  <div class="sidebar__head">
+    <a class="sidebar__brand" routerLink="/dashboard" [attr.aria-label]="'app.title' | translate">
+      <span class="sidebar__mark"><pb-logo [size]="22" /></span>
+      <span class="sidebar__name sidebar__fade">{{ 'app.title' | translate }}</span>
+    </a>
+    @if (!collapsed()) {
+      <!-- Expanded: search is an icon here. Collapsed, it moves to the toolbar as a field. -->
+      <button
+        type="button"
+        class="sidebar__tool"
+        (click)="spotlight.open()"
+        [attr.aria-label]="'globalSearch.aria' | translate"
+        [attr.data-tip]="'globalSearch.openTooltip' | translate"
+      >
+        <pb-icon name="search" [size]="20" />
+      </button>
+    }
+    @if (canCollapse()) {
+      <button
+        type="button"
+        class="sidebar__tool sidebar__toggle"
+        (click)="collapseToggle.emit()"
+        [attr.aria-label]="(collapsed() ? 'app.expandMenu' : 'app.collapseMenu') | translate"
+        [attr.aria-expanded]="!collapsed()"
+        [attr.data-tip]="(collapsed() ? 'app.expandMenu' : 'app.collapseMenu') | translate"
+      >
+        <pb-icon
+          [name]="collapsed() ? 'layout-sidebar-right-expand' : 'layout-sidebar-right-collapse'"
+          [size]="20"
+        />
+      </button>
+    }
+  </div>
+
+  <nav #nav class="sidebar__nav" [attr.aria-label]="'app.mainSections' | translate">
+    <!-- One white card for the page you are on, gliding to the next one rather than jumping. -->
+    <span
+      class="sidebar__pill"
+      aria-hidden="true"
+      [class.is-shown]="pill().shown"
+      [class.is-instant]="pill().instant"
+      [style.translate]="'0 ' + pill().top + 'px'"
+      [style.block-size.px]="pill().height"
+    ></span>
+    @for (group of navGroups(); track group.group) {
+      <div class="sidebar__group">
+        <span class="sidebar__group-label sidebar__fade">{{ group.label | translate }}</span>
+        @for (item of group.items; track item.path) {
+          <a
+            class="sidebar__link"
+            [routerLink]="item.path"
+            routerLinkActive="is-active"
+            ariaCurrentWhenActive="page"
+            [attr.data-tip]="collapsed() ? (item.label | translate) : null"
+          >
+            <pb-icon class="sidebar__icon" [name]="item.icon" [size]="20" />
+            <span class="sidebar__label sidebar__fade">{{ item.label | translate }}</span>
+          </a>
+        }
+      </div>
+    }
+  </nav>
+
+  <div class="sidebar__foot">
+    <button
+      type="button"
+      class="shell__user"
+      [class.is-open]="userMenuOpen()"
+      (click)="userMenuOpen.set(!userMenuOpen())"
+      [attr.aria-expanded]="userMenuOpen()"
+      aria-haspopup="menu"
+      [attr.aria-label]="'app.userAccount' | translate"
+    >
+      <pb-avatar size="small" tone="primary" [name]="auth.user()?.fullName ?? ''" />
+      <span class="shell__identity sidebar__fade">
+        <strong>{{ auth.user()?.fullName }}</strong>
+        <small>{{ roleLabel() | translate }}</small>
+      </span>
+      <pb-icon class="shell__chevron sidebar__fade" name="chevron-down" [size]="16" />
+    </button>
+
+    @if (userMenuOpen()) {
+      <div class="user-menu" role="menu" animate.enter="pop-in" animate.leave="pop-out">
+        <a class="user-menu__item" role="menuitem" routerLink="/settings/account">
+          <pb-icon name="user-circle" [size]="18" />
+          <span>{{ 'app.userAccount' | translate }}</span>
+        </a>
+        <button class="user-menu__item" role="menuitem" type="button" (click)="logout()">
+          <pb-icon name="logout" [size]="18" />
+          <span>{{ 'app.logout' | translate }}</span>
+        </button>
+      </div>
+    }
+  </div>
+</aside>

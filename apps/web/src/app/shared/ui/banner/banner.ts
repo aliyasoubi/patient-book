@@ -1,6 +1,9 @@
 import { Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
+import { PbIcon } from '../icon/icon';
+import { isLineIcon } from '../icon/line-icons';
+
 export type BannerTone = 'neutral' | 'warning' | 'error';
 export type BannerSize = 'default' | 'compact';
 
@@ -22,20 +25,26 @@ export type BannerSize = 'default' | 'compact';
 @Component({
   selector: 'pb-banner',
   standalone: true,
-  imports: [MatIconModule],
+  imports: [MatIconModule, PbIcon],
   host: {
     '[attr.data-tone]': 'tone()',
     '[attr.data-size]': 'size()',
   },
   template: `
-    @if (icon()) {
-      <mat-icon class="pb-banner__icon" aria-hidden="true">{{ icon() }}</mat-icon>
-    }
-    <div class="pb-banner__body">
-      @if (title()) {
-        <strong class="pb-banner__title">{{ title() }}</strong>
+    <div class="pb-banner__main">
+      @if (icon(); as name) {
+        @if (isLineIcon(name)) {
+          <pb-icon class="pb-banner__icon pb-banner__icon--line" [name]="name" />
+        } @else {
+          <mat-icon class="pb-banner__icon" aria-hidden="true">{{ name }}</mat-icon>
+        }
       }
-      <ng-content />
+      <div class="pb-banner__body">
+        @if (title()) {
+          <strong class="pb-banner__title">{{ title() }}</strong>
+        }
+        <ng-content />
+      </div>
     </div>
     <div class="pb-banner__action"><ng-content select="[pbBannerAction]" /></div>
   `,
@@ -83,12 +92,35 @@ export type BannerSize = 'default' | 'compact';
       margin-block-start: calc((1lh - 1em) / 2);
     }
 
+    /* A line icon: drawn a touch smaller than the glyph, centred on the first line. */
+    .pb-banner__icon--line {
+      --pb-icon-size: 20px;
+
+      margin-block-start: calc((1lh - var(--pb-icon-size)) / 2);
+    }
+
+    :host([data-size='compact']) .pb-banner__icon--line {
+      --pb-icon-size: 18px;
+    }
+
     :host([data-size='compact']) .pb-banner__icon {
       font-size: var(--pb-icon-sm);
     }
 
-    .pb-banner__body {
+    /*
+     * The icon and its text never part: only the action wraps, under them,
+     * once the row is too narrow for both.
+     */
+    .pb-banner__main {
+      display: flex;
+      align-items: flex-start;
+      gap: inherit;
       flex: 1 1 16rem;
+      min-width: 0;
+    }
+
+    .pb-banner__body {
+      flex: 1 1 0;
       min-width: 0;
     }
 
@@ -113,4 +145,6 @@ export class PbBanner {
   readonly size = input<BannerSize>('default');
   readonly icon = input<string | null>(null);
   readonly title = input<string | null>(null);
+
+  protected readonly isLineIcon = isLineIcon;
 }

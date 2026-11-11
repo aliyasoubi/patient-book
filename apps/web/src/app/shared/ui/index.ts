@@ -3,6 +3,15 @@
  * into every page. A change to how a field or a button behaves happens here
  * once, and every screen that uses it picks the change up automatically.
  */
+export { PbInput } from './input/input';
+export { PbIcon } from './icon/icon';
+export { PbCountUp } from './count-up/count-up';
+export { PbShamsiCalendar } from './calendar/shamsi-calendar';
+export type { CalendarMarkTone, CalendarView } from './calendar/shamsi-calendar';
+export { PbToastHost } from './toast/toast-host';
+export { ToastRef, ToastService } from './toast/toast.service';
+export type { ToastOptions, ToastTone } from './toast/toast.service';
+export type { LineIconName } from './icon/line-icons';
 export { PbTextField } from './text-field/text-field';
 export type { TextFieldOption } from './text-field/text-field';
 export { PbTextareaField } from './textarea-field/textarea-field';
@@ -34,6 +43,8 @@ export { PbIconButton } from './icon-button/icon-button';
 export type { IconButtonSize, IconButtonVariant } from './icon-button/icon-button';
 export { PbFilterChips } from './filter-chips/filter-chips';
 export type { FilterChipOption } from './filter-chips/filter-chips';
+export { PbSwitcher } from './switcher/switcher';
+export type { SwitcherOption } from './switcher/switcher';
 export { PbSegmentedButton } from './segmented-button/segmented-button';
 export type { SegmentOption } from './segmented-button/segmented-button';
 export { PbFieldGrid } from './field-grid/field-grid';

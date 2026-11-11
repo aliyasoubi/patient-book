@@ -1,0 +1,57 @@
+:host {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--mat-sys-primary);
+}
+svg {
+  display: block;
+  overflow: visible;
+}
+
+/* drawIn: the tooth is traced, then the spark lands and keeps a slow twinkle. */
+:host(.pb-logo--draw) .pb-logo__tooth {
+  stroke-dasharray: 1;
+  animation: pb-logo-trace 1200ms 150ms cubic-bezier(0.65, 0, 0.35, 1) backwards;
+}
+
+:host(.pb-logo--draw) .pb-logo__spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation:
+    pb-logo-spark 600ms 1100ms var(--pb-ease-spring, ease-out) backwards,
+    pb-logo-twinkle 6s 2s ease-in-out infinite;
+}
+
+@keyframes pb-logo-trace {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes pb-logo-spark {
+  from {
+    opacity: 0;
+    scale: 0;
+    rotate: -90deg;
+  }
+}
+
+@keyframes pb-logo-twinkle {
+  0%,
+  80%,
+  100% {
+    scale: 1;
+    rotate: 0deg;
+  }
+  88% {
+    scale: 1.35;
+    rotate: 45deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host(.pb-logo--draw) .pb-logo__tooth,
+  :host(.pb-logo--draw) .pb-logo__spark {
+    animation: none;
+  }
+}

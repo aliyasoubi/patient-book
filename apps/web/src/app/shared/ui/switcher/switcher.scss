@@ -1,0 +1,70 @@
+:host {
+  position: relative;
+  display: inline-grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  max-inline-size: 100%;
+  padding: var(--pb-space-1);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--pb-neutral-300) 45%, transparent);
+}
+
+:host(.is-stretched) {
+  display: grid;
+}
+
+/* The app reads right to left: the pill steps toward the left, one option at a time. */
+.pb-switcher__pill {
+  position: absolute;
+  inset-block: var(--pb-space-1);
+  inset-inline-start: var(--pb-space-1);
+  inline-size: calc((100% - 2 * var(--pb-space-1)) / var(--_count, 2));
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  translate: calc(var(--_index, 0) * -100%) 0;
+  transition: translate 380ms var(--pb-ease-spring);
+}
+
+.pb-switcher__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pb-space-2);
+  padding: var(--pb-space-2) var(--pb-space-5);
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pb-neutral-600);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 200ms var(--pb-ease-standard);
+
+  &:hover,
+  &.is-active {
+    color: var(--pb-graphite);
+  }
+
+  pb-icon {
+    transition: color 200ms var(--pb-ease-standard);
+  }
+
+  &.is-active pb-icon {
+    color: var(--pb-brand);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-switcher__pill {
+    transition-duration: 0ms;
+  }
+}

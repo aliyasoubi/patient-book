@@ -1,0 +1,65 @@
+@if (label()) {
+  <span class="sf__label" [id]="labelId">{{ label() }}</span>
+}
+<div
+  class="sf__box pb-select-box"
+  [class.sf__box--open]="open()"
+  [class.sf__box--invalid]="showError()"
+  [class.sf__box--quiet]="control()?.disabled"
+>
+  <!-- Either branch reports when its panel opens, so the box and chevron can follow. -->
+  @if (control(); as ctrl) {
+    <mat-select
+      (openedChange)="open.set($event)"
+      class="sf__select"
+      panelClass="pb-select-panel"
+      [formControl]="ctrl"
+      [placeholder]="placeholder()"
+      [aria-labelledby]="label() ? labelId : ''"
+      [attr.aria-describedby]="message() ? messageId : null"
+    >
+      @if (anyLabel()) {
+        <mat-option value="">{{ anyLabel() }}</mat-option>
+      }
+      @for (option of options(); track option.value) {
+        <mat-option [value]="option.value">
+          {{ option.translate ? (option.label | translate) : option.label }}
+        </mat-option>
+      }
+    </mat-select>
+  } @else {
+    <mat-select
+      (openedChange)="open.set($event)"
+      class="sf__select"
+      panelClass="pb-select-panel"
+      [value]="value()"
+      [placeholder]="placeholder()"
+      [aria-labelledby]="label() ? labelId : ''"
+      (selectionChange)="onSelectionChange($event)"
+    >
+      @if (anyLabel()) {
+        <mat-option value="">{{ anyLabel() }}</mat-option>
+      }
+      @for (option of options(); track option.value) {
+        <mat-option [value]="option.value">
+          {{ option.translate ? (option.label | translate) : option.label }}
+        </mat-option>
+      }
+    </mat-select>
+  }
+  <pb-icon class="sf__chevron" name="chevron-down" [size]="18" />
+</div>
+<div
+  class="sf__message-slot"
+  [class.sf__message-slot--reserved]="subscript() === 'fixed'"
+  [class.is-open]="!!message()"
+>
+  <p
+    class="sf__message"
+    [class.sf__message--error]="messageIsError()"
+    [id]="messageId"
+    [attr.aria-hidden]="message() ? null : 'true'"
+  >
+    {{ messageText() }}
+  </p>
+</div>

@@ -4,14 +4,15 @@ import {
   MatAutocompleteModule,
   type MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule, type SubscriptSizing } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { regroup } from '../../rial';
-import { firstErrorMessage, subscriptSizing } from '../field-errors';
+import { firstErrorMessage } from '../field-errors';
+import { PbIcon } from '../icon/icon';
+import { lineIconFor } from '../icon/line-icons';
+
+let nextId = 0;
 
 export interface TextFieldOption {
   /** What lands in the input when picked. Need not be unique — two patients can share a name. */
@@ -27,8 +28,11 @@ export interface TextFieldOption {
  * The text input used everywhere in this app: patient names, phone numbers,
  * addresses, the login form, the referral-source autocomplete.
  *
- * One component instead of one hand-assembled `<mat-form-field>` per screen
- * means a change to how fields look or announce their errors happens once.
+ * Drawn like `pb-input` (label above, a quiet outlined box that takes the
+ * accent and a soft lift on focus, a message that eases open below), so
+ * every field in the app reads as one family. One component instead of one
+ * hand-assembled field per screen means a change to how fields look or
+ * announce their errors happens once.
  * Bind it straight to a typed `FormControl` — no `ControlValueAccessor`
  * indirection, since this is an internal design-system piece, not a
  * general-purpose form control for arbitrary consumers.
@@ -36,119 +40,9 @@ export interface TextFieldOption {
 @Component({
   selector: 'pb-text-field',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatAutocompleteModule,
-    MatButtonModule,
-    MatIconModule,
-    TranslatePipe,
-  ],
-  template: `
-    <!--
-      'fixed' by default: it reserves a line of space for the hint/error slot
-      whether or not one is showing, so a validation message appearing on
-      blur doesn't push everything below the field down. A field repeated
-      down a list row — a stocktake's counts — takes 'dynamic' instead, so a
-      row is only as tall as its fields until one has something to say.
-      See subscriptSizing() for a message longer than the line.
-    -->
-    <mat-form-field appearance="outline" [subscriptSizing]="sizing()">
-      @if (label()) {
-        <mat-label>{{ label() }}</mat-label>
-      }
-      @if (prefixIcon()) {
-        <mat-icon matIconPrefix aria-hidden="true">{{ prefixIcon() }}</mat-icon>
-      }
-      <!--
-        Two branches rather than one input with a conditional binding:
-        MatAutocompleteTrigger's selector matches on the literal presence of
-        the matAutocomplete attribute in the template, so once it is attached
-        to an element it stays active for that element's lifetime — binding it
-        to null does not detach it, and the trigger throws the moment the
-        field is focused with no panel to open. Splitting the two cases is the
-        only way to keep a plain field genuinely free of the trigger.
-      -->
-      @if (hasAutocomplete()) {
-        <input
-          matInput
-          [formControl]="control()"
-          [type]="visibleType()"
-          [placeholder]="placeholder()"
-          [attr.maxlength]="maxlength()"
-          [attr.inputmode]="inputmode() || null"
-          [attr.autocomplete]="nativeAutocomplete()"
-          [class.ltr-input]="ltr()"
-          [attr.dir]="ltr() ? 'ltr' : null"
-          [matAutocomplete]="auto"
-        />
-        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)">
-          @for (option of options() ?? []; track option.id ?? option.value) {
-            <mat-option [value]="option.value">
-              {{ option.label }}
-              @if (option.meta) {
-                <small class="pb-text-field__option-meta">({{ option.meta }})</small>
-              }
-            </mat-option>
-          }
-        </mat-autocomplete>
-      } @else {
-        <input
-          matInput
-          [formControl]="control()"
-          [type]="visibleType()"
-          [placeholder]="placeholder()"
-          [attr.maxlength]="maxlength()"
-          [attr.inputmode]="inputmode() || null"
-          [attr.autocomplete]="nativeAutocomplete()"
-          [class.ltr-input]="ltr()"
-          [attr.dir]="ltr() ? 'ltr' : null"
-          (input)="groupDigits($event)"
-        />
-      }
-
-      @if (type() === 'password') {
-        <button
-          matIconSuffix
-          mat-icon-button
-          type="button"
-          (click)="revealed.set(!revealed())"
-          [attr.aria-label]="
-            (revealed() ? 'action.hidePassword' : 'action.showPassword') | translate
-          "
-          [attr.aria-pressed]="revealed()"
-        >
-          <mat-icon aria-hidden="true">{{ revealed() ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-      }
-
-      @if (hint() && !errorText()) {
-        <mat-hint>{{ hint() }}</mat-hint>
-      }
-      @if (errorText(); as message) {
-        <mat-error>{{ message }}</mat-error>
-      }
-    </mat-form-field>
-  `,
-  styles: `
-    :host {
-      display: block;
-    }
-    mat-form-field {
-      width: 100%;
-    }
-    /* Credentials, ids and phone numbers are Latin inside an RTL page;
-       force the direction so the caret and any punctuation behave. */
-    .ltr-input {
-      direction: ltr;
-      text-align: left;
-    }
-    .pb-text-field__option-meta {
-      margin-inline-start: var(--pb-space-2);
-      color: var(--mat-sys-on-surface-variant);
-    }
-  `,
+  imports: [ReactiveFormsModule, MatAutocompleteModule, MatIconModule, TranslatePipe, PbIcon],
+  templateUrl: './text-field.html',
+  styleUrl: './text-field.scss',
 })
 export class PbTextField {
   private readonly i18n = inject(TranslateService);
@@ -162,7 +56,11 @@ export class PbTextField {
   readonly inputmode = input<'text' | 'tel' | 'numeric' | 'email' | 'search' | null>(null);
   /** The native `autocomplete` attribute (browser autofill), not the option panel. */
   readonly nativeAutocomplete = input<string>('off');
-  /** Space for the hint/error line: always (`fixed`), or only while there is one. */
+  /**
+   * Room for the hint/error line: always (`fixed`), so an error appearing does
+   * not push the form down, or only while there is one (`dynamic`, eased
+   * open), for a field repeated down a list row.
+   */
   readonly subscript = input<'fixed' | 'dynamic'>('fixed');
   /** Right-align as LTR — for phone numbers, file numbers, ids inside RTL text. */
   readonly ltr = input(false);
@@ -175,13 +73,40 @@ export class PbTextField {
   /** The full option a user picked from the panel — not just its `value`, for callers that need the rest of it (an id, a linked record). */
   readonly optionSelected = output<TextFieldOption>();
 
+  protected readonly id = `pb-text-field-${nextId++}`;
+  protected readonly messageId = `${this.id}-message`;
+  protected readonly lineIcon = computed(() => lineIconFor(this.prefixIcon()));
   protected readonly revealed = signal(false);
   protected readonly visibleType = computed(() =>
     this.type() === 'password' && this.revealed() ? 'text' : this.type(),
   );
   protected readonly hasAutocomplete = computed(() => this.options() !== null);
+  /** The last message shown, and whether it was an error, kept while its line closes. */
+  private lastMessage = '';
+  private lastWasError = false;
 
-  protected errorText(): string | null {
+  /** An error shows once the field has been left; a refused save marks every field touched. */
+  protected showError(): boolean {
+    const control = this.control();
+    return control.touched && control.invalid && this.errorText() !== null;
+  }
+
+  protected message(): string | null {
+    return this.showError() ? this.errorText() : this.hint();
+  }
+
+  protected messageIsError(): boolean {
+    if (this.message()) this.lastWasError = this.showError();
+    return this.lastWasError;
+  }
+
+  protected messageText(): string {
+    const current = this.message();
+    if (current) this.lastMessage = current;
+    return this.lastMessage;
+  }
+
+  private errorText(): string | null {
     return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
   }
 
@@ -192,10 +117,6 @@ export class PbTextField {
     if (value === field.value) return;
     this.control().setValue(value);
     field.setSelectionRange(caret, caret);
-  }
-
-  protected sizing(): SubscriptSizing {
-    return subscriptSizing(this.control(), this.hint(), this.subscript());
   }
 
   /**

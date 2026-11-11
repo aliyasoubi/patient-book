@@ -1,0 +1,43 @@
+@if (label()) {
+  <label class="pb-input__label" [for]="id">{{ label() }}</label>
+}
+<div class="pb-input__box" [class.pb-input__box--invalid]="showError()">
+  @if (prefixIcon(); as icon) {
+    <pb-icon class="pb-input__icon" [name]="icon" />
+  }
+  <input
+    class="pb-input__control"
+    [id]="id"
+    [formControl]="control()"
+    [type]="visibleType()"
+    [placeholder]="placeholder()"
+    [attr.autocomplete]="nativeAutocomplete()"
+    [attr.dir]="ltr() ? 'ltr' : null"
+    [attr.aria-invalid]="showError() || null"
+    [attr.aria-describedby]="message() ? messageId : null"
+    [class.pb-input__control--ltr]="ltr()"
+  />
+  @if (type() === 'password') {
+    <button
+      class="pb-input__toggle"
+      type="button"
+      [attr.tabindex]="toggleInTabOrder() ? null : -1"
+      (click)="revealed.set(!revealed())"
+      [attr.aria-label]="(revealed() ? 'action.hidePassword' : 'action.showPassword') | translate"
+      [attr.aria-pressed]="revealed()"
+    >
+      <pb-icon class="pb-input__eye" [class.is-on]="!revealed()" name="eye" />
+      <pb-icon class="pb-input__eye" [class.is-on]="revealed()" name="eye-off" />
+    </button>
+  }
+</div>
+<div class="pb-input__message-slot" [class.is-open]="!!message()">
+  <p
+    class="pb-input__message"
+    [class.pb-input__message--error]="messageIsError()"
+    [id]="messageId"
+    [attr.aria-hidden]="message() ? null : 'true'"
+  >
+    {{ messageText() }}
+  </p>
+</div>

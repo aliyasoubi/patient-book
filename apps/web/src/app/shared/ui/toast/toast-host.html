@@ -1,0 +1,74 @@
+<section
+  class="toasts"
+  [class.is-expanded]="expanded()"
+  [class.is-paused]="paused()"
+  [class.is-empty]="!toasts().length"
+  [style.height.px]="regionHeight()"
+  [attr.aria-label]="'toast.region' | translate"
+  (mouseenter)="hovered.set(true)"
+  (mouseleave)="hovered.set(false)"
+  (focusin)="focused.set(true)"
+  (focusout)="onFocusOut($event)"
+>
+  @for (t of toasts(); track t.id; let i = $index) {
+    <div
+      class="toast-slot"
+      [class.is-front]="i === 0"
+      [class.is-buried]="i >= visible && !expanded()"
+      [style.transform]="slotTransform(i)"
+      [style.height.px]="slotHeight(i)"
+      [style.z-index]="100 - i"
+      animate.leave="toast-slot--leaving"
+    >
+      <div
+        #card
+        class="toast"
+        [attr.data-id]="t.id"
+        [attr.data-tone]="t.tone"
+        [attr.role]="t.tone === 'error' ? 'alert' : 'status'"
+        [class.bump-a]="t.bump % 2 === 1"
+        [class.bump-b]="t.bump > 0 && t.bump % 2 === 0"
+        animate.enter="toast--entering"
+        (pointerdown)="dragStart($event, t)"
+        (pointermove)="dragMove($event)"
+        (pointerup)="dragEnd($event, t)"
+        (pointercancel)="dragCancel()"
+      >
+        <div class="toast__inner">
+          <span class="toast__icon">
+            <pb-icon [name]="iconFor(t.tone)" [size]="18" [stroke]="2" />
+          </span>
+          <div class="toast__body">
+            @if (t.title) {
+              <strong class="toast__title">{{ t.title }}</strong>
+            }
+            <p class="toast__message">{{ t.message }}</p>
+          </div>
+          @if (t.action) {
+            <button class="toast__action" type="button" (click)="act(t, $event)">
+              <pb-icon name="arrow-back-up" [size]="16" [stroke]="2" />
+              {{ t.action }}
+            </button>
+          }
+          <button
+            class="toast__close"
+            type="button"
+            [attr.aria-label]="'action.dismiss' | translate"
+            (click)="close(t, $event)"
+          >
+            <pb-icon name="x" [size]="16" [stroke]="2" />
+          </button>
+        </div>
+        @if (t.duration > 0) {
+          <span
+            class="toast__progress"
+            aria-hidden="true"
+            [style.animation-duration.ms]="t.duration"
+            [class.toast__progress--restarted]="t.bump % 2 === 1"
+            (animationend)="expire(t, $event)"
+          ></span>
+        }
+      </div>
+    </div>
+  }
+</section>

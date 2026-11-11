@@ -1,0 +1,355 @@
+/*
+ * The spotlight: the app blurs and dims back, and a single panel rises into
+ * the upper middle of the screen — a field, then rows that answer it.
+ *
+ * Motion (the sign-in page's language): the scrim fades its blur in; the
+ * panel scales up from 96% on a spring as it rises; the rows cascade in a few
+ * milliseconds apart. Leaving reverses it, quicker. The row under the cursor
+ * is marked by a soft white pill that glides between rows.
+ */
+
+@keyframes spotlight-scrim-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes spotlight-panel-in {
+  from {
+    opacity: 0;
+    translate: 0 -12px;
+    scale: 0.96;
+  }
+}
+
+@keyframes spotlight-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes spotlight-panel-out {
+  to {
+    opacity: 0;
+    translate: 0 -8px;
+    scale: 0.97;
+  }
+}
+
+@keyframes spotlight-row-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+@keyframes spotlight-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    translate: 0 0;
+  }
+  30% {
+    opacity: 1;
+    translate: 0 -3px;
+  }
+}
+
+.spotlight {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  padding: 14vh var(--pb-space-4) var(--pb-space-4);
+}
+
+.spotlight--out {
+  animation: spotlight-out 180ms var(--pb-ease-standard) forwards;
+
+  .spotlight__panel {
+    animation: spotlight-panel-out 180ms var(--pb-ease-standard) forwards;
+  }
+}
+
+.spotlight__scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--pb-graphite) 22%, transparent);
+  backdrop-filter: blur(10px) saturate(120%);
+  animation: spotlight-scrim-in 260ms var(--pb-ease-standard) backwards;
+}
+
+.spotlight__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(640px, 100%);
+  max-block-size: min(560px, 76vh);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, #fff 70%, transparent);
+  border-radius: 20px;
+  background: color-mix(in srgb, #fff 94%, transparent);
+  box-shadow: var(--pb-shadow-lg);
+  animation: spotlight-panel-in 420ms var(--pb-ease-spring) backwards;
+}
+
+/* ── Field ─────────────────────────────────────────────────────────── */
+
+.spotlight__field {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-4) var(--pb-space-5);
+  border-block-end: 1px solid var(--pb-neutral-200);
+}
+
+.spotlight__glass {
+  color: var(--pb-brand);
+}
+
+.spotlight__input {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 1.125rem;
+  line-height: 2;
+  color: var(--pb-graphite);
+  caret-color: var(--pb-brand);
+
+  &::placeholder {
+    color: var(--pb-neutral-400);
+  }
+}
+
+.spotlight__loading {
+  display: inline-flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 200ms var(--pb-ease-standard);
+
+  &.is-on {
+    opacity: 1;
+  }
+
+  i {
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 50%;
+    background: var(--pb-brand);
+    animation: spotlight-dot 900ms ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 120ms;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 240ms;
+    }
+  }
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 22px;
+  block-size: 22px;
+  padding-inline: 6px;
+  border: 1px solid var(--pb-neutral-300);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 0 var(--pb-neutral-300);
+  font-family: var(--pb-font-latin);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--pb-neutral-600);
+}
+
+/* ── Rows ──────────────────────────────────────────────────────────── */
+
+.spotlight__list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--pb-space-2);
+  overscroll-behavior: contain;
+}
+
+.spotlight__group + .spotlight__group {
+  margin-block-start: var(--pb-space-2);
+}
+
+.spotlight__title {
+  margin: 0;
+  padding: var(--pb-space-2) var(--pb-space-3) var(--pb-space-1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pb-neutral-400);
+}
+
+.spotlight__row {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  inline-size: 100%;
+  min-block-size: 48px;
+  padding: var(--pb-space-2) var(--pb-space-3);
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--pb-graphite);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--pb-ease-standard),
+    box-shadow 160ms var(--pb-ease-standard);
+  animation: spotlight-row-in 320ms var(--pb-ease-emphasized) backwards;
+  animation-delay: calc(80ms + min(var(--i, 0), 10) * 22ms);
+
+  &[data-active='true'] {
+    background: var(--pb-neutral-100);
+    box-shadow: inset 0 0 0 1px var(--pb-neutral-200);
+
+    .spotlight__icon {
+      background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+      color: var(--pb-brand);
+    }
+
+    .spotlight__enter {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+}
+
+.spotlight__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 10px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  transition:
+    background-color 160ms var(--pb-ease-standard),
+    color 160ms var(--pb-ease-standard);
+}
+
+.spotlight__label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.spotlight__tag {
+  flex: 0 0 auto;
+  padding: 2px var(--pb-space-2);
+  border-radius: 999px;
+  background: var(--pb-success-container);
+  color: var(--pb-on-success-container);
+  font-size: 0.75rem;
+}
+
+.spotlight__supporting,
+.spotlight__meta {
+  flex: 0 0 auto;
+  font-size: 0.8125rem;
+  color: var(--pb-neutral-600);
+}
+
+.spotlight__meta {
+  min-inline-size: 48px;
+  text-align: end;
+}
+
+.spotlight__enter {
+  flex: 0 0 auto;
+  color: var(--pb-neutral-400);
+  opacity: 0;
+  translate: 4px 0;
+  transition:
+    opacity 160ms var(--pb-ease-standard),
+    translate 220ms var(--pb-ease-spring);
+}
+
+/* ── Nothing found ─────────────────────────────────────────────────── */
+
+.spotlight__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-6) var(--pb-space-4);
+  color: var(--pb-neutral-600);
+  text-align: center;
+  animation: spotlight-row-in 360ms var(--pb-ease-emphasized) backwards;
+
+  pb-icon {
+    color: var(--pb-neutral-400);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.spotlight__search-all {
+  padding: var(--pb-space-2) var(--pb-space-4);
+  border: 1px solid var(--pb-neutral-300);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-xs);
+  color: var(--pb-graphite);
+  font: inherit;
+  cursor: pointer;
+  transition: box-shadow 200ms var(--pb-ease-standard);
+
+  &:hover {
+    box-shadow: var(--pb-shadow-sm);
+  }
+}
+
+/* ── Footer ────────────────────────────────────────────────────────── */
+
+.spotlight__footer {
+  display: flex;
+  gap: var(--pb-space-4);
+  padding: var(--pb-space-2) var(--pb-space-5);
+  border-block-start: 1px solid var(--pb-neutral-200);
+  background: var(--pb-neutral-50);
+  font-size: 0.75rem;
+  color: var(--pb-neutral-600);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pb-space-1);
+  }
+
+  @media (max-width: 600px) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotlight__scrim,
+  .spotlight__panel,
+  .spotlight__row,
+  .spotlight__empty,
+  .spotlight--out,
+  .spotlight--out .spotlight__panel {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}

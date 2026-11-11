@@ -11,7 +11,11 @@ import { PbTextField, type TextFieldOption } from './text-field';
 @Component({
   standalone: true,
   imports: [PbTextField],
-  template: `<pb-text-field [control]="control" [options]="options()" (optionSelected)="picked = $event" />`,
+  template: `<pb-text-field
+    [control]="control"
+    [options]="options()"
+    (optionSelected)="picked = $event"
+  />`,
 })
 class Host {
   readonly control = new FormControl('', { nonNullable: true });

@@ -1,0 +1,14 @@
+<div class="failure" role="alert">
+  <div class="failure__art" aria-hidden="true">
+    <span class="failure__ring failure__ring--outer"></span>
+    <span class="failure__ring failure__ring--inner"></span>
+    <span class="failure__tile">
+      <pb-icon name="wifi-off" [size]="28" [stroke]="1.6" />
+    </span>
+  </div>
+  <p class="failure__title">{{ 'common.loadFailedTitle' | translate }}</p>
+  <p class="failure__message">{{ message() }}</p>
+  <pb-button class="failure__retry" variant="stroked" icon="refresh" (click)="retry.emit()">
+    {{ 'common.retry' | translate }}
+  </pb-button>
+</div>

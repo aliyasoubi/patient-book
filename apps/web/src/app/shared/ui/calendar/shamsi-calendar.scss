@@ -1,0 +1,328 @@
+/*
+ * The Shamsi calendar, in the brand: graphite days on white, today ringed in
+ * orange, the chosen day filled with it, Fridays in the holiday tone, days of
+ * the neighbouring months faded back. Dots under a day mark something on it.
+ *
+ * Motion: a month slides in from the side it comes from and fades; the
+ * month and year pickers zoom in softly; the chosen day pops on a spring;
+ * every cell eases its colour under the pointer.
+ */
+
+@keyframes cal-from-next {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+}
+
+@keyframes cal-from-prev {
+  from {
+    opacity: 0;
+    translate: 24px 0;
+  }
+}
+
+@keyframes cal-zoom {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+}
+
+@keyframes cal-pop {
+  0% {
+    scale: 0.6;
+  }
+  60% {
+    scale: 1.08;
+  }
+}
+
+:host {
+  display: block;
+  --_brand: var(--pb-brand, var(--mat-sys-primary));
+  --_ink: var(--pb-graphite, var(--mat-sys-on-surface));
+  --_muted: var(--pb-neutral-600, var(--mat-sys-on-surface-variant));
+  --_faint: var(--pb-neutral-400, var(--mat-sys-outline));
+  --_hover: var(--pb-neutral-100, var(--mat-sys-surface-container));
+  --_holiday: #d64545;
+}
+
+.cal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-3);
+  user-select: none;
+}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+
+.cal__head {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-1);
+}
+
+.cal__title {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.cal__crumb {
+  padding: var(--pb-space-1) var(--pb-space-2);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--_ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms var(--pb-ease-standard);
+
+  &:hover,
+  &.is-active {
+    background: var(--_hover);
+  }
+}
+
+.cal__today {
+  padding: var(--pb-space-1) var(--pb-space-3);
+  border: 1px solid var(--pb-neutral-200, var(--mat-sys-outline-variant));
+  border-radius: 999px;
+  background: #fff;
+  color: var(--_ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--pb-ease-standard),
+    box-shadow 200ms var(--pb-ease-standard);
+
+  &:hover {
+    border-color: var(--pb-neutral-300, var(--mat-sys-outline));
+    box-shadow: var(--pb-shadow-xs, none);
+  }
+}
+
+.cal__nav {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--_muted);
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--pb-ease-standard),
+    color 160ms var(--pb-ease-standard),
+    transform 160ms var(--pb-ease-standard);
+
+  &:hover {
+    background: var(--_hover);
+    color: var(--_ink);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+/* ── Days ──────────────────────────────────────────────────────────── */
+
+.cal__weekdays,
+.cal__week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.cal__weekdays span {
+  padding-block: var(--pb-space-1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--_faint);
+
+  &.is-holiday {
+    color: color-mix(in srgb, var(--_holiday) 70%, transparent);
+  }
+}
+
+.cal__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  outline: none;
+
+  &.from-next {
+    animation: cal-from-next 320ms var(--pb-ease-emphasized);
+  }
+
+  &.from-prev {
+    animation: cal-from-prev 320ms var(--pb-ease-emphasized);
+  }
+}
+
+.cal__day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* A fixed height, not a square: a wide calendar keeps its rows compact. */
+  block-size: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--_ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 140ms var(--pb-ease-standard),
+    color 140ms var(--pb-ease-standard);
+
+  &:hover:not(:disabled):not(.is-selected) {
+    background: var(--_hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--_brand);
+    outline-offset: -2px;
+  }
+
+  &.is-holiday {
+    color: var(--_holiday);
+  }
+
+  &.is-out {
+    color: var(--_faint);
+    opacity: 0.55;
+  }
+
+  &.is-today:not(.is-selected) {
+    box-shadow: inset 0 0 0 1.5px var(--_brand);
+    color: var(--_brand);
+    font-weight: 700;
+  }
+
+  &.is-selected {
+    background: var(--_brand);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--_brand) 60%, transparent);
+    animation: cal-pop 360ms var(--pb-ease-spring);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.cal__mark {
+  position: absolute;
+  inset-block-end: 5px;
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: 50%;
+  background: var(--_brand);
+
+  &[data-tone='warn'] {
+    background: var(--mat-sys-error);
+  }
+
+  &[data-tone='success'] {
+    background: #2e9e5b;
+  }
+
+  &[data-tone='neutral'] {
+    background: var(--_faint);
+  }
+
+  .is-selected & {
+    background: #fff;
+  }
+}
+
+/* ── Months and years ──────────────────────────────────────────────── */
+
+.cal__picks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--pb-space-2);
+  padding-block: var(--pb-space-1);
+}
+
+.cal__zoom {
+  animation: cal-zoom 260ms var(--pb-ease-emphasized);
+}
+
+.cal__pick {
+  block-size: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--_ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 140ms var(--pb-ease-standard);
+
+  &:hover:not(.is-selected) {
+    background: var(--_hover);
+  }
+
+  &.is-current:not(.is-selected) {
+    box-shadow: inset 0 0 0 1.5px var(--_brand);
+    color: var(--_brand);
+    font-weight: 700;
+  }
+
+  &.is-selected {
+    background: var(--_brand);
+    color: #fff;
+    font-weight: 700;
+    animation: cal-pop 360ms var(--pb-ease-spring);
+  }
+}
+
+/* ── Compact ───────────────────────────────────────────────────────── */
+
+:host(.is-compact) {
+  .cal {
+    gap: var(--pb-space-2);
+  }
+
+  .cal__day {
+    block-size: 30px;
+    border-radius: 10px;
+    font-size: 0.8125rem;
+  }
+
+  .cal__weekdays span {
+    padding-block: 0;
+  }
+
+  .cal__mark {
+    inset-block-end: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cal__grid,
+  .cal__zoom,
+  .cal__day.is-selected,
+  .cal__pick.is-selected {
+    animation: none;
+  }
+}

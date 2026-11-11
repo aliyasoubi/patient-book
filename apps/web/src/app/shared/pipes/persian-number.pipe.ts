@@ -13,7 +13,7 @@ export function formatPersianCount(value: number): string {
  * on its paper charts. Applied to counts and dates so the *text* is Persian
  * (screen readers, copy/paste). Phone numbers, national ids and file numbers
  * are left as Latin text — staff dictate and copy them that way — and get
- * their Persian look from the Farsi-Digits build of Vazirmatn (`fonts/vazirmatn.css`).
+ * their Persian look from the app's Persian-digit Vazirmatn build (`fonts/vazirmatn.css`).
  */
 @Pipe({ name: 'faNum', standalone: true })
 export class PersianNumberPipe implements PipeTransform {

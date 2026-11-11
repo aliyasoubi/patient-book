@@ -1,52 +1,25 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
-import { MatFormFieldModule, type SubscriptSizing } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage, subscriptSizing } from '../field-errors';
+import { firstErrorMessage } from '../field-errors';
+import { PbIcon } from '../icon/icon';
+import { lineIconFor } from '../icon/line-icons';
 
-/** Multi-line counterpart to {@link PbTextField} — addresses, notes, history. */
+let nextId = 0;
+
+/**
+ * Multi-line counterpart to {@link PbTextField}: addresses, notes, history.
+ * The same label, box and message as every other field; the box grows to
+ * its `rows` and the icon sits on the first line.
+ */
 @Component({
   selector: 'pb-textarea-field',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
-  template: `
-    <mat-form-field appearance="outline" [subscriptSizing]="sizing()">
-      @if (label()) {
-        <mat-label>{{ label() }}</mat-label>
-      }
-      @if (prefixIcon()) {
-        <mat-icon matIconPrefix aria-hidden="true">{{ prefixIcon() }}</mat-icon>
-      }
-      <textarea
-        matInput
-        [formControl]="control()"
-        [rows]="rows()"
-        [placeholder]="readonly() ? '' : placeholder()"
-        [readonly]="readonly()"
-        [attr.maxlength]="maxlength()"
-      ></textarea>
-      @if (readonly()) {
-        <mat-icon matIconSuffix aria-hidden="true">lock</mat-icon>
-      }
-      @if (hint() && !errorText()) {
-        <mat-hint>{{ hint() }}</mat-hint>
-      }
-      @if (errorText(); as message) {
-        <mat-error>{{ message }}</mat-error>
-      }
-    </mat-form-field>
-  `,
-  styles: `
-    :host {
-      display: block;
-    }
-    mat-form-field {
-      width: 100%;
-    }
-  `,
+  imports: [ReactiveFormsModule, MatIconModule, PbIcon],
+  templateUrl: './textarea-field.html',
+  styleUrl: './textarea-field.scss',
 })
 export class PbTextareaField {
   private readonly i18n = inject(TranslateService);
@@ -58,17 +31,39 @@ export class PbTextareaField {
   readonly rows = input(3);
   readonly maxlength = input<number | null>(null);
   /**
-   * Shown at full contrast but not editable — for text a role may read and
+   * Shown at full contrast but not editable, for text a role may read and
    * not change. Unlike a disabled control, the value stays legible.
    */
   readonly readonly = input(false);
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
 
-  protected errorText(): string | null {
-    return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
+  protected readonly id = `pb-textarea-${nextId++}`;
+  protected readonly messageId = `${this.id}-message`;
+  protected readonly lineIcon = computed(() => lineIconFor(this.prefixIcon()));
+  private lastMessage = '';
+  private lastWasError = false;
+
+  protected showError(): boolean {
+    const control = this.control();
+    return control.touched && control.invalid && this.errorText() !== null;
   }
 
-  protected sizing(): SubscriptSizing {
-    return subscriptSizing(this.control(), this.hint());
+  protected message(): string | null {
+    return this.showError() ? this.errorText() : this.hint();
+  }
+
+  protected messageIsError(): boolean {
+    if (this.message()) this.lastWasError = this.showError();
+    return this.lastWasError;
+  }
+
+  protected messageText(): string {
+    const current = this.message();
+    if (current) this.lastMessage = current;
+    return this.lastMessage;
+  }
+
+  private errorText(): string | null {
+    return firstErrorMessage(this.control().errors, this.i18n, this.errorMessages());
   }
 }

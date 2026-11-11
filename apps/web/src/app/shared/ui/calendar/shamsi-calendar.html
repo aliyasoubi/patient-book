@@ -1,0 +1,148 @@
+<div class="cal">
+  <header class="cal__head">
+    <div class="cal__title">
+      @if (view() === 'years') {
+        <button type="button" class="cal__crumb is-active" (click)="openYears()">
+          {{ yearRange() }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="cal__crumb"
+          [class.is-active]="view() === 'months'"
+          (click)="openMonths()"
+          [attr.aria-label]="'calendar.chooseMonth' | translate"
+        >
+          {{ monthName() }}
+        </button>
+        <button
+          type="button"
+          class="cal__crumb"
+          (click)="openYears()"
+          [attr.aria-label]="'calendar.chooseYear' | translate"
+        >
+          {{ yearLabel() }}
+        </button>
+      }
+    </div>
+
+    @if (showToday()) {
+      <button type="button" class="cal__today" (click)="goToday()">
+        {{ 'calendar.today' | translate }}
+      </button>
+    }
+    <!-- Previous is on the right and next on the left: the calendar reads right to left. -->
+    <button
+      type="button"
+      class="cal__nav"
+      (click)="step(-1)"
+      [attr.aria-label]="'calendar.previous' | translate"
+    >
+      <pb-icon name="chevron-right" [size]="18" />
+    </button>
+    <button
+      type="button"
+      class="cal__nav"
+      (click)="step(1)"
+      [attr.aria-label]="'calendar.next' | translate"
+    >
+      <pb-icon name="chevron-left" [size]="18" />
+    </button>
+  </header>
+
+  @switch (view()) {
+    @case ('days') {
+      <div class="cal__weekdays" aria-hidden="true">
+        @for (w of weekdays(); track w.full) {
+          <span [class.is-holiday]="w.holiday" [attr.title]="w.full">{{ w.short }}</span>
+        }
+      </div>
+
+      <!-- Re-made on every month change, so the new month slides in from the side it comes from. -->
+      @for (t of [turn()]; track t) {
+        <div
+          #grid
+          class="cal__grid"
+          [class.from-next]="direction() === 1"
+          [class.from-prev]="direction() === -1"
+          role="grid"
+          tabindex="-1"
+          [attr.aria-label]="monthName() + ' ' + yearLabel()"
+          (keydown)="onKeydown($event)"
+        >
+          @for (week of rows(); track $index) {
+            <div class="cal__week" role="row">
+              @for (cell of week; track cell.key) {
+                <button
+                  type="button"
+                  role="gridcell"
+                  class="cal__day"
+                  [class.is-out]="!cell.inMonth"
+                  [class.is-today]="cell.today"
+                  [class.is-selected]="cell.selected"
+                  [class.is-holiday]="cell.holiday"
+                  [disabled]="cell.disabled"
+                  [attr.aria-selected]="cell.selected"
+                  [attr.aria-current]="cell.today ? 'date' : null"
+                  [attr.aria-label]="cell.label"
+                  [attr.data-cursor]="isCursor(cell)"
+                  [tabindex]="isCursor(cell) ? 0 : -1"
+                  (click)="choose(cell)"
+                >
+                  <span class="cal__num">{{ cell.day }}</span>
+                  @if (cell.mark) {
+                    <span class="cal__mark" [attr.data-tone]="cell.mark"></span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @case ('months') {
+      <div
+        class="cal__picks cal__zoom"
+        role="listbox"
+        [attr.aria-label]="'calendar.chooseMonth' | translate"
+      >
+        @for (m of months(); track m.index) {
+          <button
+            type="button"
+            role="option"
+            class="cal__pick"
+            [class.is-current]="m.current"
+            [class.is-selected]="m.selected"
+            [attr.aria-selected]="m.selected"
+            (click)="chooseMonth(m.index)"
+          >
+            {{ m.label }}
+          </button>
+        }
+      </div>
+    }
+
+    @case ('years') {
+      <div
+        class="cal__picks cal__zoom"
+        role="listbox"
+        [attr.aria-label]="'calendar.chooseYear' | translate"
+      >
+        @for (y of years(); track y.year) {
+          <button
+            type="button"
+            role="option"
+            class="cal__pick"
+            [class.is-current]="y.current"
+            [class.is-selected]="y.selected"
+            [attr.aria-selected]="y.selected"
+            (click)="chooseYear(y.year)"
+          >
+            {{ y.label }}
+          </button>
+        }
+      </div>
+    }
+  }
+</div>
