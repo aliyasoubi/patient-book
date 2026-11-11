@@ -53,78 +53,69 @@ describe('Dashboard', () => {
     const fixture = TestBed.createComponent(Dashboard);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    const followUpsPanel = () => el.querySelector('.dash__panel--follow-ups')?.textContent ?? '';
-    return { fixture, el, followUpsPanel };
+    const followUpsPanel = () => el.querySelector('.agenda')?.textContent ?? '';
+    /** A count's label and the list it opens, from the focus row or the queue. */
+    const counts = () =>
+      [...el.querySelectorAll<HTMLAnchorElement>('.focus__card, .queue__row')].map((a) => ({
+        label: a.querySelector('.focus__label, .queue__label')?.textContent?.trim(),
+        href: a.getAttribute('href'),
+        clear: a.classList.contains('is-clear'),
+      }));
+    return { fixture, el, followUpsPanel, counts };
   }
 
-  it('keeps the clock and follow-ups up when the totals fail', () => {
-    const { fixture, el, followUpsPanel } = render();
-    dashboard$.error(new Error('boom'));
+  it('keeps the follow-ups up when the counts fail, and the counts away', () => {
+    const { fixture, el, followUpsPanel, counts } = render();
+    dashboard$.error(new Error('down'));
     followUps$.next([]);
     fixture.detectChanges();
-
     expect(el.textContent).toContain('dashboard.loadFailed');
-    expect(el.querySelector('pb-datetime-card')).not.toBeNull();
     expect(followUpsPanel()).toContain('dashboard.followUpsEmpty');
-    expect(el.querySelector('pb-stat-tile')).toBeNull();
+    expect(counts()).toEqual([]);
   });
 
   it('never says "nobody to call" while the follow-ups are in flight', () => {
     const { fixture, followUpsPanel } = render();
-    dashboard$.next(summary());
-    fixture.detectChanges();
-
-    expect(followUpsPanel()).toContain('dashboard.followUpsLoading');
     expect(followUpsPanel()).not.toContain('dashboard.followUpsEmpty');
-
     followUps$.next([]);
     fixture.detectChanges();
     expect(followUpsPanel()).toContain('dashboard.followUpsEmpty');
   });
 
-  it('shows only work: late lists when there are any, then this week and recall', () => {
-    const { fixture, el } = render();
-    dashboard$.next(summary({ labsOverdue: 2, inactiveOverYear: 40 }));
+  it('puts what cannot wait first, then the routine queue', () => {
+    const { fixture, counts } = render();
+    dashboard$.next(summary({ callsToday: 3, labsOverdue: 1 }));
     fixture.detectChanges();
-
-    const tiles = [...el.querySelectorAll('pb-stat-tile')];
-    expect(tiles.map((t) => t.querySelector('.pb-stat-tile__label')?.textContent)).toEqual([
-      'tile.needsReview',
+    expect(counts().map((c) => c.label)).toEqual([
+      'tile.callsToday',
+      'tile.followUpsOverdue',
       'tile.labsOverdue',
+      'tile.needsReview',
+      'tile.labsToBook',
       'tile.followUpsThisWeek',
+      'tile.inventoryReorder',
+      'tile.inventoryExpiring',
       'tile.recall',
     ]);
-    // The recall tile opens exactly the list it counts.
-    expect(tiles[3].querySelector('a')?.getAttribute('href')).toBe('/patients?inactiveMonths=12');
   });
 
-  it('counts today’s calls only when there are any, and opens exactly that list', () => {
-    const { fixture, el } = render();
-    const callsTile = () =>
-      [...el.querySelectorAll('pb-stat-tile')].find(
-        (t) => t.querySelector('.pb-stat-tile__label')?.textContent === 'tile.callsToday',
-      );
-    dashboard$.next(summary({ callsToday: 0 }));
+  it('opens exactly the list each count counts', () => {
+    const { fixture, counts } = render();
+    dashboard$.next(summary({ callsToday: 2, labsToBook: 4, inactiveOverYear: 9 }));
     fixture.detectChanges();
-    expect(callsTile()).toBeUndefined();
-
-    dashboard$.next(summary({ callsToday: 4 }));
-    fixture.detectChanges();
-    expect(callsTile()?.querySelector('a')?.getAttribute('href')).toBe(
-      '/surgery?followUp=callsToday',
-    );
+    const href = (label: string) => counts().find((c) => c.label === label)?.href;
+    expect(href('tile.callsToday')).toBe('/surgery?followUp=callsToday');
+    expect(href('tile.labsToBook')).toBe('/labs?toBook=true');
+    expect(href('tile.recall')).toBe('/patients?inactiveMonths=12');
   });
 
-  it('lists the lab work still to book for the front desk, and opens exactly that list', () => {
-    const { fixture, el } = render();
-    dashboard$.next(summary({ labsToBook: 3 }));
+  it('says a list is clear rather than going quiet at zero', () => {
+    const { fixture, counts } = render();
+    dashboard$.next(summary({ needsReview: 0, labsOverdue: 5 }));
     fixture.detectChanges();
-
-    const tiles = [...el.querySelectorAll('pb-stat-tile')];
-    const toBook = tiles.find(
-      (t) => t.querySelector('.pb-stat-tile__label')?.textContent === 'tile.labsToBook',
-    );
-    expect(toBook?.querySelector('a')?.getAttribute('href')).toBe('/labs?toBook=true');
+    const byLabel = (label: string) => counts().find((c) => c.label === label);
+    expect(byLabel('tile.needsReview')?.clear).toBe(true);
+    expect(byLabel('tile.labsOverdue')?.clear).toBe(false);
   });
 
   it('turns the greeting over on a dashboard left open', () => {

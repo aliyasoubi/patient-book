@@ -9,7 +9,6 @@ import {
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { format as formatJalali } from 'date-fns-jalali';
 
@@ -20,7 +19,7 @@ import { LoadError } from '../../shared/components/load-error';
 import { formatPersianNumber, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { inventoryUnitLabel } from '../../shared/labels';
 import { toLatinDigits } from '../../shared/validators';
-import { PbButton, PbPage, PbPageHeader, PbTextField } from '../../shared/ui';
+import { PbButton, PbPage, PbPageHeader, PbTextField, ToastService } from '../../shared/ui';
 import { suggestedOrder } from './stock-sheets';
 
 /** One supplier's part of the list — its brand stands in for who sells it. */
@@ -62,7 +61,7 @@ function wholeOrBlank(control: AbstractControl<string>): ValidationErrors | null
 export class InventoryOrder {
   private readonly inventory = inject(InventoryService);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly i18n = inject(TranslateService);
 
   protected readonly unitLabel = inventoryUnitLabel;
@@ -144,16 +143,9 @@ export class InventoryOrder {
     }
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
-      this.snackBar.open(
-        this.i18n.instant('inventoryOrder.copied'),
-        this.i18n.instant('action.dismiss'),
-      );
+      this.toast.success(this.i18n.instant('inventoryOrder.copied'));
     } catch {
-      this.snackBar.open(
-        this.i18n.instant('inventoryOrder.copyFailed'),
-        this.i18n.instant('action.dismiss'),
-        { duration: 6000 },
-      );
+      this.toast.error(this.i18n.instant('inventoryOrder.copyFailed'));
     }
   }
 }

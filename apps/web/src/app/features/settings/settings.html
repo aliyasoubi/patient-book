@@ -1,68 +1,93 @@
 <pb-page width="form">
-  <pb-page-header [title]="'settings.title' | translate" />
+  <pb-page-header
+    [title]="'settings.title' | translate"
+    [subtitle]="'settings.subtitle' | translate"
+  />
 
-  <pb-surface
-    icon="contrast"
-    [title]="'settings.appearance' | translate"
-    [description]="'settings.appearanceHint' | translate"
-  >
-    <pb-segmented-button
-      [options]="themeOptions"
-      [value]="theme.mode()"
-      (valueChange)="setTheme($any($event))"
-      [ariaLabel]="'settings.displayMode' | translate"
-    />
-  </pb-surface>
-
-  <pb-surface icon="account_circle" [title]="'settings.account' | translate">
-    <div class="account-row">
-      <div>
-        <strong>{{ auth.user()?.fullName }}</strong>
-        <span class="account-row__meta">
-          {{ auth.user()?.username }} · {{ roleLabel(auth.role()) | translate }}
-        </span>
+  <div class="set">
+    <!-- ── Who is signed in, and the way to their account ───────────── -->
+    <section class="set__card" style="--_i: 0">
+      <div class="who-row">
+        <div class="who">
+          <span class="who__avatar" aria-hidden="true">{{ initial() }}</span>
+          <div>
+            <span class="who__name">{{ auth.user()?.fullName }}</span>
+            <span class="who__meta">
+              <span class="chip chip--latin">{{ auth.user()?.username }}</span>
+              <span class="chip chip--brand">{{ roleLabel(auth.role()) | translate }}</span>
+            </span>
+          </div>
+        </div>
+        <pb-button variant="stroked" link="/settings/account" icon="user-circle">
+          {{ 'settings.openAccount' | translate }}
+        </pb-button>
       </div>
-      <pb-button variant="stroked" link="/settings/account" icon="key">
-        {{ 'settings.changePassword' | translate }}
-      </pb-button>
-    </div>
-  </pb-surface>
+    </section>
 
-  <!-- The labs the case form offers. A lab no longer used is switched off,
-       not deleted: its old cases still name it. -->
-  <pb-surface
-    icon="science"
-    [title]="'settings.labs' | translate"
-    [description]="'settings.labsHint' | translate"
-  >
-    <ul class="labs">
-      @for (lab of labs(); track lab.id) {
-        <li class="labs__item" [class.labs__item--inactive]="!lab.isActive">
-          <span class="labs__name">{{ lab.name }}</span>
-          @if (auth.can('editLabs')) {
-            <pb-switch
-              [checked]="lab.isActive"
-              [disabled]="labBusy() === lab.id"
-              (checkedChange)="setLabActive(lab, $event)"
-            >
-              {{ 'settings.labActive' | translate }}
-            </pb-switch>
-            <pb-icon-button
-              icon="edit"
-              size="compact"
-              (click)="renameLab(lab)"
-              [ariaLabel]="'settings.renameLab' | translate"
-            />
-          } @else if (!lab.isActive) {
-            <span class="labs__inactive">{{ 'settings.labInactive' | translate }}</span>
-          }
-        </li>
-      }
-    </ul>
-    @if (auth.can('editLabs')) {
-      <pb-button variant="text" icon="add" (click)="addLab()">
-        {{ 'settings.addLab' | translate }}
-      </pb-button>
-    }
-  </pb-surface>
+    <!-- ── Appearance: three choices on a sliding pill ──────────────── -->
+    <section class="set__card" style="--_i: 1">
+      <header class="set__head">
+        <span class="set__tile"><pb-icon name="palette" /></span>
+        <div class="set__titles">
+          <h2 class="set__title">{{ 'settings.appearance' | translate }}</h2>
+          <p class="set__hint">{{ 'settings.appearanceHint' | translate }}</p>
+        </div>
+      </header>
+      <pb-switcher
+        kind="radio"
+        [stretch]="true"
+        [options]="modes"
+        [value]="theme.mode()"
+        (valueChange)="setTheme($any($event))"
+        [ariaLabel]="'settings.displayMode' | translate"
+      />
+    </section>
+
+    <!-- ── Labs: the ones the case form offers. A lab no longer used is
+         switched off, not deleted: its old cases still name it. ──────── -->
+    <section class="set__card" style="--_i: 2">
+      <header class="set__head">
+        <span class="set__tile"><pb-icon name="flask" /></span>
+        <div class="set__titles">
+          <h2 class="set__title">{{ 'settings.labs' | translate }}</h2>
+          <p class="set__hint">{{ 'settings.labsHint' | translate }}</p>
+        </div>
+        @if (auth.can('editLabs')) {
+          <pb-button variant="text" icon="plus" (click)="addLab()">
+            {{ 'settings.addLab' | translate }}
+          </pb-button>
+        }
+      </header>
+
+      <ul class="labs">
+        @for (lab of labs(); track lab.id) {
+          <li class="labs__row" [class.is-off]="!lab.isActive">
+            <span class="labs__dot" aria-hidden="true"></span>
+            <span class="labs__name">{{ lab.name }}</span>
+            @if (auth.can('editLabs')) {
+              <button
+                class="labs__edit"
+                type="button"
+                (click)="renameLab(lab)"
+                [attr.aria-label]="'settings.renameLab' | translate"
+              >
+                <pb-icon name="pencil" [size]="16" />
+              </button>
+              <pb-switch
+                [checked]="lab.isActive"
+                [disabled]="labBusy() === lab.id"
+                (checkedChange)="setLabActive(lab, $event)"
+              >
+                {{ 'settings.labActive' | translate }}
+              </pb-switch>
+            } @else if (!lab.isActive) {
+              <span class="chip">{{ 'settings.labInactive' | translate }}</span>
+            }
+          </li>
+        } @empty {
+          <li class="labs__empty">{{ 'settings.labsEmpty' | translate }}</li>
+        }
+      </ul>
+    </section>
+  </div>
 </pb-page>

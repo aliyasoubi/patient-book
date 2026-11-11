@@ -6,8 +6,6 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   catchError,
   debounceTime,
@@ -55,8 +53,9 @@ import {
   PbListToolbar,
   PbSearchField,
   PbSelectField,
-  PbStatTile,
+  PbIcon,
   PbStatusChip,
+  ToastService,
 } from '../../shared/ui';
 import type { FilterChipOption, SelectOption, StatTileTone, StatusTone } from '../../shared/ui';
 import { filterCounts, shelfBrands, shelfFlags, type ShelfFlags } from './inventory-overview';
@@ -178,7 +177,6 @@ function readUrlFilters(params: ParamMap): {
     ReactiveFormsModule,
     MatIconModule,
     MatMenuModule,
-    MatProgressBarModule,
     TranslatePipe,
     EmptyState,
     LoadError,
@@ -186,13 +184,13 @@ function readUrlFilters(params: ParamMap): {
     PersianNumberPipe,
     PbButton,
     PbFilterChips,
+    PbIcon,
     PbIconButton,
     PbPage,
     PbPageHeader,
     PbListToolbar,
     PbSearchField,
     PbSelectField,
-    PbStatTile,
     PbStatusChip,
   ],
   templateUrl: './inventory-list.html',
@@ -202,7 +200,7 @@ export class InventoryList {
   private readonly inventory = inject(InventoryService);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly i18n = inject(TranslateService);
   private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
@@ -447,8 +445,8 @@ export class InventoryList {
         this.replace(saved);
         // The wrong button or a mistyped number is put right from here, while
         // nothing else has touched the item.
-        this.snackBar
-          .open(
+        this.toast
+          .success(
             this.i18n.instant('inventoryMove.recorded', {
               kind: this.i18n.instant(inventoryMovementLabel(kind)),
               // «Supe Line 4x12», not «Supe Line»: a line's sizes share its name.
@@ -456,8 +454,7 @@ export class InventoryList {
               count: formatPersianCount(saved.quantity),
               unit: this.i18n.instant(inventoryUnitLabel(saved.unit)),
             }),
-            this.i18n.instant('inventory.undo'),
-            { duration: 10000 },
+            { action: this.i18n.instant('inventory.undo'), duration: 10000 },
           )
           .onAction()
           .subscribe(() => this.undo(saved));
@@ -476,9 +473,8 @@ export class InventoryList {
     this.inventory.undo(item.id, item.version).subscribe({
       next: (restored) => {
         this.replace(restored);
-        this.snackBar.open(
+        this.toast.success(
           this.i18n.instant('inventory.undone', { count: formatPersianCount(restored.quantity) }),
-          this.i18n.instant('action.dismiss'),
         );
       },
       error: (error: unknown) => this.writeFailed(error),
@@ -552,11 +548,7 @@ export class InventoryList {
           return;
         }
         if (result === 'conflict') {
-          this.snackBar.open(
-            this.i18n.instant('error.inventoryItemModified'),
-            this.i18n.instant('action.dismiss'),
-            { duration: 6000 },
-          );
+          this.toast.warning(this.i18n.instant('error.inventoryItemModified'));
           this.retry();
           return;
         }
@@ -565,16 +557,14 @@ export class InventoryList {
   }
 
   private changed(message: string): void {
-    this.snackBar.open(this.i18n.instant(message), this.i18n.instant('action.dismiss'));
+    this.toast.success(this.i18n.instant(message));
     this.retry();
   }
 
   /** Someone else archived, restored or re-added it first: say so, show the list as it is. */
   private writeFailed(error: unknown): void {
     if (error instanceof HttpErrorResponse && [404, 409].includes(error.status)) {
-      this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-        duration: 6000,
-      });
+      this.toast.error(this.errors.translate(error));
     }
     this.retry();
   }

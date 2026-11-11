@@ -6,7 +6,6 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, finalize, map, of, Subject, switchMap } from 'rxjs';
@@ -56,6 +55,7 @@ import {
   PbPage,
   PbStatusChip,
   PbSurface,
+  ToastService,
 } from '../../shared/ui';
 import type { DataIssue, Patient, RegistryRef } from './data/patient.model';
 import type {
@@ -101,7 +101,7 @@ export class PatientDetail {
   private readonly listContext = inject(PatientListContext);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly breakpoints = inject(BreakpointObserver);
   protected readonly auth = inject(AuthService);
   private readonly errors = inject(ApiErrorTranslator);
@@ -428,10 +428,7 @@ export class PatientDetail {
     this.service.resolveIssue(p.id, field).subscribe((patient) => {
       if (!this.stillShowing(patient.id)) return;
       this.patient.set(patient);
-      this.snackBar.open(
-        this.i18n.instant('patient.issueResolved'),
-        this.i18n.instant('action.dismiss'),
-      );
+      this.toast.success(this.i18n.instant('patient.issueResolved'));
     });
   }
 
@@ -451,10 +448,7 @@ export class PatientDetail {
         if (!confirmed) return;
         this.service.archive(p.id).subscribe(() => {
           if (!this.stillShowing(p.id)) return;
-          this.snackBar.open(
-            this.i18n.instant('archive.done'),
-            this.i18n.instant('action.dismiss'),
-          );
+          this.toast.success(this.i18n.instant('archive.done'));
           void this.router.navigate(['/patients']);
         });
       });
@@ -466,10 +460,7 @@ export class PatientDetail {
     this.service.restore(p.id).subscribe((patient) => {
       if (!this.stillShowing(patient.id)) return;
       this.patient.set(patient);
-      this.snackBar.open(
-        this.i18n.instant('archive.restored'),
-        this.i18n.instant('action.dismiss'),
-      );
+      this.toast.success(this.i18n.instant('archive.restored'));
     });
   }
 
@@ -489,14 +480,13 @@ export class PatientDetail {
       .pipe(finalize(() => this.openingCase.set(null)))
       .subscribe({
         next: (created) => {
-          this.snackBar.open(
+          this.toast.success(
             this.i18n.instant(
               kind === 'ortho'
                 ? 'patientDetail.orthoCaseCreated'
                 : 'patientDetail.implantCaseCreated',
               { number: created.registryNo },
             ),
-            this.i18n.instant('action.dismiss'),
           );
           if (this.stillShowing(p.id)) this.load(p.id);
         },
@@ -504,9 +494,7 @@ export class PatientDetail {
         // show it. Anything unexpected the interceptor has said already.
         error: (error: unknown) => {
           if (isHandledByCaller(error)) {
-            this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-              duration: 6000,
-            });
+            this.toast.error(this.errors.translate(error));
           }
           if (this.stillShowing(p.id)) this.load(p.id);
         },
@@ -537,7 +525,7 @@ export class PatientDetail {
       .afterClosed()
       .subscribe((saved) => {
         if (!saved) return;
-        this.snackBar.open(done(), this.i18n.instant('action.dismiss'));
+        this.toast.success(done());
         if (this.stillShowing(patientId)) this.load(patientId);
       });
   }

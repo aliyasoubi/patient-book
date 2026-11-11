@@ -1,27 +1,24 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { addMonths, format, startOfMonth } from 'date-fns-jalali';
 
 import { RegistryService } from '../../core/services/registry.service';
 import { PatientsService } from '../patients/data/patients.service';
 import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
-import {
-  ageBandLabel,
-  genderIcon,
-  genderLabel,
-  referralKindIcon,
-  treatmentColor,
-} from '../../shared/labels';
+import { ageBandLabel, genderLabel } from '../../shared/labels';
 import { LoadError } from '../../shared/components/load-error';
-import { PbPage, PbPageHeader, PbStatTile, PbSurface } from '../../shared/ui';
+import { PbCountUp, PbIcon, PbPage, PbPageHeader, PbSwitcher } from '../../shared/ui';
+import type { SwitcherOption } from '../../shared/ui';
+import type { LineIconName } from '../../shared/ui/icon/line-icons';
 import type { PracticeStats } from '../../core/models/common.model';
 import type { TreatmentType } from '../patients/data/patient.model';
 import { MaterialConsumptionReport } from './material-consumption';
+import { StatsCatalogue } from './stats-catalogue';
+import { StatsTrend } from './stats-trend';
 
 /** The page's tabs, as the `tab` query parameter names them; the first has none. */
 const TABS = ['practice', 'consumption'] as const;
@@ -29,7 +26,7 @@ const TABS = ['practice', 'consumption'] as const;
 interface TotalTile {
   label: string;
   value: number;
-  icon: string;
+  icon: LineIconName;
   link: string | null;
 }
 
@@ -42,17 +39,19 @@ interface TotalTile {
   selector: 'pb-stats',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     RouterLink,
     MatIconModule,
-    MatProgressBarModule,
-    MatTabsModule,
     MaterialConsumptionReport,
     PersianCountPipe,
     PersianNumberPipe,
+    PbCountUp,
+    PbIcon,
     PbPage,
     PbPageHeader,
-    PbStatTile,
-    PbSurface,
+    PbSwitcher,
+    StatsCatalogue,
+    StatsTrend,
     LoadError,
     TranslatePipe,
   ],
@@ -62,7 +61,6 @@ interface TotalTile {
 export class Stats {
   private readonly registry = inject(RegistryService);
   private readonly patients = inject(PatientsService);
-  private readonly i18n = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -73,28 +71,32 @@ export class Stats {
     Math.max(0, TABS.indexOf(this.query().get('tab') as (typeof TABS)[number])),
   );
 
-  protected readonly genderLabel = genderLabel;
-  protected readonly genderIcon = genderIcon;
-  protected readonly ageBandLabel = ageBandLabel;
-  protected readonly referralKindIcon = referralKindIcon;
+  protected readonly tabNames = TABS;
+  protected readonly tabs: readonly SwitcherOption[] = [
+    { value: 'practice', label: 'stats.practiceTab', icon: 'chart-bar' },
+    { value: 'consumption', label: 'stats.consumptionTab', icon: 'packages' },
+  ];
 
-  protected readonly color = treatmentColor;
+  protected readonly genderLabel = genderLabel;
+  protected readonly ageBandLabel = ageBandLabel;
 
   protected readonly loading = signal(true);
   protected readonly failed = signal(false);
   protected readonly stats = signal<PracticeStats | null>(null);
-  /** The treatment catalogue, shown whole beneath the figures. */
+  /** The treatment catalogue, folded beneath the figures. */
   protected readonly catalogue = signal<TreatmentType[]>([]);
+  /** The treatment list shows its six most common until asked for the rest. */
+  protected readonly allTreatments = signal(false);
 
   /** Each total opens its register; "seen lately" has no list of its own. */
   protected readonly tiles = computed<TotalTile[]>(() => {
     const t = this.stats()?.totals;
     if (!t) return [];
     return [
-      { label: 'tile.patients', value: t.patients, icon: 'groups', link: '/patients' },
-      { label: 'tile.recentlyActive', value: t.recentlyActive, icon: 'how_to_reg', link: null },
-      { label: 'tile.implants', value: t.implantCases, icon: 'deployed_code', link: '/implants' },
-      { label: 'tile.ortho', value: t.orthoCases, icon: 'straighten', link: '/ortho' },
+      { label: 'tile.patients', value: t.patients, icon: 'users', link: '/patients' },
+      { label: 'tile.recentlyActive', value: t.recentlyActive, icon: 'user-check', link: null },
+      { label: 'tile.implants', value: t.implantCases, icon: 'dental', link: '/implants' },
+      { label: 'tile.ortho', value: t.orthoCases, icon: 'ruler-2', link: '/ortho' },
     ];
   });
 
@@ -110,6 +112,9 @@ export class Stats {
     const max = Math.max(1, ...list.map((b) => b.count));
     return list.map((b) => ({ ...b, percent: Math.round((b.count / max) * 100) }));
   });
+
+  /** The largest age band, drawn in the accent. */
+  protected readonly ageMax = computed(() => Math.max(0, ...this.ageBars().map((b) => b.count)));
 
   /**
    * Women and men as two fixed columns — always both, in this order, even
@@ -147,22 +152,20 @@ export class Stats {
     const max = Math.max(1, ...months.map((m) => m.count));
     const w = 100;
     const h = 32;
-    const step = w / (months.length - 1);
+    // Each month at the middle of its twelfth, over its label below.
+    const step = w / months.length;
     const points = months.map((m, i) => ({
-      x: i * step,
+      x: (i + 0.5) * step,
       y: h - (m.count / max) * h,
     }));
     const line = points
       .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
       .join(' ');
-    const area = `${line} L${w},${h} L0,${h} Z`;
+    const first = points[0].x.toFixed(1);
+    const last = points[points.length - 1].x.toFixed(1);
+    const area = `${line} L${last},${h} L${first},${h} Z`;
     return { line, area, months, max, last: months[months.length - 1] };
   });
-
-  /** Screen-reader description of the sparkline. */
-  protected trendLabel(max: number): string {
-    return this.i18n.instant('stats.trendAria', { max });
-  }
 
   constructor() {
     this.load();

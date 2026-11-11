@@ -58,7 +58,7 @@ describe('Stats', () => {
     fixture.detectChanges();
 
     expect(el.textContent).toContain('stats.loadFailed');
-    expect(el.querySelector('pb-stat-tile')).toBeNull();
+    expect(el.querySelector('.kpi')).toBeNull();
   });
 
   it('links each total to its register, and leaves "seen lately" a plain figure', () => {
@@ -66,8 +66,8 @@ describe('Stats', () => {
     stats$.next(stats());
     fixture.detectChanges();
 
-    const links = [...el.querySelectorAll('pb-stat-tile')].map(
-      (t) => t.querySelector('a')?.getAttribute('href') ?? null,
+    const links = [...el.querySelectorAll('.kpi')].map((t) =>
+      t.tagName === 'A' ? t.getAttribute('href') : null,
     );
     expect(links).toEqual(['/patients', null, '/implants', '/ortho']);
   });
@@ -87,9 +87,10 @@ describe('Stats', () => {
 
     const points = el.querySelector('.trend__line')!.getAttribute('d')!.split(' ');
     expect(points).toHaveLength(12);
-    expect(points[0]).toBe('M0.0,16.0'); // 1404/08: 2 of a peak of 4.
+    // Each month sits mid-way across its twelfth.
+    expect(points[0]).toBe('M4.2,16.0'); // 1404/08: 2 of a peak of 4.
     expect(points[5]).toMatch(/,32\.0$/); // A month with none is a real zero.
-    expect(points[11]).toBe('L100.0,0.0'); // 1405/07, this month, the peak.
+    expect(points[11]).toBe('L95.8,0.0'); // 1405/07, this month, the peak.
   });
 
   it('says so when a panel has nothing to show', () => {
@@ -110,7 +111,7 @@ describe('Stats', () => {
     ]);
     fixture.detectChanges();
 
-    const names = [...el.querySelectorAll('.catalogue__name')].map((n) => n.textContent);
+    const names = [...el.querySelectorAll('.catalogue__name')].map((n) => n.textContent?.trim());
     expect(names).toEqual(['ایمپلنت', 'ارتودنسی']);
   });
 });

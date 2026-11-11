@@ -1,0 +1,21 @@
+<p class="trend__lead">
+  {{ 'stats.newThisMonth' | translate: { count: (trend().last.count | faCount) } }}
+  <span class="trend__max">{{
+    'stats.maximum' | translate: { count: (trend().max | faCount) }
+  }}</span>
+</p>
+<svg
+  class="trend__chart"
+  viewBox="0 0 100 32"
+  preserveAspectRatio="none"
+  role="img"
+  [attr.aria-label]="ariaLabel()"
+>
+  <path class="trend__area" [attr.d]="trend().area" />
+  <path class="trend__line" [attr.d]="trend().line" />
+</svg>
+<ol class="trend__months" aria-hidden="true">
+  @for (m of trend().months; track m.month) {
+    <li>{{ monthShort(m.month) | translate }}</li>
+  }
+</ol>

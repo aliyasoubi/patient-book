@@ -7,7 +7,9 @@
     "userAccount": "حساب کاربری",
     "logout": "خروج",
     "more": "بیشتر",
-    "openMenu": "باز کردن منو"
+    "openMenu": "باز کردن منو",
+    "expandMenu": "باز کردن منوی کناری",
+    "collapseMenu": "جمع کردن منوی کناری"
   },
   "route": {
     "login": "ورود — Dentixo",
@@ -43,23 +45,25 @@
     "pagination": "صفحه‌بندی",
     "searching": "در حال جستجو",
     "percentSign": "٪",
-    "retry": "تلاش دوباره"
+    "retry": "تلاش دوباره",
+    "loadFailedTitle": "اطلاعات بارگذاری نشد"
   },
   "auth": {
-    "heading": "ورود به سیستم",
-    "subheading": "برای ادامه، اطلاعات حساب کاربری خود را وارد کنید",
+    "heading": "ورود به حساب کاربری",
+    "subheading": "برای شروع، نام کاربری خود را وارد کنید.",
+    "welcome": "خوش آمدید",
+    "passwordStep": "کلمه عبور خود را وارد کنید.",
+    "continue": "ادامه",
+    "changeUser": "تغییر نام کاربری",
     "username": "نام کاربری",
-    "password": "رمز عبور",
+    "password": "کلمه عبور",
     "signIn": "ورود",
-    "signingIn": "در حال ورود…",
+    "signingIn": "در حال ورود",
     "confidentialNotice": "اطلاعات بیماران محرمانه است. پس از پایان کار از سیستم خارج شوید.",
     "capsLock": "کلید Caps Lock روشن است",
-    "homeLink": "Dentixo — صفحه اصلی",
-    "feature": {
-      "patients": "پرونده کامل و یکپارچه بیماران",
-      "scheduling": "زمان‌بندی نوبت‌ها و جراحی‌ها",
-      "treatments": "پیگیری روند درمان ایمپلنت و ارتودنسی"
-    }
+    "usernameHint": "همان نام کاربری‌ای که مدیر مطب برایتان ساخته است.",
+    "passwordHint": "کلمه عبور به حروف بزرگ و کوچک حساس است.",
+    "homeLink": "Dentixo — صفحه اصلی"
   },
   "nav": {
     "dashboard": "داشبورد",
@@ -70,19 +74,30 @@
     "settings": "تنظیمات",
     "labs": "لابراتوار",
     "inventory": "انبار",
-    "stats": "آمار"
+    "stats": "آمار",
+    "group": {
+      "work": "کار روزانه",
+      "files": "پرونده‌ها",
+      "practice": "مطب"
+    }
   },
   "dashboard": {
     "subtitle": "آنچه امروز به رسیدگی نیاز دارد",
+    "focusAria": "کارهایی که منتظر نمی‌مانند",
+    "openList": "باز کردن فهرست",
+    "allClear": "همه انجام شده",
+    "today": "امروز",
+    "tomorrow": "فردا",
+    "queueTitle": "صف کارها",
+    "followUpsEmptyHint": "در هفت روز آینده پیگیری‌ای سررسید نمی‌شود.",
     "newPatient": "بیمار جدید",
     "workAria": "کارهای پیش رو",
-    "followUpsTitle": "پیگیری‌های هفتهٔ پیش رو",
+    "followUpsTitle": "پیگیری‌های هفته‌ی پیش رو",
     "followUpsEmpty": "در هفته آینده پیگیری‌ای در انتظار نیست.",
     "followUpsFailed": "فهرست پیگیری‌ها بارگذاری نشد.",
     "followUpsLoading": "در حال بارگذاری پیگیری‌ها…",
     "viewList": "مشاهده فهرست",
     "dateTimeAria": "تاریخ و ساعت امروز",
-    "today": "امروز",
     "previousMonth": "ماه قبل",
     "nextMonth": "ماه بعد",
     "loadFailed": "اطلاعات داشبورد بارگذاری نشد."
@@ -110,7 +125,13 @@
     "referralsTitle": "نحوه آشنایی",
     "topTen": "۱۰ مورد برتر",
     "trendAria": "روند بیماران جدید، بیشینه {{max}} نفر در ماه",
-    "maximum": "بیشینه {{count}}"
+    "maximum": "بیشینه {{count}}",
+    "showAllTreatments": "همه {{count}} درمان",
+    "showFewer": "نمایش کمتر",
+    "catalogueShow": "نمایش فهرست",
+    "catalogueHide": "بستن فهرست",
+    "tabsAria": "بخش‌های آمار",
+    "newThisMonth": "{{count}} بیمار جدید در این ماه"
   },
   "consumption": {
     "title": "مصرف ماهانه مواد",
@@ -233,7 +254,7 @@
     "noDate": "بدون تاریخ",
     "implantRegistry": "پرونده ایمپلنت {{number}}",
     "patientFile": "پرونده {{fileNo}}",
-    "identityWarning": "شماره {{number}} در پرونده ایمپلنت به «{{name}}» تعلق دارد. پیش از جراحی هویت بیمار را تأیید کنید.",
+    "identityWarning": "شماره {{number}} در پرونده ایمپلنت به «{{name}}» تعلق دارد. پیش از جراحی هویت بیمار را تایید کنید.",
     "emptyTitle": "پیگیری‌ای در این فهرست نیست",
     "loadFailed": "پیگیری‌ها بارگذاری نشد.",
     "loadFailedStale": "فهرست به‌روزرسانی نشد؛ نتایج قبلی نمایش داده می‌شود."
@@ -250,7 +271,7 @@
     "unlink": "قطع اتصال از پرونده",
     "implantRegistryNo": "شماره پرونده ایمپلنت",
     "implantRegistryNoPlaceholder": "به پرونده هم‌شماره متصل می‌شود",
-    "implantRegistryNoNext": "شمارهٔ بعدی دفتر ایمپلنت",
+    "implantRegistryNoNext": "شماره‌ی بعدی دفتر ایمپلنت",
     "surgeryDate": "تاریخ جراحی",
     "surgeryDatePlaceholder": "۱۴۰۴/۰۶/۱۱",
     "teeth": "دندان‌ها",
@@ -580,7 +601,7 @@
     "patientSold": "پرونده {{fileNo}} — در کاردکس به نام این بیمار ثبت می‌شود",
     "patientImplantFile": "پرونده {{fileNo}} — در پرونده ایمپلنت بیمار هم ثبت می‌شود، با پیگیری پروتز سه ماه بعد",
     "unlinkPatient": "برداشتن بیمار",
-    "supplier": "تأمین‌کننده",
+    "supplier": "تامین‌کننده",
     "unitPrice": "قیمت هر {{unit}} (ریال)",
     "buyPrice": "قیمت خرید هر {{unit}} (ریال)",
     "priceTotal": "جمع: {{amount}} ریال",
@@ -622,7 +643,7 @@
   "inventoryOrder": {
     "title": "لیست سفارش",
     "subtitle": "کالاهایی که به حداقل موجودی رسیده‌اند، به تفکیک برند، با تعداد پیشنهادی.",
-    "copy": "کپی برای تأمین‌کننده",
+    "copy": "کپی برای تامین‌کننده",
     "copied": "لیست سفارش کپی شد.",
     "copyFailed": "کپی انجام نشد؛ دوباره تلاش کنید.",
     "empty": "چیزی برای سفارش نیست",
@@ -673,7 +694,7 @@
     "educationFilter": "تحصیلات",
     "inactiveSince": "بدون مراجعه از",
     "treatmentsFilter": "درمان‌ها",
-    "treatmentsFilterHint": "بیمارانی که همهٔ موارد انتخابی را داشته‌اند",
+    "treatmentsFilterHint": "بیمارانی که همه‌ی موارد انتخابی را داشته‌اند",
     "treatmentFilterAria": "فیلتر درمان",
     "needsReview": "نیازمند بازبینی داده",
     "hasMedicalHistory": "دارای سابقه بیماری",
@@ -780,13 +801,13 @@
     "specializedTab": "پرونده‌های تخصصی",
     "implantBook": "پرونده ایمپلنت",
     "implantRegistryNumber": "شماره {{number}}",
-    "implantNumberHint": "شماره پرونده ایمپلنت مستقل از شماره پرونده اصلی است و ممکن است عدد یکسانی با پروندهٔ بیمار دیگری داشته باشد.",
+    "implantNumberHint": "شماره پرونده ایمپلنت مستقل از شماره پرونده اصلی است و ممکن است عدد یکسانی با پرونده‌ی بیمار دیگری داشته باشد.",
     "noImplant": "پرونده ایمپلنتی برای این بیمار ثبت نشده است.",
     "addImplantCase": "پرونده ایمپلنت جدید",
     "implantCaseCreated": "پرونده ایمپلنت شماره {{number}} ثبت شد.",
     "orthoBook": "پرونده ارتودنسی",
     "orthoRegistryNumber": "شماره {{number}}",
-    "orthoNumberHint": "شماره پرونده ارتودنسی مستقل از شماره پرونده اصلی است و ممکن است عدد یکسانی با پروندهٔ بیمار دیگری داشته باشد.",
+    "orthoNumberHint": "شماره پرونده ارتودنسی مستقل از شماره پرونده اصلی است و ممکن است عدد یکسانی با پرونده‌ی بیمار دیگری داشته باشد.",
     "noOrtho": "پرونده ارتودنسی برای این بیمار ثبت نشده است.",
     "addOrthoCase": "پرونده ارتودنسی جدید",
     "orthoCaseCreated": "پرونده ارتودنسی شماره {{number}} ثبت شد.",
@@ -843,7 +864,7 @@
     "light": "روشن",
     "dark": "تیره",
     "account": "حساب کاربری",
-    "changePassword": "تغییر رمز عبور",
+    "changePassword": "تغییر کلمه عبور",
     "labs": "لابراتوارها",
     "labsHint": "لابراتوارهایی که در فرم ارسال پیشنهاد می‌شوند. لابراتوار غیرفعال از کارهای قبلی حذف نمی‌شود.",
     "labActive": "فعال",
@@ -852,25 +873,39 @@
     "renameLab": "تغییر نام لابراتوار",
     "labName": "نام لابراتوار",
     "saveLab": "ذخیره",
-    "labSaved": "لابراتوار ذخیره شد."
+    "labSaved": "لابراتوار ذخیره شد.",
+    "subtitle": "ظاهر برنامه، حساب شما و لابراتوارهای مطب",
+    "accountHint": "نام کاربری، نقش و کلمه عبور شما",
+    "openAccount": "مدیریت حساب",
+    "labsEmpty": "هنوز لابراتواری ثبت نشده است."
   },
   "account": {
     "title": "حساب کاربری",
-    "temporaryPasswordRequired": "برای ادامه کار و دسترسی به پرونده‌ها، ابتدا رمز عبور موقت خود را تغییر دهید.",
-    "changePassword": "تغییر رمز عبور",
-    "sessionsWarning": "پس از تغییر رمز، همهٔ نشست‌های فعال روی سایر دستگاه‌ها بسته می‌شود و باید دوباره وارد شوید.",
-    "currentPassword": "رمز عبور فعلی",
-    "newPassword": "رمز عبور جدید",
+    "temporaryPasswordRequired": "برای ادامه کار و دسترسی به پرونده‌ها، ابتدا کلمه عبور موقت خود را تغییر دهید.",
+    "changePassword": "تغییر کلمه عبور",
+    "sessionsWarning": "پس از تغییر کلمه عبور، همه‌ی نشست‌های فعال روی سایر دستگاه‌ها بسته می‌شود و باید دوباره وارد شوید.",
+    "currentPassword": "کلمه عبور فعلی",
+    "newPassword": "کلمه عبور جدید",
     "newPasswordHint": "حداقل ۱۰ کاراکتر",
-    "confirmPassword": "تکرار رمز عبور جدید",
+    "confirmPassword": "تکرار کلمه عبور جدید",
     "savingLabel": "در حال ذخیره…",
-    "currentPasswordWrong": "رمز عبور فعلی نادرست است",
-    "passwordChanged": "رمز عبور تغییر کرد. برای امنیت، از همه دستگاه‌ها خارج شدید."
+    "currentPasswordWrong": "کلمه عبور فعلی نادرست است",
+    "passwordChanged": "کلمه عبور تغییر کرد. برای امنیت، از همه دستگاه‌ها خارج شدید.",
+    "gateTitle": "یک کلمه عبور تازه بسازید",
+    "ruleLength": "دست‌کم 10 نویسه",
+    "ruleDifferent": "با کلمه عبور فعلی فرق داشته باشد",
+    "ruleMatch": "تکرار آن یکسان باشد",
+    "ruleMet": "رعایت شده",
+    "ruleUnmet": "هنوز رعایت نشده",
+    "subtitle": "اطلاعات ورود و امنیت حساب شما",
+    "username": "نام کاربری",
+    "role": "نقش",
+    "securityTitle": "امنیت"
   },
   "globalSearch": {
     "placeholder": "جستجوی نام، شماره پرونده، موبایل یا کد ملی…",
     "aria": "جستجوی بیمار",
-    "openTooltip": "جستجوی بیمار (Ctrl+K)",
+    "openTooltip": "جستجوی بیمار (Ctrl+Space)",
     "empty": "بیماری با این مشخصات پیدا نشد",
     "failed": "جستجو انجام نشد؛ برای جستجو در فهرست بیماران Enter را بزنید.",
     "recent": "بیماران اخیر",
@@ -880,6 +915,33 @@
       "mobile": "مطابق موبایل"
     }
   },
+  "keys": {
+    "ctrlSpace": "Ctrl Space",
+    "esc": "Esc"
+  },
+  "calendar": {
+    "today": "امروز",
+    "previous": "قبلی",
+    "next": "بعدی",
+    "chooseMonth": "انتخاب ماه",
+    "chooseYear": "انتخاب سال",
+    "open": "باز کردن تقویم",
+    "clear": "پاک کردن",
+    "placeholder": "مثلا 1405/08/20",
+    "title": "تقویم"
+  },
+  "spotlight": {
+    "patients": "بیماران",
+    "pages": "رفتن به",
+    "actions": "کارهای سریع",
+    "newPatient": "بیمار جدید",
+    "newFollowUp": "پیگیری جدید",
+    "newLabCase": "کار لابراتوار جدید",
+    "searchAll": "جست‌وجوی «{{q}}» در همه‌ی بیماران",
+    "hintMove": "جابه‌جایی",
+    "hintOpen": "باز کردن",
+    "hintClose": "بستن"
+  },
   "filters": {
     "changeThem": "فیلترها را تغییر دهید."
   },
@@ -888,11 +950,14 @@
     "rows": "{{count}} ردیف",
     "items": "{{count}} قلم"
   },
+  "toast": {
+    "region": "اعلان‌ها"
+  },
   "action": {
     "dismiss": "بستن",
     "callPerson": "تماس با {{name}}",
     "cancel": "انصراف",
-    "confirm": "تأیید",
+    "confirm": "تایید",
     "clearSearch": "پاک کردن جستجو",
     "showPassword": "نمایش رمز",
     "hidePassword": "پنهان کردن رمز"
@@ -944,7 +1009,7 @@
     "zimmer": "زیمر",
     "dentium": "دنتیوم",
     "straumann": "اشترومن",
-    "neobiotech": "نئوبایوتک",
+    "neobiotech": "نیوبایوتک",
     "sky": "اسکای",
     "megagen": "مگاژن",
     "speed": "اسپید",
@@ -1028,12 +1093,12 @@
   },
   "error": {
     "network": "ارتباط با سرور برقرار نشد. اتصال شبکه را بررسی کنید.",
-    "invalidCredentials": "نام کاربری یا رمز عبور نادرست است.",
+    "invalidCredentials": "نام کاربری یا کلمه عبور نادرست است.",
     "accountDisabled": "این حساب کاربری غیرفعال شده است.",
     "sessionExpired": "نشست شما منقضی شده است. دوباره وارد شوید.",
     "sessionRevoked": "نشست شما باطل شده است. دوباره وارد شوید.",
-    "passwordChangeRequired": "پیش از دسترسی به پرونده‌ها باید رمز عبور اولیه را تغییر دهید.",
-    "currentPasswordWrong": "رمز عبور فعلی نادرست است.",
+    "passwordChangeRequired": "پیش از دسترسی به پرونده‌ها باید کلمه عبور اولیه را تغییر دهید.",
+    "currentPasswordWrong": "کلمه عبور فعلی نادرست است.",
     "usernameTaken": "این نام کاربری قبلاً ثبت شده است.",
     "cannotDisableSelf": "نمی‌توانید حساب خودتان را غیرفعال کنید.",
     "cannotDemoteSelf": "نمی‌توانید نقش مدیریتی خودتان را تغییر دهید.",
@@ -1061,7 +1126,7 @@
     "dateUnknownFormat": "قالب تاریخ شناخته نشد.",
     "dateNonNumeric": "تاریخ باید فقط شامل رقم باشد.",
     "dateAmbiguousYear": "سال تاریخ مبهم است؛ آن را کامل بنویسید.",
-    "dateYearOutOfRange": "سال {{year}} خارج از محدودهٔ تقویم شمسی است.",
+    "dateYearOutOfRange": "سال {{year}} خارج از محدوده‌ی تقویم شمسی است.",
     "dateMonthInvalid": "ماه {{month}} معتبر نیست؛ ماه باید بین ۱ تا ۱۲ باشد.",
     "dateDayInvalid": "روز {{day}} معتبر نیست.",
     "dateNotOnCalendar": "این روز در تقویم شمسی وجود ندارد.",

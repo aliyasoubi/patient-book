@@ -1,0 +1,122 @@
+/* ── Catalogue: folded reference ───────────────────────────────────── */
+
+.catalogue {
+  display: block;
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+}
+
+.catalogue__title {
+  color: var(--pb-graphite);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.catalogue__hint {
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.catalogue__head {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  inline-size: 100%;
+  padding: var(--pb-space-4) var(--pb-space-5);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: -2px;
+  }
+}
+
+.catalogue__titles {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.catalogue__count {
+  padding: 2px var(--pb-space-2);
+  border-radius: 999px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.catalogue__chevron {
+  color: var(--pb-neutral-500);
+  transition: rotate 320ms var(--pb-ease-spring);
+
+  .catalogue.is-open & {
+    rotate: 180deg;
+  }
+}
+
+.catalogue__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 380ms var(--pb-ease-emphasized);
+
+  .catalogue.is-open & {
+    grid-template-rows: 1fr;
+  }
+}
+
+.catalogue__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--pb-space-2);
+  min-block-size: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0 var(--pb-space-5);
+  list-style: none;
+  opacity: 0;
+  transition:
+    opacity 240ms var(--pb-ease-standard),
+    padding-block-end 380ms var(--pb-ease-emphasized);
+
+  .catalogue.is-open & {
+    padding-block-end: var(--pb-space-5);
+    opacity: 1;
+  }
+}
+
+.catalogue__item {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+  padding: var(--pb-space-2) var(--pb-space-3);
+  border-radius: 10px;
+  background: var(--pb-neutral-100);
+  font-size: 0.8125rem;
+
+  .mat-icon {
+    inline-size: 18px;
+    block-size: 18px;
+    color: var(--pb-neutral-500);
+    font-size: 18px;
+    font-variation-settings: 'wght' 300;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalogue__chevron,
+  .catalogue__body,
+  .catalogue__list {
+    transition-duration: 0ms;
+  }
+}

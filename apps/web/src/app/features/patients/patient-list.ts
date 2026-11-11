@@ -68,6 +68,7 @@ import {
 import type { FilterChipOption, SelectOption } from '../../shared/ui';
 import type { Patient, ReferralSource, TreatmentType } from './data/patient.model';
 import type { EducationLevel, Gender } from '../../core/models/common.model';
+import { PhonePipe } from '../../shared/pipes/phone.pipe';
 
 /**
  * File number, newest first — matches the registry and surgery lists'
@@ -216,6 +217,7 @@ function sameFilters(a: Filters, b: Filters): boolean {
   selector: 'pb-patient-list',
   standalone: true,
   imports: [
+    PhonePipe,
     ReactiveFormsModule,
     RouterLink,
     MatTableModule,

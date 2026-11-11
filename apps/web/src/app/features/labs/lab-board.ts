@@ -16,7 +16,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   catchError,
@@ -54,6 +53,7 @@ import {
   PbSegmentedButton,
   PbSelectField,
   PbSurface,
+  ToastService,
 } from '../../shared/ui';
 import type { FilterChipOption, SegmentOption, SelectOption } from '../../shared/ui';
 import { LabCaseCard } from './lab-case-card';
@@ -185,7 +185,7 @@ export class LabBoard {
    */
   private readonly params = this.route.snapshot.queryParamMap;
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly i18n = inject(TranslateService);
   private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
@@ -480,11 +480,9 @@ export class LabBoard {
     this.labs.setPartsReturned(c.id, true).subscribe({
       next: () => {
         this.busy.set(null);
-        const ref = this.snackBar.open(
-          this.i18n.instant('labs.partsReturnedDone'),
-          this.i18n.instant('labs.undo'),
-          { duration: 8000 },
-        );
+        const ref = this.toast.success(this.i18n.instant('labs.partsReturnedDone'), {
+          action: this.i18n.instant('labs.undo'),
+        });
         ref.onAction().subscribe(() =>
           this.labs.setPartsReturned(c.id, false).subscribe({
             next: () => this.reload(),
@@ -502,7 +500,7 @@ export class LabBoard {
     this.labs.undo(c.id, c.version).subscribe({
       next: () => {
         this.busy.set(null);
-        this.snackBar.open(this.i18n.instant('labs.undone'), this.i18n.instant('action.dismiss'));
+        this.toast.success(this.i18n.instant('labs.undone'));
         this.reload();
       },
       error: (error: unknown) => this.writeFailed(error),
@@ -526,10 +524,7 @@ export class LabBoard {
         if (!confirmed) return;
         this.labs.archive(c.id).subscribe({
           next: () => {
-            this.snackBar.open(
-              this.i18n.instant('labs.archived'),
-              this.i18n.instant('action.dismiss'),
-            );
+            this.toast.success(this.i18n.instant('labs.archived'));
             this.reload();
           },
           error: (error: unknown) => this.writeFailed(error),
@@ -540,7 +535,7 @@ export class LabBoard {
   protected restore(c: LabCase): void {
     this.labs.restore(c.id).subscribe({
       next: () => {
-        this.snackBar.open(this.i18n.instant('labs.restored'), this.i18n.instant('action.dismiss'));
+        this.toast.success(this.i18n.instant('labs.restored'));
         if (this.archived().length === 1 && this.page() > 1) this.page.update((p) => p - 1);
         else this.reload();
       },
@@ -582,11 +577,9 @@ export class LabBoard {
     request.subscribe({
       next: (moved) => {
         this.busy.set(null);
-        const ref = this.snackBar.open(
-          this.i18n.instant(message, { name: c.recordedName }),
-          this.i18n.instant('labs.undo'),
-          { duration: 8000 },
-        );
+        const ref = this.toast.success(this.i18n.instant(message, { name: c.recordedName }), {
+          action: this.i18n.instant('labs.undo'),
+        });
         ref.onAction().subscribe(() => this.undo(moved));
         this.reload();
       },
@@ -601,9 +594,7 @@ export class LabBoard {
   private writeFailed(error: unknown): void {
     this.busy.set(null);
     if (error instanceof HttpErrorResponse && [404, 409].includes(error.status)) {
-      this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-        duration: 6000,
-      });
+      this.toast.error(this.errors.translate(error));
     }
     this.reload();
   }

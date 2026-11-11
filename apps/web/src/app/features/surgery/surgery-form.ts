@@ -14,7 +14,6 @@ import { FormBuilder, ReactiveFormsModule, Validators, type FormControl } from '
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
@@ -58,6 +57,7 @@ import {
   PbTextField,
   PbTextareaField,
   PbToothPicker,
+  ToastService,
 } from '../../shared/ui';
 import type { SelectOption, TextFieldOption } from '../../shared/ui';
 import { AuthService } from '../../core/services/auth.service';
@@ -139,7 +139,7 @@ export class SurgeryForm implements HasUnsavedChanges {
   private readonly route = inject(ActivatedRoute);
   /** The list this form was opened from, with its search and filters. */
   private readonly listReturn = inject(ListReturn);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly dateAdapter = inject<DateAdapter<Date>>(DateAdapter);
   private readonly errors = inject(ApiErrorTranslator);
   private readonly i18n = inject(TranslateService);
@@ -585,11 +585,10 @@ export class SurgeryForm implements HasUnsavedChanges {
     this.registry.saveSurgery(this.id() ?? null, payload).subscribe({
       next: () => {
         this.saving.set(false);
-        this.snackBar.open(
+        this.toast.success(
           this.isEdit()
             ? this.i18n.instant('surgeryForm.saved')
             : this.i18n.instant('surgeryForm.created'),
-          this.i18n.instant('action.dismiss'),
         );
         this.saved = true;
         void this.router.navigateByUrl(this.listReturn.urlFor('/surgery'));
@@ -630,13 +629,11 @@ export class SurgeryForm implements HasUnsavedChanges {
         const message = changed
           ? this.i18n.instant('surgeryForm.conflict', { fields: changed })
           : this.i18n.instant('surgeryForm.conflictNoFields');
-        this.snackBar.open(message, this.i18n.instant('action.dismiss'), { duration: 15000 });
+        this.toast.warning(message, { duration: 15000 });
       },
       // Most likely deleted meanwhile — a 404 the interceptor leaves to us.
       error: (error: unknown) =>
-        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-          duration: 15000,
-        }),
+        this.toast.error(this.errors.translate(error), { duration: 15000 }),
     });
   }
 
@@ -661,9 +658,7 @@ export class SurgeryForm implements HasUnsavedChanges {
       }
     }
 
-    this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-      duration: 6000,
-    });
+    this.toast.error(this.errors.translate(error));
   }
 
   protected cancel(): void {

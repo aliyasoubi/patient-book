@@ -1,54 +1,64 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { getDate, getDay, getMonth, getYear } from 'date-fns-jalali';
 
 import { RegistryService } from '../../core/services/registry.service';
 import { AuthService } from '../../core/services/auth.service';
-import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import { JALALI_MONTH_KEYS, JALALI_WEEKDAY_KEYS } from '../../core/jalali/jalali-date-adapter';
+import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { LoadError } from '../../shared/components/load-error';
 import {
   PbButton,
-  PbDatetimeCard,
-  PbPage,
-  PbPageHeader,
-  PbStatTile,
-  PbSurface,
+  PbCountUp,
+  PbIcon,
+  PbShamsiCalendar,
+  type CalendarMarkTone,
+  type LineIconName,
 } from '../../shared/ui';
-import type { StatTileTone } from '../../shared/ui';
 import type { DashboardSummary, FollowUpDue } from '../../core/models/common.model';
+import { DashboardAgenda } from './dashboard-agenda';
 
-interface WorkTile {
+/** How a count reads: `warn` is slipping, `caution` is routine work that is due. */
+export type WorkTone = 'brand' | 'warn' | 'caution' | 'neutral';
+
+/** One count of the front desk's work — always a list, and always opening exactly that list. */
+export interface WorkItem {
+  key: string;
   label: string;
   value: number;
-  icon: string;
+  icon: LineIconName;
   link: string;
   queryParams?: Record<string, string>;
-  tone: StatTileTone;
+  tone: WorkTone;
 }
 
 /**
- * The front desk's page: what needs doing today, each count a link to the
- * list it counts. How the practice looks — totals, growth, demographics,
- * referrals — is on the statistics page, not here.
+ * The front desk's start page: what needs doing, in order of urgency. No
+ * totals and no charts — those live on the statistics page — only work, and
+ * every count opens exactly the list it counts.
+ *
+ * - The focus row: today's calls, overdue follow-ups and late lab work, the
+ *   three things that cannot wait.
+ * - This week: the follow-ups coming due, as an agenda by day.
+ * - The queue: everything else that is routine but due, a row each; a queue
+ *   at zero says it is clear rather than going quiet.
+ *
+ * Counts and follow-ups load independently, so one failing never blanks the
+ * other — and "nobody to call" is only ever said once the list is in.
  */
 @Component({
   selector: 'pb-dashboard',
   standalone: true,
   imports: [
     RouterLink,
-    MatProgressBarModule,
-    PersianNumberPipe,
-    PbButton,
-    PbStatTile,
-    PbSurface,
-    PbPageHeader,
-    PbPage,
-    LoadError,
-    PbDatetimeCard,
-    MatIconModule,
     TranslatePipe,
+    LoadError,
+    DashboardAgenda,
+    PbButton,
+    PbCountUp,
+    PbIcon,
+    PbShamsiCalendar,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -62,24 +72,17 @@ export class Dashboard {
   protected readonly failed = signal(false);
   protected readonly summary = signal<DashboardSummary | null>(null);
   protected readonly followUps = signal<FollowUpDue[]>([]);
-  /**
-   * Its own flag, not `failed`: the two requests are independent, and "no
-   * follow-ups this week" must never be what a failed request looks like.
-   */
+  /** Its own flag: "no follow-ups this week" must never be what a failed request looks like. */
   protected readonly followUpsFailed = signal(false);
-  /** In flight, so the panel never shows "nobody to call" before it knows. */
+  /** In flight, so the agenda never says "nobody to call" before it knows. */
   protected readonly followUpsLoading = signal(true);
 
-  /**
-   * The current hour, re-read every minute so the greeting turns from morning
-   * to afternoon on a dashboard left open all day. Equal values do not
-   * propagate, so this only recomputes the greeting when the hour changes.
-   */
-  private readonly hour = signal(new Date().getHours());
+  /** Re-read every minute, so the greeting turns over on a dashboard left open all day. */
+  private readonly now = signal(new Date());
 
   protected readonly greeting = computed(() => {
     this.i18n.currentLang();
-    const hour = this.hour();
+    const hour = this.now().getHours();
     const name = this.auth.user()?.fullName ?? '';
     const part =
       hour < 12
@@ -90,122 +93,119 @@ export class Dashboard {
     return name ? this.i18n.instant('greeting.withName', { part, name }) : part;
   });
 
-  /**
-   * Ordered by urgency: what is late, then what is due this week, then the
-   * standing recall list. Every tile is a list to work through; the
-   * practice's totals live on the statistics page.
-   */
-  protected readonly tiles = computed<WorkTile[]>(() => {
+  /** «چهارشنبه، ۲۰ آبان ۱۴۰۵» */
+  protected readonly today = computed(() => {
+    this.i18n.currentLang();
+    return this.dayTitle(this.now());
+  });
+
+  /** The three things that cannot wait. */
+  protected readonly focus = computed((): WorkItem[] => {
     const s = this.summary();
     if (!s) return [];
-    const tiles: WorkTile[] = [
+    return [
       {
+        key: 'calls',
+        label: 'tile.callsToday',
+        value: s.callsToday,
+        icon: 'phone',
+        link: '/surgery',
+        queryParams: { followUp: 'callsToday' },
+        tone: 'brand',
+      },
+      {
+        key: 'overdue',
+        label: 'tile.followUpsOverdue',
+        value: s.followUpsOverdue,
+        icon: 'calendar-x',
+        link: '/surgery',
+        queryParams: { followUp: 'overdue' },
+        tone: 'warn',
+      },
+      {
+        key: 'labsOverdue',
+        label: 'tile.labsOverdue',
+        value: s.labsOverdue,
+        icon: 'flask',
+        link: '/labs',
+        queryParams: { overdue: 'true' },
+        tone: 'warn',
+      },
+    ];
+  });
+
+  /** Routine but due — each row a list to work through. */
+  protected readonly queue = computed((): WorkItem[] => {
+    const s = this.summary();
+    if (!s) return [];
+    return [
+      {
+        key: 'review',
         label: 'tile.needsReview',
         value: s.needsReview,
-        icon: 'error',
+        icon: 'alert-circle',
         link: '/patients',
         queryParams: { hasIssues: 'true' },
         tone: 'warn',
       },
-    ];
-    // A permanently-zero warning tile trains people to ignore warnings, so
-    // these appear only when there is actually something overdue.
-    if (s.followUpsOverdue > 0) {
-      tiles.push({
-        label: 'tile.followUpsOverdue',
-        value: s.followUpsOverdue,
-        icon: 'event_busy',
-        link: '/surgery',
-        // Exactly the rows the tile counts.
-        queryParams: { followUp: 'overdue' },
-        tone: 'warn',
-      });
-    }
-    // The front desk's lab list: work that is back and has no booking yet.
-    if (s.labsToBook > 0) {
-      tiles.push({
+      {
+        key: 'labsToBook',
         label: 'tile.labsToBook',
         value: s.labsToBook,
-        icon: 'event_busy',
+        icon: 'calendar-check',
         link: '/labs',
-        // The board, narrowed to exactly the cases the tile counts.
         queryParams: { toBook: 'true' },
-        // Routine: the work is back and waits on a phone call, not late.
         tone: 'caution',
-      });
-    }
-    if (s.labsOverdue > 0) {
-      tiles.push({
-        label: 'tile.labsOverdue',
-        value: s.labsOverdue,
-        icon: 'schedule',
-        link: '/labs',
-        // The board, narrowed to exactly the cases the tile counts.
-        queryParams: { overdue: 'true' },
-        tone: 'warn',
-      });
-    }
-    // The stock's two questions, counted exactly as the inventory list's
-    // own filters answer them. What to order opens the order list — the
-    // same items, with the quantity to ask the supplier for. Both are
-    // routine upkeep, so amber: red is kept for a patient slipping.
-    if (s.inventoryReorder > 0) {
-      tiles.push({
+      },
+      {
+        key: 'week',
+        label: 'tile.followUpsThisWeek',
+        value: s.followUpsThisWeek,
+        icon: 'calendar',
+        link: '/surgery',
+        queryParams: { followUp: 'week' },
+        tone: 'neutral',
+      },
+      {
+        key: 'reorder',
         label: 'tile.inventoryReorder',
         value: s.inventoryReorder,
-        icon: 'shopping_cart',
+        icon: 'packages',
         link: '/inventory/order',
         tone: 'caution',
-      });
-    }
-    if (s.inventoryExpiring > 0) {
-      tiles.push({
+      },
+      {
+        key: 'expiring',
         label: 'tile.inventoryExpiring',
         value: s.inventoryExpiring,
-        icon: 'hourglass_bottom',
+        icon: 'clock',
         link: '/inventory',
         queryParams: { filter: 'expiry' },
         tone: 'caution',
-      });
-    }
-    // Who to ring today — the follow-up list's «تماس امروز», calls put off to
-    // a later day left out. Shown only when there is someone to call.
-    if (s.callsToday > 0) {
-      tiles.push({
-        label: 'tile.callsToday',
-        value: s.callsToday,
-        icon: 'call',
-        link: '/surgery',
-        // Exactly the rows the tile counts.
-        queryParams: { followUp: 'callsToday' },
+      },
+      {
+        key: 'recall',
+        label: 'tile.recall',
+        value: s.inactiveOverYear,
+        icon: 'history',
+        link: '/patients',
+        queryParams: { inactiveMonths: '12' },
         tone: 'neutral',
-      });
+      },
+    ];
+  });
+
+  /** The days of the coming week that have a follow-up, dotted on the calendar. */
+  protected readonly followUpMarks = computed(() => {
+    const marks = new Map<string, CalendarMarkTone>();
+    for (const item of this.followUps()) {
+      if (item.followUpDate) marks.set(item.followUpDate, 'brand');
     }
-    // Who to call this week: the operational number a receptionist opens
-    // the dashboard for.
-    tiles.push({
-      label: 'tile.followUpsThisWeek',
-      value: s.followUpsThisWeek,
-      icon: 'event_repeat',
-      link: '/surgery',
-      queryParams: { followUp: 'week' },
-      tone: 'neutral',
-    });
-    // The recall list: patients with no visit on file in over a year. A
-    // standing list rather than an alarm, so it never turns red.
-    tiles.push({
-      label: 'tile.recall',
-      value: s.inactiveOverYear,
-      icon: 'history',
-      link: '/patients',
-      queryParams: { inactiveMonths: '12' },
-      tone: 'neutral',
-    });
-    return tiles;
+    return marks;
   });
 
   constructor() {
-    const id = setInterval(() => this.hour.set(new Date().getHours()), 60_000);
+    const id = setInterval(() => this.now.set(new Date()), 60_000);
     inject(DestroyRef).onDestroy(() => clearInterval(id));
     this.load();
   }
@@ -228,7 +228,7 @@ export class Dashboard {
     this.loadFollowUps();
   }
 
-  /** Also the panel's own retry, so a failed list can be re-fetched by itself. */
+  /** Also the agenda's own retry, so a failed list can be re-fetched by itself. */
   protected loadFollowUps(): void {
     this.followUpsFailed.set(false);
     this.followUpsLoading.set(true);
@@ -242,5 +242,11 @@ export class Dashboard {
         this.followUpsLoading.set(false);
       },
     });
+  }
+
+  private dayTitle(date: Date): string {
+    const weekday = this.i18n.instant(`day.${JALALI_WEEKDAY_KEYS[getDay(date)]}`);
+    const month = this.i18n.instant(JALALI_MONTH_KEYS[getMonth(date)]);
+    return `${weekday}، ${formatPersianNumber(getDate(date))} ${month} ${formatPersianNumber(getYear(date))}`;
   }
 }

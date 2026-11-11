@@ -1,0 +1,79 @@
+/* The chart reveals from its oldest month (local left, mirrored to the right). */
+@keyframes stats-draw {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+:host {
+  display: block;
+}
+
+.trend__lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pb-space-2);
+  margin: calc(-1 * var(--pb-space-2)) 0 var(--pb-space-4);
+  color: var(--pb-graphite);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.trend__max {
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Oldest month on the right, as the page reads. */
+.trend__chart {
+  display: block;
+  inline-size: 100%;
+  block-size: 128px;
+  overflow: visible;
+  scale: -1 1;
+  animation: stats-draw 1100ms var(--pb-ease-emphasized) backwards;
+}
+
+.trend__area {
+  fill: color-mix(in srgb, var(--pb-brand) 8%, transparent);
+}
+
+.trend__line {
+  fill: none;
+  stroke: var(--pb-brand);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.trend__months {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  margin: var(--pb-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--pb-neutral-500);
+  font-size: 0.6875rem;
+  text-align: center;
+
+  li {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  li:last-child {
+    color: var(--pb-graphite);
+    font-weight: 700;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trend__chart {
+    animation: none;
+  }
+}

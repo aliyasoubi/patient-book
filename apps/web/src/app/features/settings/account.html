@@ -1,73 +1,105 @@
-<pb-page width="narrow">
-  <pb-page-header
-    [title]="'account.title' | translate"
-    [backLabel]="auth.user()?.mustChangePassword ? null : ('common.back' | translate)"
-    (back)="back()"
-  />
+<!--
+  A temporary password: the gate over the blurred app, and nothing else —
+  the API serves no data until it is changed.
+-->
+@if (auth.user()?.mustChangePassword) {
+  <pb-password-gate />
+} @else {
+  <pb-page width="form">
+    <pb-page-header
+      [title]="'account.title' | translate"
+      [subtitle]="'account.subtitle' | translate"
+      [backLabel]="'common.back' | translate"
+      (back)="back()"
+    />
 
-  @if (auth.user()?.mustChangePassword) {
-    <pb-banner tone="warning" icon="lock_reset" role="alert">
-      {{ 'account.temporaryPasswordRequired' | translate }}
-    </pb-banner>
-  }
+    <div class="set">
+      <!-- ── The person ─────────────────────────────────────────────── -->
+      <section class="set__card" style="--_i: 0">
+        <div class="who">
+          <span class="who__avatar" aria-hidden="true">{{ initial() }}</span>
+          <span class="who__name">{{ auth.user()?.fullName }}</span>
+        </div>
+        <dl class="facts">
+          <div class="set__row">
+            <dt class="set__label">{{ 'account.username' | translate }}</dt>
+            <dd class="chip chip--latin">{{ auth.user()?.username }}</dd>
+          </div>
+          <div class="set__row">
+            <dt class="set__label">{{ 'account.role' | translate }}</dt>
+            <dd class="chip chip--brand">{{ roleLabel(auth.role()) | translate }}</dd>
+          </div>
+        </dl>
+      </section>
 
-  <pb-surface>
-    <div class="identity">
-      <pb-avatar size="large" tone="primary" [name]="auth.user()?.fullName ?? ''" />
-      <div>
-        <strong>{{ auth.user()?.fullName }}</strong>
-        <span class="identity__meta">
-          <span class="ltr-nums">{{ auth.user()?.username }}</span>
-          ·
-          {{ roleLabel(auth.role()) | translate }}
-        </span>
-      </div>
+      <!-- ── Security: a new password, its rules ticking off as typed ── -->
+      <section class="set__card" style="--_i: 1">
+        <header class="set__head">
+          <span class="set__tile"><pb-icon name="key" /></span>
+          <div class="set__titles">
+            <h2 class="set__title">{{ 'account.changePassword' | translate }}</h2>
+            <p class="set__hint">{{ 'account.sessionsWarning' | translate }}</p>
+          </div>
+        </header>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pw">
+          <pb-input
+            [control]="form.controls.currentPassword"
+            [label]="'account.currentPassword' | translate"
+            type="password"
+            prefixIcon="lock"
+            [ltr]="true"
+            nativeAutocomplete="current-password"
+            [showErrors]="tried()"
+            [errorMessages]="currentPasswordErrors()"
+          />
+          <pb-input
+            [control]="form.controls.newPassword"
+            [label]="'account.newPassword' | translate"
+            type="password"
+            prefixIcon="key"
+            [ltr]="true"
+            nativeAutocomplete="new-password"
+            [showErrors]="tried()"
+          />
+          <pb-input
+            [control]="form.controls.confirmPassword"
+            [label]="'account.confirmPassword' | translate"
+            type="password"
+            prefixIcon="key"
+            [ltr]="true"
+            nativeAutocomplete="new-password"
+            [showErrors]="tried()"
+          />
+
+          <ul class="rules">
+            @for (rule of rules(); track rule.key) {
+              <li class="rules__item" [class.is-met]="rule.met">
+                <span class="rules__tick" aria-hidden="true"
+                  ><pb-icon name="check" [size]="12" [stroke]="3"
+                /></span>
+                <span>{{ rule.key | translate }}</span>
+                <span class="visually-hidden">{{
+                  (rule.met ? 'account.ruleMet' : 'account.ruleUnmet') | translate
+                }}</span>
+              </li>
+            }
+          </ul>
+
+          <div class="pw__actions">
+            <pb-button
+              variant="flat"
+              type="submit"
+              icon="check"
+              [loading]="saving()"
+              [shrinkWhileLoading]="true"
+              [loadingText]="'account.savingLabel' | translate"
+            >
+              {{ 'account.changePassword' | translate }}
+            </pb-button>
+          </div>
+        </form>
+      </section>
     </div>
-  </pb-surface>
-
-  <pb-surface
-    icon="key"
-    [title]="'account.changePassword' | translate"
-    [description]="'account.sessionsWarning' | translate"
-  >
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pw-form">
-      <pb-text-field
-        [control]="form.controls.currentPassword"
-        [label]="'account.currentPassword' | translate"
-        type="password"
-        [ltr]="true"
-        nativeAutocomplete="current-password"
-        [errorMessages]="currentPasswordErrors()"
-      />
-
-      <pb-text-field
-        [control]="form.controls.newPassword"
-        [label]="'account.newPassword' | translate"
-        type="password"
-        [ltr]="true"
-        nativeAutocomplete="new-password"
-        [hint]="'account.newPasswordHint' | translate"
-      />
-
-      <pb-text-field
-        [control]="form.controls.confirmPassword"
-        [label]="'account.confirmPassword' | translate"
-        type="password"
-        [ltr]="true"
-        nativeAutocomplete="new-password"
-      />
-
-      <pb-form-actions [sticky]="false">
-        <pb-button
-          variant="flat"
-          type="submit"
-          icon="save"
-          [loading]="saving()"
-          [loadingText]="'account.savingLabel' | translate"
-        >
-          {{ 'account.changePassword' | translate }}
-        </pb-button>
-      </pb-form-actions>
-    </form>
-  </pb-surface>
-</pb-page>
+  </pb-page>
+}

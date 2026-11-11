@@ -1,137 +1,376 @@
-@use '../../../styles/type';
+@use '../../../styles/panel';
+
+/*
+ * The dashboard, drawn in the brand: near-white page, white panels lifted
+ * on soft shadows, orange only for today's calls and the main action.
+ *
+ * Motion as on the sign-in page: sections rise in a short stagger, counts
+ * count up, the agenda's days follow one another down, and every row lifts
+ * a little under the pointer. Loading is a flat placeholder in the shape of what
+ * is coming, pulsing softly — never a spinner or a jump.
+ */
+
+@keyframes dash-rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
 
 .dash {
-  // M3 canonical layout: a 12-column grid on expanded windows, 2 columns on
-  // medium, 1 on compact. The clock is a fixed-size card; the follow-up list
-  // takes the rest of the row, since names and dates read better wide.
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: var(--pb-space-4);
-
-    > * {
-      grid-column: span 4;
-      min-width: 0;
-    }
-
-    @media (max-width: 1199px) {
-      > * {
-        grid-column: span 6;
-      }
-    }
-
-    @media (max-width: 839px) {
-      > * {
-        grid-column: span 12;
-      }
-    }
-
-    // Through the grid, so it outweighs the `> *` default above.
-    @media (min-width: 1200px) {
-      > .dash__panel--follow-ups {
-        grid-column: span 8;
-      }
-    }
-  }
-
-  &__view-list {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--pb-space-1);
-    margin-top: var(--pb-space-3);
-    font-size: var(--mat-sys-body-small-size);
-    font-weight: 600;
-    color: var(--mat-sys-primary);
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    .material-symbols-rounded {
-      font-size: var(--pb-icon-xs);
-    }
-  }
-}
-
-/* ── Work tiles ────────────────────────────────────────────────────── */
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
-  gap: var(--pb-space-4);
+  container: dash / inline-size;
+  display: flex;
+  flex-direction: column;
+  /* The page's height, so the agenda can take what is left of it. */
+  min-block-size: 100%;
+  gap: var(--pb-space-3);
+  max-inline-size: 1440px;
+  margin-inline: auto;
+  padding: var(--pb-space-4) var(--pb-space-6);
 
   @media (max-width: 700px) {
-    gap: var(--pb-space-3);
+    padding: var(--pb-space-4);
   }
 }
 
-/* ── Panels ────────────────────────────────────────────────────────── */
-// pb-surface owns the bordered-panel look and its title+hint header; the
-// grid placement lives on `.dash__panel--*` above.
-.panel__empty {
-  @include type.supporting-text;
+.dash__rise {
+  animation: dash-rise 560ms var(--pb-ease-emphasized) backwards;
+  animation-delay: calc(60ms + var(--d, 0) * 70ms);
 }
 
-/* ── Upcoming surgeries ────────────────────────────────────────────── */
-.upcoming {
+/* ── Head ──────────────────────────────────────────────────────────── */
+
+.dash__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--pb-space-4);
+}
+
+.dash__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--pb-graphite);
+}
+
+.dash__date {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+  margin: var(--pb-space-1) 0 0;
+  font-size: 0.9375rem;
+  color: var(--pb-neutral-600);
+
+  pb-icon {
+    color: var(--pb-neutral-400);
+  }
+}
+
+.dash__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pb-space-2);
+}
+
+/* ── Focus cards ───────────────────────────────────────────────────── */
+
+.focus {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--pb-space-4);
+
+  @container dash (min-width: 820px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* The side column's panels: tighter, so the queue and the month share it. */
+.panel--compact {
+  padding: var(--pb-space-3) var(--pb-space-4);
+
+  .panel__head {
+    margin-block-end: var(--pb-space-2);
+  }
+}
+
+.focus__card {
+  --_tone: var(--pb-neutral-600);
+  --_tint: var(--pb-neutral-100);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'icon .'
+    'value value'
+    'label label'
+    'go go';
+  gap: var(--pb-space-1);
+  padding: var(--pb-space-4) var(--pb-space-5);
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  color: var(--pb-graphite);
+  text-decoration: none;
+  transition:
+    box-shadow 260ms var(--pb-ease-standard),
+    translate 320ms var(--pb-ease-spring),
+    border-color 260ms var(--pb-ease-standard);
+
+  &:hover {
+    translate: 0 -3px;
+    box-shadow: var(--pb-shadow-lg);
+  }
+
+  &[data-tone='brand'] {
+    --_tone: var(--pb-brand);
+    --_tint: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+  }
+
+  &[data-tone='warn'] {
+    --_tone: var(--mat-sys-error);
+    --_tint: color-mix(in srgb, var(--mat-sys-error) 10%, #fff);
+  }
+
+  /* Today's calls, when there are any, is the card the morning starts from. */
+  &[data-tone='brand']:not(.is-clear) {
+    border-color: transparent;
+    background: var(--pb-graphite);
+    color: #fff;
+
+    .focus__label,
+    .focus__go {
+      color: color-mix(in srgb, #fff 75%, transparent);
+    }
+
+    .focus__icon {
+      background: var(--pb-brand);
+      color: #fff;
+    }
+  }
+
+  &.is-clear {
+    --_tone: #2e9e5b;
+    --_tint: color-mix(in srgb, #2e9e5b 12%, #fff);
+  }
+}
+
+.focus__icon {
+  grid-area: icon;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 14px;
+  background: var(--_tint);
+  color: var(--_tone);
+}
+
+.focus__value {
+  grid-area: value;
+  margin-block-start: var(--pb-space-1);
+  font-size: 2.125rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.focus__label {
+  grid-area: label;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--pb-neutral-600);
+}
+
+.focus__go {
+  grid-area: go;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pb-space-1);
+  margin-block-start: var(--pb-space-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--_tone);
+
+  pb-icon {
+    transition: translate 300ms var(--pb-ease-spring);
+  }
+
+  .focus__card:hover & pb-icon {
+    translate: -4px 0;
+  }
+}
+
+/* ── Grid ──────────────────────────────────────────────────────────── */
+
+/*
+ * Wide: the work that cannot wait with the agenda under it, beside a column
+ * holding the queue and the month — the whole day on the first screen. The
+ * agenda takes the height left over (`contain: size` keeps a busy week from
+ * pushing the page longer; it scrolls inside its panel instead). Narrow,
+ * everything stacks at its own height.
+ */
+.dash__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--pb-space-3);
+  min-block-size: 0;
+
+  @container dash (min-width: 820px) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: stretch;
+  }
+}
+
+.dash__main,
+.dash__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-3);
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+pb-dashboard-agenda {
+  min-block-size: 280px;
+
+  @container dash (min-width: 820px) {
+    flex: 1 1 0;
+    contain: size;
+  }
+}
+
+@include panel.panels;
+
+.queue__chevron {
+  flex: 0 0 auto;
+  color: var(--pb-neutral-400);
+  transition: translate 300ms var(--pb-ease-spring);
+
+  :hover > & {
+    translate: -3px 0;
+  }
+}
+
+/* ── Queue ─────────────────────────────────────────────────────────── */
+
+.queue__rows {
   display: flex;
   flex-direction: column;
   gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
 
-  a {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-3);
-    padding: var(--pb-space-2) var(--pb-space-3);
-    border-radius: var(--mat-sys-corner-medium);
-    text-decoration: none;
-    color: inherit;
+.queue__row-wrap {
+  animation: dash-rise 420ms var(--pb-ease-emphasized) backwards;
+  animation-delay: calc(420ms + var(--d, 0) * 50ms);
+}
 
-    &:hover {
-      background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
+.queue__row {
+  --_tone: var(--pb-neutral-600);
+  --_tint: var(--pb-neutral-100);
+
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-1) var(--pb-space-2);
+  border-radius: 12px;
+  color: var(--pb-graphite);
+  text-decoration: none;
+  transition: background-color 160ms var(--pb-ease-standard);
+
+  &:hover {
+    background: var(--pb-neutral-50);
+  }
+
+  &[data-tone='warn'] {
+    --_tone: var(--mat-sys-error);
+    --_tint: color-mix(in srgb, var(--mat-sys-error) 10%, #fff);
+  }
+
+  &[data-tone='caution'] {
+    --_tone: var(--pb-on-warning-container);
+    --_tint: var(--pb-warning-container);
+  }
+
+  &.is-clear {
+    --_tone: var(--pb-neutral-400);
+    --_tint: var(--pb-neutral-100);
+
+    .queue__label {
+      color: var(--pb-neutral-600);
     }
   }
+}
 
-  &__icon {
-    flex: 0 0 auto;
-    font-size: var(--pb-icon-sm);
-    color: var(--mat-sys-on-surface-variant);
+.queue__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 11px;
+  background: var(--_tint);
+  color: var(--_tone);
+}
 
-    &--warn {
-      color: var(--mat-sys-error);
-    }
+.queue__label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.queue__count {
+  min-inline-size: 32px;
+  padding: 2px var(--pb-space-2);
+  border-radius: 999px;
+  background: var(--_tint);
+  color: var(--_tone);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.queue__clear {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #2e9e5b 14%, #fff);
+  color: #2e9e5b;
+}
+
+/* ── Skeletons: the shape of what is coming ───────────────────────── */
+
+@include panel.skeletons;
+
+.focus__card--skeleton {
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash__rise,
+  .queue__row-wrap,
+  .skeleton {
+    animation: none;
   }
 
-  &__body {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__name {
-    font: var(--mat-sys-body-medium);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__meta {
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__date {
-    flex: 0 0 auto;
-    font: var(--mat-sys-body-small);
-    font-weight: 600;
-    font-feature-settings: var(--pb-font-numeric);
-    color: var(--mat-sys-on-surface-variant);
+  .focus__card,
+  .queue__chevron {
+    transition-duration: 0ms;
   }
 }

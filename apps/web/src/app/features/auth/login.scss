@@ -1,405 +1,352 @@
-@use '../../../styles/type';
+@use '../../../styles/brand';
 
-$desktop: 900px;
+/*
+ * Sign-in, after the best of them (Linear, Vercel, Apple): one narrow
+ * column in the middle of a quiet page — the mark, a one-line heading, and
+ * one question at a time, the username and then the password.
+ *
+ * Spacing runs on the 4-step scale (`--pb-space-*`: 4 · 8 · 12 · 16 · 24 · 32).
+ *
+ * Motion, all of it soft:
+ * - the mark traces itself (`pb-logo [drawIn]`), then heading and form rise;
+ * - two hairline rings turn behind the column, a dot riding each;
+ * - the steps trade places sideways — forward toward the left (the reading
+ *   direction), back toward the right — while the old one fades;
+ * - a refused sign-in nudges the column once; its reason arrives as a toast.
+ */
+
+$column: 320px;
+$narrow: 600px;
+
+/* ── Keyframes ───────────────────────────────────────────────────── */
 
 @keyframes login-rise {
   from {
     opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    translate: 0 12px;
   }
 }
 
-@keyframes login-drift {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(6%, -8%, 0) scale(1.12);
-  }
-  100% {
-    transform: translate3d(-4%, 6%, 0) scale(0.94);
-  }
-}
-
-@keyframes login-float {
+@keyframes login-ring-in {
   from {
-    transform: rotate(14deg) translateY(0);
-  }
-  to {
-    transform: rotate(10deg) translateY(18px);
+    opacity: 0;
+    scale: 0.92;
   }
 }
+
+@keyframes login-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes login-shake {
+  15%,
+  55% {
+    translate: -8px 0;
+  }
+  35%,
+  75% {
+    translate: 4px 0;
+  }
+  90% {
+    translate: -4px 0;
+  }
+}
+
+/* ── Page ────────────────────────────────────────────────────────── */
+
+.login {
+  @include brand.light-screen;
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-block-size: 100dvh;
+  padding: 72px var(--pb-space-5) 96px;
+  overflow: hidden;
+}
+
+/* Staggered arrival: each element names its place with `--d`. */
+.login__rise {
+  animation: login-rise 700ms var(--pb-ease-emphasized) backwards;
+  animation-delay: calc(700ms + var(--d, 0) * 90ms);
+}
+
+/* ── Orbits ──────────────────────────────────────────────────────── */
+
+.login__orbits {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.login__orbit {
+  position: relative;
+  grid-area: 1 / 1;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--pb-graphite) 9%, transparent);
+  border-radius: 50%;
+  animation:
+    login-ring-in 1400ms var(--pb-ease-emphasized) backwards,
+    login-turn 60s linear infinite;
+
+  /* The rider: a dot on the ring's edge, carried round by the ring's turn. Physical sides, as it turns anyway. */
+  i {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    inline-size: 8px;
+    block-size: 8px;
+    margin: -4px 0 0 -4px;
+    border-radius: 50%;
+    background: var(--pb-brand);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--pb-brand) 14%, transparent);
+  }
+}
+
+.login__orbit--inner {
+  inline-size: min(520px, 118vw);
+}
+
+.login__orbit--outer {
+  inline-size: min(820px, 190vw);
+  animation-duration: 1400ms, 110s;
+  animation-direction: normal, reverse;
+  animation-delay: 150ms, 0s;
+
+  i {
+    inline-size: 4px;
+    block-size: 4px;
+    margin: -2px 0 0 -2px;
+    background: var(--pb-graphite);
+    box-shadow: none;
+    opacity: 0.5;
+  }
+}
+
+/* ── Column ──────────────────────────────────────────────────────── */
+
+.login__column {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  max-inline-size: $column;
+
+  &.is-shaking {
+    animation: login-shake 420ms var(--pb-ease-standard);
+  }
+}
+
+/* The mark on a white tile, lifted like an app icon. */
+.login__brand {
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+  inline-size: 72px;
+  block-size: 72px;
+  margin-block-end: var(--pb-space-6);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-md);
+  transition:
+    transform 450ms var(--pb-ease-spring),
+    box-shadow 300ms var(--pb-ease-standard);
+
+  &:hover {
+    transform: rotate(-6deg) scale(1.04);
+    box-shadow: var(--pb-shadow-lg);
+  }
+}
+
+.login__heads {
+  margin-block-end: var(--pb-space-6);
+  text-align: center;
+}
+
+.login__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.login__subtitle {
+  margin: var(--pb-space-1) 0 0;
+  font: var(--mat-sys-body-medium);
+  line-height: 1.8;
+  color: var(--pb-neutral-600);
+}
+
+/* ── Steps ───────────────────────────────────────────────────────── */
 
 /*
- * The hero is the front page's scene (public/landing/landing.css) — its
- * night background, colour fields, line grid and headline gradient — so
- * stepping from dentixo.ir to sign-in feels like one product. Colours are
- * the M3 *fixed* roles, which hold the same tone in light and dark mode;
- * the two hexes below are the landing's own and have no M3 role.
+ * The steps share one grid cell; an inactive one waits on the side it will
+ * come from. `minmax(0, 1fr)` holds the column at its width: an `auto` track
+ * would grow to the longest unbreakable thing inside — a long username in
+ * the chip — and drag every field wider with it.
  */
-.login {
-  --login-night: #060912;
-  --login-teal: #8fd6c9;
-  --login-ink: var(--mat-sys-primary-fixed);
-  --login-glass: color-mix(in srgb, white 7%, transparent);
-  --login-glass-edge: color-mix(in srgb, white 14%, transparent);
-
+.login__stack {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
-  min-height: 100dvh;
-  background: var(--mat-sys-surface-container-lowest);
+}
 
-  @media (min-width: $desktop) {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    grid-template-rows: 1fr;
-  }
+.login__step {
+  grid-area: 1 / 1;
+  transition:
+    opacity 280ms var(--pb-ease-standard),
+    translate 520ms var(--pb-ease-emphasized),
+    filter 280ms var(--pb-ease-standard);
 
-  /* ── Brand hero — a compact header on mobile, an inset panel on desktop ── */
-  &__hero {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    padding: var(--pb-space-5) var(--pb-space-5) calc(var(--pb-space-6) + 28px);
-    color: var(--login-ink);
-    background: var(--login-night);
-
-    @media (min-width: $desktop) {
-      margin: var(--pb-space-3);
-      margin-inline-end: 0;
-      padding: var(--pb-space-6) calc(var(--pb-space-6) + var(--pb-space-4));
-      border: 1px solid var(--login-glass-edge);
-      border-radius: var(--mat-sys-corner-extra-large);
-      box-shadow: 0 30px 60px -30px
-        color-mix(in srgb, var(--mat-sys-on-primary-fixed) 70%, transparent);
-    }
-  }
-
-  &__aurora {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-  }
-
-  &__blob {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(90px);
-    opacity: 0.5;
-    animation: login-drift 22s ease-in-out infinite alternate;
-
-    &--one {
-      inline-size: 55%;
-      aspect-ratio: 1;
-      inset-block-start: -15%;
-      inset-inline-start: -10%;
-      background: var(--mat-sys-on-primary-fixed-variant);
-    }
-
-    &--two {
-      inline-size: 45%;
-      aspect-ratio: 1;
-      inset-block-end: -10%;
-      inset-inline-end: -8%;
-      background: var(--mat-sys-on-tertiary-fixed-variant);
-      animation-duration: 26s;
-      animation-delay: -8s;
-    }
-
-    &--three {
-      inline-size: 35%;
-      aspect-ratio: 1;
-      inset-block-start: 40%;
-      inset-inline-start: 35%;
-      /* The landing's deep teal; no M3 role carries it. */
-      background: #12403a;
-      opacity: 0.45;
-      animation-duration: 30s;
-      animation-delay: -14s;
-    }
-  }
-
-  /* The landing's faint line grid, fading out from the headline. */
-  &__grid {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-image:
-      linear-gradient(color-mix(in srgb, white 4.5%, transparent) 1px, transparent 1px),
-      linear-gradient(90deg, color-mix(in srgb, white 4.5%, transparent) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse 80% 60% at 60% 70%, black, transparent 75%);
-  }
-
-  /* The mark again, oversized and faint — a texture, not a second logo. */
-  &__watermark {
-    position: absolute;
-    z-index: -1;
-    inset-block-start: -12%;
-    inset-inline-end: -16%;
-    color: color-mix(in srgb, white 6%, transparent);
+  &:not(.is-active) {
+    opacity: 0;
+    filter: blur(2px);
     pointer-events: none;
-    scale: 0.4;
-    transform-origin: top center;
-    animation: login-float 9s ease-in-out infinite alternate;
-
-    @media (min-width: $desktop) {
-      scale: 1;
-    }
   }
 
-  &__hero-content {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: var(--pb-space-5);
-    block-size: 100%;
-    max-inline-size: 520px;
-    animation: login-rise 700ms var(--pb-ease-emphasized) both;
+  /* Done with: gone right. Still to come: waiting left. (RTL reads right to left.) */
+  &[data-pos='past'] {
+    translate: 48px 0;
   }
 
-  /* Back to the front page — a plain link: the app router would send `/` to the dashboard. */
-  &__brand {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-3);
-    inline-size: fit-content;
-    border-radius: var(--mat-sys-corner-medium);
-    color: inherit;
-    text-decoration: none;
+  &[data-pos='next'] {
+    translate: -48px 0;
+  }
+}
 
-    &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary-fixed-dim);
-      outline-offset: 4px;
-    }
+.login__fields {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  gap: var(--pb-space-4);
+}
 
-    h1 {
-      margin: 0;
-      font: var(--mat-sys-title-large);
-      font-weight: 700;
-      letter-spacing: -0.2px;
-      color: white;
-    }
+/* ── Who is signing in ───────────────────────────────────────────── */
+
+.login__who {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  min-block-size: 56px;
+  padding: var(--pb-space-1) var(--pb-space-2) var(--pb-space-1) var(--pb-space-2);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+}
+
+.login__avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--pb-brand) 14%, #fff);
+  color: var(--pb-brand-strong);
+  /*
+   * Optically centred: Inter, trimmed to the capital's own height, so the box
+   * is the letter rather than a line box with descender room below it.
+   */
+  font-family: var(--pb-font-latin);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  text-box: trim-both cap alphabetic;
+}
+
+.login__who-name {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--pb-font-latin);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: end;
+}
+
+.login__change {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 40px;
+  block-size: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pb-neutral-600);
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--pb-ease-standard),
+    color 150ms var(--pb-ease-standard),
+    transform 300ms var(--pb-ease-spring);
+
+  &:hover {
+    background: var(--pb-neutral-200);
+    color: var(--pb-graphite);
+    transform: rotate(-12deg);
   }
 
-  &__mark {
-    display: inline-grid;
-    place-items: center;
-    inline-size: 44px;
-    block-size: 44px;
-    border: 1px solid var(--login-glass-edge);
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--login-glass);
-    backdrop-filter: blur(12px);
+  &:active {
+    transform: scale(0.9);
+  }
+}
 
-    pb-logo {
-      color: white;
-    }
+.login__cta {
+  margin-top: var(--pb-space-4);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+
+.login__notice {
+  position: absolute;
+  inset-block-end: calc(var(--pb-space-5) + env(safe-area-inset-bottom));
+  inset-inline: var(--pb-space-5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pb-space-2);
+  margin: 0;
+  font: var(--mat-sys-body-small);
+  line-height: 1.7;
+  text-align: center;
+  color: var(--pb-neutral-600);
+
+  pb-icon {
+    color: var(--pb-neutral-400);
   }
 
-  &__pitch {
-    @media (min-width: $desktop) {
-      margin-block-start: auto;
-    }
-  }
+  @media (max-width: $narrow) {
+    align-items: flex-start;
+    text-align: start;
 
-  &__tagline {
-    margin: 0;
-    font: var(--mat-sys-headline-small);
-    font-weight: 800;
-    line-height: 1.6;
-    background: linear-gradient(
-      100deg,
-      var(--mat-sys-primary-fixed),
-      var(--mat-sys-primary-fixed-dim) 30%,
-      var(--mat-sys-tertiary-fixed-dim) 60%,
-      var(--login-teal) 90%
-    );
-    background-clip: text;
-    color: transparent;
-    text-wrap: balance;
-
-    @media (min-width: $desktop) {
-      font-size: clamp(2rem, 2.6vw, 2.75rem);
-      line-height: 1.5;
-    }
-  }
-
-  &__features {
-    display: none;
-    gap: var(--pb-space-3);
-    margin: var(--pb-space-6) 0 0;
-    padding: 0;
-    list-style: none;
-
-    @media (min-width: $desktop) {
-      display: grid;
-    }
-
-    li {
-      display: flex;
-      align-items: center;
-      gap: var(--pb-space-3);
-      padding: var(--pb-space-3) var(--pb-space-4);
-      border: 1px solid var(--login-glass-edge);
-      border-radius: var(--mat-sys-corner-large);
-      background: var(--login-glass);
-      backdrop-filter: blur(14px) saturate(140%);
-      font: var(--mat-sys-title-small);
-      font-weight: 500;
-      animation: login-rise 600ms calc(250ms + var(--i, 0) * 90ms) var(--pb-ease-emphasized) both;
-      transition:
-        transform 250ms var(--pb-ease-standard),
-        background-color 250ms var(--pb-ease-standard);
-
-      &:hover {
-        transform: translateX(-4px);
-        background: color-mix(in srgb, white 11%, transparent);
-      }
-    }
-  }
-
-  &__feature-icon {
-    display: inline-grid;
-    place-items: center;
-    flex: 0 0 auto;
-    inline-size: 40px;
-    block-size: 40px;
-    border: 1px solid var(--login-glass-edge);
-    border-radius: var(--mat-sys-corner-medium);
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--mat-sys-primary-fixed-dim) 18%, transparent),
-      color-mix(in srgb, var(--mat-sys-tertiary-fixed-dim) 8%, transparent)
-    );
-    color: var(--mat-sys-primary-fixed-dim);
-
-    mat-icon {
-      font-size: var(--pb-icon-md);
-    }
-  }
-
-  /* ── Form — a sheet that overlaps the hero on mobile ─────────────── */
-  &__main {
-    position: relative;
-    display: grid;
-    place-items: start center;
-    margin-block-start: -28px;
-    padding: var(--pb-space-6) var(--pb-space-4)
-      calc(var(--pb-space-5) + env(safe-area-inset-bottom));
-    border-radius: var(--mat-sys-corner-extra-large) var(--mat-sys-corner-extra-large) 0 0;
-    background:
-      radial-gradient(
-        ellipse 60% 40% at 50% 0%,
-        color-mix(in srgb, var(--mat-sys-primary) 9%, transparent),
-        transparent
-      ),
-      var(--mat-sys-surface-container-lowest);
-
-    @media (min-width: $desktop) {
-      place-items: center;
-      margin: 0;
-      padding: var(--pb-space-6);
-      border-radius: 0;
-      background:
-        radial-gradient(
-          circle 420px at 50% 30%,
-          color-mix(in srgb, var(--mat-sys-primary) 8%, transparent),
-          transparent
-        ),
-        var(--mat-sys-surface-container-lowest);
-    }
-  }
-
-  &__panel {
-    inline-size: 100%;
-    max-inline-size: 380px;
-    animation: login-rise 700ms 120ms var(--pb-ease-emphasized) both;
-  }
-
-  &__progress {
-    position: fixed;
-    z-index: 10;
-    inset-block-start: 0;
-    inset-inline: 0;
-  }
-
-  // On mobile the hero right above already says "this is the door in".
-  &__badge {
-    display: none;
-    place-items: center;
-    inline-size: 52px;
-    block-size: 52px;
-    margin-block-end: var(--pb-space-4);
-    border-radius: var(--mat-sys-corner-large);
-    background: linear-gradient(
-      135deg,
-      var(--mat-sys-primary-container),
-      var(--mat-sys-tertiary-container)
-    );
-    color: var(--mat-sys-on-primary-container);
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, white 35%, transparent),
-      0 8px 20px -8px color-mix(in srgb, var(--mat-sys-primary) 45%, transparent);
-
-    @media (min-width: $desktop) {
-      display: inline-grid;
-    }
-
-    mat-icon {
-      font-size: var(--pb-icon-md);
-    }
-  }
-
-  &__title {
-    margin: 0 0 var(--pb-space-1);
-    font: var(--mat-sys-headline-small);
-    font-weight: 800;
-    letter-spacing: -0.3px;
-    color: var(--mat-sys-on-surface);
-  }
-
-  &__subtitle {
-    @include type.supporting-text;
-
-    margin-block-end: var(--pb-space-5);
-  }
-
-  &__error {
-    margin-bottom: var(--pb-space-4);
-  }
-
-  &__submit {
-    margin-top: var(--pb-space-2);
-  }
-
-  &__footer {
-    @include type.supporting-text(small);
-
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-2);
-    margin-top: var(--pb-space-5);
-    padding: var(--pb-space-2) var(--pb-space-3);
-    border: 1px solid var(--mat-sys-outline-variant);
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--mat-sys-surface-container-low);
-
-    mat-icon {
-      font-size: var(--pb-icon-xs);
-      inline-size: var(--pb-icon-xs);
-      block-size: var(--pb-icon-xs);
-      flex: 0 0 auto;
-      color: var(--mat-sys-primary);
+    pb-icon {
+      margin-block-start: var(--pb-space-1);
     }
   }
 }
 
-pb-text-field {
-  display: block;
-  margin-bottom: var(--pb-space-3);
+/* ── Reduced motion ──────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .login__rise,
+  .login__orbit,
+  .login__column.is-shaking {
+    animation: none;
+  }
+
+  .login__step,
+  .login__brand,
+  .login__change {
+    transition-duration: 0ms;
+  }
 }

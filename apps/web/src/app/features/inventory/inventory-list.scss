@@ -1,149 +1,287 @@
-@use '../../../styles/surface';
+/*
+ * The store: three filter tiles, the search, then a white card per shelf.
+ * A shelf's head is one calm row — icon, name, how many, only the flags that
+ * need a look — and its items open under it on their own height, so nothing
+ * ever appears at full size in one frame.
+ */
 
-/** The three questions about the stock, as tiles that are also the filters. */
+@keyframes stock-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@keyframes stock-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ── Tiles: the three questions about the stock, each a filter ─────── */
+
 .tiles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--pb-space-3);
 
-  /* Three narrow tiles side by side on a phone, so the shelves stay in view. */
-  @media (max-width: 640px) {
-    gap: var(--pb-space-2);
-  }
-
-  &__tile {
-    all: unset;
-    display: block;
-    box-sizing: border-box;
-    cursor: pointer;
-    // The tile's own card corner, so the ring drawn around it follows the card.
-    border-radius: var(--mat-sys-corner-large);
-
-    &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: 2px;
-    }
-
-    &:hover pb-stat-tile {
-      transform: translateY(-2px);
-    }
-
-    /* The list on screen: a ring, so it reads as chosen without changing the tile. */
-    &--on {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: 2px;
-    }
-  }
-
-  pb-stat-tile {
-    height: 100%;
-    transition: transform var(--pb-duration-short) var(--pb-ease-standard);
+  @media (min-width: 641px) {
+    gap: var(--pb-space-4);
   }
 }
 
-/** One category: its heading, then its items in one outlined panel. */
-.shelf {
+.tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'icon .'
+    'value value'
+    'label label';
+  gap: var(--pb-space-1);
+  padding: var(--pb-space-4);
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  color: var(--pb-graphite);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 220ms var(--pb-ease-standard),
+    box-shadow 260ms var(--pb-ease-standard),
+    translate 320ms var(--pb-ease-spring);
+
+  &:hover {
+    translate: 0 -2px;
+    box-shadow: var(--pb-shadow-md);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 2px;
+  }
+
+  /* The list on screen: an accent edge and a faint tint, not a new card. */
+  &.is-on {
+    border-color: var(--pb-brand);
+    background: color-mix(in srgb, var(--pb-brand) 4%, #fff);
+  }
+}
+
+.tile__icon {
+  grid-area: icon;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  margin-block-end: var(--pb-space-2);
+  border-radius: 11px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  transition:
+    background-color 220ms var(--pb-ease-standard),
+    color 220ms var(--pb-ease-standard);
+
+  .mat-icon {
+    inline-size: 20px;
+    block-size: 20px;
+    font-size: 20px;
+    font-variation-settings: 'wght' 300;
+  }
+
+  .is-due & {
+    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    color: var(--pb-brand-strong);
+  }
+}
+
+.tile__value {
+  grid-area: value;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.tile__label {
+  grid-area: label;
+  overflow: hidden;
+  color: var(--pb-neutral-600);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ── First load: the shape of the shelves ──────────────────────────── */
+
+.shelf-skeletons {
   display: flex;
   flex-direction: column;
-  gap: var(--pb-space-2);
+  gap: var(--pb-space-3);
+}
 
-  &__title {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-2);
-    margin: var(--pb-space-2) 0 0;
-    font: var(--mat-sys-title-small);
-    color: var(--mat-sys-on-surface-variant);
+.shelf-skeleton {
+  block-size: 64px;
+  border-radius: 20px;
+  background: var(--pb-neutral-200);
+  animation: stock-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── Shelves ───────────────────────────────────────────────────────── */
+
+.shelf {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  animation: stock-rise 420ms calc(min(var(--_i, 0), 8) * 40ms) var(--pb-ease-emphasized) backwards;
+}
+
+.shelf__title {
+  margin: 0;
+  font: inherit;
+}
+
+.shelf__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pb-space-2) var(--pb-space-3);
+  inline-size: 100%;
+  min-block-size: 64px;
+  padding: var(--pb-space-3) var(--pb-space-4);
+  border: 0;
+  background: transparent;
+  color: var(--pb-graphite);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 180ms var(--pb-ease-standard);
+
+  &:hover {
+    background: color-mix(in srgb, var(--pb-neutral-100) 60%, transparent);
   }
 
-  &__icon {
-    font-size: var(--pb-icon-sm);
-    color: var(--mat-sys-primary);
-  }
-
-  /* A closed shelf is one row: name, how many, and only what needs a look. */
-  &__toggle {
-    all: unset;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--pb-space-1) var(--pb-space-3);
-    width: 100%;
-    min-height: 52px;
-    padding: var(--pb-space-2) var(--pb-space-4);
-    cursor: pointer;
-    color: var(--mat-sys-on-surface);
-    @include surface.outlined;
-
-    &:hover {
-      border-color: var(--mat-sys-primary);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary);
-      outline-offset: 2px;
-    }
-
-    /* The app reads right to left: a closed shelf points left, along the reading direction. */
-    &[aria-expanded='false'] .shelf__chevron {
-      transform: rotate(90deg);
-    }
-  }
-
-  &__chevron {
-    transition: transform var(--pb-duration-short) var(--pb-ease-standard);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__name {
-    font: var(--mat-sys-title-medium);
-  }
-
-  &__count {
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__flags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--pb-space-2);
-    margin-inline-start: auto;
-
-    &:empty {
-      display: none;
-    }
-  }
-
-  &__items {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    overflow: hidden;
-    @include surface.outlined;
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: -2px;
+    border-radius: 20px;
   }
 }
+
+.shelf__head--static {
+  cursor: default;
+
+  &:hover {
+    background: transparent;
+  }
+}
+
+.shelf__icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: 11px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+
+  .mat-icon {
+    inline-size: 20px;
+    block-size: 20px;
+    font-size: 20px;
+    font-variation-settings: 'wght' 300;
+  }
+}
+
+.shelf__name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.shelf__count {
+  color: var(--pb-neutral-500);
+  font-size: 0.8125rem;
+}
+
+.shelf__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pb-space-2);
+  margin-inline-start: auto;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.shelf__chevron {
+  flex: 0 0 auto;
+  color: var(--pb-neutral-500);
+  transition: rotate 340ms var(--pb-ease-spring);
+
+  .shelf__flags:empty + & {
+    margin-inline-start: auto;
+  }
+
+  .is-open & {
+    rotate: 180deg;
+  }
+}
+
+/* Opens on its own height: 0fr → 1fr, the rows fading in as it goes. */
+.shelf__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 380ms var(--pb-ease-emphasized);
+
+  .is-open > & {
+    grid-template-rows: 1fr;
+  }
+}
+
+.shelf__inner {
+  min-block-size: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 260ms var(--pb-ease-standard);
+
+  .is-open & {
+    opacity: 1;
+  }
+}
+
+.shelf__brands {
+  display: block;
+  padding: 0 var(--pb-space-4) var(--pb-space-3);
+}
+
+.shelf__items {
+  margin: 0;
+  padding: 0;
+  border-block-start: 1px solid var(--pb-neutral-100);
+  list-style: none;
+}
+
+/* ── An item ───────────────────────────────────────────────────────── */
 
 .item {
   display: flex;
   align-items: center;
   gap: var(--pb-space-3) var(--pb-space-4);
+  min-block-size: 60px;
   padding: var(--pb-space-2) var(--pb-space-4);
-  min-height: 56px;
-  border-inline-start: 3px solid transparent;
+  transition: background-color 160ms var(--pb-ease-standard);
 
   & + & {
-    border-top: 1px solid var(--mat-sys-outline-variant);
+    border-block-start: 1px solid var(--pb-neutral-100);
   }
 
-  /* An empty or low shelf reads differently down the list, before any chip is read. */
-  &[data-stock='out'] {
-    border-inline-start-color: var(--mat-sys-error);
-  }
-
-  &[data-stock='low'] {
-    border-inline-start-color: var(--pb-on-warning-container);
+  &:hover {
+    background: color-mix(in srgb, var(--pb-neutral-100) 50%, transparent);
   }
 
   @media (max-width: 640px) {
@@ -151,113 +289,128 @@
     gap: var(--pb-space-2) var(--pb-space-3);
     padding-block: var(--pb-space-3);
   }
+}
 
-  &__what {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+.item__what {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
 
-    @media (max-width: 640px) {
-      flex-basis: 100%;
-    }
+  @media (max-width: 640px) {
+    flex-basis: 100%;
   }
+}
 
-  &__name {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 0 var(--pb-space-2);
+.item__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--pb-space-2);
 
-    strong {
-      font: var(--mat-sys-title-small);
-    }
-  }
-
-  &__brand {
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  /* The size is what tells one row of a line from the next: give it weight. */
-  &__spec {
-    font: var(--mat-sys-body-medium);
+  strong {
+    font-size: 0.9375rem;
     font-weight: 600;
-    font-feature-settings: var(--pb-font-numeric);
+  }
+}
+
+.item__brand {
+  color: var(--pb-neutral-500);
+  font-size: 0.8125rem;
+}
+
+/* The size is what tells one row of a line from the next: give it weight. */
+.item__spec {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-feature-settings: var(--pb-font-numeric);
+}
+
+.item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--pb-space-3);
+  min-inline-size: 0;
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+}
+
+.item__notes {
+  max-inline-size: 32ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.item__alerts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--pb-space-2);
+
+  &:empty {
+    display: none;
   }
 
-  &__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 var(--pb-space-3);
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
-    min-width: 0;
+  @media (max-width: 640px) {
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* A fixed-width column, so balances line up down the card. */
+.item__stock {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--pb-space-1);
+  min-inline-size: 72px;
+
+  @media (max-width: 640px) {
+    min-inline-size: 0;
+    margin-inline-end: auto;
+  }
+}
+
+.item__quantity {
+  font-size: 1.125rem;
+  font-weight: 800;
+  font-feature-settings: var(--pb-font-numeric);
+  transition: color 220ms var(--pb-ease-standard);
+
+  [data-stock='out'] & {
+    color: var(--mat-sys-error);
   }
 
-  &__notes {
-    max-width: 32ch;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  [data-stock='low'] & {
+    color: var(--pb-on-warning-container);
+  }
+}
+
+.item__unit {
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+}
+
+.item__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--pb-space-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shelf,
+  .shelf-skeleton {
+    animation: none;
   }
 
-  &__alerts {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--pb-space-2);
-
-    &:empty {
-      display: none;
-    }
-
-    /* A line of its own on a phone, so the balance and its buttons share one. */
-    @media (max-width: 640px) {
-      flex-basis: 100%;
-      justify-content: flex-start;
-    }
-  }
-
-  /** A fixed-width column, so balances line up down the panel. */
-  &__stock {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: baseline;
-    justify-content: flex-end;
-    gap: var(--pb-space-1);
-    min-width: 64px;
-
-    @media (max-width: 640px) {
-      min-width: 0;
-      margin-inline-end: auto;
-    }
-  }
-
-  &__quantity {
-    font: var(--mat-sys-title-medium);
-    font-weight: 700;
-    font-feature-settings: var(--pb-font-numeric);
-
-    [data-stock='out'] & {
-      color: var(--mat-sys-error);
-    }
-
-    [data-stock='low'] & {
-      color: var(--pb-on-warning-container);
-    }
-  }
-
-  &__unit {
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__actions {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-1);
+  .tile,
+  .shelf__body,
+  .shelf__inner,
+  .shelf__chevron {
+    transition-duration: 0ms;
   }
 }

@@ -4,7 +4,6 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   catchError,
   debounceTime,
@@ -37,6 +36,7 @@ import {
   PbPaginator,
   PbListToolbar,
   PbSearchField,
+  ToastService,
 } from '../../shared/ui';
 import type { FilterChipOption } from '../../shared/ui';
 import type { RegistryCase } from '../../core/models/common.model';
@@ -94,7 +94,7 @@ export class RegistryList {
   private readonly registry = inject(RegistryService);
   private readonly i18n = inject(TranslateService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
 
@@ -244,10 +244,7 @@ export class RegistryList {
       .afterClosed()
       .subscribe((saved) => {
         if (!saved) return;
-        this.snackBar.open(
-          this.i18n.instant('registryForm.saved'),
-          this.i18n.instant('action.dismiss'),
-        );
+        this.toast.success(this.i18n.instant('registryForm.saved'));
         this.retry();
       });
   }
@@ -269,10 +266,7 @@ export class RegistryList {
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this.registry.deleteCase(this.kind(), c.id).subscribe(() => {
-          this.snackBar.open(
-            this.i18n.instant('registryForm.deleted'),
-            this.i18n.instant('action.dismiss'),
-          );
+          this.toast.success(this.i18n.instant('registryForm.deleted'));
           this.retry();
         });
       });
@@ -281,19 +275,14 @@ export class RegistryList {
   protected restore(c: RegistryCase): void {
     this.registry.restoreCase(this.kind(), c.id).subscribe({
       next: () => {
-        this.snackBar.open(
-          this.i18n.instant('registryForm.restored'),
-          this.i18n.instant('action.dismiss'),
-        );
+        this.toast.success(this.i18n.instant('registryForm.restored'));
         this.retry();
       },
       // The patient has another implant file by now: one each. Anything
       // unexpected the interceptor has said already.
       error: (error: unknown) => {
         if (!isHandledByCaller(error)) return;
-        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-          duration: 6000,
-        });
+        this.toast.error(this.errors.translate(error));
       },
     });
   }

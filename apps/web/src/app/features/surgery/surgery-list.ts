@@ -7,7 +7,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import type { PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   catchError,
   debounceTime,
@@ -52,6 +51,7 @@ import {
   PbListToolbar,
   PbSearchField,
   PbStatusChip,
+  ToastService,
 } from '../../shared/ui';
 import type { FilterChipOption, ProgressStep, StatusTone } from '../../shared/ui';
 import type {
@@ -65,6 +65,7 @@ import { FollowUpContactDialog, type FollowUpContactDialogData } from './follow-
 import type { RecordContactInput } from '../../core/services/registry.service';
 import { daysUntil, followUpDistance, followUpProgress } from './follow-up-distance';
 import { placedImplantLine } from '../../shared/placed-implant';
+import { PhonePipe } from '../../shared/pipes/phone.pipe';
 
 /**
  * The questions staff ask of the list, most urgent first. Each is a
@@ -140,6 +141,7 @@ function readUrlFilters(params: ParamMap): UrlFilters {
   selector: 'pb-surgery-list',
   standalone: true,
   imports: [
+    PhonePipe,
     ReactiveFormsModule,
     MatProgressBarModule,
     EmptyState,
@@ -169,7 +171,7 @@ export class SurgeryList {
   private readonly listReturn = inject(ListReturn);
   private readonly i18n = inject(TranslateService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
   protected readonly abutmentLabel = abutmentLabel;
@@ -489,20 +491,13 @@ export class SurgeryList {
         this.registry.recordContact(item.id, result).subscribe({
           next: () => {
             this.updating.set(null);
-            this.snackBar.open(
-              this.i18n.instant('followUpContact.saved'),
-              this.i18n.instant('action.dismiss'),
-            );
+            this.toast.success(this.i18n.instant('followUpContact.saved'));
             this.retry();
           },
           error: (error: unknown) => {
             this.updating.set(null);
             if (isHandledByCaller(error)) {
-              this.snackBar.open(
-                this.errors.translate(error),
-                this.i18n.instant('action.dismiss'),
-                { duration: 6000 },
-              );
+              this.toast.error(this.errors.translate(error));
             }
             this.retry();
           },
@@ -549,11 +544,9 @@ export class SurgeryList {
     this.registry.saveSurgery(item.id, body).subscribe({
       next: (saved) => {
         this.updating.set(null);
-        const ref = this.snackBar.open(
-          this.i18n.instant('surgery.statusSaved'),
-          undoing ? this.i18n.instant('action.dismiss') : this.i18n.instant('surgery.undo'),
-          { duration: 8000 },
-        );
+        const ref = this.toast.success(this.i18n.instant('surgery.statusSaved'), {
+          action: undoing ? undefined : this.i18n.instant('surgery.undo'),
+        });
         if (!undoing) {
           ref.onAction().subscribe(() => {
             const back = previous === 'booked' && previousDay ? previousDay : null;
@@ -580,9 +573,7 @@ export class SurgeryList {
       error: (error: unknown) => {
         this.updating.set(null);
         if (isHandledByCaller(error)) {
-          this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-            duration: 6000,
-          });
+          this.toast.error(this.errors.translate(error));
         }
         this.retry();
       },
@@ -629,7 +620,7 @@ export class SurgeryList {
    * "nothing here".
    */
   private removed(message: string): void {
-    this.snackBar.open(this.i18n.instant(message), this.i18n.instant('action.dismiss'));
+    this.toast.success(this.i18n.instant(message));
     if (this.items().length === 1 && this.page() > 1) {
       this.page.update((p) => p - 1);
     } else {
@@ -644,9 +635,7 @@ export class SurgeryList {
    */
   private writeFailed(error: unknown): void {
     if (error instanceof HttpErrorResponse && [404, 409].includes(error.status)) {
-      this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-        duration: 6000,
-      });
+      this.toast.error(this.errors.translate(error));
     }
     this.retry();
   }

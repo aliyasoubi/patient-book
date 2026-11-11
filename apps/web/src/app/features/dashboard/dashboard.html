@@ -1,95 +1,135 @@
-<pb-page class="dash" width="wide">
-  <pb-page-header [title]="greeting()" [subtitle]="'dashboard.subtitle' | translate">
-    @if (auth.can('editPatients')) {
-      <pb-button link="/patients/new" icon="person_add">{{
-        'dashboard.newPatient' | translate
-      }}</pb-button>
-    }
-  </pb-page-header>
-
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
+<div class="dash">
+  <!-- ── Greeting and the day's actions ─────────────────────────── -->
+  <header class="dash__head dash__rise" style="--d: 0">
+    <div class="dash__hello">
+      <h1 class="dash__title">{{ greeting() }}</h1>
+      <p class="dash__date">
+        <pb-icon name="calendar" [size]="16" />
+        {{ today() }}
+      </p>
+    </div>
+    <div class="dash__actions">
+      @if (auth.can('editSurgery')) {
+        <pb-button variant="stroked" icon="calendar-check" link="/surgery/new">
+          {{ 'spotlight.newFollowUp' | translate }}
+        </pb-button>
+      }
+      @if (auth.can('editLabs')) {
+        <pb-button variant="stroked" icon="flask" link="/labs/new">
+          {{ 'spotlight.newLabCase' | translate }}
+        </pb-button>
+      }
+      @if (auth.can('editPatients')) {
+        <pb-button variant="flat" icon="user-plus" link="/patients/new" [raised]="true">
+          {{ 'dashboard.newPatient' | translate }}
+        </pb-button>
+      }
+    </div>
+  </header>
 
   @if (failed()) {
     <pb-load-error [message]="'dashboard.loadFailed' | translate" (retry)="load()" />
   }
 
-  @if (summary()) {
-    <!-- ── Work tiles ──────────────────────────────────────────── -->
-    <section
-      class="tiles"
-      animate.enter="pb-enter"
-      [attr.aria-label]="'dashboard.workAria' | translate"
-    >
-      @for (tile of tiles(); track tile.label) {
-        <pb-stat-tile
-          [label]="tile.label | translate"
-          [value]="tile.value"
-          [icon]="tile.icon"
-          [link]="tile.link"
-          [queryParams]="tile.queryParams ?? null"
-          [tone]="tile.tone"
-        />
-      }
-    </section>
-  }
+  <!--
+    Two columns on a wide screen: the work that cannot wait and this week's
+    agenda, beside the queue and the month — the whole day on the first
+    screen. The agenda takes what height is left and scrolls inside itself.
+  -->
+  <div class="dash__body">
+    <div class="dash__main">
+      <!-- ── Focus: what cannot wait ────────────────────────────────── -->
+      <section class="focus" [attr.aria-label]="'dashboard.focusAria' | translate">
+        @if (loading() && !summary()) {
+          @for (n of [0, 1, 2]; track n) {
+            <div class="focus__card focus__card--skeleton" aria-hidden="true">
+              <span class="skeleton skeleton--icon"></span>
+              <span class="skeleton skeleton--number"></span>
+              <span class="skeleton skeleton--text"></span>
+            </div>
+          }
+        }
+        @for (item of focus(); track item.key; let i = $index) {
+          <a
+            class="focus__card dash__rise"
+            [style.--d]="i + 1"
+            [attr.data-tone]="item.tone"
+            [class.is-clear]="!item.value"
+            [routerLink]="item.link"
+            [queryParams]="item.queryParams ?? null"
+          >
+            <span class="focus__icon"><pb-icon [name]="item.icon" [size]="22" /></span>
+            <span class="focus__value">
+              <pb-count-up [value]="item.value" [delay]="200 + i * 90" />
+            </span>
+            <span class="focus__label">{{ item.label | translate }}</span>
+            <span class="focus__go" aria-hidden="true">
+              @if (item.value) {
+                {{ 'dashboard.openList' | translate }}
+                <pb-icon name="arrow-left" [size]="16" />
+              } @else {
+                <pb-icon name="check" [size]="16" />
+                {{ 'dashboard.allClear' | translate }}
+              }
+            </span>
+          </a>
+        }
+      </section>
 
-  <!-- The clock and the follow-ups have their own data, so they stay up
-       while the counts are loading or have failed. -->
-  <div class="dash__grid">
-    <!-- ── Today: clock, date and this month ────────────────── -->
-    <pb-datetime-card />
+      <!-- ── This week, as an agenda ──────────────────────────────── -->
+      <pb-dashboard-agenda
+        class="dash__rise"
+        style="--d: 4"
+        [items]="followUps()"
+        [loading]="followUpsLoading()"
+        [failed]="followUpsFailed()"
+        (retry)="loadFollowUps()"
+      />
+    </div>
 
-    <!-- ── Follow-ups this week ───────────────────────────────
-         Who to call: the surgeries whose follow-up falls in the coming
-         seven days and has not happened yet, soonest first. -->
-    <pb-surface class="dash__panel--follow-ups" [title]="'dashboard.followUpsTitle' | translate">
-      @if (followUpsFailed()) {
-        <pb-load-error
-          [message]="'dashboard.followUpsFailed' | translate"
-          (retry)="loadFollowUps()"
-        />
-      } @else if (followUpsLoading()) {
-        <!-- Never the empty message while in flight: "nobody to call" must
-             only ever mean the list came back empty. -->
-        <p class="panel__empty" role="status">
-          {{ 'dashboard.followUpsLoading' | translate }}
-        </p>
-      } @else if (followUps().length) {
-        <ul class="upcoming">
-          @for (item of followUps(); track item.id) {
-            <li>
-              <a [routerLink]="['/surgery']" [queryParams]="{ q: item.recordedName }">
-                <mat-icon
-                  class="upcoming__icon"
-                  [class.upcoming__icon--warn]="item.hasNameMismatch"
-                  aria-hidden="true"
-                >
-                  {{ item.hasNameMismatch ? 'warning' : 'event_repeat' }}
-                </mat-icon>
-                <span class="upcoming__body">
-                  <span class="upcoming__name">{{ item.recordedName }}</span>
-                  @if (item.implantRegistryNo) {
-                    <span class="upcoming__meta">
-                      {{
-                        'surgery.implantRegistry' | translate: { number: item.implantRegistryNo }
-                      }}
-                    </span>
-                  }
-                </span>
-                <span class="upcoming__date">{{ item.followUpDate | faNum }}</span>
+    <div class="dash__side">
+      <!-- ── The queue: routine but due ─────────────────────────── -->
+      <section class="panel panel--compact queue dash__rise" style="--d: 5">
+        <header class="panel__head">
+          <h2 class="panel__title">{{ 'dashboard.queueTitle' | translate }}</h2>
+        </header>
+        @if (loading() && !summary()) {
+          @for (n of [0, 1, 2, 3]; track n) {
+            <span class="skeleton skeleton--row"></span>
+          }
+        }
+        <ul class="queue__rows">
+          @for (item of queue(); track item.key; let i = $index) {
+            <li class="queue__row-wrap" [style.--d]="i">
+              <a
+                class="queue__row"
+                [attr.data-tone]="item.tone"
+                [class.is-clear]="!item.value"
+                [routerLink]="item.link"
+                [queryParams]="item.queryParams ?? null"
+              >
+                <span class="queue__icon"><pb-icon [name]="item.icon" [size]="18" /></span>
+                <span class="queue__label">{{ item.label | translate }}</span>
+                @if (item.value) {
+                  <span class="queue__count"
+                    ><pb-count-up [value]="item.value" [delay]="400 + i * 60"
+                  /></span>
+                } @else {
+                  <span class="queue__clear"
+                    ><pb-icon name="check" [size]="14" [stroke]="2.5"
+                  /></span>
+                }
+                <pb-icon class="queue__chevron" name="chevron-left" [size]="16" />
               </a>
             </li>
           }
         </ul>
-        <a class="dash__view-list" routerLink="/surgery" [queryParams]="{ followUp: 'week' }">
-          {{ 'dashboard.viewList' | translate }}
-          <mat-icon aria-hidden="true">arrow_back</mat-icon>
-        </a>
-      } @else {
-        <p class="panel__empty">{{ 'dashboard.followUpsEmpty' | translate }}</p>
-      }
-    </pb-surface>
+      </section>
+
+      <!-- ── The month, follow-up days marked ───────────────────── -->
+      <section class="panel panel--compact dash__rise" style="--d: 6" [attr.aria-label]="'calendar.title' | translate">
+        <pb-shamsi-calendar [selected]="null" [marks]="followUpMarks()" [compact]="true" />
+      </section>
+    </div>
   </div>
-</pb-page>
+</div>

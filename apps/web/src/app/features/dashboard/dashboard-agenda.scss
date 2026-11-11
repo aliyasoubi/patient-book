@@ -1,0 +1,196 @@
+@use '../../../styles/panel';
+
+/*
+ * The coming week's follow-ups as an agenda: a hairline down the start edge
+ * joining the days, a dot per day (today's filled in the brand), and the
+ * people to call under each. Days follow one another in; a row lifts its
+ * outline under the pointer.
+ */
+
+@keyframes agenda-rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+:host {
+  display: flex;
+  min-block-size: 0;
+}
+
+/* The panel fills the host; the days scroll inside it when there are many. */
+.agenda {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+@include panel.panels;
+@include panel.skeletons;
+
+/* ── Agenda ────────────────────────────────────────────────────────── */
+
+.agenda__days {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.agenda__day {
+  position: relative;
+  padding-inline-start: var(--pb-space-5);
+  padding-block-end: var(--pb-space-4);
+  animation: agenda-rise 480ms var(--pb-ease-emphasized) backwards;
+  animation-delay: calc(360ms + var(--d, 0) * 80ms);
+
+  /* The day line: a hairline joining the days, down the start edge. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 14px 0;
+    inset-inline-start: 5px;
+    inline-size: 1px;
+    background: var(--pb-neutral-200);
+  }
+
+  &:last-child::before {
+    display: none;
+  }
+}
+
+.agenda__day-head {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+  margin-block-end: var(--pb-space-2);
+}
+
+.agenda__dot {
+  position: absolute;
+  inset-inline-start: 0;
+  inline-size: 11px;
+  block-size: 11px;
+  border: 2px solid var(--pb-neutral-300);
+  border-radius: 50%;
+  background: #fff;
+
+  &.is-today {
+    border-color: var(--pb-brand);
+    background: var(--pb-brand);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--pb-brand) 16%, transparent);
+  }
+}
+
+.agenda__day-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--pb-graphite);
+}
+
+.agenda__relative {
+  padding: 1px var(--pb-space-2);
+  border-radius: 999px;
+  background: var(--pb-neutral-100);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pb-neutral-600);
+
+  &[data-when='today'] {
+    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    color: var(--pb-brand-strong);
+  }
+}
+
+.agenda__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agenda__item {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-2) var(--pb-space-3);
+  border-radius: 12px;
+  color: var(--pb-graphite);
+  text-decoration: none;
+  transition:
+    background-color 160ms var(--pb-ease-standard),
+    box-shadow 200ms var(--pb-ease-standard);
+
+  &:hover {
+    background: var(--pb-neutral-50);
+    box-shadow: inset 0 0 0 1px var(--pb-neutral-200);
+  }
+}
+
+.agenda__avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 50%;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+
+  &.is-warn {
+    background: var(--pb-warning-container);
+    color: var(--pb-on-warning-container);
+  }
+}
+
+.agenda__who {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-inline-size: 0;
+  line-height: 1.6;
+}
+
+.agenda__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.agenda__meta {
+  font-size: 0.75rem;
+  color: var(--pb-neutral-600);
+}
+
+.agenda__phone {
+  font-size: 0.8125rem;
+  color: var(--pb-neutral-600);
+}
+
+.agenda__chevron {
+  flex: 0 0 auto;
+  color: var(--pb-neutral-400);
+  transition: translate 300ms var(--pb-ease-spring);
+
+  :hover > & {
+    translate: -3px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agenda__day {
+    animation: none;
+  }
+
+  .agenda__chevron {
+    transition-duration: 0ms;
+  }
+}

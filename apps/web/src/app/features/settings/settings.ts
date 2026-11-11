@@ -1,6 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -9,14 +8,14 @@ import { LabService } from '../../core/services/lab.service';
 import { roleLabel } from '../../shared/labels';
 import {
   PbButton,
-  PbIconButton,
+  PbIcon,
   PbPage,
   PbPageHeader,
-  PbSegmentedButton,
-  PbSurface,
   PbSwitch,
+  PbSwitcher,
+  ToastService,
 } from '../../shared/ui';
-import type { SegmentOption } from '../../shared/ui';
+import type { SwitcherOption } from '../../shared/ui';
 import type { Lab } from '../../core/models/common.model';
 import { LabNameDialog } from './lab-name-dialog';
 
@@ -28,16 +27,7 @@ import { LabNameDialog } from './lab-name-dialog';
 @Component({
   selector: 'pb-settings',
   standalone: true,
-  imports: [
-    PbSegmentedButton,
-    PbButton,
-    PbIconButton,
-    PbSwitch,
-    PbSurface,
-    PbPageHeader,
-    TranslatePipe,
-    PbPage,
-  ],
+  imports: [PbButton, PbIcon, PbSwitch, PbSwitcher, PbPageHeader, TranslatePipe, PbPage],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
 })
@@ -46,16 +36,18 @@ export class Settings {
   protected readonly theme = inject(ThemeService);
   private readonly labService = inject(LabService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly i18n = inject(TranslateService);
 
   protected readonly roleLabel = roleLabel;
 
-  protected readonly themeOptions: SegmentOption[] = [
-    { value: 'system', label: 'settings.automatic', icon: 'brightness_auto', translate: true },
-    { value: 'light', label: 'settings.light', icon: 'light_mode', translate: true },
-    { value: 'dark', label: 'settings.dark', icon: 'dark_mode', translate: true },
+  protected readonly modes: readonly SwitcherOption[] = [
+    { value: 'system', label: 'settings.automatic', icon: 'device-desktop' },
+    { value: 'light', label: 'settings.light', icon: 'sun' },
+    { value: 'dark', label: 'settings.dark', icon: 'moon' },
   ];
+  /** The letter on the person's tile. */
+  protected readonly initial = computed(() => (this.auth.user()?.fullName ?? '').trim().charAt(0));
 
   protected readonly labs = signal<Lab[]>([]);
   /** The lab whose switch is mid-flight. */
@@ -85,10 +77,7 @@ export class Settings {
       .afterClosed()
       .subscribe((saved) => {
         if (!saved) return;
-        this.snackBar.open(
-          this.i18n.instant('settings.labSaved'),
-          this.i18n.instant('action.dismiss'),
-        );
+        this.toast.success(this.i18n.instant('settings.labSaved'));
         this.loadLabs();
       });
   }

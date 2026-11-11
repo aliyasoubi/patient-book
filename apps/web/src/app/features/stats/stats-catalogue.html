@@ -1,0 +1,27 @@
+<!-- Every treatment a patient file can record: reference, not a figure, so
+     it stays folded until asked for. -->
+<section class="catalogue" [class.is-open]="open()">
+  <button
+    class="catalogue__head"
+    type="button"
+    [attr.aria-expanded]="open()"
+    (click)="open.set(!open())"
+  >
+    <span class="catalogue__titles">
+      <span class="catalogue__title">{{ 'stats.catalogueTitle' | translate }}</span>
+      <span class="catalogue__hint">{{ 'stats.catalogueHint' | translate }}</span>
+    </span>
+    <span class="catalogue__count">{{ types().length | faCount }}</span>
+    <pb-icon class="catalogue__chevron" name="chevron-down" [size]="18" />
+  </button>
+  <div class="catalogue__body">
+    <ul class="catalogue__list">
+      @for (t of types(); track t.id) {
+        <li class="catalogue__item">
+          <mat-icon aria-hidden="true">{{ t.icon }}</mat-icon>
+          <span class="catalogue__name">{{ t.nameFa }}</span>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

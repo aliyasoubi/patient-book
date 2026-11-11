@@ -1,0 +1,78 @@
+<section class="panel agenda">
+  <header class="panel__head">
+    <h2 class="panel__title">{{ 'dashboard.followUpsTitle' | translate }}</h2>
+    <a class="panel__link" routerLink="/surgery" [queryParams]="{ followUp: 'week' }">
+      {{ 'dashboard.viewList' | translate }}
+      <pb-icon name="arrow-left" [size]="16" />
+    </a>
+  </header>
+
+  @if (failed()) {
+    <pb-load-error [message]="'dashboard.followUpsFailed' | translate" (retry)="retry.emit()" />
+  } @else if (loading()) {
+    <!-- Never the empty message while in flight: "nobody to call" only once the list is in. -->
+    <div
+      class="agenda__loading"
+      role="status"
+      [attr.aria-label]="'dashboard.followUpsLoading' | translate"
+    >
+      @for (n of [0, 1, 2]; track n) {
+        <span class="skeleton skeleton--row"></span>
+      }
+    </div>
+  } @else if (agenda().length) {
+    <ol class="agenda__days">
+      @for (day of agenda(); track day.date; let d = $index) {
+        <li class="agenda__day" [style.--d]="d">
+          <div class="agenda__day-head">
+            <span class="agenda__dot" [class.is-today]="day.relative === 'today'"></span>
+            <span class="agenda__day-title">{{ day.title }}</span>
+            @if (day.relative) {
+              <span class="agenda__relative" [attr.data-when]="day.relative">
+                {{ 'dashboard.' + day.relative | translate }}
+              </span>
+            }
+          </div>
+          <ul class="agenda__items">
+            @for (item of day.items; track item.id) {
+              <li>
+                <a
+                  class="agenda__item"
+                  [routerLink]="['/surgery']"
+                  [queryParams]="{ q: item.recordedName }"
+                >
+                  <span class="agenda__avatar" [class.is-warn]="item.hasNameMismatch">
+                    <pb-icon
+                      [name]="item.hasNameMismatch ? 'alert-triangle' : 'user'"
+                      [size]="16"
+                    />
+                  </span>
+                  <span class="agenda__who">
+                    <span class="agenda__name">{{ item.recordedName }}</span>
+                    @if (item.implantRegistryNo) {
+                      <span class="agenda__meta">
+                        {{
+                          'surgery.implantRegistry' | translate: { number: item.implantRegistryNo }
+                        }}
+                      </span>
+                    }
+                  </span>
+                  @if (item.mobile) {
+                    <span class="agenda__phone" dir="ltr">{{ item.mobile | phone }}</span>
+                  }
+                  <pb-icon class="agenda__chevron" name="chevron-left" [size]="16" />
+                </a>
+              </li>
+            }
+          </ul>
+        </li>
+      }
+    </ol>
+  } @else {
+    <pb-empty-state
+      icon="event_busy"
+      [title]="'dashboard.followUpsEmpty' | translate"
+      [hint]="'dashboard.followUpsEmptyHint' | translate"
+    />
+  }
+</section>

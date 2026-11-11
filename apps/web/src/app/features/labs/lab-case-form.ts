@@ -21,7 +21,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DateAdapter } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { addDays } from 'date-fns-jalali';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
@@ -68,6 +67,7 @@ import {
   PbTextField,
   PbTextareaField,
   PbToothWorkPicker,
+  ToastService,
 } from '../../shared/ui';
 import type { SegmentOption, SelectOption, TextFieldOption, ToothWork } from '../../shared/ui';
 import {
@@ -152,7 +152,7 @@ export class LabCaseForm implements HasUnsavedChanges {
   /** The list this form was opened from, with its search and filters. */
   private readonly listReturn = inject(ListReturn);
   private readonly route = inject(ActivatedRoute);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly dateAdapter = inject<DateAdapter<Date>>(DateAdapter);
   private readonly errors = inject(ApiErrorTranslator);
   private readonly i18n = inject(TranslateService);
@@ -533,10 +533,7 @@ export class LabCaseForm implements HasUnsavedChanges {
       next: () => {
         this.saving.set(false);
         this.saved = true;
-        this.snackBar.open(
-          this.i18n.instant(loaded ? 'labForm.saved' : 'labForm.created'),
-          this.i18n.instant('action.dismiss'),
-        );
+        this.toast.success(this.i18n.instant(loaded ? 'labForm.saved' : 'labForm.created'));
         void this.router.navigateByUrl(this.listReturn.urlFor('/labs'));
       },
       error: (error: unknown) => {
@@ -567,16 +564,10 @@ export class LabCaseForm implements HasUnsavedChanges {
         this.loaded.set(after);
         adoptUntouched(this.form, this.formValues(after));
         if (!this.linkChanged) this.linkedPatient.set(this.linkOf(after));
-        this.snackBar.open(
-          this.i18n.instant('labForm.conflict'),
-          this.i18n.instant('action.dismiss'),
-          { duration: 15000 },
-        );
+        this.toast.warning(this.i18n.instant('labForm.conflict'), { duration: 15000 });
       },
       error: (error: unknown) =>
-        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-          duration: 15000,
-        }),
+        this.toast.error(this.errors.translate(error), { duration: 15000 }),
     });
   }
 
@@ -590,9 +581,7 @@ export class LabCaseForm implements HasUnsavedChanges {
       control.setErrors({ server: this.errors.field(path, failure.code, failure.params) });
       control.markAsTouched();
     }
-    this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-      duration: 6000,
-    });
+    this.toast.error(this.errors.translate(error));
   }
 
   protected cancel(): void {

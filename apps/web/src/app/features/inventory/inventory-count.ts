@@ -12,7 +12,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map, startWith, type Subscription } from 'rxjs';
 
@@ -39,6 +38,7 @@ import {
   PbStatusChip,
   PbTextField,
   type SelectOption,
+  ToastService,
 } from '../../shared/ui';
 import { changedLines, type CountRow } from './stock-sheets';
 
@@ -84,7 +84,7 @@ export class InventoryCount implements HasUnsavedChanges {
   private readonly inventory = inject(InventoryService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toast = inject(ToastService);
   private readonly i18n = inject(TranslateService);
   private readonly errors = inject(ApiErrorTranslator);
 
@@ -225,21 +225,18 @@ export class InventoryCount implements HasUnsavedChanges {
     this.inventory.count(lines).subscribe({
       next: ({ counted, minimums }) => {
         this.saving.set(false);
-        this.snackBar.open(
+        this.toast.success(
           this.i18n.instant('inventoryCount.saved', {
             counted: formatPersianCount(counted),
             minimums: formatPersianCount(minimums),
           }),
-          this.i18n.instant('action.dismiss'),
         );
         this.load();
       },
       // Nothing was saved: the sheet stays as typed, to try again.
       error: (error: unknown) => {
         this.saving.set(false);
-        this.snackBar.open(this.errors.translate(error), this.i18n.instant('action.dismiss'), {
-          duration: 6000,
-        });
+        this.toast.error(this.errors.translate(error));
       },
     });
   }

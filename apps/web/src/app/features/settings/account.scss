@@ -1,25 +1,85 @@
-.identity {
-  display: flex;
-  align-items: center;
-  gap: var(--pb-space-4);
+@use '../../../styles/settings-page';
 
-  strong {
-    display: block;
-    font: var(--mat-sys-title-medium);
-  }
+@include settings-page.sections;
 
-  &__meta {
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
+@keyframes rules-tick {
+  40% {
+    scale: 1.25;
   }
 }
 
-.pw-form {
+.facts {
+  margin: var(--pb-space-4) 0 0;
+  padding-block-start: var(--pb-space-2);
+  border-block-start: 1px solid var(--pb-neutral-100);
+
+  dd {
+    margin: 0;
+  }
+}
+
+.pw {
   display: flex;
   flex-direction: column;
-  gap: var(--pb-space-3);
+  gap: var(--pb-space-4);
+  max-inline-size: 440px;
+}
 
-  pb-text-field {
-    display: block;
+/* Each rule ticks itself off as the new password meets it. */
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+  margin: 0;
+  padding: var(--pb-space-3) var(--pb-space-4);
+  border-radius: 12px;
+  background: var(--pb-neutral-100);
+  list-style: none;
+}
+
+.rules__item {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+  color: var(--pb-neutral-600);
+  font-size: 0.8125rem;
+  transition: color 220ms var(--pb-ease-standard);
+
+  &.is-met {
+    color: var(--pb-on-success-container);
+  }
+}
+
+.rules__tick {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 18px;
+  block-size: 18px;
+  border: 1.5px solid var(--pb-neutral-300);
+  border-radius: 50%;
+  color: transparent;
+  transition:
+    background-color 220ms var(--pb-ease-standard),
+    border-color 220ms var(--pb-ease-standard),
+    color 220ms var(--pb-ease-standard);
+
+  .is-met & {
+    border-color: transparent;
+    background: #2e9e5b;
+    color: #fff;
+    animation: rules-tick 380ms var(--pb-ease-spring);
+  }
+}
+
+.pw__actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-block-start: var(--pb-space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-met .rules__tick {
+    animation: none;
   }
 }

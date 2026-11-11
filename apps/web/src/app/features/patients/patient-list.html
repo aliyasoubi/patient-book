@@ -200,7 +200,7 @@
                 @if (patient.mobile) {
                   <span class="card__meta-item">
                     <mat-icon aria-hidden="true">smartphone</mat-icon>
-                    <span class="ltr-nums">{{ patient.mobile }}</span>
+                    <span class="ltr-nums">{{ patient.mobile | phone }}</span>
                   </span>
                 }
                 <span class="card__meta-item">
@@ -290,10 +290,10 @@
             <td mat-cell *matCellDef="let p">
               @if (p.mobile) {
                 <a class="table__phone ltr-nums" [href]="'tel:' + p.mobile">
-                  {{ p.mobile }}
+                  {{ p.mobile | phone }}
                 </a>
               } @else if (p.homePhone) {
-                <span class="ltr-nums table__phone--muted">{{ p.homePhone }}</span>
+                <span class="ltr-nums table__phone--muted">{{ p.homePhone | phone }}</span>
               } @else {
                 <span class="table__muted">—</span>
               }

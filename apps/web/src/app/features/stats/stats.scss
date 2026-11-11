@@ -1,302 +1,454 @@
-@use '../../../styles/surface';
-@use '../../../styles/type';
+@use '../../../styles/panel';
 
-.stats {
-  &__tabs {
-    --mat-tab-header-divider-color: var(--mat-sys-outline-variant);
+/*
+ * The statistics page, kept calm: four totals, then a few plain panels on
+ * one grid. One accent per chart (the leading row, the line), everything
+ * else in quiet neutrals, so the eye goes to what is largest rather than to
+ * fourteen colours. Reference material (the treatment catalogue) folds away.
+ */
+
+@include panel.panels;
+@include panel.skeletons;
+
+@keyframes stats-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
   }
+}
 
-  &__tab {
-    display: flex;
-    flex-direction: column;
-    gap: var(--pb-space-4);
-    padding-top: var(--pb-space-4);
-  }
+.stats__body {
+  container: stats / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-4);
+  animation: stats-rise 420ms var(--pb-ease-emphasized) backwards;
+}
 
-  // The same 12-column grid as the dashboard: 12 columns on expanded windows,
-  // 2 on medium, 1 on compact, with every panel naming its span so the rows
-  // pack with no holes.
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: var(--pb-space-4);
-
-    > * {
-      grid-column: span 4;
-      min-width: 0;
-    }
-
-    @media (max-width: 1199px) {
-      > * {
-        grid-column: span 6;
-      }
-    }
-
-    @media (max-width: 839px) {
-      > * {
-        grid-column: span 12;
-      }
-    }
-
-    // Spans for one panel are written through the grid, so they outweigh
-    // the `> *` default above rather than losing to it.
-
-    // Expanded: the long treatment list beside growth, then the three
-    // short breakdowns in one row.
-    @media (min-width: 1200px) {
-      > .stats__panel--treatments {
-        grid-column: span 8;
-      }
-    }
-
-    // Medium: the treatment list takes a full row, the other four pair up.
-    @media (min-width: 840px) and (max-width: 1199px) {
-      > .stats__panel--treatments {
-        grid-column: span 12;
-      }
-    }
-  }
+.stats__switch {
+  align-self: flex-start;
+  margin-block-end: var(--pb-space-4);
 }
 
 /* ── Totals ────────────────────────────────────────────────────────── */
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
-  gap: var(--pb-space-4);
 
-  @media (max-width: 700px) {
-    gap: var(--pb-space-3);
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--pb-space-3);
+
+  @container stats (min-width: 760px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--pb-space-4);
   }
 }
 
-/* ── Panels ────────────────────────────────────────────────────────── */
-// pb-surface owns the bordered-panel look and its title+hint header; the
-// grid placement lives on `.stats__panel--*` above.
-.panel__empty {
-  @include type.supporting-text;
+.kpi {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'icon .'
+    'value value'
+    'label label';
+  gap: var(--pb-space-1);
+  padding: var(--pb-space-4) var(--pb-space-5);
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  color: var(--pb-graphite);
+  text-decoration: none;
+  animation: stats-rise 460ms calc(var(--_i, 0) * 60ms) var(--pb-ease-emphasized) backwards;
+  transition:
+    box-shadow 260ms var(--pb-ease-standard),
+    translate 320ms var(--pb-ease-spring);
+
+  .skeleton--icon {
+    grid-area: icon;
+  }
+
+  .skeleton--number,
+  .skeleton--text {
+    grid-column: 1 / -1;
+  }
 }
 
-/* ── Horizontal bars ───────────────────────────────────────────────── */
+.kpi--link:hover {
+  translate: 0 -3px;
+  box-shadow: var(--pb-shadow-lg);
+}
+
+.kpi--link:focus-visible {
+  outline: 2px solid var(--pb-brand);
+  outline-offset: 2px;
+}
+
+.kpi__icon {
+  grid-area: icon;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 40px;
+  block-size: 40px;
+  margin-block-end: var(--pb-space-2);
+  border-radius: 12px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+}
+
+.kpi__value {
+  grid-area: value;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.kpi__label {
+  grid-area: label;
+  color: var(--pb-neutral-600);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* ── Panels on one grid ───────────────────────────────────────────── */
+
+.stats__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--pb-space-3);
+
+  @container stats (min-width: 760px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--pb-space-4);
+  }
+
+  @container stats (min-width: 1080px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  > * {
+    min-inline-size: 0;
+  }
+}
+
+.stats__wide {
+  @container stats (min-width: 760px) {
+    grid-column: 1 / -1;
+  }
+
+  @container stats (min-width: 1080px) {
+    grid-column: span 2;
+  }
+}
+
+.panel__head {
+  align-items: baseline;
+}
+
+.panel__hint {
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.panel__empty {
+  margin: 0;
+  padding-block: var(--pb-space-4);
+  color: var(--pb-neutral-500);
+  font-size: 0.875rem;
+  list-style: none;
+}
+
+.panel__foot {
+  margin: var(--pb-space-4) 0 0;
+  padding-block-start: var(--pb-space-3);
+  border-block-start: 1px dashed var(--pb-neutral-200);
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+}
+
+.panel__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pb-space-1);
+  margin-block-start: var(--pb-space-3);
+  padding: var(--pb-space-1) var(--pb-space-2);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pb-brand-strong);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms var(--pb-ease-standard);
+
+  &:hover {
+    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+  }
+
+  pb-icon {
+    transition: rotate 320ms var(--pb-ease-spring);
+  }
+
+  pb-icon.is-flipped {
+    rotate: 180deg;
+  }
+}
+
+.skeleton--block {
+  block-size: 180px;
+}
+
+/* ── Bars: label and count on a line, a thin track under ──────────── */
+
 .bars {
   display: flex;
   flex-direction: column;
-  gap: var(--pb-space-2);
+  gap: var(--pb-space-3);
   margin: 0;
   padding: 0;
   list-style: none;
-
-  &__row {
-    display: grid;
-    grid-template-columns: minmax(96px, 132px) 1fr auto;
-    align-items: center;
-    gap: var(--pb-space-3);
-  }
-
-  &__label {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--pb-space-2);
-    font: var(--mat-sys-body-medium);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__icon {
-    font-size: var(--pb-icon-sm);
-    flex: 0 0 auto;
-  }
-
-  &__track {
-    height: 8px;
-    border-radius: var(--mat-sys-corner-full);
-    background: var(--mat-sys-surface-container-high);
-    overflow: hidden;
-  }
-
-  &__fill {
-    display: block;
-    height: 100%;
-    border-radius: var(--mat-sys-corner-full);
-    // Twice the medium duration on purpose: a chart drawing itself in, read
-    // as it grows, not a control answering a touch.
-    transition: width calc(2 * var(--pb-duration-medium)) var(--pb-ease-standard);
-
-    &--primary {
-      background: var(--mat-sys-primary);
-    }
-  }
-
-  &__value {
-    font: var(--mat-sys-body-medium);
-    font-weight: 600;
-    font-feature-settings: var(--pb-font-numeric);
-    min-width: 3ch;
-    text-align: end;
-  }
-
-  &--compact .bars__row {
-    grid-template-columns: minmax(70px, 88px) 1fr auto;
-  }
 }
 
-/* ── Trend sparkline ───────────────────────────────────────────────── */
-.trend {
-  &__chart {
-    width: 100%;
-    height: 76px;
-    display: block;
-    overflow: visible;
-  }
-
-  &__area {
-    fill: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
-  }
-
-  &__line {
-    fill: none;
-    stroke: var(--mat-sys-primary);
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    // Keep the stroke an even weight despite the non-uniform viewBox scaling.
-    vector-effect: non-scaling-stroke;
-  }
-
-  &__foot {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--pb-space-2);
-    margin-top: var(--pb-space-3);
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__max {
-    font: var(--mat-sys-body-small);
-  }
-}
-
-/* ── Gender split ──────────────────────────────────────────────────── */
-/* Two columns in the age-band idiom: label, track, value. The gender colour
-   comes from the same tokens the rest of the app uses for the two. */
-.gender {
+.bars__row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--pb-space-4);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px var(--pb-space-3);
+  align-items: baseline;
+}
 
-  &__col {
-    --_tone: var(--mat-sys-primary);
+.bars__label {
+  overflow: hidden;
+  color: var(--pb-graphite);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
-    display: flex;
-    flex-direction: column;
-    gap: var(--pb-space-2);
-    min-width: 0;
+.bars__value {
+  color: var(--pb-neutral-600);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
 
-    &[data-gender='female'] {
-      --_tone: var(--mat-sys-tertiary);
-    }
-  }
+.bars__track {
+  grid-column: 1 / -1;
+  block-size: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--pb-neutral-100);
+}
 
-  &__icon {
-    color: var(--_tone);
-  }
+.bars__fill {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--pb-graphite) 55%, transparent);
+  transition: inline-size 700ms var(--pb-ease-emphasized);
+  animation: bars-grow 900ms var(--pb-ease-emphasized) backwards;
+}
 
-  &__fill {
-    background: var(--_tone);
-  }
+.is-lead .bars__fill {
+  background: var(--pb-brand);
+}
 
-  &__value {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--pb-space-2);
+.is-lead .bars__value {
+  color: var(--pb-graphite);
+}
 
-    small {
-      font: var(--mat-sys-body-small);
-      color: var(--mat-sys-on-surface-variant);
-    }
-  }
-
-  &__unknown {
-    margin: var(--pb-space-3) 0 0;
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
+@keyframes bars-grow {
+  from {
+    inline-size: 0;
   }
 }
 
-/* ── Referral list ─────────────────────────────────────────────────── */
-.referrals {
+/* The rest of a list opens on its own height: 0fr → 1fr, never a jump. */
+.more {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 360ms var(--pb-ease-emphasized),
+    opacity 240ms var(--pb-ease-standard);
+
+  &.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+.more__inner {
+  min-block-size: 0;
+  overflow: hidden;
+  padding-block-start: var(--pb-space-3);
+}
+
+/* ── Growth ────────────────────────────────────────────────────────── */
+
+/* ── Gender: one split bar and its legend ──────────────────────────── */
+
+.split {
+  display: flex;
+  gap: 3px;
+  block-size: 12px;
+  margin-block: var(--pb-space-2) var(--pb-space-5);
+}
+
+.split__part {
+  flex-basis: 0;
+  min-inline-size: 4px;
+  border-radius: 999px;
+  animation: split-in 800ms var(--pb-ease-emphasized) backwards;
+  transform-origin: inline-start;
+
+  &[data-gender='female'] {
+    background: var(--pb-brand);
+  }
+
+  &[data-gender='male'] {
+    background: color-mix(in srgb, var(--pb-graphite) 70%, transparent);
+  }
+}
+
+@keyframes split-in {
+  from {
+    scale: 0 1;
+  }
+}
+
+.legend {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--pb-space-3);
   margin: 0;
   padding: 0;
   list-style: none;
+}
 
-  a {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-3);
-    padding: var(--pb-space-2) var(--pb-space-3);
-    border-radius: var(--mat-sys-corner-medium);
-    text-decoration: none;
-    color: inherit;
-    font: var(--mat-sys-body-medium);
+.legend__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--pb-space-2);
+  font-size: 0.875rem;
 
-    &:hover {
-      background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
-    }
+  &[data-gender='female'] .legend__dot {
+    background: var(--pb-brand);
   }
 
-  &__icon {
-    font-size: var(--pb-icon-sm);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__name {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__count {
-    font-weight: 600;
-    font-feature-settings: var(--pb-font-numeric);
+  &[data-gender='male'] .legend__dot {
+    background: color-mix(in srgb, var(--pb-graphite) 70%, transparent);
   }
 }
 
-/* ── Treatment catalogue ───────────────────────────────────────────── */
-.catalogue {
-  margin: 0;
+.legend__dot {
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: 3px;
+}
+
+.legend__label {
+  color: var(--pb-graphite);
+  font-weight: 500;
+}
+
+.legend__value {
+  font-weight: 700;
+}
+
+.legend__share {
+  min-inline-size: 4ch;
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  text-align: end;
+}
+
+/* ── Referrals: a ranked list, each row opening its patients ──────── */
+
+.ranks {
+  display: flex;
+  flex-direction: column;
+  margin: 0 calc(-1 * var(--pb-space-2));
   padding: 0;
   list-style: none;
+}
+
+.ranks__row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: var(--pb-space-2);
+  grid-template-columns: 24px minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-2);
+  border-radius: 10px;
+  color: var(--pb-graphite);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: background-color 160ms var(--pb-ease-standard);
 
-  &__item {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-2);
-    padding: var(--pb-space-2) var(--pb-space-3);
-    @include surface.tonal(medium);
-    font: var(--mat-sys-body-medium);
-
-    > .material-symbols-rounded {
-      font-size: var(--pb-icon-sm);
-      color: var(--mat-sys-on-surface-variant);
-      flex: 0 0 auto;
-    }
+  &:hover {
+    background: var(--pb-neutral-100);
   }
 
-  &__name {
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: -2px;
+  }
+}
+
+.ranks__place {
+  display: inline-grid;
+  place-items: center;
+  block-size: 24px;
+  border-radius: 7px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  li:first-child & {
+    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    color: var(--pb-brand-strong);
+  }
+}
+
+.ranks__name {
+  overflow: hidden;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ranks__count {
+  color: var(--pb-neutral-600);
+  font-weight: 700;
+}
+
+.ranks__go {
+  color: var(--pb-neutral-400);
+  opacity: 0;
+  translate: 4px 0;
+  transition:
+    opacity 160ms var(--pb-ease-standard),
+    translate 260ms var(--pb-ease-spring);
+
+  .ranks__row:hover & {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats__body,
+  .kpi,
+  .bars__fill,
+  .split__part {
+    animation: none;
+  }
+
+  .more {
+    transition-duration: 0ms;
   }
 }
