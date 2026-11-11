@@ -58,6 +58,7 @@ import {
 import type { FilterChipOption, SegmentOption, SelectOption } from '../../shared/ui';
 import { LabCaseCard } from './lab-case-card';
 import { LabBookDialog, LabBookDialogData } from './lab-book-dialog';
+import { LabListDialog } from './lab-list-dialog';
 import { LabReceiveDialog, LabReceiveDialogData } from './lab-receive-dialog';
 import { LabSendDialog, LabSendDialogData } from './lab-send-dialog';
 import type { LabReceiveParts, LabSendInput } from '../../core/services/lab.service';
@@ -315,7 +316,7 @@ export class LabBoard {
   private readonly reloadTick = signal(0);
 
   constructor() {
-    this.labs.labs().subscribe({ next: (labs) => this.labList.set(labs), error: () => undefined });
+    this.loadLabs();
 
     this.fetch$
       .pipe(
@@ -385,6 +386,21 @@ export class LabBoard {
 
   protected reload(): void {
     this.reloadTick.update((n) => n + 1);
+  }
+
+  private loadLabs(): void {
+    this.labs.labs().subscribe({ next: (labs) => this.labList.set(labs), error: () => undefined });
+  }
+
+  /** Afterwards the lab filter and the cards show the labs' new names. */
+  protected manageLabs(): void {
+    this.dialog
+      .open(LabListDialog, { width: '480px', maxWidth: '92vw' })
+      .afterClosed()
+      .subscribe(() => {
+        this.loadLabs();
+        this.reload();
+      });
   }
 
   protected setLab(id: string): void {
