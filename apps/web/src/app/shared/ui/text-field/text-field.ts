@@ -84,6 +84,20 @@ export class PbTextField {
     this.type() === 'password' && this.revealed() ? 'text' : this.type(),
   );
   protected readonly hasAutocomplete = computed(() => this.options() !== null);
+  /**
+   * Typed in Latin with Latin digits: credentials and email addresses only.
+   * Every other number (a count, a price, a phone) keeps Persian digits.
+   */
+  protected readonly latin = computed(() => {
+    const autofill = this.nativeAutocomplete();
+    return (
+      this.type() === 'password' ||
+      this.type() === 'email' ||
+      autofill.includes('username') ||
+      autofill.includes('password') ||
+      autofill.includes('email')
+    );
+  });
   /** The last message shown, and whether it was an error, kept while its line closes. */
   private lastMessage = '';
   private lastWasError = false;

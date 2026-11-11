@@ -40,6 +40,7 @@
       [attr.aria-invalid]="showError() || null"
       [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
       [class.tf__control--ltr]="ltr()"
+      [class.tf__control--latin]="latin()"
       [matAutocomplete]="auto"
       [matAutocompleteConnectedTo]="origin"
     />
@@ -67,6 +68,7 @@
       [attr.aria-invalid]="showError() || null"
       [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
       [class.tf__control--ltr]="ltr()"
+      [class.tf__control--latin]="latin()"
       (input)="groupDigits($event)"
     />
   }

@@ -50,19 +50,24 @@
 }
 
 /*
- * Credentials, ids and phone numbers are Latin inside an RTL page, typed in
- * Inter with Latin digits. A Persian placeholder still reads from the right.
+ * Numbers, ids and phone numbers read left to right inside an RTL page, but
+ * stay in the app's font, so their digits are Persian like every other
+ * number on screen. A Persian placeholder still reads from the right.
  */
 .tf__control--ltr {
   direction: ltr;
   text-align: left;
-  font-family: var(--pb-font-latin);
-  letter-spacing: 0.01em;
 
   &:placeholder-shown {
     direction: rtl;
     text-align: right;
   }
+}
+
+/* Usernames, passwords and email addresses alone are typed in Inter, with Latin digits. */
+.tf__control--latin {
+  font-family: var(--pb-font-latin);
+  letter-spacing: 0.01em;
 }
 
 .tf__toggle {
