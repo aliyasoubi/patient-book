@@ -496,3 +496,44 @@ html .mat-mdc-dialog-container .mat-mdc-dialog-title + .mat-mdc-dialog-content {
 .spacer {
   flex: 1 1 auto;
 }
+
+/* ── Reveal ────────────────────────────────────────────────────────── */
+/**
+ * Something shown only when a choice is made (a field that a tick opens):
+ * kept in the page and opened on its own height, 0fr → 1fr, so what follows
+ * slides rather than jumps. In a field grid the closed one also gives back
+ * the row gap above it. Mark it `inert` while closed.
+ */
+.pb-reveal {
+  display: grid;
+  // Not stretched by a grid around it: with the negative margin below, a
+  // stretched item would keep the margin's height while closed.
+  align-self: start;
+  grid-template-rows: 0fr;
+  margin-block-start: calc(-1 * var(--pb-space-3));
+  opacity: 0;
+  transition:
+    grid-template-rows 360ms var(--pb-ease-emphasized),
+    margin 360ms var(--pb-ease-emphasized),
+    opacity 240ms var(--pb-ease-standard);
+
+  > * {
+    min-block-size: 0;
+    // Clipped to its own height while it opens, with room left around it
+    // for the field's focus lift.
+    overflow: clip;
+    overflow-clip-margin: 8px;
+  }
+
+  &.is-open {
+    grid-template-rows: 1fr;
+    margin-block-start: 0;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-reveal {
+    transition-duration: 0ms;
+  }
+}

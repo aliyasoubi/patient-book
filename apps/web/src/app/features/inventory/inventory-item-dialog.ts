@@ -242,18 +242,25 @@ export const MAX_SUGGESTIONS = 8;
           >
             {{ 'inventoryForm.soldToPatients' | translate }}
           </pb-checkbox-field>
-          @if (soldToPatients()) {
-            <pb-text-field
-              class="pb-field-grid__full"
-              [control]="form.controls.salePrice"
-              [label]="'inventoryForm.salePrice' | translate"
-              [hint]="'inventoryForm.salePriceHint' | translate"
-              inputmode="numeric"
-              [grouped]="true"
-              [maxlength]="13"
-              [ltr]="true"
-            />
-          }
+          <!-- Always in the form, opening on its own height when ticked, so the
+               fields below slide down instead of jumping. Closed, it is inert. -->
+          <div
+            class="pb-field-grid__full pb-reveal"
+            [class.is-open]="soldToPatients()"
+            [attr.inert]="soldToPatients() ? null : ''"
+          >
+            <div>
+              <pb-text-field
+                [control]="form.controls.salePrice"
+                [label]="'inventoryForm.salePrice' | translate"
+                [hint]="'inventoryForm.salePriceHint' | translate"
+                inputmode="numeric"
+                [grouped]="true"
+                [maxlength]="13"
+                [ltr]="true"
+              />
+            </div>
+          </div>
           <pb-textarea-field
             class="pb-field-grid__full"
             [control]="form.controls.notes"
