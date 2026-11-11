@@ -44,8 +44,9 @@ export class Login {
   /** Shown on the branding panel — a quick reminder of what signing in unlocks. */
   protected readonly features = [
     { icon: 'groups', label: 'auth.feature.patients' },
-    { icon: 'event_available', label: 'auth.feature.scheduling' },
+    { icon: 'event_available', label: 'auth.feature.followUps' },
     { icon: 'straighten', label: 'auth.feature.treatments' },
+    { icon: 'inventory', label: 'auth.feature.inventory' },
   ];
 
   protected trackCapsLock(event: Event): void {
