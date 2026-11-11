@@ -58,6 +58,7 @@ export interface DonutPart {
           class="legend__row"
           [attr.data-part]="i"
           [class.is-dim]="active() !== null && active() !== arc.key"
+          [style.--_i]="i"
           (pointerenter)="active.set(arc.key)"
           (pointerleave)="active.set(null)"
         >
@@ -67,6 +68,9 @@ export interface DonutPart {
           <span class="legend__share"
             >{{ arc.share | faNum }}{{ 'common.percentSign' | translate }}</span
           >
+          <span class="legend__bar" aria-hidden="true"
+            ><span class="legend__fill" [style.inline-size.%]="arc.share"></span
+          ></span>
         </li>
       }
     </ul>
@@ -85,7 +89,7 @@ export class StatsDonut {
   /** Arcs in percent of the ring, a small gap left between neighbours. */
   protected readonly arcs = computed(() => {
     const total = this.total() || 1;
-    const gap = this.parts().filter((p) => p.count > 0).length > 1 ? 1.5 : 0;
+    const gap = this.parts().filter((p) => p.count > 0).length > 1 ? 1.2 : 0;
     let offset = 0;
     return this.parts().map((part) => {
       const share = (part.count / total) * 100;

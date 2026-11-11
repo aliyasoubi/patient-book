@@ -11,18 +11,38 @@
   }
 }
 
+@keyframes legend-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+@keyframes legend-fill {
+  from {
+    inline-size: 0;
+  }
+}
+
+/*
+ * The ring beside its legend, centred in whatever room the panel gives it.
+ * Solid colours and square-ended arcs with a hair of space between them, so
+ * neighbours never overlap into a darker blot where they meet.
+ */
 :host {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--pb-space-5);
+  justify-content: center;
+  gap: var(--pb-space-5) var(--pb-space-6);
+  padding-block: var(--pb-space-2);
 }
 
 .donut {
   position: relative;
   flex: 0 0 auto;
-  inline-size: 152px;
-  block-size: 152px;
+  inline-size: 168px;
+  block-size: 168px;
   animation: donut-in 500ms var(--pb-ease-emphasized) backwards;
 }
 
@@ -37,7 +57,7 @@
 .donut__track {
   fill: none;
   stroke: var(--pb-neutral-100);
-  stroke-width: 14;
+  stroke-width: 11;
 }
 
 .donut__arc {
@@ -45,30 +65,30 @@
 
   fill: none;
   stroke: var(--_tone);
-  stroke-width: 14;
-  stroke-linecap: round;
+  stroke-width: 11;
+  stroke-linecap: butt;
   stroke-dasharray: var(--_len) 100;
   cursor: default;
   transition:
-    stroke-width 220ms var(--pb-ease-spring),
+    stroke-width 240ms var(--pb-ease-spring),
     opacity 200ms var(--pb-ease-standard);
   animation: donut-sweep 1000ms calc(200ms + var(--_i, 0) * 260ms) var(--pb-ease-emphasized)
     backwards;
 
   &[data-part='1'] {
-    --_tone: color-mix(in srgb, var(--pb-graphite) 72%, transparent);
+    --_tone: #4a4a50;
   }
 
   &[data-part='2'] {
-    --_tone: var(--pb-neutral-300);
+    --_tone: #c9ccd1;
   }
 
   &:hover {
-    stroke-width: 18;
+    stroke-width: 15;
   }
 
   &.is-dim {
-    opacity: 0.35;
+    opacity: 0.3;
   }
 }
 
@@ -79,11 +99,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   pointer-events: none;
 
   strong {
     color: var(--pb-graphite);
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 800;
     line-height: 1.1;
   }
@@ -91,14 +112,17 @@
   span {
     color: var(--pb-neutral-500);
     font-size: 0.75rem;
+    font-weight: 600;
   }
 }
 
+/* Each part: its name and figures, and a bar for its share under them. */
 .legend {
   display: flex;
-  flex: 1 1 140px;
+  flex: 1 1 180px;
   flex-direction: column;
   gap: var(--pb-space-2);
+  max-inline-size: 280px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -110,24 +134,25 @@
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: var(--pb-space-2);
-  padding: var(--pb-space-2);
-  border-radius: 10px;
+  gap: 6px var(--pb-space-2);
+  padding: var(--pb-space-2) var(--pb-space-3);
+  border-radius: 12px;
   font-size: 0.875rem;
   transition:
     background-color 160ms var(--pb-ease-standard),
     opacity 200ms var(--pb-ease-standard);
+  animation: legend-in 420ms calc(500ms + var(--_i, 0) * 120ms) var(--pb-ease-emphasized) backwards;
 
   &[data-part='1'] {
-    --_tone: color-mix(in srgb, var(--pb-graphite) 72%, transparent);
+    --_tone: #4a4a50;
   }
 
   &[data-part='2'] {
-    --_tone: var(--pb-neutral-300);
+    --_tone: #c9ccd1;
   }
 
   &:hover {
-    background: var(--pb-neutral-100);
+    background: var(--pb-neutral-50);
   }
 
   &.is-dim {
@@ -144,23 +169,44 @@
 
 .legend__label {
   color: var(--pb-graphite);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .legend__value {
-  font-weight: 700;
+  color: var(--pb-graphite);
+  font-weight: 800;
 }
 
 .legend__share {
   min-inline-size: 4ch;
   color: var(--pb-neutral-500);
   font-size: 0.75rem;
+  font-weight: 600;
   text-align: end;
+}
+
+.legend__bar {
+  grid-column: 1 / -1;
+  display: block;
+  block-size: 4px;
+  border-radius: 999px;
+  background: var(--pb-neutral-100);
+}
+
+.legend__fill {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--_tone);
+  animation: legend-fill 900ms calc(600ms + var(--_i, 0) * 120ms) var(--pb-ease-emphasized)
+    backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .donut,
-  .donut__arc {
+  .donut__arc,
+  .legend__row,
+  .legend__fill {
     animation: none;
   }
 }

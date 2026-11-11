@@ -373,3 +373,14 @@
     transition-duration: 0ms;
   }
 }
+
+/* The gender panel is as tall as the growth chart beside it: its ring and
+   legend sit in the middle of that height rather than at the top. */
+.stats__panel--gender {
+  display: flex;
+  flex-direction: column;
+
+  pb-stats-donut {
+    flex: 1 1 auto;
+  }
+}
