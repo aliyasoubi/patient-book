@@ -9,7 +9,7 @@
 
   <div class="stage">
     @if (collapsed() || isHandset()) {
-      <header class="topbar" animate.enter="topbar-in">
+      <header class="topbar" animate.enter="topbar-in" animate.leave="topbar-out">
         @if (isHandset()) {
           <a
             class="topbar__brand"

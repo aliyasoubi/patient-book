@@ -110,11 +110,20 @@ export class Sidebar {
     );
   }
 
-  private placePill(instant: boolean): void {
+  /**
+   * The sidebar can be drawn before the router has marked its active link
+   * (the shell loads after the first navigation ends), so a missing link is
+   * looked for again over the next frames before the card is hidden.
+   */
+  private placePill(instant: boolean, tries = 30): void {
     const nav = this.nav()?.nativeElement;
     const active = nav?.querySelector<HTMLElement>('.sidebar__link.is-active');
     if (!nav || !active) {
-      this.pill.update((p) => ({ ...p, shown: false }));
+      if (tries > 0 && typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => this.placePill(instant, tries - 1));
+      } else {
+        this.pill.update((p) => ({ ...p, shown: false }));
+      }
       return;
     }
     const top =

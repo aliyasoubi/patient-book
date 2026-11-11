@@ -34,10 +34,20 @@ $gutter: var(--pb-space-3);
   }
 }
 
+/* The bar opens on its own height, so the page eases down rather than jumping. */
 @keyframes shell-topbar-in {
   from {
+    block-size: 0;
     opacity: 0;
-    translate: 0 -8px;
+    border-block-end-width: 0;
+  }
+}
+
+@keyframes shell-topbar-out {
+  to {
+    block-size: 0;
+    opacity: 0;
+    border-block-end-width: 0;
   }
 }
 
@@ -50,7 +60,11 @@ $gutter: var(--pb-space-3);
 }
 
 .topbar-in {
-  animation: shell-topbar-in 320ms var(--pb-ease-emphasized) backwards;
+  animation: shell-topbar-in 420ms var(--pb-ease-emphasized) backwards;
+}
+
+.topbar-out {
+  animation: shell-topbar-out 320ms var(--pb-ease-emphasized) forwards;
 }
 
 /* ── Frame ─────────────────────────────────────────────────────────── */
@@ -79,8 +93,11 @@ $gutter: var(--pb-space-3);
 
   --sidebar: #{$wide};
 
+  position: relative;
   display: grid;
   grid-template-columns: var(--sidebar) minmax(0, 1fr);
+  // One row, the window's height: the sidebar and the page always reach the bottom.
+  grid-template-rows: minmax(0, 1fr);
   block-size: 100dvh;
   transition: grid-template-columns 420ms var(--pb-ease-emphasized);
 
@@ -91,6 +108,11 @@ $gutter: var(--pb-space-3);
   &.is-handset {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The search overlay draws itself fixed; its host takes no cell in the grid. */
+.shell > pb-spotlight {
+  position: absolute;
 }
 
 /* ── Stage: the page panel ─────────────────────────────────────────── */
@@ -123,6 +145,7 @@ $gutter: var(--pb-space-3);
   justify-content: center;
   gap: var(--pb-space-3);
   block-size: 64px;
+  overflow: hidden;
   padding-inline: var(--pb-space-5);
   border-block-end: 1px solid var(--pb-neutral-200);
   background: color-mix(in srgb, #fff 70%, transparent);
@@ -196,9 +219,16 @@ $gutter: var(--pb-space-3);
 }
 
 .page {
+  // Positioned, so what a page places absolutely (screen-reader-only text,
+  // popovers) is held inside this scroller instead of stretching the window:
+  // a window scrollbar would narrow the whole app by its width.
+  position: relative;
   flex: 1 1 auto;
   min-block-size: 0;
   overflow-y: auto;
+  // Room for the scrollbar is kept whether or not one shows, so a page that
+  // grows long enough to scroll does not narrow by its width.
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 
