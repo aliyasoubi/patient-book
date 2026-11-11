@@ -21,6 +21,7 @@
     "db:down": "docker compose down",
     "migration:run": "npm run migration:run --workspace=api",
     "seed": "npm run seed --workspace=api",
+    "seed:demo": "npm run seed:demo --workspace=api",
     "import": "npm run import --workspace=api",
     "import:inventory": "npm run import:inventory --workspace=api --",
     "export": "npm run export --workspace=api",
