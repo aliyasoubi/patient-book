@@ -4,9 +4,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import type { PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import {
   catchError,
   debounceTime,
@@ -33,27 +31,17 @@ import {
   PersianNumberPipe,
 } from '../../shared/pipes/persian-number.pipe';
 import {
-  abutmentLabel,
-  contactOutcomeLabel,
-  surgeryDoneLabel,
-  surgeryKindIcon,
-  surgeryKindLabel,
-} from '../../shared/labels';
-import {
-  PbBanner,
   PbButton,
   PbFilterChips,
-  PbIconButton,
   PbPage,
   PbPageHeader,
   PbPaginator,
-  PbProgressSteps,
-  PbListToolbar,
   PbSearchField,
-  PbStatusChip,
+  PbSwitcher,
   ToastService,
 } from '../../shared/ui';
-import type { FilterChipOption, ProgressStep, StatusTone } from '../../shared/ui';
+import type { FilterChipOption, SwitcherOption } from '../../shared/ui';
+import { FollowUpRow } from './follow-up-row';
 import type {
   FollowUpFilter,
   FollowUpState,
@@ -63,9 +51,7 @@ import type {
 import { SurgeryBookDialog, type SurgeryBookResult } from './surgery-book-dialog';
 import { FollowUpContactDialog, type FollowUpContactDialogData } from './follow-up-contact-dialog';
 import type { RecordContactInput } from '../../core/services/registry.service';
-import { daysUntil, followUpDistance, followUpProgress } from './follow-up-distance';
-import { placedImplantLine } from '../../shared/placed-implant';
-import { PhonePipe } from '../../shared/pipes/phone.pipe';
+import { daysUntil, followUpDistance } from './follow-up-distance';
 
 /**
  * The questions staff ask of the list, most urgent first. Each is a
@@ -84,23 +70,47 @@ const FOLLOW_UP_FILTERS: readonly (FilterChipOption & { value: FollowUpFilter })
   { value: 'declined', label: 'surgery.filterDeclined', icon: 'cancel', translate: true },
 ];
 
-/** How a follow-up reads on the card: the state is the API's, the colour is ours. */
-const FOLLOW_UP_TONE: Record<FollowUpState, StatusTone> = {
-  none: 'neutral',
-  pending: 'neutral',
-  due: 'warning',
-  overdue: 'error',
-  booked: 'success',
-  declined: 'neutral',
-};
-
-/** A row of the list with what its card draws, worked out once per load so the bindings hold still. */
+/** A row with what it shows worked out once per load, so the bindings hold still. */
 interface QueueRow {
   item: SurgeryQueueItem;
-  steps: ProgressStep[];
-  /** 0 to 100: how much of the wait for the follow-up has gone; `null` when there is nothing to measure. */
-  progress: number | null;
+  /** The headline of its "when" column. */
+  when: string;
+  /** The legacy tooth phrase, minus a brand shown on its own. */
+  position: string;
+  /** The day to call again has come. */
+  callDue: boolean;
 }
+
+/** Groups down the sheet, most urgent first; a cancelled surgery last. */
+type GroupKey = FollowUpState | 'off';
+const GROUP_ORDER: readonly GroupKey[] = [
+  'overdue',
+  'due',
+  'pending',
+  'none',
+  'booked',
+  'declined',
+  'off',
+];
+const GROUP_LABEL: Record<GroupKey, string> = {
+  overdue: 'surgery.groupOverdue',
+  due: 'surgery.groupDue',
+  pending: 'surgery.groupPending',
+  none: 'surgery.groupNone',
+  booked: 'surgery.groupBooked',
+  declined: 'surgery.groupDeclined',
+  off: 'surgery.groupOff',
+};
+
+/** The views most asked for, on the segmented bar; the rest are chips under it. */
+const PRIMARY_VIEWS: readonly (FollowUpFilter | '')[] = [
+  '',
+  'callsToday',
+  'overdue',
+  'pending',
+  'week',
+  'booked',
+];
 
 function isFollowUpFilter(value: unknown): value is FollowUpFilter {
   return FOLLOW_UP_FILTERS.some((f) => f.value === value);
@@ -141,25 +151,19 @@ function readUrlFilters(params: ParamMap): UrlFilters {
   selector: 'pb-surgery-list',
   standalone: true,
   imports: [
-    PhonePipe,
     ReactiveFormsModule,
-    MatProgressBarModule,
     EmptyState,
     LoadError,
+    FollowUpRow,
     PersianNumberPipe,
-    PbListToolbar,
     PbSearchField,
+    PbSwitcher,
     PbPageHeader,
     PbPage,
-    PbBanner,
     PbPaginator,
     PbButton,
     PbFilterChips,
-    PbIconButton,
-    PbStatusChip,
-    MatIconModule,
     TranslatePipe,
-    PbProgressSteps,
   ],
   templateUrl: './surgery-list.html',
   styleUrl: './surgery-list.scss',
@@ -174,13 +178,15 @@ export class SurgeryList {
   private readonly toast = inject(ToastService);
   private readonly errors = inject(ApiErrorTranslator);
   protected readonly auth = inject(AuthService);
-  protected readonly abutmentLabel = abutmentLabel;
-  protected readonly placedImplantLine = placedImplantLine;
-  protected readonly outcomeLabel = contactOutcomeLabel;
-  protected readonly kindLabel = surgeryKindLabel;
-  protected readonly doneLabel = surgeryDoneLabel;
-  protected readonly kindIcon = surgeryKindIcon;
-  protected readonly followUpFilters = FOLLOW_UP_FILTERS;
+  /** The segmented bar: everything, then the windows asked of the list every day. */
+  protected readonly views: SwitcherOption[] = PRIMARY_VIEWS.map((value) => ({
+    value,
+    label: value
+      ? (FOLLOW_UP_FILTERS.find((f) => f.value === value)?.label ?? '')
+      : 'surgery.viewAll',
+  }));
+  /** The windows asked now and then, as chips under the bar. */
+  protected readonly moreViews = FOLLOW_UP_FILTERS.filter((f) => !PRIMARY_VIEWS.includes(f.value));
   /**
    * Which rows are listed at all, each its own switch: those not yet linked
    * to a patient file — to be linked from the form — and the archived ones.
@@ -221,8 +227,27 @@ export class SurgeryList {
     this.i18n.currentLang();
     return this.items().map((item) => ({
       item,
-      steps: this.stepsFor(item),
-      progress: this.waitProgress(item),
+      when: this.whenNote(item),
+      position: this.toothPositionDisplay(item),
+      callDue: this.callDue(item),
+    }));
+  });
+
+  /**
+   * The page's rows in urgency groups — overdue, due, waiting, booked,
+   * cancelled — each keeping the order the API sent, so the eye starts at
+   * what cannot wait and the colour of each group tells it where it is.
+   */
+  protected readonly groups = computed(() => {
+    const byKey = new Map<GroupKey, QueueRow[]>();
+    for (const row of this.rows()) {
+      const key: GroupKey = row.item.status === 'cancelled' ? 'off' : row.item.followUpState;
+      byKey.set(key, [...(byKey.get(key) ?? []), row]);
+    }
+    return GROUP_ORDER.filter((key) => byKey.has(key)).map((key) => ({
+      key,
+      label: GROUP_LABEL[key],
+      rows: byKey.get(key) ?? [],
     }));
   });
   /** The row whose follow-up status is mid-save, so it cannot be changed twice. */
@@ -321,73 +346,9 @@ export class SurgeryList {
     this.reloadTick.update((n) => n + 1);
   }
 
-  protected toneFor(state: FollowUpState): StatusTone {
-    return FOLLOW_UP_TONE[state];
-  }
-
-  /** Whether the card shows a follow-up track at all: it needs a date and a surgery that stands. */
-  protected hasProgress(item: SurgeryQueueItem): boolean {
-    return !!item.followUpDate && item.status !== 'cancelled';
-  }
-
   /** The status can be changed from the card, as opposed to only shown. */
   protected canChangeStatus(): boolean {
     return this.auth.can('editSurgery') && !this.archivedOnly();
-  }
-
-  /**
-   * The follow-up as steps: it was created, it waits for a call, and it ends
-   * in an appointment or in the patient's cancellation. The third step is
-   * whichever ending it reached, or the good one still ahead.
-   */
-  private stepsFor(item: SurgeryQueueItem): ProgressStep[] {
-    const status = item.followUpStatus;
-    const created: ProgressStep = {
-      value: 'created',
-      label: 'surgery.stepCreated',
-      icon: 'flag',
-      state: 'done',
-      translate: true,
-    };
-    const open: ProgressStep = {
-      value: 'open',
-      label: 'surgery.statusOpen',
-      icon: 'call',
-      state: status === 'open' ? 'current' : 'done',
-      translate: true,
-      interactive: true,
-    };
-    const ending: ProgressStep =
-      status === 'declined'
-        ? {
-            value: 'declined',
-            label: 'surgery.statusDeclined',
-            icon: 'cancel',
-            state: 'error',
-            translate: true,
-          }
-        : {
-            value: 'booked',
-            label: 'surgery.statusBooked',
-            icon: 'event_available',
-            state: status === 'booked' ? 'success' : 'upcoming',
-            translate: true,
-            interactive: true,
-          };
-    return [created, open, ending];
-  }
-
-  /** How much of the wait has gone: full once it is settled as booked, none to show once cancelled. */
-  private waitProgress(item: SurgeryQueueItem): number | null {
-    if (!this.hasProgress(item) || item.followUpStatus === 'declined') return null;
-    if (item.followUpStatus === 'booked') return 100;
-    if (!item.surgeryDate || !item.followUpDate) return null;
-    return Math.round(followUpProgress(item.surgeryDate.iso, item.followUpDate.iso) * 100);
-  }
-
-  /** A closed follow-up sinks in the list and quiets on the card; it is no longer work to do. */
-  protected isSettled(item: SurgeryQueueItem): boolean {
-    return item.followUpState === 'booked' || item.followUpState === 'declined';
   }
 
   /**
@@ -429,13 +390,6 @@ export class SurgeryList {
     const isBrandOnly =
       item.toothPosition.trim().toLowerCase() === item.implantBrand.trim().toLowerCase();
     return isBrandOnly ? '' : item.toothPosition;
-  }
-
-  /** An archived row offers only its way back; editing waits until it is restored. */
-  protected hasActions(): boolean {
-    return this.archivedOnly()
-      ? this.auth.can('archiveSurgery')
-      : this.auth.can('editSurgery') || this.auth.can('archiveSurgery');
   }
 
   protected emptyHint(): string {

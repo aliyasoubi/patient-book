@@ -12,24 +12,32 @@
     }
   </pb-page-header>
 
-  <pb-list-toolbar>
+  <!-- ── The questions the desk asks of the list, most asked first ── -->
+  <div class="views">
+    <div class="views__scroll">
+      <pb-switcher
+        [options]="views"
+        [value]="followUp()"
+        (valueChange)="setFollowUp($event)"
+        [ariaLabel]="'surgery.viewsAria' | translate"
+      />
+    </div>
     <pb-search-field
+      class="views__search"
       [control]="search"
       [placeholder]="'surgery.searchPlaceholder' | translate"
       [ariaLabel]="'surgery.searchAria' | translate"
     />
+  </div>
 
-    <!-- The questions staff ask of the list, one at a time: clicking the
-         selected chip clears it and shows everything again. -->
+  <!-- The rarer windows, and the switches for which rows are listed at all. -->
+  <div class="more">
     <pb-filter-chips
-      [options]="followUpFilters"
+      [options]="moreViews"
       [selected]="followUpSelected()"
-      (selectedChange)="setFollowUp($event[0])"
-      [ariaLabel]="'surgery.followUpFilter' | translate"
+      (selectedChange)="setFollowUp($event[0] ?? '')"
+      [ariaLabel]="'surgery.moreFilters' | translate"
     />
-
-    <!-- Separate from the follow-up questions: they change which rows are
-         listed at all, and combine with any of them. -->
     <pb-filter-chips
       multiple
       [options]="rowFilters"
@@ -37,282 +45,69 @@
       (selectedChange)="setRowFilters($event)"
       [ariaLabel]="'common.filters' | translate"
     />
-  </pb-list-toolbar>
+  </div>
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
-
-  <!-- A failed fetch keeps the previous rows (if any) under this banner. It is
-       never shown as the empty state: "nothing to follow up" and "the list
-       could not be loaded" are different facts. -->
-  @if (failed()) {
-    <pb-load-error
-      [message]="
-        (items().length > 0 ? 'surgery.loadFailedStale' : 'surgery.loadFailed') | translate
-      "
-      (retry)="retry()"
-    />
-  }
-
-  @if (!loading() && !failed() && items().length === 0) {
-    <pb-empty-state
-      icon="event_busy"
-      [title]="'surgery.emptyTitle' | translate"
-      [hint]="emptyHint()"
-    />
-  } @else {
-    <ul class="queue">
-      @for (row of rows(); track row.item.id) {
-        @let item = row.item;
-        <li
-          class="queue__item"
-          [class.queue__item--mismatch]="item.hasNameMismatch"
-          [class.queue__item--settled]="isSettled(item)"
-        >
-          <!-- M3's determinate linear indicator along the top edge: how much of
-               the wait between the surgery and its follow-up has gone. It fills
-               as the date nears, and is full once it is due or booked. -->
-          @if (row.progress !== null) {
-            <mat-progress-bar
-              class="queue__wait"
-              [attr.data-state]="item.followUpState"
-              mode="determinate"
-              [value]="row.progress"
-              [attr.aria-label]="'surgery.waitProgress' | translate"
+  <!-- ── The sheet: grouped by urgency, read from the top down ──────── -->
+  <section class="sheet" [class.is-busy]="loading() && items().length > 0">
+    @if (failed()) {
+      <!-- The previous rows stay under the banner: "nothing to follow up" and
+           "the list could not be loaded" are different facts. -->
+      <pb-load-error
+        [message]="
+          (items().length > 0 ? 'surgery.loadFailedStale' : 'surgery.loadFailed') | translate
+        "
+        (retry)="retry()"
+      />
+    } @else if (loading() && items().length === 0) {
+      <div class="sheet__skeleton" aria-hidden="true">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <span class="skeleton-row"></span>
+        }
+      </div>
+    } @else if (items().length === 0) {
+      <pb-empty-state
+        icon="event_busy"
+        [title]="'surgery.emptyTitle' | translate"
+        [hint]="emptyHint()"
+      />
+    } @else {
+      <div class="sheet__head" aria-hidden="true">
+        <span>{{ 'surgery.colWhen' | translate }}</span>
+        <span>{{ 'surgery.colWho' | translate }}</span>
+        <span>{{ 'surgery.colWork' | translate }}</span>
+        <span>{{ 'surgery.colContact' | translate }}</span>
+        <span></span>
+      </div>
+      @for (group of groups(); track group.key) {
+        <div class="group" role="list" [attr.aria-label]="group.label | translate">
+          <div class="group__head" [attr.data-state]="group.key" role="presentation">
+            <span class="group__dot" aria-hidden="true"></span>
+            <span class="group__label">{{ group.label | translate }}</span>
+            <span class="group__count">{{ group.rows.length | faNum }}</span>
+          </div>
+          @for (row of group.rows; track row.item.id; let i = $index) {
+            <pb-follow-up-row
+              [item]="row.item"
+              [when]="row.when"
+              [position]="row.position"
+              [callDue]="row.callDue"
+              [canEdit]="canChangeStatus()"
+              [canArchive]="auth.can('archiveSurgery')"
+              [archived]="archivedOnly()"
+              [busy]="updating() === row.item.id"
+              [locked]="updating() !== null"
+              [style.--_i]="i"
+              (recordCall)="recordCall(row.item)"
+              (book)="bookAppointment(row.item)"
+              (setStatus)="setStatus(row.item, $event)"
+              (archive)="delete(row.item)"
+              (restore)="restore(row.item)"
             />
           }
-
-          <!-- Who, and when they are to be followed up: the two things the list
-               is read for, on one line. -->
-          <div class="queue__head">
-            <div class="queue__who">
-              <div class="queue__identity">
-                <strong>{{ item.recordedName || ('patient.unnamed' | translate) }}</strong>
-                <!-- The file and the number to call, from the patient's file. A
-                     row not linked yet says so, to be linked from the form. -->
-                @if (item.patient; as patient) {
-                  <pb-status-chip icon="link" [link]="['/patients', patient.id]">
-                    {{ 'surgery.patientFile' | translate: { fileNo: patient.fileNo } }}
-                  </pb-status-chip>
-                  @if (patient.mobile) {
-                    <span class="queue__phone" dir="ltr">
-                      <mat-icon aria-hidden="true">smartphone</mat-icon>
-                      {{ patient.mobile | phone }}
-                    </span>
-                  }
-                } @else {
-                  <span class="queue__unlinked">
-                    <mat-icon aria-hidden="true">link_off</mat-icon>
-                    {{ 'surgery.unlinked' | translate }}
-                  </span>
-                }
-              </div>
-              <!-- What was done and when: a footnote to the follow-up. -->
-              <span class="queue__done">
-                @if (item.surgeryDate; as done) {
-                  {{ doneLabel(item.kind) | translate: { date: (done.jalali | faNum) } }}
-                } @else {
-                  {{ 'surgery.noDate' | translate }}
-                }
-              </span>
-            </div>
-
-            <div class="queue__when">
-              @if (item.status === 'cancelled') {
-                <!-- A cancelled surgery owes no follow-up; say so rather than
-                     show a date that no longer means anything. -->
-                <pb-status-chip icon="cancel">{{ 'surgery.cancelled' | translate }}</pb-status-chip>
-              } @else if (item.followUpDate; as followUp) {
-                <span class="queue__when-date">
-                  <mat-icon aria-hidden="true">event_repeat</mat-icon>
-                  {{ followUp.jalali | faNum }}
-                </span>
-                <pb-status-chip [tone]="toneFor(item.followUpState)">
-                  {{ whenNote(item) }}
-                </pb-status-chip>
-              } @else if (item.prosthesisDue) {
-                <!-- LEGACY: an imported note the backfill could not read. Remove with
-                     the runtime fallbacks listed in apps/api/src/modules/surgery/legacy-prosthesis-due.ts. -->
-                <span class="queue__when-date">
-                  <mat-icon aria-hidden="true">event_repeat</mat-icon>
-                  {{ item.prosthesisDue }}
-                </span>
-              }
-            </div>
-
-            <!-- Edit and archive/restore, one tap each and in sight; the
-                 status lives on the card. -->
-            @if (hasActions()) {
-              <div class="queue__actions">
-                @if (archivedOnly()) {
-                  <pb-icon-button
-                    icon="unarchive"
-                    [ariaLabel]="'surgery.restore' | translate"
-                    [tooltip]="'surgery.restore' | translate"
-                    (click)="restore(item)"
-                  />
-                } @else {
-                  @if (auth.can('editSurgery')) {
-                    <pb-icon-button
-                      icon="edit"
-                      [link]="['/surgery', item.id, 'edit']"
-                      [ariaLabel]="'common.edit' | translate"
-                      [tooltip]="'common.edit' | translate"
-                    />
-                  }
-                  @if (auth.can('archiveSurgery')) {
-                    <pb-icon-button
-                      icon="archive"
-                      [ariaLabel]="'common.archive' | translate"
-                      [tooltip]="'common.archive' | translate"
-                      (click)="delete(item)"
-                    />
-                  }
-                }
-              </div>
-            }
-          </div>
-
-          <!-- A reused register number is a patient-safety issue: the number
-               on the list belongs to someone else in the implant book. -->
-          @if (item.hasNameMismatch) {
-            <pb-banner tone="error" size="compact" icon="warning" role="note">
-              {{
-                'surgery.identityWarning'
-                  | translate: { number: item.implantRegistryNo, name: item.registeredName }
-              }}
-            </pb-banner>
-          }
-
-          <!-- The work itself, one line, every item the same height. -->
-          <div class="queue__meta">
-            <pb-status-chip [icon]="kindIcon(item.kind)">
-              {{ kindLabel(item.kind) | translate }}
-            </pb-status-chip>
-            @if (item.teethFdi.length) {
-              <!-- Numbers only: the chart they were picked on is in the form. -->
-              <span
-                class="queue__teeth"
-                role="group"
-                [attr.aria-label]="'surgery.teeth' | translate"
-              >
-                @for (tooth of item.teethFdi; track tooth) {
-                  <span class="queue__tooth">{{ tooth | faNum }}</span>
-                }
-              </span>
-            } @else if (toothPositionDisplay(item); as position) {
-              <!-- Rows from before the chart keep the phrase they were written with. -->
-              <span class="queue__detail">
-                <mat-icon aria-hidden="true">dentistry</mat-icon>
-                {{ position }}
-              </span>
-            }
-            @if (item.implantBrand) {
-              <span class="queue__detail">
-                <mat-icon aria-hidden="true">label</mat-icon>
-                {{ item.implantBrand }}
-              </span>
-            }
-            @if (item.kind === 'implant' && item.abutmentType !== 'unknown') {
-              <span class="queue__detail">
-                <mat-icon aria-hidden="true">hardware</mat-icon>
-                {{ abutmentLabel(item.abutmentType) | translate }}
-              </span>
-            }
-          </div>
-
-          <!-- Each implant the stock handed out for it: which tooth took which box. -->
-          @if (item.implants.length) {
-            <ul class="queue__implants" [attr.aria-label]="'surgery.implants' | translate">
-              @for (implant of item.implants; track $index) {
-                <li>{{ placedImplantLine(implant) }}</li>
-              }
-            </ul>
-          }
-
-          <!-- Where the follow-up stands with the patient, as steps along a
-               track. Still to call is the default and the only open state: a
-               call that settles nothing leaves it as it is. -->
-          @if (hasProgress(item)) {
-            <div class="queue__track">
-              <pb-progress-steps
-                class="queue__steps"
-                [steps]="row.steps"
-                [disabled]="!canChangeStatus() || updating() !== null"
-                (stepSelected)="setStatus(item, $any($event))"
-                [ariaLabel]="'surgery.followUpStatus' | translate"
-              />
-              @if (canChangeStatus()) {
-                <div class="queue__track-actions">
-                  @if (item.followUpStatus !== 'declined') {
-                    <pb-button
-                      variant="text"
-                      icon="call"
-                      [disabled]="updating() !== null"
-                      (click)="recordCall(item)"
-                    >
-                      {{ 'surgery.recordCall' | translate }}
-                    </pb-button>
-                  }
-                  @if (item.followUpStatus === 'booked') {
-                    <pb-button
-                      variant="text"
-                      icon="edit_calendar"
-                      [disabled]="updating() !== null"
-                      (click)="bookAppointment(item)"
-                    >
-                      {{
-                        (item.followUpAppointmentAt
-                          ? 'surgery.changeAppointment'
-                          : 'surgery.setAppointment'
-                        ) | translate
-                      }}
-                    </pb-button>
-                  }
-                  @if (item.followUpStatus !== 'declined') {
-                    <pb-button
-                      variant="text"
-                      tone="danger"
-                      icon="cancel"
-                      [disabled]="updating() !== null"
-                      (click)="setStatus(item, 'declined')"
-                    >
-                      {{ 'surgery.cancelByPatient' | translate }}
-                    </pb-button>
-                  }
-                </div>
-              }
-              <!-- The last call and the next one, so whoever picks the card up
-                   next knows where it stands before dialling. -->
-              @if (item.lastContact || item.nextContactAt) {
-                <p class="queue__contact">
-                  <mat-icon aria-hidden="true">history</mat-icon>
-                  @if (item.lastContact; as last) {
-                    <span>
-                      {{ 'surgery.lastCall' | translate: { when: (last.at | faNum) } }}
-                      @if (last.by) {
-                        · {{ last.by }}
-                      }
-                      — <strong>{{ outcomeLabel(last.outcome) | translate }}</strong>
-                    </span>
-                  }
-                  @if (item.nextContactAt; as next) {
-                    <span class="queue__next-call" [class.queue__next-call--due]="callDue(item)">
-                      {{ 'surgery.nextCall' | translate: { date: (next.jalali | faNum) } }}
-                    </span>
-                  }
-                  @if (item.lastContact?.note; as note) {
-                    <span class="queue__contact-note">«{{ note }}»</span>
-                  }
-                </p>
-              }
-            </div>
-          }
-        </li>
+        </div>
       }
-    </ul>
-  }
+    }
+  </section>
 
   @if (total() > 0) {
     <pb-paginator

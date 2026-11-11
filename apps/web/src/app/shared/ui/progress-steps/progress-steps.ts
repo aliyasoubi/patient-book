@@ -81,7 +81,8 @@ export interface ProgressStep {
     }
 
     .pb-steps__step {
-      --_bg: transparent;
+      /* Solid, so the track running to the node never shows through it. */
+      --_bg: var(--pb-card, #fff);
       --_fg: var(--mat-sys-on-surface-variant);
       --_border: var(--mat-sys-outline-variant);
       --_track: var(--mat-sys-outline-variant);

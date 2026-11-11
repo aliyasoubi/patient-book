@@ -23,7 +23,15 @@
   background: #fff;
   box-shadow: var(--pb-shadow-sm);
   translate: calc(var(--_index, 0) * -100%) 0;
-  transition: translate 380ms var(--pb-ease-spring);
+  transition:
+    translate 380ms var(--pb-ease-spring),
+    opacity 200ms var(--pb-ease-standard),
+    scale 260ms var(--pb-ease-standard);
+
+  :host(.is-unset) & {
+    opacity: 0;
+    scale: 0.9;
+  }
 }
 
 .pb-switcher__option {

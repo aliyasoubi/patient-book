@@ -1,0 +1,192 @@
+@let it = item();
+
+<!-- ── When ─────────────────────────────────────────────────────── -->
+<div class="cell cell--when">
+  @if (it.status === 'cancelled') {
+    <strong class="when">{{ 'surgery.declinedLabel' | translate }}</strong>
+    <span class="when__sub">{{ 'surgery.cancelled' | translate }}</span>
+  } @else if (it.followUpDate; as date) {
+    <strong class="when">{{ when() }}</strong>
+    <span class="when__sub">
+      <pb-icon name="calendar" [size]="13" />
+      <span class="ltr-nums">{{ date.jalali | faNum }}</span>
+    </span>
+  } @else if (it.prosthesisDue) {
+    <!-- LEGACY: an imported note the backfill could not read. -->
+    <strong class="when when--quiet">{{ it.prosthesisDue }}</strong>
+  } @else {
+    <strong class="when when--quiet">{{ 'surgery.noDate' | translate }}</strong>
+  }
+</div>
+
+<!-- ── Who ──────────────────────────────────────────────────────── -->
+<div class="cell cell--who">
+  <span class="avatar" aria-hidden="true">{{ initial() }}</span>
+  <span class="who">
+    <span class="who__name">
+      {{ it.recordedName || ('patient.unnamed' | translate) }}
+      @if (it.hasNameMismatch) {
+        <span
+          class="who__warn"
+          [matTooltip]="
+            'surgery.identityWarning'
+              | translate: { number: it.implantRegistryNo, name: it.registeredName }
+          "
+          [attr.aria-label]="'surgery.identityShort' | translate"
+          role="img"
+          ><pb-icon name="alert-triangle" [size]="15"
+        /></span>
+      }
+    </span>
+    <span class="who__line">
+      @if (it.patient; as patient) {
+        @if (patient.mobile) {
+          <a
+            class="who__phone"
+            [href]="'tel:' + patient.mobile"
+            [attr.aria-label]="'surgery.callPatient' | translate: { name: it.recordedName }"
+          >
+            <pb-icon name="phone" [size]="13" />
+            <span class="ltr-nums">{{ patient.mobile | phone }}</span>
+          </a>
+        }
+        <a class="who__file" [routerLink]="['/patients', patient.id]">{{
+          'surgery.patientFile' | translate: { fileNo: patient.fileNo }
+        }}</a>
+      } @else {
+        <span class="who__unlinked">
+          <mat-icon aria-hidden="true">link_off</mat-icon>
+          {{ 'surgery.unlinked' | translate }}
+        </span>
+      }
+    </span>
+  </span>
+</div>
+
+<!-- ── Work ─────────────────────────────────────────────────────── -->
+<div class="cell cell--work">
+  <span class="work__kind">
+    <mat-icon aria-hidden="true">{{ kindIcon(it.kind) }}</mat-icon>
+    {{ kindLabel(it.kind) | translate }}
+    @if (it.teethFdi.length) {
+      <span class="work__teeth" role="group" [attr.aria-label]="'surgery.teeth' | translate">
+        @for (tooth of it.teethFdi; track tooth) {
+          <span class="work__tooth">{{ tooth | faNum }}</span>
+        }
+      </span>
+    }
+  </span>
+  <span class="work__line">
+    @if (it.surgeryDate; as done) {
+      <span>{{ doneLabel(it.kind) | translate: { date: (done.jalali | faNum) } }}</span>
+    }
+    @if (!it.teethFdi.length && position()) {
+      <span>{{ position() }}</span>
+    }
+    @if (it.implantBrand) {
+      <span class="work__brand" [matTooltip]="implantsText()">{{ it.implantBrand }}</span>
+    }
+    @if (it.kind === 'implant' && it.abutmentType !== 'unknown') {
+      <span>{{ abutmentLabel(it.abutmentType) | translate }}</span>
+    }
+  </span>
+</div>
+
+<!-- ── Contact ──────────────────────────────────────────────────── -->
+<div class="cell cell--contact">
+  @if (it.lastContact; as last) {
+    <span class="contact__outcome" [attr.data-outcome]="last.outcome">
+      {{ outcomeLabel(last.outcome) | translate }}
+    </span>
+    <span class="contact__line">
+      <span class="ltr-nums">{{ last.at | faNum }}</span>
+      @if (last.by) {
+        <span>· {{ last.by }}</span>
+      }
+      @if (last.note) {
+        <span class="contact__note" [matTooltip]="last.note"
+          ><pb-icon name="info-circle" [size]="13"
+        /></span>
+      }
+    </span>
+  } @else {
+    <span class="contact__none">{{ 'surgery.noContact' | translate }}</span>
+  }
+  @if (it.nextContactAt; as next) {
+    <span class="contact__next" [class.is-due]="callDue()">
+      <pb-icon name="phone" [size]="12" />
+      {{ 'surgery.nextCall' | translate: { date: (next.jalali | faNum) } }}
+    </span>
+  }
+</div>
+
+<!-- ── Actions ──────────────────────────────────────────────────── -->
+<div class="cell cell--actions">
+  @if (archived()) {
+    @if (canArchive()) {
+      <pb-icon-button
+        icon="unarchive"
+        [ariaLabel]="'surgery.restore' | translate"
+        [tooltip]="'surgery.restore' | translate"
+        (click)="restore.emit()"
+      />
+    }
+  } @else {
+    @if (canEdit() && open() && it.followUpStatus !== 'declined') {
+      <button type="button" class="call" [disabled]="locked()" (click)="recordCall.emit()">
+        <pb-icon name="phone" [size]="16" />
+        <span>{{ 'surgery.recordCall' | translate }}</span>
+      </button>
+    }
+    @if (canEdit() || canArchive()) {
+      <pb-icon-button
+        icon="more_vert"
+        [menu]="menu"
+        [disabled]="locked()"
+        [ariaLabel]="'surgery.moreActions' | translate"
+      />
+      <mat-menu #menu="matMenu" xPosition="before">
+        @if (canEdit() && open()) {
+          @if (it.followUpStatus === 'booked') {
+            <button mat-menu-item type="button" (click)="book.emit()">
+              <mat-icon aria-hidden="true">edit_calendar</mat-icon>
+              <span>{{
+                (it.followUpAppointmentAt ? 'surgery.changeAppointment' : 'surgery.setAppointment')
+                  | translate
+              }}</span>
+            </button>
+          } @else {
+            <button mat-menu-item type="button" (click)="setStatus.emit('booked')">
+              <mat-icon aria-hidden="true">event_available</mat-icon>
+              <span>{{ 'surgery.markBooked' | translate }}</span>
+            </button>
+          }
+          @if (it.followUpStatus !== 'open') {
+            <button mat-menu-item type="button" (click)="setStatus.emit('open')">
+              <mat-icon aria-hidden="true">call</mat-icon>
+              <span>{{ 'surgery.reopen' | translate }}</span>
+            </button>
+          }
+          @if (it.followUpStatus !== 'declined') {
+            <button mat-menu-item type="button" (click)="setStatus.emit('declined')">
+              <mat-icon aria-hidden="true">cancel</mat-icon>
+              <span>{{ 'surgery.cancelByPatient' | translate }}</span>
+            </button>
+          }
+        }
+        @if (canEdit()) {
+          <a mat-menu-item [routerLink]="['/surgery', it.id, 'edit']">
+            <mat-icon aria-hidden="true">edit</mat-icon>
+            <span>{{ 'common.edit' | translate }}</span>
+          </a>
+        }
+        @if (canArchive()) {
+          <button mat-menu-item type="button" (click)="archive.emit()">
+            <mat-icon aria-hidden="true">archive</mat-icon>
+            <span>{{ 'common.archive' | translate }}</span>
+          </button>
+        }
+      </mat-menu>
+    }
+  }
+</div>

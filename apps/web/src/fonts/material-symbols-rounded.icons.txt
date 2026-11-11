@@ -48,7 +48,6 @@ escalator_warning
 event
 event_available
 event_busy
-event_repeat
 event_upcoming
 expand
 face
@@ -57,7 +56,6 @@ female
 files
 filter
 filter_alt_off
-flag
 folder
 format_paint
 function

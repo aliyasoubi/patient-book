@@ -26,6 +26,7 @@ export interface SwitcherOption {
     '[style.--_count]': 'options().length',
     '[style.--_index]': 'index()',
     '[class.is-stretched]': 'stretch()',
+    '[class.is-unset]': 'unset()',
   },
   template: `
     <span class="pb-switcher__pill" aria-hidden="true"></span>
@@ -56,6 +57,9 @@ export class PbSwitcher {
   /** Fill the container's width, the options sharing it evenly. */
   readonly stretch = input(false);
   readonly valueChange = output<string>();
+
+  /** None of the options is the value (it was set elsewhere): the pill steps away. */
+  protected readonly unset = computed(() => !this.options().some((o) => o.value === this.value()));
 
   protected readonly index = computed(() =>
     Math.max(
