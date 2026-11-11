@@ -756,7 +756,7 @@ p {
 }
 .mock__panels {
   display: grid;
-  grid-template-columns: 1fr 1.3fr 1fr;
+  grid-template-columns: 1fr 2.3fr;
   gap: 0.9em;
 }
 .mock__card {
@@ -805,21 +805,6 @@ p {
   box-shadow: 0 0 0 0 rgba(172, 199, 255, 0.6);
   animation: today 2.4s 2.6s ease-out infinite;
 }
-.mock__bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.45em;
-  height: 9em;
-  margin-top: 1em;
-}
-.mock__bars span {
-  flex: 1;
-  height: var(--h);
-  border-radius: 0.4em 0.4em 0.15em 0.15em;
-  background: linear-gradient(180deg, var(--brand), rgba(172, 199, 255, 0.2));
-  transform-origin: bottom;
-  animation: grow 1.2s calc(1600ms + var(--i) * 60ms) var(--ease) both;
-}
 .mock__list b {
   display: block;
   margin-bottom: 0.6em;
@@ -851,11 +836,6 @@ p {
   background: rgba(143, 214, 201, 0.35);
 }
 
-@keyframes grow {
-  from {
-    transform: scaleY(0);
-  }
-}
 @keyframes today {
   70%,
   100% {
@@ -1297,14 +1277,18 @@ html:not(.js) .viz--patients .viz__row {
 
 @keyframes travel {
   0%,
-  12% {
+  10% {
     left: 0;
   }
-  40%,
-  55% {
-    left: 50%;
+  28%,
+  38% {
+    left: 33.333%;
   }
-  85%,
+  56%,
+  66% {
+    left: 66.667%;
+  }
+  86%,
   100% {
     left: 100%;
   }
