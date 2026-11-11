@@ -12,6 +12,12 @@ export class RefreshSurgeryCaseCopies1792300000000 implements MigrationInterface
   name = 'RefreshSurgeryCaseCopies1792300000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // The rule is today's, and reads a column a later migration adds
+    // (SurgeryQueuePatient). A database that has not got there yet is being
+    // built from empty, or restored from before this one: built from empty it
+    // has no rows to bring into step, and without this every new database —
+    // CI's among them — stopped here.
+    if (!(await queryRunner.hasColumn('surgery_queue', 'patientId'))) return;
     await refreshCaseCopies(queryRunner.manager);
   }
 
