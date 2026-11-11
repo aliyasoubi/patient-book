@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 import type { LineIconName } from '../icon/line-icons';
 
@@ -82,8 +82,17 @@ export class PbInput {
     return this.lastWasError;
   }
 
+  /** The hint, as the placeholder while empty and an in-box note after. */
+  protected placeholderText(): string {
+    return placeholderWithHint(this.placeholder(), this.hint());
+  }
+
+  protected showInlineHint(): boolean {
+    return hintAsNote(this.placeholder(), this.hint(), this.control().value);
+  }
+
   protected message(): string | null {
-    return this.showError() ? this.errorText() : this.hint();
+    return this.showError() ? this.errorText() : null;
   }
 
   protected messageText(): string {

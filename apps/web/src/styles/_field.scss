@@ -202,22 +202,26 @@
 }
 
 /**
- * The message line of a field in a form, where an error appearing must not
- * push the field below it down: the line is always there, one line tall,
- * and only its words fade in. A longer message still grows it, smoothly.
+ * The hint, inside the box at its end, once the field has a value (while it
+ * is empty the hint is the placeholder). Never wider than a share of the
+ * box; the whole text is in its title.
  */
-@mixin message-slot-reserved {
-  grid-template-rows: 1fr;
-  opacity: 1;
-  min-block-size: calc(var(--pb-space-2) + 0.8125rem * 1.6);
+@mixin inline-hint {
+  // Its own width, up to the cap: the typed text gives way first.
+  flex: 0 0 auto;
+  max-inline-size: 45%;
+  overflow: hidden;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: 0.75;
+  animation: field-hint-in 240ms var(--pb-ease-standard);
+}
 
-  > * {
-    padding-block-start: var(--pb-space-2);
+@keyframes field-hint-in {
+  from {
     opacity: 0;
-    transition: opacity 200ms var(--pb-ease-standard);
-  }
-
-  &.is-open > * {
-    opacity: 1;
   }
 }

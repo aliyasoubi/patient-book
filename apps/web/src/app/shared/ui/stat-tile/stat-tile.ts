@@ -63,12 +63,13 @@ export type StatTileTone = 'neutral' | 'caution' | 'warn';
       text-decoration: none;
       color: inherit;
       transition:
-        border-color var(--pb-duration-short) var(--pb-ease-standard),
-        transform var(--pb-duration-short) var(--pb-ease-standard);
+        box-shadow 260ms var(--pb-ease-standard),
+        transform 320ms var(--pb-ease-spring);
     }
 
+    /* A tile that opens a list lifts on hover; its edge stays as it is. */
     a.pb-stat-tile__body:hover {
-      border-color: var(--mat-sys-primary);
+      box-shadow: var(--pb-shadow-lg);
       transform: translateY(-2px);
     }
 

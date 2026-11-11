@@ -25,11 +25,12 @@
   text-align: start;
   cursor: pointer;
   transition:
-    border-color var(--pb-duration-short) var(--pb-ease-standard),
-    background-color var(--pb-duration-short) var(--pb-ease-standard);
+    background-color var(--pb-duration-short) var(--pb-ease-standard),
+    box-shadow 220ms var(--pb-ease-standard);
 
+  /* Hover lifts the card on a soft shadow; its edge stays as it is. */
   &:hover {
-    border-color: var(--tx-fg);
+    box-shadow: var(--pb-shadow-md);
   }
 
   &:focus-visible {

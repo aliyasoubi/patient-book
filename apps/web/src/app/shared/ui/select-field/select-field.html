@@ -14,10 +14,16 @@
       class="sf__select"
       panelClass="pb-select-panel"
       [formControl]="ctrl"
-      [placeholder]="placeholder()"
+      [placeholder]="placeholderText()"
       [aria-labelledby]="label() ? labelId : ''"
       [attr.aria-describedby]="message() ? messageId : null"
     >
+      <mat-select-trigger>
+        <span class="sf__value">{{ selectedLabel() }}</span>
+        @if (hint()) {
+          <span class="sf__hint" [title]="hint()">{{ hint() }}</span>
+        }
+      </mat-select-trigger>
       @if (anyLabel()) {
         <mat-option value="">{{ anyLabel() }}</mat-option>
       }
@@ -33,10 +39,16 @@
       class="sf__select"
       panelClass="pb-select-panel"
       [value]="value()"
-      [placeholder]="placeholder()"
+      [placeholder]="placeholderText()"
       [aria-labelledby]="label() ? labelId : ''"
       (selectionChange)="onSelectionChange($event)"
     >
+      <mat-select-trigger>
+        <span class="sf__value">{{ selectedLabel() }}</span>
+        @if (hint()) {
+          <span class="sf__hint" [title]="hint()">{{ hint() }}</span>
+        }
+      </mat-select-trigger>
       @if (anyLabel()) {
         <mat-option value="">{{ anyLabel() }}</mat-option>
       }
@@ -49,11 +61,7 @@
   }
   <pb-icon class="sf__chevron" name="chevron-down" [size]="18" />
 </div>
-<div
-  class="sf__message-slot"
-  [class.sf__message-slot--reserved]="subscript() === 'fixed'"
-  [class.is-open]="!!message()"
->
+<div class="sf__message-slot" [class.is-open]="!!message()">
   <p
     class="sf__message"
     [class.sf__message--error]="messageIsError()"

@@ -47,9 +47,12 @@
 .ta__control {
   @include field.control;
 
+  /* Grows with what is typed, from its `rows` up; no drag handle. */
+  field-sizing: content;
   block-size: auto;
-  min-block-size: 1lh;
-  resize: vertical;
+  min-block-size: calc(var(--_rows, 3) * 1lh);
+  max-block-size: 16lh;
+  resize: none;
   line-height: 1.7;
   scrollbar-width: thin;
 }
@@ -78,4 +81,9 @@
   .ta__message-slot {
     transition-duration: 0ms;
   }
+}
+
+.ta__hint {
+  @include field.inline-hint;
+  margin-block-start: 3px;
 }

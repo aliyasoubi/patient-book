@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { regroup } from '../../rial';
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 import { lineIconFor } from '../icon/line-icons';
 
@@ -57,9 +57,9 @@ export class PbTextField {
   /** The native `autocomplete` attribute (browser autofill), not the option panel. */
   readonly nativeAutocomplete = input<string>('off');
   /**
-   * Room for the hint/error line: always (`fixed`), so an error appearing does
-   * not push the form down, or only while there is one (`dynamic`, eased
-   * open), for a field repeated down a list row.
+   * Kept so existing callers still compile. Hints now sit inside the box, so
+   * the line under a field only ever holds an error, and it eases open on
+   * its own height whichever value is passed.
    */
   readonly subscript = input<'fixed' | 'dynamic'>('fixed');
   /** Right-align as LTR — for phone numbers, file numbers, ids inside RTL text. */
@@ -91,8 +91,17 @@ export class PbTextField {
     return control.touched && control.invalid && this.errorText() !== null;
   }
 
+  /** The hint, as the placeholder while empty and an in-box note after. */
+  protected placeholderText(): string {
+    return placeholderWithHint(this.placeholder(), this.hint());
+  }
+
+  protected showInlineHint(): boolean {
+    return hintAsNote(this.placeholder(), this.hint(), this.control().value);
+  }
+
   protected message(): string | null {
-    return this.showError() ? this.errorText() : this.hint();
+    return this.showError() ? this.errorText() : null;
   }
 
   protected messageIsError(): boolean {

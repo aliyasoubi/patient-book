@@ -67,10 +67,6 @@
   @include field.message-slot;
 }
 
-.sf__message-slot--reserved {
-  @include field.message-slot-reserved;
-}
-
 .sf__message {
   @include field.message;
 }
@@ -85,4 +81,23 @@
   .sf__message-slot {
     transition-duration: 0ms;
   }
+}
+
+/* The chosen value, then the hint, on the trigger's one line. */
+.sf__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+mat-select-trigger {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pb-space-2);
+  min-inline-size: 0;
+}
+
+.sf__hint {
+  @include field.inline-hint;
+
+  margin-inline-start: auto;
 }

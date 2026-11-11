@@ -18,12 +18,16 @@
     [id]="id"
     [formControl]="control()"
     [rows]="rows()"
-    [placeholder]="readonly() ? '' : placeholder()"
+    [style.--_rows]="rows()"
+    [placeholder]="readonly() ? '' : placeholderText()"
     [readonly]="readonly()"
     [attr.maxlength]="maxlength()"
     [attr.aria-invalid]="showError() || null"
-    [attr.aria-describedby]="message() ? messageId : null"
+    [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
   ></textarea>
+  @if (showInlineHint()) {
+    <span class="ta__hint" [id]="id + '-hint'" [title]="hint()">{{ hint() }}</span>
+  }
   @if (readonly()) {
     <pb-icon class="ta__lock" name="lock" [size]="18" />
   }

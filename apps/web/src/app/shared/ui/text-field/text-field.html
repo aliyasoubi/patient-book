@@ -32,13 +32,13 @@
       [id]="id"
       [formControl]="control()"
       [type]="visibleType()"
-      [placeholder]="placeholder()"
+      [placeholder]="placeholderText()"
       [attr.maxlength]="maxlength()"
       [attr.inputmode]="inputmode() || null"
       [attr.autocomplete]="nativeAutocomplete()"
       [attr.dir]="ltr() ? 'ltr' : null"
       [attr.aria-invalid]="showError() || null"
-      [attr.aria-describedby]="message() ? messageId : null"
+      [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
       [class.tf__control--ltr]="ltr()"
       [matAutocomplete]="auto"
       [matAutocompleteConnectedTo]="origin"
@@ -59,18 +59,21 @@
       [id]="id"
       [formControl]="control()"
       [type]="visibleType()"
-      [placeholder]="placeholder()"
+      [placeholder]="placeholderText()"
       [attr.maxlength]="maxlength()"
       [attr.inputmode]="inputmode() || null"
       [attr.autocomplete]="nativeAutocomplete()"
       [attr.dir]="ltr() ? 'ltr' : null"
       [attr.aria-invalid]="showError() || null"
-      [attr.aria-describedby]="message() ? messageId : null"
+      [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
       [class.tf__control--ltr]="ltr()"
       (input)="groupDigits($event)"
     />
   }
 
+  @if (showInlineHint()) {
+    <span class="tf__hint" [id]="id + '-hint'" [title]="hint()">{{ hint() }}</span>
+  }
   @if (type() === 'password') {
     <button
       class="tf__toggle"
@@ -84,11 +87,7 @@
     </button>
   }
 </div>
-<div
-  class="tf__message-slot"
-  [class.tf__message-slot--reserved]="subscript() === 'fixed'"
-  [class.is-open]="!!message()"
->
+<div class="tf__message-slot" [class.is-open]="!!message()">
   <p
     class="tf__message"
     [class.tf__message--error]="messageIsError()"

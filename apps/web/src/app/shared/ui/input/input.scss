@@ -89,3 +89,7 @@
     transition-duration: 0ms;
   }
 }
+
+.pb-input__hint {
+  @include field.inline-hint;
+}

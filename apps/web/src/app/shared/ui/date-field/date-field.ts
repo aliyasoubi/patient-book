@@ -16,7 +16,7 @@ import { type FormControl, type ValidationErrors } from '@angular/forms';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 import { PbShamsiCalendar, type CalendarView } from '../calendar/shamsi-calendar';
 
@@ -121,8 +121,18 @@ export class PbDateField {
     return control.invalid && control.touched && this.errorText() !== null;
   }
 
+  /** The hint, after the example date, as the placeholder while empty. */
+  protected withHint(placeholder: string): string {
+    return placeholderWithHint(placeholder, this.hint());
+  }
+
+  protected showInlineHint(): boolean {
+    // The example date is always the placeholder, so the hint is always a note.
+    return hintAsNote('date', this.hint(), this.control().value);
+  }
+
   protected message(): string | null {
-    return this.showError() ? this.errorText() : this.hint();
+    return this.showError() ? this.errorText() : null;
   }
 
   protected messageText(): string {

@@ -3,7 +3,7 @@ import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 import { lineIconFor } from '../icon/line-icons';
 
@@ -48,8 +48,17 @@ export class PbTextareaField {
     return control.touched && control.invalid && this.errorText() !== null;
   }
 
+  /** The hint, as the placeholder while empty and an in-box note after. */
+  protected placeholderText(): string {
+    return placeholderWithHint(this.placeholder(), this.hint());
+  }
+
+  protected showInlineHint(): boolean {
+    return hintAsNote(this.placeholder(), this.hint(), this.control().value);
+  }
+
   protected message(): string | null {
-    return this.showError() ? this.errorText() : this.hint();
+    return this.showError() ? this.errorText() : null;
   }
 
   protected messageIsError(): boolean {

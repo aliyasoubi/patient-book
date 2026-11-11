@@ -3,7 +3,7 @@ import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { firstErrorMessage } from '../field-errors';
+import { firstErrorMessage, placeholderWithHint } from '../field-errors';
 import { PbIcon } from '../icon/icon';
 
 let nextId = 0;
@@ -54,9 +54,9 @@ export class PbSelectField {
   readonly anyLabel = input<string | null>(null);
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
   /**
-   * `fixed` (a form) keeps a line under the field for an error to appear in
-   * without the layout moving. `dynamic` (a list's toolbar, where nothing is
-   * ever invalid) drops it, so the field is its box and no taller.
+   * Kept so existing callers still compile. Hints now sit inside the box, so
+   * the line under a field only ever holds an error, and it eases open on
+   * its own height whichever value is passed.
    */
   readonly subscript = input<'fixed' | 'dynamic'>('fixed');
 
@@ -71,8 +71,21 @@ export class PbSelectField {
     return !!ctrl && ctrl.touched && ctrl.invalid && this.errorText() !== null;
   }
 
+  /** Errors only: the hint sits inside the box, beside the chosen value. */
   protected message(): string | null {
-    return this.showError() ? this.errorText() : this.hint();
+    return this.showError() ? this.errorText() : null;
+  }
+
+  protected placeholderText(): string {
+    return placeholderWithHint(this.placeholder(), this.hint());
+  }
+
+  /** What the box shows for the current choice, drawn by hand so the hint can sit beside it. */
+  protected selectedLabel(): string {
+    const value = this.control()?.value ?? this.value();
+    const option = this.options().find((o) => o.value === value);
+    if (option) return option.translate ? this.i18n.instant(option.label) : option.label;
+    return value === '' ? (this.anyLabel() ?? '') : '';
   }
 
   protected messageIsError(): boolean {

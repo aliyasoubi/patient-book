@@ -31,10 +31,11 @@ describe('PbInput', () => {
     expect(root.querySelector('label')?.getAttribute('for')).toBe(input.id);
   });
 
-  it('shows the hint until the field is touched, then the error in its place', () => {
+  it('keeps the hint inside the box and opens a line below only for an error', () => {
     const { fixture, root, input } = render();
     const message = () => root.querySelector('.pb-input__message');
-    expect(message()?.textContent?.trim()).toBe('راهنما');
+    expect(input.placeholder).toContain('راهنما');
+    expect(message()?.textContent?.trim()).toBe('');
     expect(input.getAttribute('aria-invalid')).toBeNull();
 
     fixture.componentInstance.control.markAsTouched();

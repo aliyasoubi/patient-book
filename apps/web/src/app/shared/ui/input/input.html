@@ -10,13 +10,16 @@
     [id]="id"
     [formControl]="control()"
     [type]="visibleType()"
-    [placeholder]="placeholder()"
+    [placeholder]="placeholderText()"
     [attr.autocomplete]="nativeAutocomplete()"
     [attr.dir]="ltr() ? 'ltr' : null"
     [attr.aria-invalid]="showError() || null"
-    [attr.aria-describedby]="message() ? messageId : null"
+    [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
     [class.pb-input__control--ltr]="ltr()"
   />
+  @if (showInlineHint()) {
+    <span class="pb-input__hint" [id]="id + '-hint'" [title]="hint()">{{ hint() }}</span>
+  }
   @if (type() === 'password') {
     <button
       class="pb-input__toggle"

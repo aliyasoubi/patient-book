@@ -96,3 +96,24 @@ export function firstErrorMessage(
   if (!key) return null;
   return overrides[key] ?? defaultMessage(key, errors[key], i18n) ?? null;
 }
+
+/**
+ * A field's hint lives inside its box. With no example of its own, the hint
+ * is the placeholder while the field is empty, and a quiet note at the box's
+ * end once it has a value. Beside an example placeholder (a date's
+ * 1368/05/12) it is that note from the start. Only an error opens a line
+ * under the field.
+ */
+export function placeholderWithHint(placeholder: string, hint: string | null): string {
+  return placeholder || hint || '';
+}
+
+/** Whether the hint shows as a note at the box's end rather than as the placeholder. */
+export function hintAsNote(placeholder: string, hint: string | null, value: unknown): boolean {
+  return !!hint && (!!placeholder || hasText(value));
+}
+
+/** Whether a control holds something worth keeping the in-box hint beside. */
+export function hasText(value: unknown): boolean {
+  return value !== null && value !== undefined && String(value).trim() !== '';
+}

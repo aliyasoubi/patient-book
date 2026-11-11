@@ -12,15 +12,18 @@
       autocomplete="off"
       [id]="id"
       [value]="text()"
-      [placeholder]="placeholder() || ('calendar.placeholder' | translate)"
+      [placeholder]="withHint(placeholder() || ('calendar.placeholder' | translate))"
       [attr.aria-invalid]="showError() || null"
-      [attr.aria-describedby]="message() ? messageId : null"
+      [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
       [attr.aria-expanded]="open()"
       aria-haspopup="dialog"
       (input)="onInput($event)"
       (keydown)="onKeydown($event)"
       (blur)="onBlur()"
     />
+    @if (showInlineHint()) {
+      <span class="date__hint" [id]="id + '-hint'" [title]="hint()">{{ hint() }}</span>
+    }
     <button
       type="button"
       class="date__toggle"

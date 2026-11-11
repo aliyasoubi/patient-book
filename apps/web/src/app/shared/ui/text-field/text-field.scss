@@ -94,10 +94,6 @@
   @include field.message-slot;
 }
 
-.tf__message-slot--reserved {
-  @include field.message-slot-reserved;
-}
-
 .tf__message {
   @include field.message;
 }
@@ -114,4 +110,8 @@
   .tf__message {
     transition-duration: 0ms;
   }
+}
+
+.tf__hint {
+  @include field.inline-hint;
 }

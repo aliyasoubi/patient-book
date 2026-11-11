@@ -57,7 +57,7 @@
             [control]="form.controls.username"
             [label]="'auth.username' | translate"
             [showErrors]="tried().username"
-            [hint]="'auth.usernameHint' | translate"
+            [placeholder]="'auth.usernameHint' | translate"
             prefixIcon="user"
             [ltr]="true"
             nativeAutocomplete="username"
@@ -104,7 +104,8 @@
             type="password"
             prefixIcon="lock"
             [ltr]="true"
-            [hint]="(capsLock() ? 'auth.capsLock' : 'auth.passwordHint') | translate"
+            [placeholder]="'auth.passwordHint' | translate"
+            [hint]="capsLock() ? ('auth.capsLock' | translate) : null"
             nativeAutocomplete="current-password"
           />
           <pb-button
