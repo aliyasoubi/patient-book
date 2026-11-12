@@ -45,6 +45,7 @@ import { LoadError } from '../../shared/components/load-error';
 import {
   PbButton,
   PbFilterChips,
+  PbIcon,
   PbPage,
   PbPageHeader,
   PbPaginator,
@@ -160,6 +161,7 @@ const WIDE_BOARD = '(min-width: 1360px)';
     LoadError,
     PbButton,
     PbFilterChips,
+    PbIcon,
     PbPage,
     PbPageHeader,
     PbPaginator,
@@ -544,6 +546,31 @@ export class LabBoard {
   }
 
   // -- Dragging ---------------------------------------------------------------------
+
+  /** The case being dragged, and the column it is over: they light the board up. */
+  protected readonly dragging = signal<LabCase | null>(null);
+  protected readonly over = signal<LabStage | null>(null);
+
+  /** What dropping on a column does, in the words of its button. */
+  protected readonly dropAction: Record<LabStage, string> = {
+    at_lab: 'labs.sendAgain',
+    at_clinic: 'labs.receive',
+    booked: 'labs.book',
+    delivered: 'labs.deliver',
+  };
+
+  /** While dragging: whether this column takes the card ('target'), is its home, or is out of reach. */
+  protected dropState(stage: LabStage): 'target' | 'home' | 'blocked' | null {
+    const c = this.dragging();
+    if (!c) return null;
+    if (c.stage === stage) return 'home';
+    return MOVES[c.stage].includes(stage) ? 'target' : 'blocked';
+  }
+
+  protected dragEnded(): void {
+    this.dragging.set(null);
+    this.over.set(null);
+  }
 
   /** Only a drop that is a real move lights up a column. */
   protected readonly canEnter = (drag: CdkDrag<LabCase>, drop: CdkDropList<LabCase[]>): boolean =>

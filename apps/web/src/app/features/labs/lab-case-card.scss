@@ -1,90 +1,239 @@
-@use '../../../styles/surface';
+/*
+ * A lab case: white, quiet, one colour at most. Who, what, when, then the
+ * next move. Urgency is the only colour — a thin bar on the card's edge and
+ * the "when" line, red for late, amber for today — so a column of cards
+ * shows at once which ones need someone.
+ */
 
 :host {
   display: block;
 }
 
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--pb-space-2);
-  padding: var(--pb-space-3) var(--pb-space-4);
-  @include surface.outlined(medium);
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-4);
+  overflow: hidden;
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  transition: box-shadow 220ms var(--pb-ease-standard);
 
-  &--overdue {
-    border-color: color-mix(in srgb, var(--mat-sys-error) 45%, transparent);
+  &:hover {
+    box-shadow: var(--pb-shadow-md);
   }
 
-  &__head {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--pb-space-2);
+  /* The urgency bar on the reading edge. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: 3px;
+    background: transparent;
+    transition: background-color 200ms var(--pb-ease-standard);
   }
 
-  &__identity {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--pb-space-2);
+  &[data-urgency='late']::before {
+    background: var(--mat-sys-error);
   }
 
-  &__name {
-    font: var(--mat-sys-title-small);
+  &[data-urgency='soon']::before {
+    background: #e8a317;
   }
 
-  &__menu {
-    margin: calc(-1 * var(--pb-space-2));
-    margin-inline-start: 0;
-  }
-
-  /** What the case is: supporting text, not chips — chips are for where it stands. */
-  &__details {
-    display: flex;
-    flex-direction: column;
-    gap: var(--pb-space-1);
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &__detail {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--pb-space-1);
-
-    .material-symbols-rounded {
-      font-size: var(--pb-icon-xs);
-    }
-  }
-
-  /** Which lab has it is what staff scan the board for: it reads above the rest. */
-  &__detail--lab {
-    font-weight: 600;
-    color: var(--mat-sys-on-surface);
-  }
-
-  &__status {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--pb-space-2);
-  }
-
-  &__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--pb-space-2);
-
-    &:empty {
-      display: none;
-    }
+  &[aria-busy='true'] {
+    opacity: 0.6;
   }
 }
 
-/* A narrow column must not push a long chip past the card's edge. */
-.card__status > pb-status-chip {
-  max-width: 100%;
-  white-space: normal;
-  line-height: 1.4;
-  padding-block: var(--pb-space-1);
+/* ── Who ─────────────────────────────────────────────────────────────── */
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pb-space-2);
+}
+
+.card__grip {
+  display: inline-grid;
+  place-items: center;
+  margin-block-start: 2px;
+  margin-inline-start: -6px;
+  color: var(--pb-neutral-300);
+  cursor: grab;
+  transition: color 160ms var(--pb-ease-standard);
+
+  .card:hover & {
+    color: var(--pb-neutral-500);
+  }
+}
+
+.card__who {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.card__name {
+  overflow: hidden;
+  color: var(--pb-graphite);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--pb-space-3);
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.card__file {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--pb-graphite);
+    text-decoration: underline;
+  }
+}
+
+.card__lab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card__menu {
+  margin: -6px;
+  margin-inline-start: 0;
+}
+
+/* ── What ────────────────────────────────────────────────────────────── */
+
+.card__work {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.work {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.work__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pb-graphite);
+  font-size: 0.8125rem;
+  font-weight: 700;
+
+  pb-icon {
+    color: var(--pb-neutral-400);
+  }
+}
+
+.work__count {
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.work__teeth {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-inline-start: 20px;
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  line-height: 1.6;
+
+  .work--parts & {
+    padding-inline-start: 0;
+  }
+}
+
+/* ── When ────────────────────────────────────────────────────────────── */
+
+.card__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pb-space-1) var(--pb-space-3);
+  padding-block-start: var(--pb-space-3);
+  border-block-start: 1px solid var(--pb-neutral-100);
+}
+
+.when {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pb-neutral-600);
+  font-size: 0.8125rem;
+  font-weight: 700;
+
+  pb-icon {
+    color: var(--pb-neutral-400);
+  }
+
+  &[data-tone='error'],
+  &[data-tone='error'] pb-icon {
+    color: var(--mat-sys-error);
+  }
+
+  &[data-tone='warning'],
+  &[data-tone='warning'] pb-icon {
+    color: #b7791f;
+  }
+
+  &[data-tone='success'],
+  &[data-tone='success'] pb-icon {
+    color: #17703d;
+  }
+}
+
+.trip {
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+}
+
+/* ── The next move ───────────────────────────────────────────────────── */
+
+.card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pb-space-2);
+
+  &:empty {
+    display: none;
+  }
+}
+
+.card__primary {
+  flex: 1 1 100%;
+}
+
+/* The rarer moves under it, quiet and side by side. */
+.card__actions > pb-button:not(.card__primary) {
+  flex: 1 1 0;
 }

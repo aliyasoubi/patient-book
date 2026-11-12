@@ -52,17 +52,25 @@ const DEFAULT_PARTS_DAYS = '7';
         [options]="waitOptions()"
         [label]="'labReceive.waitDays' | translate"
         [hint]="'labReceive.waitDaysHint' | translate"
+        [hintBelow]="true"
       />
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <pb-button variant="text" type="button" (click)="ref.close()">
+      <!-- The usual answer filled, the exception outlined, cancel quiet. -->
+      <pb-button variant="text" tone="neutral" type="button" (click)="ref.close()">
         {{ 'action.cancel' | translate }}
       </pb-button>
-      <pb-button variant="text" type="button" icon="hourglass_empty" (click)="workOnly()">
+      <pb-button
+        variant="stroked"
+        tone="neutral"
+        type="button"
+        icon="hourglass_empty"
+        (click)="workOnly()"
+      >
         {{ 'labReceive.workOnly' | translate }}
       </pb-button>
       <pb-button
-        variant="text"
+        variant="flat"
         type="button"
         icon="check"
         (click)="ref.close({ partsReturned: true })"

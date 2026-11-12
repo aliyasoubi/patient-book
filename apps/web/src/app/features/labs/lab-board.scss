@@ -57,26 +57,93 @@
   }
 }
 
-/* While dragging: the card follows the pointer, a dashed slot marks where it would land. */
+/* ── Dragging ─────────────────────────────────────────────────────────
+   Picked up, the card lifts and tilts under the pointer; its old place
+   stays as a dashed outline. Columns that take it are outlined and say what
+   the drop will do; the one under the pointer fills in; columns it cannot go
+   to fade back. */
+.column {
+  transition:
+    opacity 220ms var(--pb-ease-standard),
+    box-shadow 220ms var(--pb-ease-standard),
+    background-color 220ms var(--pb-ease-standard);
+
+  &--target {
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pb-brand) 35%, transparent);
+  }
+
+  &--over {
+    background-color: color-mix(in srgb, var(--pb-brand) 7%, var(--pb-neutral-50));
+    box-shadow: inset 0 0 0 2px var(--pb-brand);
+  }
+
+  &--blocked {
+    opacity: 0.45;
+  }
+
+  /* Closed, the hint takes no room: its margin cancels the list's gap. */
+  &__cards > .pb-reveal {
+    margin-block-end: calc(-1 * var(--pb-space-3));
+  }
+
+  &__drop {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-3);
+    margin-block-end: var(--pb-space-3);
+    padding: var(--pb-space-3);
+    border: 2px dashed color-mix(in srgb, var(--pb-brand) 45%, transparent);
+    border-radius: 14px;
+    color: var(--pb-brand-strong);
+    transition:
+      background-color 200ms var(--pb-ease-standard),
+      border-color 200ms var(--pb-ease-standard);
+
+    .column--over & {
+      border-color: var(--pb-brand);
+      background: #fff;
+    }
+
+    span {
+      display: flex;
+      flex-direction: column;
+    }
+
+    strong {
+      font-size: 0.875rem;
+    }
+
+    small {
+      color: var(--pb-neutral-500);
+      font-size: 0.75rem;
+    }
+  }
+}
+
+pb-lab-case-card.cdk-drag:not(.cdk-drag-disabled) {
+  cursor: grab;
+}
+
 .cdk-drag-preview {
-  box-shadow: var(--mat-sys-level3);
-  border-radius: var(--mat-sys-corner-medium);
+  border-radius: 16px;
+  box-shadow: var(--pb-shadow-lg, 0 18px 40px -12px rgb(16 24 40 / 0.35));
+  cursor: grabbing;
+  rotate: 1.5deg;
+  scale: 1.02;
 }
 
 .cdk-drag-placeholder {
-  opacity: 0.35;
+  border-radius: 16px;
+  outline: 2px dashed var(--pb-neutral-300);
+  outline-offset: -2px;
+  opacity: 0.5;
+  filter: grayscale(1);
 }
 
 /* Let go: the card glides into its slot. The CDK animates the drop only when
    the dragged card has a transform transition; without one it jumps there. */
 .cdk-drag-animating {
   transition: transform var(--pb-duration-medium) var(--pb-ease-emphasized);
-}
-
-.cdk-drop-list-receiving {
-  outline: 2px dashed color-mix(in srgb, var(--mat-sys-primary) 50%, transparent);
-  outline-offset: 4px;
-  border-radius: var(--mat-sys-corner-medium);
 }
 
 .archive {

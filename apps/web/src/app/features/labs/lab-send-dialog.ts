@@ -6,6 +6,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { addDays } from 'date-fns-jalali';
 
+import { jalaliInWords } from '../../core/jalali/jalali-words';
 import type { LabCase, LabTripKind } from '../../core/models/common.model';
 import type { LabSendInput } from '../../core/services/lab.service';
 import { labWaitOptions, labTripKindOptions } from './lab-options';
@@ -62,6 +63,7 @@ export function suggestedTripKind(c: Pick<LabCase, 'workTypes' | 'trips'>): LabT
         [options]="waitOptions()"
         [label]="'labForm.waitDays' | translate"
         [hint]="expectedHint()"
+        [hintBelow]="true"
       />
       <pb-text-field
         [control]="form.controls.note"
@@ -71,10 +73,10 @@ export function suggestedTripKind(c: Pick<LabCase, 'workTypes' | 'trips'>): LabT
       />
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <pb-button variant="text" type="button" (click)="ref.close()">
+      <pb-button variant="text" tone="neutral" type="button" (click)="ref.close()">
         {{ 'action.cancel' | translate }}
       </pb-button>
-      <pb-button variant="text" type="button" icon="send" (click)="submit()">
+      <pb-button variant="flat" type="button" icon="send" (click)="submit()">
         {{ 'labSend.confirm' | translate }}
       </pb-button>
     </mat-dialog-actions>
@@ -121,7 +123,7 @@ export class LabSendDialog {
     const { sentAt, waitDays } = this.value();
     if (!sentAt || !waitDays) return null;
     return this.i18n.instant('labForm.expectedOn', {
-      date: this.dateAdapter.format(addDays(sentAt, Number(waitDays)), 'yyyy/MM/dd'),
+      date: jalaliInWords(addDays(sentAt, Number(waitDays)), this.i18n),
     });
   });
 

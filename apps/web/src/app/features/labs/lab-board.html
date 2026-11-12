@@ -102,9 +102,13 @@
 
     <div class="board" cdkDropListGroup>
       @for (column of columns(); track column.stage) {
+        @let drop = dropState(column.stage);
         <pb-surface
           class="pb-surface--low column"
           [class.column--hidden]="!wide() && shownColumn() !== column.stage"
+          [class.column--target]="drop === 'target'"
+          [class.column--blocked]="drop === 'blocked'"
+          [class.column--over]="drop === 'target' && over() === column.stage"
           [title]="column.title | translate"
           [icon]="column.icon"
           [hint]="column.hint | translate"
@@ -117,12 +121,34 @@
             [cdkDropListEnterPredicate]="canEnter"
             [cdkDropListSortingDisabled]="true"
             (cdkDropListDropped)="onDrop($event)"
+            (cdkDropListEntered)="over.set(column.stage)"
+            (cdkDropListExited)="over.set(null)"
           >
+            <!-- While a card is dragged, a column that takes it says what the drop will do.
+                 Inside the list, at its top, so the list's own edges do not move. -->
+            <div
+              class="pb-reveal"
+              [class.is-open]="drop === 'target'"
+              [attr.inert]="drop === 'target' ? null : ''"
+            >
+              <div>
+                <div class="column__drop">
+                  <pb-icon name="arrow-bar-to-down" [size]="18" />
+                  <span>
+                    <strong>{{ dropAction[column.stage] | translate }}</strong>
+                    <small>{{ 'labs.dropHere' | translate }}</small>
+                  </span>
+                </div>
+              </div>
+            </div>
             @for (c of column.cases; track c.id) {
               <pb-lab-case-card
                 cdkDrag
                 [cdkDragData]="c"
                 [cdkDragDisabled]="!canEdit || !wide() || c.stage === 'delivered'"
+                [draggable]="canEdit && wide() && c.stage !== 'delivered'"
+                (cdkDragStarted)="dragging.set(c)"
+                (cdkDragEnded)="dragEnded()"
                 [labCase]="c"
                 [canEdit]="canEdit"
                 [busy]="busy() === c.id"

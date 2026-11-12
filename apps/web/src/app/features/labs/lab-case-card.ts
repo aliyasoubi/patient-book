@@ -18,14 +18,16 @@ import {
   labTripKindLabel,
   labWorkTypeLabel,
 } from '../../shared/labels';
-import { PbButton, PbIconButton, PbStatusChip } from '../../shared/ui';
-import type { StatusTone } from '../../shared/ui';
+import { PbButton, PbIcon, PbIconButton } from '../../shared/ui';
+import type { LineIconName, StatusTone } from '../../shared/ui';
 
 /**
- * One case on the lab board. What the case is reads as supporting text; where
- * it stands — the trip, its timing, parts still owed — as status chips; and
- * the move a person makes next as a button, so nobody has to know that cards
- * can also be dragged. Laid out like a surgery-list row: name, file chip, menu.
+ * One case on the lab board, read top to bottom in one glance: who (the name,
+ * the file and the lab in quiet text), what (each kind of work, how many
+ * teeth, which), when (where it stands — the only line with colour, and only
+ * when it needs someone: late in red, today in amber), and the next move as
+ * one full-width button, the rarer moves quieter beside it. A grip shows the
+ * card can be dragged to the next column.
  */
 @Component({
   selector: 'pb-lab-case-card',
@@ -38,32 +40,43 @@ import type { StatusTone } from '../../shared/ui';
     TranslatePipe,
     PersianNumberPipe,
     PbButton,
+    PbIcon,
     PbIconButton,
-    PbStatusChip,
   ],
   template: `
     @let c = labCase();
-    <article
-      class="card"
-      [class.card--overdue]="c.timeliness === 'overdue' || c.appointmentTimeliness === 'overdue'"
-      [attr.aria-busy]="busy() || null"
-    >
+    <article class="card" [attr.data-urgency]="urgency()" [attr.aria-busy]="busy() || null">
+      <!-- Who: the name first, then the file and the lab in quiet text. -->
       <header class="card__head">
-        <div class="card__identity">
+        @if (draggable()) {
+          <span class="card__grip" aria-hidden="true" [title]="'labs.dragHandle' | translate">
+            <pb-icon name="grip-vertical" [size]="16" />
+          </span>
+        }
+        <div class="card__who">
           <strong class="card__name">{{
             c.recordedName || ('patient.unnamed' | translate)
           }}</strong>
-          @if (c.patient) {
-            <pb-status-chip icon="link" [link]="['/patients', c.patient.id]">
-              {{ 'labs.patientFile' | translate: { fileNo: c.patient.fileNo } }}
-            </pb-status-chip>
-          }
+          <span class="card__meta">
+            @if (c.patient) {
+              <a class="card__file" [routerLink]="['/patients', c.patient.id]">{{
+                'labs.patientFile' | translate: { fileNo: c.patient.fileNo }
+              }}</a>
+            }
+            @if (c.lab) {
+              <span class="card__lab">
+                <pb-icon name="flask" [size]="13" />
+                {{ c.lab.name }}
+              </span>
+            }
+          </span>
         </div>
         <!-- Edit, undo and archive — or, archived, only the way back. -->
         @if (canEdit()) {
           <pb-icon-button
             class="card__menu"
             icon="more_vert"
+            size="compact"
             [menu]="menu"
             [ariaLabel]="'labs.cardActions' | translate"
           />
@@ -101,140 +114,129 @@ import type { StatusTone } from '../../shared/ui';
         }
       </header>
 
-      <div class="card__details">
-        @if (workLines(); as lines) {
-          <!-- Charted work, kind by kind: what it is, how many teeth, which. -->
-          @for (line of lines; track line) {
-            <span class="card__detail">
-              <mat-icon aria-hidden="true">dentistry</mat-icon>{{ line }}
+      <!-- What: each kind of work on its line — the work, how many teeth, which. -->
+      <ul class="card__work">
+        @for (w of work(); track $index) {
+          <li class="work">
+            <span class="work__title">
+              <pb-icon name="dental" [size]="14" />
+              {{ w.title }}
+              @if (w.count) {
+                <span class="work__count">{{ w.count }}</span>
+              }
             </span>
-          }
-        } @else {
-          <span class="card__detail">
-            <mat-icon aria-hidden="true">dentistry</mat-icon>{{ workTypes() }}
-          </span>
-        }
-        @if (c.lab) {
-          <span class="card__detail card__detail--lab">
-            <mat-icon aria-hidden="true">science</mat-icon>{{ c.lab.name }}
-          </span>
-        }
-        @if (!workLines() && teeth()) {
-          <span class="card__detail">
-            <mat-icon aria-hidden="true">pin_drop</mat-icon>{{ teeth() }}
-          </span>
+            @if (w.teeth) {
+              <span class="work__teeth">{{ w.teeth }}</span>
+            }
+          </li>
         }
         @if (parts(); as p) {
           <!-- What went along with an implant crown, and whether it is back. -->
-          <span class="card__detail">
-            <mat-icon aria-hidden="true">hardware</mat-icon>{{ p }}
-          </span>
+          <li class="work work--parts">
+            <span class="work__teeth"><pb-icon name="box" [size]="13" /> {{ p }}</span>
+          </li>
         }
-      </div>
+      </ul>
 
+      <!-- When: where it stands, the one line coloured only when it needs someone. -->
       <div class="card__status">
+        <div class="when" [attr.data-tone]="whenTone()">
+          <pb-icon [name]="whenIcon()" [size]="15" />
+          <span class="when__text">
+            @switch (c.stage) {
+              @case ('at_lab') {
+                @switch (c.timeliness) {
+                  @case ('overdue') {
+                    {{ 'labs.daysLate' | translate: { count: (c.daysLate | faNum) } }}
+                  }
+                  @case ('due_today') {
+                    {{ 'labs.dueToday' | translate }}
+                  }
+                  @default {
+                    {{ 'labs.dueOn' | translate: { date: (trip()?.expectedAt | faNum) } }}
+                  }
+                }
+              }
+              @case ('at_clinic') {
+                @if (c.daysInStage) {
+                  {{ 'labs.daysAtClinic' | translate: { count: (c.daysInStage | faNum) } }}
+                } @else {
+                  {{ 'labs.backToday' | translate }}
+                }
+              }
+              @case ('booked') {
+                @switch (c.appointmentTimeliness) {
+                  @case ('overdue') {
+                    {{
+                      'labs.appointmentPassed'
+                        | translate
+                          : { date: (c.appointmentAt | faNum), count: (daysPast() | faNum) }
+                    }}
+                  }
+                  @case ('due_today') {
+                    {{ 'labs.appointmentToday' | translate }}
+                  }
+                  @default {
+                    {{
+                      'labs.appointmentOn'
+                        | translate
+                          : { date: (c.appointmentAt | faNum), count: (c.appointmentDays | faNum) }
+                    }}
+                  }
+                }
+              }
+              @case ('delivered') {
+                {{ 'labs.deliveredOn' | translate: { date: (c.deliveredAt | faNum) } }}
+              }
+            }
+          </span>
+        </div>
         <!-- Which trip the work is on; once delivered it is history, on the case page. -->
         @if (c.stage !== 'delivered' && trip(); as t) {
-          <pb-status-chip icon="local_shipping" tone="primary">
-            {{
-              'labs.tripChip'
-                | translate: { kind: (tripKindLabel(t.kind) | translate), n: (t.sequence | faNum) }
-            }}
-          </pb-status-chip>
-        }
-        @switch (c.stage) {
-          @case ('at_lab') {
-            <pb-status-chip [icon]="timingIcon()" [tone]="timingTone()">
-              @switch (c.timeliness) {
-                @case ('overdue') {
-                  {{ 'labs.daysLate' | translate: { count: (c.daysLate | faNum) } }}
-                }
-                @case ('due_today') {
-                  {{ 'labs.dueToday' | translate }}
-                }
-                @default {
-                  {{ 'labs.dueOn' | translate: { date: (trip()?.expectedAt | faNum) } }}
-                }
-              }
-            </pb-status-chip>
-          }
-          @case ('at_clinic') {
-            <pb-status-chip icon="hourglass_empty">
-              @if (c.daysInStage) {
-                {{ 'labs.daysAtClinic' | translate: { count: (c.daysInStage | faNum) } }}
-              } @else {
-                {{ 'labs.backToday' | translate }}
-              }
-            </pb-status-chip>
-          }
-          @case ('booked') {
-            <pb-status-chip [icon]="bookingIcon()" [tone]="bookingTone()">
-              @switch (c.appointmentTimeliness) {
-                @case ('overdue') {
-                  {{
-                    'labs.appointmentPassed'
-                      | translate: { date: (c.appointmentAt | faNum), count: (daysPast() | faNum) }
-                  }}
-                }
-                @case ('due_today') {
-                  {{ 'labs.appointmentToday' | translate }}
-                }
-                @default {
-                  {{
-                    'labs.appointmentOn'
-                      | translate
-                        : { date: (c.appointmentAt | faNum), count: (c.appointmentDays | faNum) }
-                  }}
-                }
-              }
-            </pb-status-chip>
-          }
-          @case ('delivered') {
-            <pb-status-chip icon="task_alt" tone="success">
-              {{ 'labs.deliveredOn' | translate: { date: (c.deliveredAt | faNum) } }}
-            </pb-status-chip>
-          }
+          <span class="trip">{{
+            'labs.tripChip'
+              | translate: { kind: (tripKindLabel(t.kind) | translate), n: (t.sequence | faNum) }
+          }}</span>
         }
         @if (c.partsOutstanding && c.stage !== 'at_lab') {
           <!-- At the lab the parts are where they should be; once the work is
                back, parts still out are owed — on their own day, if the lab was given one. -->
-          <pb-status-chip icon="hardware" [tone]="partsTone()">
-            @switch (c.partsTimeliness) {
-              @case ('overdue') {
-                {{ 'labs.partsLate' | translate: { count: (c.partsDaysLate | faNum) } }}
+          <div class="when" [attr.data-tone]="partsTone()">
+            <pb-icon name="box" [size]="15" />
+            <span class="when__text">
+              @switch (c.partsTimeliness) {
+                @case ('overdue') {
+                  {{ 'labs.partsLate' | translate: { count: (c.partsDaysLate | faNum) } }}
+                }
+                @case ('due_today') {
+                  {{ 'labs.partsDueToday' | translate }}
+                }
+                @case ('on_time') {
+                  {{ 'labs.partsDueOn' | translate: { date: (c.partsDueAt | faNum) } }}
+                }
+                @default {
+                  {{ 'labs.partsOwed' | translate }}
+                }
               }
-              @case ('due_today') {
-                {{ 'labs.partsDueToday' | translate }}
-              }
-              @case ('on_time') {
-                {{ 'labs.partsDueOn' | translate: { date: (c.partsDueAt | faNum) } }}
-              }
-              @default {
-                {{ 'labs.partsOwed' | translate }}
-              }
-            }
-          </pb-status-chip>
+            </span>
+          </div>
         }
       </div>
 
-      <!-- The next move, one button each; everything else is in the menu. -->
+      <!-- The next move first and full width; the rarer one beside it, quieter. -->
       @if (canEdit() && !archived()) {
         <div class="card__actions">
           @if (partsOnly()) {
             <!-- Listed for the parts alone: the work's own moves are on its own card. -->
-            <pb-button
-              variant="stroked"
-              icon="assignment_return"
-              [disabled]="busy()"
-              (click)="partsReturned.emit()"
-            >
-              {{ 'labs.partsReturned' | translate }}
-            </pb-button>
+            <ng-container *ngTemplateOutlet="partsButton; context: { $implicit: 'stroked' }" />
           } @else {
             @switch (c.stage) {
               @case ('at_lab') {
                 <pb-button
+                  class="card__primary"
+                  [fullWidth]="true"
                   variant="stroked"
+                  tone="neutral"
                   icon="move_to_inbox"
                   [disabled]="busy()"
                   (click)="receive.emit()"
@@ -245,23 +247,36 @@ import type { StatusTone } from '../../shared/ui';
               @case ('at_clinic') {
                 <!-- The front desk's move: this column is exactly the work still to book. -->
                 <pb-button
+                  class="card__primary"
+                  [fullWidth]="true"
                   variant="stroked"
+                  tone="neutral"
                   icon="event_available"
                   [disabled]="busy()"
                   (click)="book.emit()"
                 >
                   {{ 'labs.book' | translate }}
                 </pb-button>
-                <ng-container *ngTemplateOutlet="partsButton" />
+                <ng-container *ngTemplateOutlet="partsButton; context: { $implicit: 'text' }" />
                 <ng-container *ngTemplateOutlet="sendAgainButton" />
               }
               @case ('booked') {
-                <ng-container *ngTemplateOutlet="deliverButton" />
-                <ng-container *ngTemplateOutlet="partsButton" />
+                <pb-button
+                  class="card__primary"
+                  [fullWidth]="true"
+                  variant="stroked"
+                  tone="neutral"
+                  icon="how_to_reg"
+                  [disabled]="busy()"
+                  (click)="deliver.emit()"
+                >
+                  {{ 'labs.deliver' | translate }}
+                </pb-button>
+                <ng-container *ngTemplateOutlet="partsButton; context: { $implicit: 'text' }" />
                 <ng-container *ngTemplateOutlet="sendAgainButton" />
               }
               @case ('delivered') {
-                <ng-container *ngTemplateOutlet="partsButton" />
+                <ng-container *ngTemplateOutlet="partsButton; context: { $implicit: 'stroked' }" />
               }
             }
           }
@@ -269,23 +284,26 @@ import type { StatusTone } from '../../shared/ui';
       }
     </article>
 
-    <ng-template #deliverButton>
-      <pb-button variant="stroked" icon="how_to_reg" [disabled]="busy()" (click)="deliver.emit()">
-        {{ 'labs.deliver' | translate }}
-      </pb-button>
-    </ng-template>
-
     <!-- Work back for a remake: there when needed, quieter than the next move. -->
     <ng-template #sendAgainButton>
-      <pb-button variant="text" icon="send" [disabled]="busy()" (click)="sendAgain.emit()">
+      <pb-button
+        variant="text"
+        tone="neutral"
+        icon="send"
+        [disabled]="busy()"
+        (click)="sendAgain.emit()"
+      >
         {{ 'labs.sendAgain' | translate }}
       </pb-button>
     </ng-template>
 
-    <ng-template #partsButton>
+    <ng-template #partsButton let-variant>
       @if (labCase().partsOutstanding) {
         <pb-button
-          variant="stroked"
+          [class.card__primary]="variant === 'stroked'"
+          [fullWidth]="variant === 'stroked'"
+          [variant]="variant"
+          tone="neutral"
           icon="assignment_return"
           [disabled]="busy()"
           (click)="partsReturned.emit()"
@@ -307,6 +325,8 @@ export class LabCaseCard {
   readonly busy = input(false);
   /** Shown in the archive: restore is the only thing to do. */
   readonly archived = input(false);
+  /** It can be dragged to another column: shows the grip. */
+  readonly draggable = input(false);
 
   readonly receive = output<void>();
   readonly book = output<void>();
@@ -329,24 +349,6 @@ export class LabCaseCard {
       .join(this.i18n.instant('list.separator'));
   });
 
-  /**
-   * Work picked on the chart, one line a kind — "implant crown · 1 tooth ·
-   * upper right: 6" — so a jaw of mixed work reads at a glance. Null for
-   * per-jaw work and for cases written before the chart.
-   */
-  protected readonly workLines = computed(() => {
-    this.i18n.currentLang();
-    const { toothWork } = this.labCase();
-    if (!toothWork.length) return null;
-    return teethByWork(toothWork, LAB_TOOTH_WORK_TYPES).map(({ workType, teeth }) =>
-      [
-        this.i18n.instant(labWorkTypeLabel(workType)),
-        this.i18n.instant('labs.toothCount', { count: formatPersianCount(teeth.length) }),
-        teethSummary(teeth, this.i18n),
-      ].join(' · '),
-    );
-  });
-
   protected readonly teeth = computed(() => {
     this.i18n.currentLang();
     // Per-jaw work by its jaw; a case written before the chart as it was typed.
@@ -356,6 +358,58 @@ export class LabCaseCard {
       ? this.i18n.instant('labs.toothCount', { count: formatPersianCount(toothCount) })
       : null;
     return [count, teeth || null].filter(Boolean).join(' · ');
+  });
+
+  /** The work, kind by kind: a title, the tooth count, and which teeth (or jaw). */
+  protected readonly work = computed<
+    { title: string; count: string | null; teeth: string | null }[]
+  >(() => {
+    this.i18n.currentLang();
+    const { toothWork } = this.labCase();
+    if (toothWork.length) {
+      return teethByWork(toothWork, LAB_TOOTH_WORK_TYPES).map(({ workType, teeth }) => ({
+        title: this.i18n.instant(labWorkTypeLabel(workType)),
+        count: this.i18n.instant('labs.toothCount', { count: formatPersianCount(teeth.length) }),
+        teeth: teethSummary(teeth, this.i18n),
+      }));
+    }
+    return [{ title: this.workTypes(), count: null, teeth: this.teeth() || null }];
+  });
+
+  /** How urgent the card is, for its edge: late, today, or nothing to flag. */
+  protected readonly urgency = computed(() => {
+    const tones = [this.whenTone(), this.labCase().partsOutstanding ? this.partsTone() : null];
+    if (tones.includes('error')) return 'late';
+    if (tones.includes('warning')) return 'soon';
+    return null;
+  });
+
+  /** The tone of where the case stands. */
+  protected readonly whenTone = computed<StatusTone>(() => {
+    switch (this.labCase().stage) {
+      case 'at_lab':
+        return this.timingTone();
+      case 'booked':
+        return this.bookingTone();
+      case 'delivered':
+        return 'success';
+      default:
+        return 'neutral';
+    }
+  });
+
+  protected readonly whenIcon = computed<LineIconName>(() => {
+    const c = this.labCase();
+    switch (c.stage) {
+      case 'at_lab':
+        return c.timeliness === 'overdue' ? 'clock' : 'calendar';
+      case 'at_clinic':
+        return 'hourglass';
+      case 'booked':
+        return c.appointmentTimeliness === 'overdue' ? 'calendar-x' : 'calendar-check';
+      default:
+        return 'circle-check';
+    }
   });
 
   /** Impression copings and analogs sent along, and when they came back. */
@@ -414,12 +468,4 @@ export class LabCaseCard {
         return 'neutral';
     }
   });
-
-  protected readonly bookingIcon = computed(() =>
-    this.labCase().appointmentTimeliness === 'overdue' ? 'event_busy' : 'event_available',
-  );
-
-  protected readonly timingIcon = computed(() =>
-    this.labCase().timeliness === 'overdue' ? 'schedule' : 'event',
-  );
 }

@@ -36,10 +36,10 @@ export interface LabBookDialogData {
       <pb-date-field [control]="form.controls.date" [label]="'labBook.date' | translate" />
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <pb-button variant="text" type="button" (click)="ref.close()">
+      <pb-button variant="text" tone="neutral" type="button" (click)="ref.close()">
         {{ 'action.cancel' | translate }}
       </pb-button>
-      <pb-button variant="text" type="button" icon="event_available" (click)="submit()">
+      <pb-button variant="flat" type="button" icon="event_available" (click)="submit()">
         {{ 'labBook.confirm' | translate }}
       </pb-button>
     </mat-dialog-actions>
