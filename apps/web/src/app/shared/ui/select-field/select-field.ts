@@ -51,6 +51,12 @@ export class PbSelectField {
   readonly label = input('');
   readonly placeholder = input('');
   readonly hint = input<string | null>(null);
+  /**
+   * Show the hint as a line under the box rather than beside the value: for
+   * information the choice works out (a return date, a follow-up day), which
+   * reads as its result, not as a label.
+   */
+  readonly hintBelow = input(false);
   /** Leading "any/all" option for filter selects, e.g. "همه". Omit to require a real choice. */
   readonly anyLabel = input<string | null>(null);
   readonly errorMessages = input<Readonly<Record<string, string>>>({});
@@ -74,13 +80,14 @@ export class PbSelectField {
     return !!ctrl && this.errorsShown() && ctrl.invalid && this.errorText() !== null;
   }
 
-  /** Errors only: the hint sits inside the box, beside the chosen value. */
+  /** The error; or, set below the box, the hint. Otherwise the hint sits beside the value. */
   protected message(): string | null {
-    return this.showError() ? this.errorText() : null;
+    if (this.showError()) return this.errorText();
+    return this.hintBelow() ? this.hint() : null;
   }
 
   protected placeholderText(): string {
-    return placeholderWithHint(this.placeholder(), this.hint());
+    return placeholderWithHint(this.placeholder(), this.hintBelow() ? null : this.hint());
   }
 
   /** What the box shows for the current choice, drawn by hand so the hint can sit beside it. */

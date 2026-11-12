@@ -1,4 +1,4 @@
-<pb-page width="form">
+<pb-page width="wide">
   <!-- On edit, whose work this is: its patient's file, or the name it was sent under. -->
   @let row = loaded();
   <pb-page-header
@@ -16,57 +16,108 @@
     <mat-progress-bar mode="indeterminate" />
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
-    <pb-surface icon="dentistry" [title]="'labForm.caseSection' | translate">
-      <pb-field-grid>
-        <!-- Typing searches the patient book; picking a name links the case to
-             that file, and typing another name over it unlinks it. A name
-             typed without picking is kept as written. -->
-        <div class="pb-field-grid__full">
-          <pb-text-field
-            [control]="form.controls.recordedName"
-            [label]="'labForm.patient' | translate"
-            [hint]="(linkedPatient() ? 'labForm.patientLinked' : 'labForm.patientHint') | translate"
-            prefixIcon="person_search"
-            [maxlength]="160"
-            [options]="patientOptions()"
-            (optionSelected)="onPatientSelected($event)"
-          />
-          @if (linkedPatient(); as linked) {
-            <div class="form__linked">
-              <mat-icon aria-hidden="true">link</mat-icon>
-              <span
-                >{{ linked.fullName || ('patient.unnamed' | translate) }} —
-                {{ 'labs.patientFile' | translate: { fileNo: linked.fileNo } }}</span
-              >
-              <pb-icon-button
-                icon="close"
-                size="compact"
-                (click)="unlink()"
-                [ariaLabel]="'labForm.unlink' | translate"
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pb-form">
+    <div class="pb-form__main">
+      <!-- ── 1. Whose work, and which lab ─────────────────────────── -->
+      <section class="pb-step" style="--_i: 0">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 1 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'labForm.stepWho' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'labForm.stepWhoHint' | translate }}</p>
+          </div>
+        </header>
+
+        <div class="pb-grid who-row">
+          @if (isEdit()) {
+            <!-- An existing case keeps its patient: shown, not edited. -->
+            <div class="patient">
+              <span class="patient__label">{{ 'labForm.patient' | translate }}</span>
+              <div class="patient__card">
+                <span class="patient__avatar" aria-hidden="true">{{ patientInitial() }}</span>
+                <span class="patient__text">
+                  <strong>{{
+                    linkedPatient()?.fullName ||
+                      form.controls.recordedName.value ||
+                      ('patient.unnamed' | translate)
+                  }}</strong>
+                  @if (linkedPatient(); as linked) {
+                    <a class="patient__file" [routerLink]="['/patients', linked.id]">{{
+                      'labs.patientFile' | translate: { fileNo: linked.fileNo }
+                    }}</a>
+                  } @else {
+                    <small>{{ 'labForm.patientUnlinked' | translate }}</small>
+                  }
+                </span>
+                <pb-icon class="patient__lock" name="lock" [size]="16" />
+              </div>
+            </div>
+          } @else {
+            <!-- Typing searches the patient book; picking a name links the case
+                 to that file, and typing another name over it unlinks it. -->
+            <div class="who">
+              <pb-text-field
+                [control]="form.controls.recordedName"
+                [label]="'labForm.patient' | translate"
+                [hint]="linkedPatient() ? null : ('labForm.patientHint' | translate)"
+                prefixIcon="person_search"
+                [maxlength]="160"
+                [options]="patientOptions()"
+                (optionSelected)="onPatientSelected($event)"
               />
+              <div class="pb-reveal" [class.is-open]="!!linkedPatient()">
+                <div>
+                  @if (linkedPatient(); as linked) {
+                    <div class="linked">
+                      <span class="linked__icon"><pb-icon name="folder" [size]="16" /></span>
+                      <span class="linked__text">
+                        <strong>{{ linked.fullName || ('patient.unnamed' | translate) }}</strong>
+                        <small>{{
+                          'labs.patientFile' | translate: { fileNo: linked.fileNo }
+                        }}</small>
+                      </span>
+                      <pb-icon-button
+                        icon="close"
+                        size="compact"
+                        (click)="unlink()"
+                        [ariaLabel]="'labForm.unlink' | translate"
+                      />
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
           }
+          <pb-select-field
+            [control]="form.controls.labId"
+            [options]="labOptions()"
+            [label]="'labs.lab' | translate"
+          />
         </div>
+      </section>
 
-        <pb-select-field
-          [control]="form.controls.labId"
-          [options]="labOptions()"
-          [label]="'labs.lab' | translate"
-        />
+      <!-- ── 2. What is made, on which teeth ──────────────────────── -->
+      <section class="pb-step" style="--_i: 1">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 2 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'labForm.stepWork' | translate }}</h2>
+            <p class="pb-step__hint">
+              {{ (isJawWork() ? 'labForm.stepWorkJawHint' : 'labForm.toothWorkHint') | translate }}
+            </p>
+          </div>
+        </header>
 
-        <div class="pb-field-grid__full form__work">
-          <span class="form__label" id="work-types-label">{{
-            'labForm.workTypes' | translate
-          }}</span>
+        <div class="work">
+          <span class="work__label">{{ 'labForm.workTypes' | translate }}</span>
           <pb-filter-chips
             [options]="workTypeOptions"
-            [selected]="form.controls.workTypes.value"
+            [selected]="workTypeChips()"
             (selectedChange)="setWorkTypes($event)"
             [ariaLabel]="'labForm.workTypes' | translate"
           />
           @if (form.controls.workTypes.touched && form.controls.workTypes.invalid) {
-            <span class="form__error" role="alert">{{
+            <span class="work__error" role="alert">{{
               'labForm.workTypesRequired' | translate
             }}</span>
           }
@@ -74,8 +125,8 @@
 
         @if (isJawWork()) {
           <!-- Made per jaw: no teeth to pick. -->
-          <div class="pb-field-grid__full form__work">
-            <span class="form__label">{{ 'labForm.jaw' | translate }}</span>
+          <div class="work">
+            <span class="work__label">{{ 'labForm.jaw' | translate }}</span>
             <pb-segmented-button
               [options]="jawOptions"
               [value]="form.controls.jaw.value"
@@ -84,143 +135,204 @@
             />
           </div>
         } @else {
-          <!-- Per-tooth work: the chosen kind is what a tap puts on a tooth, so
-               one case can hold a jaw's crowns, laminates and implant crowns. -->
-          <div class="pb-field-grid__full form__work">
-            <span class="form__label">{{ 'labForm.teeth' | translate }}</span>
-            <span class="form__hint">{{
-              (brush() ? 'labForm.toothWorkHint' : 'labForm.toothWorkPick') | translate
-            }}</span>
-            <pb-tooth-work-picker
-              [value]="form.controls.toothWork.value"
-              (valueChange)="setToothWork($event)"
-              [kinds]="toothWorkKinds"
-              [brush]="brush()"
-              [invalid]="form.controls.toothWork.touched && form.controls.toothWork.invalid"
-              [ariaLabel]="'labForm.teeth' | translate"
-            />
-            @if (legacyTeeth(); as written) {
-              <span class="form__hint">{{
-                'labForm.teethWritten' | translate: { text: written }
-              }}</span>
-            }
-            @if (form.controls.toothWork.touched && form.controls.toothWork.invalid) {
-              <span class="form__error" role="alert">{{
-                'labForm.teethRequired' | translate
-              }}</span>
-            }
-          </div>
+          <pb-tooth-work-picker
+            [value]="form.controls.toothWork.value"
+            (valueChange)="setToothWork($event)"
+            [kinds]="toothWorkKinds"
+            [brush]="brush()"
+            [invalid]="form.controls.toothWork.touched && form.controls.toothWork.invalid"
+            [ariaLabel]="'labForm.teeth' | translate"
+          />
+          @if (legacyTeeth(); as written) {
+            <p class="note">{{ 'labForm.teethWritten' | translate: { text: written } }}</p>
+          }
+          @if (form.controls.toothWork.touched && form.controls.toothWork.invalid) {
+            <span class="work__error" role="alert">{{ 'labForm.teethRequired' | translate }}</span>
+          }
         }
 
         <!-- The parts the clinic lends the lab for an implant crown, and owes back. -->
-        @if (isImplantCrown()) {
+        <div
+          class="pb-reveal"
+          [class.is-open]="isImplantCrown()"
+          [attr.inert]="isImplantCrown() ? null : ''"
+        >
+          <div>
+            <h3 class="pb-step__sub">{{ 'labForm.implantParts' | translate }}</h3>
+            <div class="pb-grid pb-grid--3">
+              <pb-select-field
+                [control]="form.controls.implantBrand"
+                [options]="brandOptions()"
+                [anyLabel]="'surgeryForm.brandUnspecified' | translate"
+                [label]="'surgeryForm.implantBrand' | translate"
+              />
+              <pb-text-field
+                [control]="form.controls.impressionCount"
+                [label]="'labForm.impressionCount' | translate"
+                inputmode="numeric"
+                [ltr]="true"
+              />
+              <pb-text-field
+                [control]="form.controls.analogCount"
+                [label]="'labForm.analogCount' | translate"
+                inputmode="numeric"
+                [ltr]="true"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 3. The trip: out to the lab, and when it is due back ──── -->
+      <section class="pb-step" style="--_i: 2">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 3 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">
+              {{
+                isEdit()
+                  ? ('labForm.latestTrip'
+                    | translate: { n: (loaded()?.trips?.length ?? 1 | faNum) })
+                  : ('labForm.firstTrip' | translate)
+              }}
+            </h2>
+            <p class="pb-step__hint">
+              {{ (isEdit() ? 'labForm.latestTripHint' : 'labForm.stepTripHint') | translate }}
+            </p>
+          </div>
+        </header>
+        <div class="pb-grid pb-grid--3">
           <pb-select-field
-            [control]="form.controls.implantBrand"
-            [options]="brandOptions()"
-            [anyLabel]="'surgeryForm.brandUnspecified' | translate"
-            [label]="'surgeryForm.implantBrand' | translate"
+            [control]="form.controls.tripKind"
+            [options]="tripKindOptions"
+            [label]="'labForm.tripKind' | translate"
           />
-          <div class="form__pair">
-            <pb-text-field
-              [control]="form.controls.impressionCount"
-              [label]="'labForm.impressionCount' | translate"
-              inputmode="numeric"
-              [ltr]="true"
-            />
-            <pb-text-field
-              [control]="form.controls.analogCount"
-              [label]="'labForm.analogCount' | translate"
-              inputmode="numeric"
-              [ltr]="true"
-            />
+          <pb-date-field [control]="form.controls.sentAt" [label]="'labForm.sentAt' | translate" />
+          <!-- What the wait works out to sits under it: a result, not a label. -->
+          <pb-select-field
+            [control]="form.controls.waitDays"
+            [options]="waitOptions()"
+            [label]="'labForm.waitDays' | translate"
+            [hint]="expectedHint()"
+            [hintBelow]="true"
+          />
+        </div>
+        <div class="pb-grid pb-grid--2">
+          <pb-text-field
+            [control]="form.controls.tripNote"
+            [label]="'labForm.tripNote' | translate"
+            [placeholder]="'labForm.tripNoteHint' | translate"
+            [maxlength]="300"
+          />
+          <pb-textarea-field
+            [control]="form.controls.notes"
+            [label]="'labForm.notes' | translate"
+            [rows]="2"
+          />
+        </div>
+      </section>
+    </div>
+
+    <!-- ── The case as it will be saved, its trips, and the save ────────── -->
+    <aside class="pb-form__aside">
+      <div class="pb-aside-card">
+        <header class="sum__head">
+          <span class="sum__icon"><pb-icon name="flask" [size]="20" /></span>
+          <span class="sum__titles">
+            <small>{{ 'labForm.summaryTitle' | translate }}</small>
+            <strong>{{ labName() || ('labForm.summaryNoLab' | translate) }}</strong>
+          </span>
+        </header>
+
+        <dl class="sum__facts">
+          <div class="fact">
+            <dt>{{ 'labForm.patient' | translate }}</dt>
+            <dd>
+              {{
+                linkedPatient()?.fullName ||
+                  form.controls.recordedName.value ||
+                  ('surgeryForm.summaryEmpty' | translate)
+              }}
+            </dd>
+          </div>
+          <div class="fact">
+            <dt>{{ 'labForm.summaryWork' | translate }}</dt>
+            <dd>{{ workSummary() || ('surgeryForm.summaryEmpty' | translate) }}</dd>
+          </div>
+          <div class="fact">
+            <dt>{{ 'labForm.sentAt' | translate }}</dt>
+            <dd class="ltr-nums">{{ sentAtText() ?? ('surgeryForm.summaryEmpty' | translate) }}</dd>
+          </div>
+        </dl>
+
+        @if (expectedHint(); as due) {
+          <div class="due">
+            <span class="due__icon"><pb-icon name="calendar-check" [size]="18" /></span>
+            <span class="due__text">
+              <small>{{ 'labForm.summaryDue' | translate }}</small>
+              <strong>{{ due }}</strong>
+            </span>
           </div>
         }
-      </pb-field-grid>
-    </pb-surface>
 
-    <pb-surface
-      icon="local_shipping"
-      [title]="
-        isEdit()
-          ? ('labForm.latestTrip' | translate: { n: (loaded()?.trips?.length ?? 1 | faNum) })
-          : ('labForm.firstTrip' | translate)
-      "
-      [description]="isEdit() ? ('labForm.latestTripHint' | translate) : null"
-    >
-      <pb-field-grid>
-        <pb-select-field
-          [control]="form.controls.tripKind"
-          [options]="tripKindOptions"
-          [label]="'labForm.tripKind' | translate"
-        />
-        <pb-date-field [control]="form.controls.sentAt" [label]="'labForm.sentAt' | translate" />
-        <pb-select-field
-          [control]="form.controls.waitDays"
-          [options]="waitOptions()"
-          [label]="'labForm.waitDays' | translate"
-          [hint]="expectedHint()"
-        />
-        <pb-text-field
-          [control]="form.controls.tripNote"
-          [label]="'labForm.tripNote' | translate"
-          [hint]="'labForm.tripNoteHint' | translate"
-          [maxlength]="300"
-        />
-        <pb-textarea-field
-          class="pb-field-grid__full"
-          [control]="form.controls.notes"
-          [label]="'labForm.notes' | translate"
-          [rows]="3"
-        />
-      </pb-field-grid>
-    </pb-surface>
-
-    <!-- Every trip so far, oldest first: what it went for, and how long it took. -->
-    @if (loaded(); as c) {
-      @if (c.trips.length > 1 || c.trips[0]?.receivedAt) {
-        <pb-surface icon="history" [title]="'labForm.history' | translate">
-          <ol class="trips">
-            @for (t of c.trips; track t.id) {
-              <li>
-                <strong>{{ tripKindLabel(t.kind) | translate }}</strong>
-                <span class="trips__meta">
-                  {{ 'labForm.tripSent' | translate: { date: (t.sentAt | faNum) } }}
-                  ·
-                  @if (t.receivedAt) {
-                    {{ 'labForm.tripReceived' | translate: { date: (t.receivedAt | faNum) } }}
-                  } @else {
-                    {{ 'labForm.tripExpected' | translate: { date: (t.expectedAt | faNum) } }}
-                  }
-                  @if (t.note) {
-                    · {{ t.note }}
-                  }
-                </span>
-              </li>
-            }
-          </ol>
-          @if (c.deliveredAt) {
-            <p class="trips__delivered">
-              <mat-icon aria-hidden="true">task_alt</mat-icon>
-              {{ 'labs.deliveredOn' | translate: { date: (c.deliveredAt | faNum) } }}
-            </p>
+        <!-- Every trip so far, oldest first: what it went for, and how long it took. -->
+        @if (loaded(); as c) {
+          @if (c.trips.length > 1 || c.trips[0]?.receivedAt) {
+            <div class="trips">
+              <span class="trips__title">{{ 'labForm.history' | translate }}</span>
+              <ol class="trips__list">
+                @for (t of c.trips; track t.id) {
+                  <li class="trips__item" [class.is-back]="!!t.receivedAt">
+                    <span class="trips__dot" aria-hidden="true"></span>
+                    <span class="trips__text">
+                      <strong>{{ tripKindLabel(t.kind) | translate }}</strong>
+                      <small>
+                        {{ 'labForm.tripSent' | translate: { date: (t.sentAt | faNum) } }}
+                        ·
+                        @if (t.receivedAt) {
+                          {{ 'labForm.tripReceived' | translate: { date: (t.receivedAt | faNum) } }}
+                        } @else {
+                          {{ 'labForm.tripExpected' | translate: { date: (t.expectedAt | faNum) } }}
+                        }
+                      </small>
+                      @if (t.note) {
+                        <small class="trips__note">{{ t.note }}</small>
+                      }
+                    </span>
+                  </li>
+                }
+              </ol>
+              @if (c.deliveredAt) {
+                <p class="trips__delivered">
+                  <pb-icon name="circle-check" [size]="15" />
+                  {{ 'labs.deliveredOn' | translate: { date: (c.deliveredAt | faNum) } }}
+                </p>
+              }
+            </div>
           }
-        </pb-surface>
-      }
-    }
+        }
 
-    <pb-form-actions>
-      <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
-        {{ 'common.cancel' | translate }}
-      </pb-button>
-      <pb-button
-        variant="flat"
-        type="submit"
-        [icon]="isEdit() ? 'save' : 'send'"
-        [loading]="saving()"
-        [loadingText]="'common.saving' | translate"
-      >
-        {{ (isEdit() ? 'labForm.save' : 'labForm.create') | translate }}
-      </pb-button>
-    </pb-form-actions>
+        <div class="pb-aside-card__actions">
+          <pb-button
+            variant="flat"
+            type="submit"
+            [icon]="isEdit() ? 'save' : 'send'"
+            [loading]="saving()"
+            [loadingText]="'common.saving' | translate"
+          >
+            {{ (isEdit() ? 'labForm.save' : 'labForm.create') | translate }}
+          </pb-button>
+          <pb-button
+            variant="text"
+            tone="neutral"
+            type="button"
+            (click)="cancel()"
+            [disabled]="saving()"
+          >
+            {{ 'common.cancel' | translate }}
+          </pb-button>
+        </div>
+      </div>
+    </aside>
   </form>
 </pb-page>

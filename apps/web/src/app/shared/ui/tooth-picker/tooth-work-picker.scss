@@ -1,71 +1,79 @@
-@use '../../../../styles/type';
+/*
+ * On top of tooth-picker.scss: a tooth marked with a kind of work takes that
+ * kind's tint on its crown, outlined in the kind's ink, with the kind's
+ * letter under its number — so the chart never relies on colour alone. The
+ * legend under the chart reads the teeth back kind by kind.
+ */
 
-// On top of tooth-picker.scss: a marked tooth takes its kind's tint, outlined
-// in the kind's ink so it holds against the page, with the kind's letter.
-.chart {
-  &__tooth {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    line-height: 1.1;
+.chart__tooth--on {
+  color: var(--tooth-fg);
 
-    &--on {
-      border-color: var(--tooth-fg);
-      background: var(--tooth-bg);
-      color: var(--tooth-fg);
-
-      &:hover {
-        background: color-mix(in srgb, var(--tooth-fg) 10%, var(--tooth-bg));
-      }
-    }
+  .chart__crown {
+    fill: var(--tooth-bg);
+    stroke: var(--tooth-fg);
   }
 
-  &__mark {
-    font: var(--mat-sys-label-small);
+  .chart__root {
+    fill: color-mix(in srgb, var(--tooth-bg) 60%, #fff);
+    stroke: color-mix(in srgb, var(--tooth-fg) 40%, transparent);
   }
+}
 
-  &__legend {
-    display: flex;
-    flex-direction: column;
-    gap: var(--pb-space-2);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
+.chart__mark {
+  min-block-size: 1em;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  line-height: 1;
+}
 
-  &__group {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--pb-space-2);
-  }
+.chart__count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+}
 
-  &__swatch {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    inline-size: 1.5rem;
-    block-size: 1.5rem;
-    border: 1px solid var(--tooth-fg);
-    border-radius: var(--mat-sys-corner-extra-small);
-    background: var(--tooth-bg);
-    color: var(--tooth-fg);
-    font: var(--mat-sys-label-small);
-  }
+.chart__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+  margin: 0;
+  padding: var(--pb-space-3) 0 0;
+  border-block-start: 1px solid var(--pb-neutral-100);
+  list-style: none;
+}
 
-  &__group-text {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 var(--pb-space-2);
-    font: var(--mat-sys-body-medium);
-    font-feature-settings: var(--pb-font-numeric);
-  }
+.chart__group {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pb-space-2);
+}
 
-  &__group-count,
-  &__group-teeth {
-    @include type.supporting-text(small);
-  }
+.chart__swatch {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border: 1px solid var(--tooth-fg);
+  border-radius: 7px;
+  background: var(--tooth-bg);
+  color: var(--tooth-fg);
+  font-size: 0.6875rem;
+  font-weight: 800;
+}
+
+.chart__group-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--pb-space-2);
+  color: var(--pb-graphite);
+  font-size: 0.875rem;
+  font-feature-settings: var(--pb-font-numeric);
+}
+
+.chart__group-count,
+.chart__group-teeth {
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
 }

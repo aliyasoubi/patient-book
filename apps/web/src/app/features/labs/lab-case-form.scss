@@ -1,81 +1,331 @@
-@use '../../../styles/type';
+/*
+ * A lab case as three numbered steps (styles/_form-steps.scss) — whose work
+ * and which lab, what is made on which teeth, the trip out and when it is
+ * due back — with the case as it will be saved beside them: the lab, the
+ * patient, the work, the day out and back, the trips so far, and the save.
+ */
 
-.form {
-  &__linked {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-2);
-    margin-block: var(--pb-space-1) var(--pb-space-3);
-    padding: var(--pb-space-1) var(--pb-space-3);
-    border-radius: var(--mat-sys-corner-medium);
-    background: var(--mat-sys-secondary-container);
-    color: var(--mat-sys-on-secondary-container);
-    font: var(--mat-sys-body-medium);
-    font-feature-settings: var(--pb-font-numeric);
-    --mat-icon-button-icon-color: var(--mat-sys-on-secondary-container);
-
-    span {
-      flex: 1 1 auto;
-    }
-  }
-
-  &__work {
-    display: flex;
-    flex-direction: column;
-    gap: var(--pb-space-2);
-    margin-bottom: var(--pb-space-3);
-  }
-
-  &__label {
-    @include type.supporting-text(small);
-  }
-
-  &__hint {
-    @include type.supporting-text(small);
-  }
-
-  &__error {
-    font: var(--mat-sys-body-small);
-    color: var(--mat-sys-error);
-  }
-
-  &__pair {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--pb-space-3);
+.who-row {
+  @media (min-width: 760px) {
+    grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
   }
 }
 
-/* The trips in order, numbered by the list itself in Persian digits. */
-.trips {
+/* An existing case's patient: shown, locked, linked to their file. */
+.patient__label {
+  display: block;
+  margin: 0 var(--pb-space-3) var(--pb-space-2);
+  color: var(--pb-graphite);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.patient__card {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  min-block-size: 48px;
+  padding: var(--pb-space-2) var(--pb-space-3);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 12px;
+  background: var(--pb-neutral-50);
+}
+
+.patient__avatar {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 34px;
+  block-size: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+  color: var(--pb-brand-strong);
+  font-weight: 800;
+}
+
+.patient__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-inline-size: 0;
+
+  strong {
+    color: var(--pb-graphite);
+    font-size: 0.9375rem;
+  }
+
+  small {
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
+  }
+}
+
+.patient__file {
+  align-self: flex-start;
+  color: var(--pb-brand-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.patient__lock {
+  color: var(--pb-neutral-400);
+}
+
+/* The patient file a new case is linked to, sliding in under the name. */
+.linked {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  margin-block-start: var(--pb-space-2);
+  padding: var(--pb-space-2) var(--pb-space-2) var(--pb-space-2) var(--pb-space-3);
+  border: 1px solid color-mix(in srgb, #1f9d55 25%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, #1f9d55 6%, #fff);
+}
+
+.linked__icon {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 30px;
+  block-size: 30px;
+  border-radius: 9px;
+  background: #fff;
+  color: #17703d;
+}
+
+.linked__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-inline-size: 0;
+
+  strong {
+    color: var(--pb-graphite);
+    font-size: 0.875rem;
+  }
+
+  small {
+    color: #17703d;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+}
+
+/* ── The work ──────────────────────────────────────────────────────── */
+
+.work {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+}
+
+.work__label {
+  margin-inline-start: var(--pb-space-3);
+  color: var(--pb-graphite);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.work__error {
+  color: var(--mat-sys-error);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.note {
   margin: 0;
-  padding-inline-start: var(--pb-space-5);
-  list-style: persian;
+  color: var(--pb-neutral-500);
+  font-size: 0.8125rem;
+}
+
+/* ── The summary ───────────────────────────────────────────────────── */
+
+.sum__head {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+}
+
+.sum__icon {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+  color: var(--pb-brand-strong);
+}
+
+.sum__titles {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+
+  small {
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  strong {
+    color: var(--pb-graphite);
+    font-size: 1.0625rem;
+    font-weight: 800;
+  }
+}
+
+.sum__facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pb-space-3);
+  padding-block: var(--pb-space-2);
+  border-block-start: 1px solid var(--pb-neutral-100);
+
+  dt {
+    flex: 0 0 auto;
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--pb-graphite);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: end;
+  }
+}
+
+.due {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-3);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--pb-brand) 8%, #fff);
+}
+
+.due__icon {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: 11px;
+  background: #fff;
+  color: var(--pb-brand-strong);
+}
+
+.due__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  small {
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
+  }
+
+  strong {
+    color: var(--pb-graphite);
+    font-size: 0.875rem;
+    font-weight: 800;
+  }
+}
+
+/* The trips so far, as a short thread. */
+.trips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+  padding-block-start: var(--pb-space-3);
+  border-block-start: 1px solid var(--pb-neutral-100);
+}
+
+.trips__title {
+  color: var(--pb-graphite);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.trips__list {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--pb-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 
-  li::marker {
-    color: var(--mat-sys-on-surface-variant);
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 8px;
+    inset-inline-start: 4px;
+    inline-size: 2px;
+    background: var(--pb-neutral-200);
+  }
+}
+
+.trips__item {
+  position: relative;
+  display: flex;
+  gap: var(--pb-space-3);
+}
+
+.trips__dot {
+  flex: 0 0 auto;
+  inline-size: 10px;
+  block-size: 10px;
+  margin-block-start: 5px;
+  border: 2px solid var(--pb-brand);
+  border-radius: 50%;
+  background: #fff;
+
+  .is-back & {
+    border-color: #1f9d55;
+    background: #1f9d55;
+  }
+}
+
+.trips__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  strong {
+    color: var(--pb-graphite);
+    font-size: 0.8125rem;
   }
 
-  &__meta {
-    @include type.supporting-text(small);
-
-    display: block;
+  small {
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
     font-feature-settings: var(--pb-font-numeric);
   }
+}
 
-  &__delivered {
-    @include type.supporting-text;
+.trips__note {
+  font-style: italic;
+}
 
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-2);
-    margin-top: var(--pb-space-4);
-
-    .material-symbols-rounded {
-      color: var(--pb-on-success-container);
-    }
-  }
+.trips__delivered {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #17703d;
+  font-size: 0.8125rem;
+  font-weight: 700;
 }

@@ -20,7 +20,7 @@
     >
       <mat-select-trigger>
         <span class="sf__value">{{ selectedLabel() }}</span>
-        @if (hint()) {
+        @if (hint() && !hintBelow()) {
           <span class="sf__hint" [title]="hint()">{{ hint() }}</span>
         }
       </mat-select-trigger>
@@ -45,7 +45,7 @@
     >
       <mat-select-trigger>
         <span class="sf__value">{{ selectedLabel() }}</span>
-        @if (hint()) {
+        @if (hint() && !hintBelow()) {
           <span class="sf__hint" [title]="hint()">{{ hint() }}</span>
         }
       </mat-select-trigger>

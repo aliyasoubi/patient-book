@@ -17,7 +17,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DateAdapter } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -49,21 +49,20 @@ import {
   labJawLabel,
   defaultLabWaitDays,
   labTripKindLabel,
+  labWorkTypeLabel,
 } from '../../shared/labels';
 import { PersianNumberPipe, formatPersianCount } from '../../shared/pipes/persian-number.pipe';
 import { toLatinDigits } from '../../shared/validators';
 import {
   PbButton,
   PbDateField,
-  PbFieldGrid,
   PbFilterChips,
-  PbFormActions,
+  PbIcon,
   PbIconButton,
   PbPage,
   PbPageHeader,
   PbSegmentedButton,
   PbSelectField,
-  PbSurface,
   PbTextField,
   PbTextareaField,
   PbToothWorkPicker,
@@ -129,16 +128,15 @@ const teethUnlessJawWork = (control: AbstractControl<LabToothWork[]>): Validatio
     PersianNumberPipe,
     PbButton,
     PbDateField,
-    PbFieldGrid,
     PbFilterChips,
-    PbFormActions,
+    PbIcon,
     PbIconButton,
     PbPage,
     PbPageHeader,
     PbSegmentedButton,
     PbSelectField,
-    PbSurface,
     PbTextField,
+    RouterLink,
     PbTextareaField,
     PbToothWorkPicker,
   ],
@@ -209,10 +207,22 @@ export class LabCaseForm implements HasUnsavedChanges {
     return types.length === 1 && isJawWork(types[0] as LabWorkType);
   });
 
-  /** The per-tooth work chosen, which a tap on the chart puts on a tooth. */
+  /**
+   * The per-tooth work a tap on the chart puts on a tooth. With none chosen it
+   * is the first kind (a crown), so teeth can be picked straight away and a
+   * kind chosen only when the case mixes them.
+   */
   protected readonly brush = computed(() =>
-    this.isJawWork() ? null : (this.workTypesValue()[0] ?? null),
+    this.isJawWork() ? null : (this.workTypesValue()[0] ?? LAB_TOOTH_WORK_TYPES[0] ?? null),
   );
+
+  /** The chips as they read: the kind chosen, or the one a tap would use. */
+  protected readonly workTypeChips = computed(() => {
+    const chosen = this.workTypesValue();
+    if (chosen.length) return chosen;
+    const brush = this.brush();
+    return brush ? [brush] : [];
+  });
 
   /** What the case makes, as it will be saved: the jaw's work, or whatever its teeth carry. */
   private readonly caseWork = computed<LabWorkType[]>(() => {
@@ -278,6 +288,31 @@ export class LabCaseForm implements HasUnsavedChanges {
   private readonly tripValue = toSignal(this.form.valueChanges, {
     initialValue: this.form.value,
   });
+  /** The lab chosen, by name, for the summary. */
+  protected readonly labName = computed(() => {
+    const id = this.tripValue().labId;
+    return this.labOptions().find((o) => o.value === id)?.label ?? '';
+  });
+
+  /** The trip's day out, for the summary. */
+  protected readonly sentAtText = computed(() => {
+    const sentAt = this.tripValue().sentAt;
+    return sentAt ? this.dateAdapter.format(sentAt, 'yyyy/MM/dd') : null;
+  });
+
+  /** What the case makes, in words, for the summary. */
+  protected readonly workSummary = computed(() => {
+    this.i18n.currentLang();
+    return this.caseWork()
+      .map((type) => this.i18n.instant(labWorkTypeLabel(type)))
+      .join(this.i18n.instant('list.separator'));
+  });
+
+  /** The letter on the patient's tile. */
+  protected readonly patientInitial = computed(() =>
+    (this.linkedPatient()?.fullName || this.tripValue().recordedName || '').trim().charAt(0),
+  );
+
   /** The day the trip is due back, so nobody has to count. */
   protected readonly expectedHint = computed(() => {
     this.i18n.currentLang();

@@ -3,16 +3,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PersianNumberPipe, formatPersianCount } from '../../pipes/persian-number.pipe';
 import { PbButton } from '../button/button';
-import {
-  type QuadrantView,
-  type ToothWork,
-  chartQuadrants,
-  jawTeeth,
-  positionOf,
-  teethByWork,
-  teethSummary,
-  toothName,
-} from './teeth';
+import { type ToothWork, jawTeeth, teethByWork, teethSummary, toothName } from './teeth';
+import { mouthView } from './tooth-shapes';
 
 /** The categorical tints in styles.scss — a group, never a status. */
 export type ToothWorkTone =
@@ -56,27 +48,43 @@ interface WorkGroup {
       [attr.aria-label]="ariaLabel()"
       [attr.aria-invalid]="invalid() || null"
     >
-      <div class="chart__arches" dir="ltr">
-        @for (quadrant of quadrants(); track quadrant.id) {
-          <div class="chart__quadrant" role="group" [attr.aria-label]="quadrant.label">
-            <span class="chart__caption">{{ quadrant.label }}</span>
-            <div class="chart__teeth">
-              @for (tooth of quadrant.teeth; track tooth) {
-                @let kind = kindOf(tooth);
+      <div class="chart__mouth" dir="ltr">
+        <span class="chart__side chart__side--right">{{ 'tooth.patientRight' | translate }}</span>
+        <span class="chart__side chart__side--left">{{ 'tooth.patientLeft' | translate }}</span>
+
+        @for (jaw of jaws(); track jaw.id) {
+          <div class="chart__jaw" [attr.data-jaw]="jaw.id">
+            <span class="chart__jaw-label">{{ jaw.label | translate }}</span>
+            <div class="chart__row" role="group" [attr.aria-label]="jaw.label | translate">
+              @for (tooth of jaw.teeth; track tooth.fdi; let i = $index) {
+                @let kind = kindOf(tooth.fdi);
                 <button
                   type="button"
                   class="chart__tooth"
                   [class.chart__tooth--on]="!!kind"
+                  [class.is-midline]="i === 7"
                   [style.--tooth-bg]="kind ? toneVar(kind.tone, 'bg') : null"
                   [style.--tooth-fg]="kind ? toneVar(kind.tone, 'fg') : null"
+                  [style.--_lift.px]="tooth.lift"
                   [attr.aria-pressed]="!!kind"
-                  [attr.aria-label]="toothLabel(tooth, kind)"
-                  (click)="tap(tooth)"
+                  [attr.aria-label]="toothLabel(tooth.fdi, kind)"
+                  [title]="toothLabel(tooth.fdi, kind)"
+                  (click)="tap(tooth.fdi)"
                 >
-                  <span>{{ position(tooth) | faNum }}</span>
-                  @if (kind) {
-                    <span class="chart__mark" aria-hidden="true">{{ kind.mark | translate }}</span>
-                  }
+                  <svg
+                    class="chart__shape"
+                    viewBox="0 0 40 60"
+                    preserveAspectRatio="none"
+                    [attr.width]="tooth.width"
+                    aria-hidden="true"
+                  >
+                    <path class="chart__root" [attr.d]="tooth.root" />
+                    <path class="chart__crown" [attr.d]="tooth.crown" />
+                  </svg>
+                  <span class="chart__num">{{ tooth.position | faNum }}</span>
+                  <span class="chart__mark" aria-hidden="true">{{
+                    kind ? (kind.mark | translate) : ''
+                  }}</span>
                 </button>
               }
             </div>
@@ -84,16 +92,38 @@ interface WorkGroup {
         }
       </div>
 
-      <div class="chart__shortcuts">
-        <pb-button variant="text" [disabled]="!brushKind()" (click)="toggleJaw('upper')">{{
-          'tooth.wholeUpper' | translate
-        }}</pb-button>
-        <pb-button variant="text" [disabled]="!brushKind()" (click)="toggleJaw('lower')">{{
-          'tooth.wholeLower' | translate
-        }}</pb-button>
-        <pb-button variant="text" [disabled]="!value().length" (click)="clear()">{{
-          'tooth.clear' | translate
-        }}</pb-button>
+      <div class="chart__foot">
+        <span class="chart__count">
+          @if (brushKind(); as b) {
+            <span
+              class="chart__swatch"
+              aria-hidden="true"
+              [style.--tooth-bg]="toneVar(b.tone, 'bg')"
+              [style.--tooth-fg]="toneVar(b.tone, 'fg')"
+              >{{ b.mark | translate }}</span
+            >
+            {{ 'tooth.brushHint' | translate: { kind: (b.label | translate) } }}
+          }
+        </span>
+        <div class="chart__shortcuts">
+          <pb-button
+            variant="text"
+            tone="neutral"
+            [disabled]="!brushKind()"
+            (click)="toggleJaw('upper')"
+            >{{ 'tooth.wholeUpper' | translate }}</pb-button
+          >
+          <pb-button
+            variant="text"
+            tone="neutral"
+            [disabled]="!brushKind()"
+            (click)="toggleJaw('lower')"
+            >{{ 'tooth.wholeLower' | translate }}</pb-button
+          >
+          <pb-button variant="text" tone="neutral" [disabled]="!value().length" (click)="clear()">{{
+            'tooth.clear' | translate
+          }}</pb-button>
+        </div>
       </div>
 
       @if (groups().length) {
@@ -133,11 +163,10 @@ export class PbToothWorkPicker {
   readonly invalid = input(false);
   readonly valueChange = output<ToothWork[]>();
 
-  protected readonly position = positionOf;
-
-  protected readonly quadrants = computed<QuadrantView[]>(() => {
+  /** The mouth, drawn as {@link PbToothPicker} draws it. */
+  protected readonly jaws = computed(() => {
     this.i18n.currentLang();
-    return chartQuadrants(this.i18n);
+    return mouthView(this.i18n);
   });
 
   private readonly kindsByValue = computed(

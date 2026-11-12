@@ -1,11 +1,10 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { type Observable, of, throwError } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 
 import { JALALI_DATE_FORMATS, JalaliDateAdapter } from '../../core/jalali/jalali-date-adapter';
@@ -146,8 +145,9 @@ function open(id?: string, update?: () => Observable<LabCase>) {
     fixture.detectChanges();
   };
 
-  const linkedText = () => root.querySelector('.form__linked')?.textContent ?? null;
-  return { labs, type, pick, save, linkedText, fixture };
+  /** The linked file: the card under the name on a new case, the locked card on an edit. */
+  const linkedText = () => root.querySelector('.linked, .patient__card')?.textContent ?? null;
+  return { labs, type, pick, save, linkedText, fixture, nameInput };
 }
 
 describe('LabCaseForm patient link', () => {
@@ -192,29 +192,12 @@ describe('LabCaseForm patient link', () => {
     );
   });
 
-  it('does not link back, after a conflict, a patient typed over', async () => {
-    let calls = 0;
-    const conflict = new HttpErrorResponse({
-      status: 409,
-      error: { code: 'ERR_LAB_CASE_MODIFIED' },
-    });
-    const { labs, type, save, fixture } = open('case-1', () =>
-      calls++ === 0 ? throwError(() => conflict) : of(saved()),
-    );
-    await type(second.fullName);
-    // Someone else saved meanwhile; the case is still linked to the first patient.
-    labs.get.mockReturnValue(of(saved({ version: 4 })));
-    save();
+  it('shows an existing case’s patient locked, not as a field to type over', async () => {
+    const { linkedText, nameInput, fixture } = open('case-1');
     await fixture.whenStable();
-    save();
+    fixture.detectChanges();
 
-    expect(labs.update).toHaveBeenLastCalledWith(
-      'case-1',
-      expect.objectContaining({
-        patientId: null,
-        recordedName: second.fullName,
-        expectedVersion: 4,
-      }),
-    );
+    expect(nameInput()).toBeNull();
+    expect(linkedText()).toContain(first.fullName);
   });
 });
