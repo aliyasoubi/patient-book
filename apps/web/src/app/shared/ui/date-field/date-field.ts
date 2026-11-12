@@ -14,12 +14,11 @@ import {
 } from '@angular/core';
 import { type FormControl, type ValidationErrors } from '@angular/forms';
 import { DateAdapter } from '@angular/material/core';
-import { getDate, getDay, getMonth, getYear } from 'date-fns-jalali';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { errorsRevealed } from '../form-submitted';
 import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
-import { JALALI_MONTH_KEYS, JALALI_WEEKDAY_KEYS } from '../../../core/jalali/jalali-date-adapter';
+import { jalaliInWords } from '../../../core/jalali/jalali-words';
 import { PbIcon } from '../icon/icon';
 import { PbAutoHeight } from '../auto-height/auto-height';
 import { PbShamsiCalendar, type CalendarView } from '../calendar/shamsi-calendar';
@@ -96,9 +95,7 @@ export class PbDateField {
     this.i18n.currentLang();
     const value = this.value();
     if (this.focused() || this.unreadable() || !value || !this.adapter.isValid(value)) return null;
-    const weekday = this.i18n.instant(`day.${JALALI_WEEKDAY_KEYS[getDay(value)]}`);
-    const month = this.i18n.instant(JALALI_MONTH_KEYS[getMonth(value)]);
-    return `${weekday} ${getDate(value)} ${month} ${getYear(value)}`;
+    return jalaliInWords(value, this.i18n);
   });
 
   protected readonly calendarView = computed(() => VIEW_FOR[this.startView()]);

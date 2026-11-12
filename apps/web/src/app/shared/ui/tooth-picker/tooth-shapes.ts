@@ -81,6 +81,27 @@ const SHAPES: Record<
   },
 };
 
+/**
+ * Where the lower teeth differ from the upper: the incisors are much
+ * narrower; a premolar has a single root; a molar has two — one toward the
+ * front, one toward the back — and is a little narrower.
+ */
+const LOWER: Partial<Record<ToothShapeKind, Partial<(typeof SHAPES)[ToothShapeKind]>>> = {
+  incisor: { width: 27 },
+  lateral: { width: 29 },
+  canine: { width: 35 },
+  premolar: {
+    root: 'M14 32 C13.4 20 16 8.5 20 2.5 C24 8.5 26.6 20 26 32 Z',
+    pulp: 'M20 8 L20 31',
+    width: 37,
+  },
+  molar: {
+    root: 'M6.5 32 C6 21 8.4 10 12 3.5 C14.8 10 16.8 20 17.8 32 Z M22.2 32 C23.2 20 25.2 10 28 3.5 C31.6 10 34 21 33.5 32 Z',
+    pulp: 'M11.8 9 C13.4 17 15 25 15.6 31 M28.2 9 C26.6 17 25 25 24.4 31',
+    width: 47,
+  },
+};
+
 function shapeOf(position: number): ToothShapeKind {
   if (position === 1) return 'incisor';
   if (position === 2) return 'lateral';
@@ -102,6 +123,8 @@ export interface ToothView {
   width: number;
   /** How far the tooth sits from the bite line, so each row bends like an arch. */
   lift: number;
+  /** Its lean in degrees, square to that curve: back teeth fan out like a real arch. */
+  tilt: number;
   /** "6 upper right", for a screen reader and the hover title. */
   name: string;
 }
@@ -123,7 +146,11 @@ export function mouthView(i18n: TranslateService): JawView[] {
   const view = (fdi: number): ToothView => {
     const position = positionOf(fdi);
     const kind = shapeOf(position);
-    const shape = SHAPES[kind];
+    const quadrant = Math.floor(fdi / 10);
+    const shape = { ...SHAPES[kind], ...(quadrant >= 3 ? LOWER[kind] : {}) };
+    // The viewer's left (the patient's right: 1x, 4x) leans one way, the other
+    // side the other; the lower row is drawn flipped, so its sign turns over.
+    const side = quadrant === 1 || quadrant === 3 ? -1 : 1;
     return {
       fdi,
       position,
@@ -136,6 +163,7 @@ export function mouthView(i18n: TranslateService): JawView[] {
       pulp: shape.pulp,
       width: shape.width,
       lift: Math.round((position - 1) * (position - 1) * 0.7),
+      tilt: side * (position - 1) * 1.7,
       name: toothName(fdi, i18n),
     };
   };

@@ -49,6 +49,7 @@ import { mouthView } from './tooth-shapes';
                   [attr.aria-label]="tooth.name"
                   [title]="tooth.name"
                   [style.--_lift.px]="tooth.lift"
+                  [style.--_tilt.deg]="tooth.tilt"
                   (click)="toggle(tooth.fdi)"
                 >
                   <svg

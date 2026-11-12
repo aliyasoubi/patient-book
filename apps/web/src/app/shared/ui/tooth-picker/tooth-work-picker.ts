@@ -92,6 +92,7 @@ interface WorkGroup {
                   [style.--tooth-bg]="kind ? toneVar(kind.tone, 'bg') : null"
                   [style.--tooth-fg]="kind ? toneVar(kind.tone, 'fg') : null"
                   [style.--_lift.px]="tooth.lift"
+                  [style.--_tilt.deg]="tooth.tilt"
                   [attr.aria-pressed]="!!kind"
                   [attr.aria-label]="toothLabel(tooth.fdi, kind)"
                   [title]="toothLabel(tooth.fdi, kind)"

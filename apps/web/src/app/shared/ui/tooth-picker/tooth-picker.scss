@@ -138,6 +138,7 @@
   display: block;
   block-size: 72px;
   overflow: visible;
+  rotate: var(--_tilt, 0deg);
   transition: scale 260ms var(--pb-ease-spring);
 
   /* The lower teeth: the same drawings, crowns up toward the bite. */

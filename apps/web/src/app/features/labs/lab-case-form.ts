@@ -25,6 +25,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { addDays } from 'date-fns-jalali';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 
+import { jalaliInWords } from '../../core/jalali/jalali-words';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import { HasUnsavedChanges, warnBeforeUnload } from '../../core/guards/unsaved-changes.guard';
@@ -308,7 +309,8 @@ export class LabCaseForm implements HasUnsavedChanges {
   /** The trip's day out, for the summary. */
   protected readonly sentAtText = computed(() => {
     const sentAt = this.tripValue().sentAt;
-    return sentAt ? this.dateAdapter.format(sentAt, 'yyyy/MM/dd') : null;
+    this.i18n.currentLang();
+    return sentAt ? jalaliInWords(sentAt, this.i18n) : null;
   });
 
   /** What the case makes, in words, for the summary. */
@@ -330,7 +332,7 @@ export class LabCaseForm implements HasUnsavedChanges {
     const { sentAt, waitDays } = this.tripValue();
     if (!sentAt || !waitDays) return null;
     return this.i18n.instant('labForm.expectedOn', {
-      date: this.dateAdapter.format(addDays(sentAt, Number(waitDays)), 'yyyy/MM/dd'),
+      date: jalaliInWords(addDays(sentAt, Number(waitDays)), this.i18n),
     });
   });
 
