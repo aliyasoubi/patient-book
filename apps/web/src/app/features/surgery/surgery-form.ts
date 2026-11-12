@@ -30,7 +30,7 @@ import {
   surgeryKindIcon,
   surgeryKindLabel,
 } from '../../shared/labels';
-import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
+import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { digitString, identifierValue } from '../../shared/validators';
 import {
   adoptUntouched,
@@ -46,14 +46,11 @@ import type { SurgeryKind, SurgeryQueueItem } from '../../core/models/common.mod
 import {
   PbButton,
   PbDateField,
-  PbFieldGrid,
-  PbFormActions,
+  PbIcon,
   PbIconButton,
   PbPage,
   PbPageHeader,
   PbSelectField,
-  PbStatusChip,
-  PbSurface,
   PbTextField,
   PbTextareaField,
   PbToothPicker,
@@ -116,15 +113,13 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
     PbSelectField,
     PbDateField,
     PbButton,
-    PbSurface,
-    PbStatusChip,
+    PbIcon,
     PbPageHeader,
     TranslatePipe,
     PbPage,
-    PbFieldGrid,
-    PbFormActions,
     PbIconButton,
     PbToothPicker,
+    PersianNumberPipe,
     MatIconModule,
   ],
   templateUrl: './surgery-form.html',
@@ -224,6 +219,26 @@ export class SurgeryForm implements HasUnsavedChanges {
   });
   private readonly followUpMonthsValue = toSignal(this.form.controls.followUpMonths.valueChanges, {
     initialValue: '3',
+  });
+  /** The months chosen, for the chips: '' is no follow-up. */
+  protected readonly monthsValue = computed(() => this.followUpMonthsValue() ?? '');
+  /** The teeth picked, for the chart and the summary. */
+  protected readonly teethValue = toSignal(this.form.controls.teeth.valueChanges, {
+    initialValue: [] as number[],
+  });
+
+  /** The surgery's day as the summary shows it. */
+  protected readonly surgeryDateText = computed(() => {
+    const date = this.surgeryDateValue();
+    return date ? this.dateAdapter.format(date, 'yyyy/MM/dd') : null;
+  });
+
+  /** The day the follow-up call falls on, once there is a date to count from. */
+  protected readonly followUpDueText = computed(() => {
+    const date = this.surgeryDateValue();
+    const months = Number(this.followUpMonthsValue());
+    if (!date || !months) return null;
+    return this.dateAdapter.format(this.dateAdapter.addCalendarMonths(date, months), 'yyyy/MM/dd');
   });
   /**
    * LEGACY: the row's imported prosthesis note, shown when no date can be
@@ -499,6 +514,12 @@ export class SurgeryForm implements HasUnsavedChanges {
     control.setValue('');
     control.markAsPristine();
     if (this.isImplant()) this.prefillNew();
+  }
+
+  /** A follow-up chip: the months after the surgery to call, or '' for none. */
+  protected setMonths(value: string): void {
+    this.form.controls.followUpMonths.setValue(value);
+    this.form.controls.followUpMonths.markAsDirty();
   }
 
   protected setTeeth(teeth: number[]): void {

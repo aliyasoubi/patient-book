@@ -1,4 +1,4 @@
-<pb-page width="form">
+<pb-page width="wide">
   <!-- On edit, whose follow-up this is: its patient's file, or the name the book wrote. -->
   @let row = loaded();
   <pb-page-header
@@ -16,152 +16,301 @@
     <mat-progress-bar mode="indeterminate" />
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
-    <pb-surface icon="event" [title]="'surgeryForm.section' | translate">
-      <pb-field-grid>
-        <!-- What was done decides the rest of the form: an implant has a
-             register number, a brand and a cover; the other kinds have teeth
-             and a date. Chosen once, when the row is added; an edit shows it
-             and no more — a row under the wrong kind is deleted and added
-             again. -->
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="sf">
+    <div class="sf__main">
+      <!-- ── 1. Who, what, when ───────────────────────────────────── -->
+      <section class="step" style="--_i: 0">
+        <header class="step__head">
+          <span class="step__num">{{ 1 | faNum }}</span>
+          <div class="step__titles">
+            <h2 class="step__title">{{ 'surgeryForm.stepWho' | translate }}</h2>
+            <p class="step__hint">{{ 'surgeryForm.stepWhoHint' | translate }}</p>
+          </div>
+        </header>
+
+        <!-- What was done shapes the rest of the form. Chosen once, when the
+             row is added; an edit shows it and no more. -->
         @if (isEdit()) {
-          <div class="pb-field-grid__full form__kind-fixed">
-            <pb-status-chip [icon]="kindIcon(form.controls.kind.value)">
-              {{ kindLabel(form.controls.kind.value) | translate }}
-            </pb-status-chip>
-            <span class="form__kind-hint">{{ 'surgeryForm.kindFixedHint' | translate }}</span>
+          <div class="kind-fixed">
+            <span class="kind-fixed__icon"
+              ><mat-icon aria-hidden="true">{{
+                kindIcon(form.controls.kind.value)
+              }}</mat-icon></span
+            >
+            <span class="kind-fixed__text">
+              <strong>{{ kindLabel(form.controls.kind.value) | translate }}</strong>
+              <small>{{ 'surgeryForm.kindFixedHint' | translate }}</small>
+            </span>
           </div>
         } @else {
-          <pb-select-field
-            class="pb-field-grid__full"
-            [options]="kindOptions"
-            [value]="form.controls.kind.value"
-            (valueChange)="onKindChange($any($event))"
-            [label]="'surgeryForm.kind' | translate"
-          />
+          <div class="kinds" role="radiogroup" [attr.aria-label]="'surgeryForm.kind' | translate">
+            @for (option of kindOptions; track option.value) {
+              <button
+                type="button"
+                class="kinds__option"
+                role="radio"
+                [class.is-on]="form.controls.kind.value === option.value"
+                [attr.aria-checked]="form.controls.kind.value === option.value"
+                (click)="onKindChange($any(option.value))"
+              >
+                <mat-icon aria-hidden="true">{{ kindIcon(option.value) }}</mat-icon>
+                <span>{{ option.label | translate }}</span>
+              </button>
+            }
+          </div>
         }
 
-        <!-- Typing searches the patient book; picking a name links the row to
-             that file, and its number and phone come from there. Typing
-             another name over it unlinks it. -->
-        <div class="pb-field-grid__full">
-          <pb-text-field
-            [control]="form.controls.recordedName"
-            [label]="'surgeryForm.recordedName' | translate"
-            [hint]="
-              (linkedPatient() ? 'surgeryForm.patientLinked' : 'surgeryForm.patientHint')
-                | translate
-            "
-            prefixIcon="person_search"
-            [maxlength]="160"
-            [options]="patientOptions()"
-            (optionSelected)="onPatientSelected($event)"
-          />
-          @if (linkedPatient(); as linked) {
-            <div class="form__linked">
-              <mat-icon aria-hidden="true">link</mat-icon>
-              <span
-                >{{ linked.fullName || ('patient.unnamed' | translate) }} —
-                {{ 'surgery.patientFile' | translate: { fileNo: linked.fileNo } }}</span
-              >
-              <pb-icon-button
-                icon="close"
-                size="compact"
-                (click)="unlink()"
-                [ariaLabel]="'surgeryForm.unlink' | translate"
-              />
+        <div class="row row--who">
+          <!-- Typing searches the patient book; picking a name links the row
+               to that file. Typing another name over it unlinks it. -->
+          <div class="who">
+            <pb-text-field
+              [control]="form.controls.recordedName"
+              [label]="'surgeryForm.recordedName' | translate"
+              [hint]="
+                (linkedPatient() ? 'surgeryForm.patientLinked' : 'surgeryForm.patientHint')
+                  | translate
+              "
+              prefixIcon="person_search"
+              [maxlength]="160"
+              [options]="patientOptions()"
+              (optionSelected)="onPatientSelected($event)"
+            />
+            <div class="pb-reveal" [class.is-open]="!!linkedPatient()">
+              <div>
+                @if (linkedPatient(); as linked) {
+                  <div class="linked">
+                    <span class="linked__icon"><pb-icon name="folder" [size]="16" /></span>
+                    <span class="linked__text">
+                      <strong>{{ linked.fullName || ('patient.unnamed' | translate) }}</strong>
+                      <small>{{
+                        'surgery.patientFile' | translate: { fileNo: linked.fileNo }
+                      }}</small>
+                    </span>
+                    <pb-icon-button
+                      icon="close"
+                      size="compact"
+                      (click)="unlink()"
+                      [ariaLabel]="'surgeryForm.unlink' | translate"
+                    />
+                  </div>
+                }
+              </div>
             </div>
-          }
-        </div>
-
-        <pb-date-field
-          [control]="form.controls.surgeryDate"
-          [label]="'surgeryForm.surgeryDate' | translate"
-          [placeholder]="'surgeryForm.surgeryDatePlaceholder' | translate"
-        />
-
-        <!-- The teeth, picked on the chart the lab form uses. -->
-        <div class="pb-field-grid__full form__teeth">
-          <span class="form__label">{{ 'surgeryForm.teeth' | translate }}</span>
-          <pb-tooth-picker
-            [selected]="form.controls.teeth.value"
-            (selectedChange)="setTeeth($event)"
-            [ariaLabel]="'surgeryForm.teeth' | translate"
+          </div>
+          <pb-date-field
+            [control]="form.controls.surgeryDate"
+            [label]="'surgeryForm.surgeryDate' | translate"
+            [placeholder]="'surgeryForm.surgeryDatePlaceholder' | translate"
           />
-          @if (legacyTeeth(); as written) {
-            <span class="form__hint">{{
+        </div>
+      </section>
+
+      <!-- ── 2. The teeth, and for an implant its file ─────────────── -->
+      <section class="step" style="--_i: 1">
+        <header class="step__head">
+          <span class="step__num">{{ 2 | faNum }}</span>
+          <div class="step__titles">
+            <h2 class="step__title">{{ 'surgeryForm.stepTeeth' | translate }}</h2>
+            <p class="step__hint">{{ 'surgeryForm.stepTeethHint' | translate }}</p>
+          </div>
+        </header>
+
+        <pb-tooth-picker
+          [selected]="teethValue()"
+          (selectedChange)="setTeeth($event)"
+          [ariaLabel]="'surgeryForm.teeth' | translate"
+        />
+        @if (legacyTeeth(); as written) {
+          <p class="note">
+            {{
               (teethRead() ? 'surgeryForm.teethRead' : 'surgeryForm.teethWritten')
                 | translate: { text: written }
-            }}</span>
-          }
-          @if (placedImplants().length) {
-            <span class="form__hint">{{ 'surgeryForm.implantsFromStock' | translate }}</span>
+            }}
+          </p>
+        }
+        @if (placedImplants().length) {
+          <div class="placed">
+            <span class="placed__title">{{ 'surgeryForm.implantsFromStock' | translate }}</span>
             @for (line of placedImplants(); track $index) {
-              <span class="form__hint">{{ line }}</span>
+              <span class="placed__line">{{ line }}</span>
             }
-          }
-        </div>
-
-        @if (isImplant()) {
-          <pb-text-field
-            [control]="form.controls.implantRegistryNo"
-            [label]="'surgeryForm.implantRegistryNo' | translate"
-            [ltr]="true"
-            inputmode="numeric"
-            [hint]="
-              (isEdit()
-                ? 'surgeryForm.implantRegistryNoPlaceholder'
-                : 'surgeryForm.implantRegistryNoNext'
-              ) | translate
-            "
-          />
-
-          <pb-select-field
-            [control]="form.controls.implantBrand"
-            [options]="brandOptions()"
-            [anyLabel]="'surgeryForm.brandUnspecified' | translate"
-            [label]="'surgeryForm.implantBrand' | translate"
-          />
-
-          <pb-select-field
-            [control]="form.controls.abutmentType"
-            [options]="abutmentOptions"
-            [label]="'surgeryForm.abutmentType' | translate"
-          />
+          </div>
         }
 
-        <pb-select-field
-          [control]="form.controls.followUpMonths"
-          [options]="followUpOptions()"
-          [anyLabel]="'surgeryForm.noFollowUp' | translate"
-          [label]="'surgeryForm.followUp' | translate"
-          [hint]="followUpHint()"
-        />
+        <div class="pb-reveal" [class.is-open]="isImplant()" [attr.inert]="isImplant() ? null : ''">
+          <div>
+            <h3 class="step__sub">{{ 'surgeryForm.stepImplant' | translate }}</h3>
+            <div class="row row--three">
+              <pb-text-field
+                [control]="form.controls.implantRegistryNo"
+                [label]="'surgeryForm.implantRegistryNo' | translate"
+                [ltr]="true"
+                inputmode="numeric"
+                prefixIcon="folder"
+                [hint]="
+                  (isEdit()
+                    ? 'surgeryForm.implantRegistryNoPlaceholder'
+                    : 'surgeryForm.implantRegistryNoNext'
+                  ) | translate
+                "
+              />
+              <pb-select-field
+                [control]="form.controls.implantBrand"
+                [options]="brandOptions()"
+                [anyLabel]="'surgeryForm.brandUnspecified' | translate"
+                [label]="'surgeryForm.implantBrand' | translate"
+              />
+              <pb-select-field
+                [control]="form.controls.abutmentType"
+                [options]="abutmentOptions"
+                [label]="'surgeryForm.abutmentType' | translate"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 3. When to call, and anything else ────────────────────── -->
+      <section class="step" style="--_i: 2">
+        <header class="step__head">
+          <span class="step__num">{{ 3 | faNum }}</span>
+          <div class="step__titles">
+            <h2 class="step__title">{{ 'surgeryForm.stepFollowUp' | translate }}</h2>
+            <p class="step__hint">{{ 'surgeryForm.stepFollowUpHint' | translate }}</p>
+          </div>
+        </header>
+
+        <!-- The usual waits as one tap each; "none" for a surgery that owes no call. -->
+        <div
+          class="months"
+          role="radiogroup"
+          [attr.aria-label]="'surgeryForm.followUp' | translate"
+        >
+          @for (option of followUpOptions(); track option.value) {
+            <button
+              type="button"
+              class="months__option"
+              role="radio"
+              [class.is-on]="monthsValue() === option.value"
+              [attr.aria-checked]="monthsValue() === option.value"
+              (click)="setMonths(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
+          <button
+            type="button"
+            class="months__option months__option--none"
+            role="radio"
+            [class.is-on]="!monthsValue()"
+            [attr.aria-checked]="!monthsValue()"
+            (click)="setMonths('')"
+          >
+            {{ 'surgeryForm.noFollowUp' | translate }}
+          </button>
+        </div>
 
         <pb-textarea-field
-          class="pb-field-grid__full"
           [control]="form.controls.notes"
           [label]="'surgeryForm.notes' | translate"
           [rows]="3"
           [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
           [readonly]="!canEditClinicalNotes"
         />
-      </pb-field-grid>
-    </pb-surface>
+      </section>
+    </div>
 
-    <pb-form-actions>
-      <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
-        {{ 'common.cancel' | translate }}
-      </pb-button>
-      <pb-button
-        variant="flat"
-        type="submit"
-        icon="save"
-        [loading]="saving()"
-        [loadingText]="'surgeryForm.savingLabel' | translate"
-      >
-        {{ submitLabel() | translate }}
-      </pb-button>
-    </pb-form-actions>
+    <!-- ── The follow-up as it will be saved, and the save ──────────── -->
+    <aside class="summary">
+      <div class="summary__card">
+        <header class="summary__head">
+          <span class="summary__kind"
+            ><mat-icon aria-hidden="true">{{ kindIcon(form.controls.kind.value) }}</mat-icon></span
+          >
+          <span class="summary__titles">
+            <small>{{ 'surgeryForm.summaryTitle' | translate }}</small>
+            <strong>{{ kindLabel(form.controls.kind.value) | translate }}</strong>
+          </span>
+        </header>
+
+        <dl class="summary__facts">
+          <div class="fact">
+            <dt>{{ 'surgeryForm.summaryPatient' | translate }}</dt>
+            <dd>
+              {{ form.controls.recordedName.value || ('surgeryForm.summaryEmpty' | translate) }}
+              @if (linkedPatient(); as linked) {
+                <span class="fact__chip">{{
+                  'surgery.patientFile' | translate: { fileNo: linked.fileNo }
+                }}</span>
+              } @else if (form.controls.recordedName.value) {
+                <span class="fact__chip fact__chip--warn">{{
+                  'surgeryForm.summaryUnlinked' | translate
+                }}</span>
+              }
+            </dd>
+          </div>
+          <div class="fact">
+            <dt>{{ 'surgeryForm.summaryDate' | translate }}</dt>
+            <dd class="ltr-nums">
+              {{ surgeryDateText() ?? ('surgeryForm.summaryEmpty' | translate) }}
+            </dd>
+          </div>
+          <div class="fact">
+            <dt>{{ 'surgeryForm.summaryTeeth' | translate }}</dt>
+            <dd>
+              @if (teethValue().length) {
+                <span class="fact__teeth">
+                  @for (tooth of teethValue(); track tooth) {
+                    <span class="fact__tooth">{{ tooth | faNum }}</span>
+                  }
+                </span>
+              } @else {
+                <span class="fact__quiet">{{ 'surgeryForm.summaryNoTeeth' | translate }}</span>
+              }
+            </dd>
+          </div>
+          @if (isImplant()) {
+            <div class="fact">
+              <dt>{{ 'surgeryForm.summaryImplant' | translate }}</dt>
+              <dd>
+                {{ form.controls.implantBrand.value || ('surgeryForm.summaryEmpty' | translate) }}
+                @if (form.controls.implantRegistryNo.value; as no) {
+                  <span class="fact__chip">{{ no | faNum }}</span>
+                }
+              </dd>
+            </div>
+          }
+        </dl>
+
+        <!-- The call it sets up: the one date the follow-ups page will act on. -->
+        <div class="due" [class.is-none]="!monthsValue()">
+          <span class="due__icon"><pb-icon name="calendar-check" [size]="18" /></span>
+          <span class="due__text">
+            <small>{{ 'surgeryForm.summaryFollowUp' | translate }}</small>
+            <strong>{{
+              monthsValue()
+                ? (followUpDueText() ?? followUpHint() ?? '')
+                : ('surgeryForm.summaryNoFollowUp' | translate)
+            }}</strong>
+          </span>
+        </div>
+
+        <div class="summary__actions">
+          <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
+            {{ 'common.cancel' | translate }}
+          </pb-button>
+          <pb-button
+            variant="flat"
+            type="submit"
+            icon="save"
+            [loading]="saving()"
+            [loadingText]="'surgeryForm.savingLabel' | translate"
+          >
+            {{ submitLabel() | translate }}
+          </pb-button>
+        </div>
+      </div>
+    </aside>
   </form>
 </pb-page>
