@@ -322,6 +322,15 @@ mat-icon.pb-btn__icon {
   --mat-button-text-ripple-color: color-mix(in srgb, var(--mat-sys-error) 12%, transparent);
 }
 
+/* The quiet way out (cancel, stay) beside a filled primary: graphite, not the accent. */
+:host(.pb-button--neutral) .pb-btn {
+  --mat-button-text-label-text-color: var(--pb-neutral-600, var(--mat-sys-on-surface-variant));
+  --mat-button-text-state-layer-color: var(--pb-graphite, var(--mat-sys-on-surface));
+  --mat-button-outlined-label-text-color: var(--pb-graphite, var(--mat-sys-on-surface));
+  --mat-button-outlined-outline-color: var(--pb-neutral-300, var(--mat-sys-outline));
+  --mat-button-outlined-state-layer-color: var(--pb-graphite, var(--mat-sys-on-surface));
+}
+
 /* A count on the button itself, e.g. active filters — stays visible when
    the label collapses, since it is the part that changes. */
 .pb-btn__badge {

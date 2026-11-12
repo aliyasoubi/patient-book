@@ -13,7 +13,7 @@ import { isLineIcon } from '../icon/line-icons';
 
 export type ButtonVariant = 'flat' | 'stroked' | 'text';
 export type ButtonSize = 'default' | 'large';
-export type ButtonTone = 'default' | 'danger';
+export type ButtonTone = 'default' | 'danger' | 'neutral';
 export type ButtonRouterLink = string | readonly unknown[];
 
 /** The app's vocabulary, in Material 3's terms. */
@@ -69,6 +69,7 @@ const APPEARANCE: Record<ButtonVariant, MatButtonAppearance> = {
     '[class.pb-button--full]': 'fullWidth()',
     '[class.pb-button--large]': "size() === 'large'",
     '[class.pb-button--danger]': "tone() === 'danger'",
+    '[class.pb-button--neutral]': "tone() === 'neutral'",
     '[class.pb-button--collapsed]': 'collapsed()',
     '[class.pb-button--forward]': 'forward()',
     '[class.pb-button--raised]': 'raised()',
@@ -85,7 +86,7 @@ export class PbButton {
   readonly type = input<'button' | 'submit'>('button');
   readonly icon = input<string | null>(null);
   readonly disabled = input(false);
-  /** `danger` takes the error colour — delete, archive, clear. */
+  /** `danger` takes the error colour — delete, archive, clear; `neutral` is graphite, for the quiet way out beside a primary action. */
   readonly tone = input<ButtonTone>('default');
   /** True while the action this button triggers is in flight. Implies disabled. */
   readonly loading = input(false);

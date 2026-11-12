@@ -26,21 +26,21 @@ export interface ConfirmData {
     <mat-dialog-content>
       <p class="message">{{ data.message }}</p>
     </mat-dialog-content>
-    <!-- M3 basic dialogs use text buttons for every action — a filled button
-         is the full-screen dialog's idiom. Archiving is still destructive from
-         the user's point of view, so that one action takes the danger tone.
-         It also starts on Cancel: Enter on a dialog that just opened must not
-         archive or discard. -->
+    <!-- One clear primary: the action the dialog asks about, filled — red
+         when it loses or removes something. Beside it the way out, quiet in
+         graphite. Focus starts on the way out for a destructive one, so Enter
+         on a dialog that just opened never archives or discards. -->
     <mat-dialog-actions align="end">
       <pb-button
         variant="text"
+        tone="neutral"
         (click)="ref.close(false)"
         [attr.cdkFocusInitial]="data.tone === 'warn' ? '' : null"
       >
         {{ data.cancelLabel ?? ('action.cancel' | translate) }}
       </pb-button>
       <pb-button
-        variant="text"
+        variant="flat"
         [tone]="data.tone === 'warn' ? 'danger' : 'default'"
         (click)="ref.close(true)"
         [attr.cdkFocusInitial]="data.tone === 'warn' ? null : ''"

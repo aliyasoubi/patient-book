@@ -1,6 +1,6 @@
 import { PatientGlance } from './patient-glance';
 import { PatientHistory } from './patient-history';
-import { formatPhone } from '../../shared/pipes/phone.pipe';
+import { PatientProfile } from './patient-profile';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -72,6 +72,7 @@ import type { StatusTone } from '../../shared/ui';
   imports: [
     PatientGlance,
     PatientHistory,
+    PatientProfile,
     RouterLink,
     MatMenuModule,
     MatTabsModule,
@@ -234,31 +235,6 @@ export class PatientDetail {
   protected initialOf(name: string | null): string {
     return (name ?? '').trim().charAt(0);
   }
-
-  protected readonly detailRows = computed(() => {
-    this.i18n.currentLang();
-    const p = this.patient();
-    if (!p) return [];
-    const rows: { icon: string; label: string; value: string; ltr?: boolean }[] = [];
-    const push = (icon: string, label: string, value: string | null | undefined, ltr = false) => {
-      if (value) rows.push({ icon, label, value, ltr });
-    };
-
-    push('badge', this.i18n.instant('field.nationalId'), p.nationalId, true);
-    push('escalator_warning', this.i18n.instant('field.fatherName'), p.fatherName);
-    push('work', this.i18n.instant('field.occupation'), p.occupation);
-    push(
-      'school',
-      this.i18n.instant('field.education'),
-      p.education !== 'unknown' ? this.i18n.instant(educationLabel(p.education)) : p.educationRaw,
-    );
-    push('smartphone', this.i18n.instant('field.mobile'), formatPhone(p.mobile), true);
-    push('call', this.i18n.instant('field.homePhone'), formatPhone(p.homePhone), true);
-    push('home', this.i18n.instant('field.homeAddress'), p.homeAddress);
-    push('apartment', this.i18n.instant('field.workAddress'), p.workAddress);
-    push('share', this.i18n.instant('field.referralSource'), p.referralSource?.name ?? null);
-    return rows;
-  });
 
   /**
    * One `switchMap` for every load, so going straight from one patient to the

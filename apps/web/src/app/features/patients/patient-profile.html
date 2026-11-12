@@ -1,0 +1,138 @@
+@let p = patient();
+
+<!-- ── How to reach them ─────────────────────────────────────────────── -->
+<section class="card" style="--_i: 0">
+  <h2 class="card__title">{{ 'patientProfile.contact' | translate }}</h2>
+
+  @if (p.mobile) {
+    <div class="phone phone--main">
+      <span class="phone__icon"><pb-icon name="phone" [size]="18" /></span>
+      <span class="phone__text">
+        <small>{{ 'field.mobile' | translate }}</small>
+        <a class="phone__number" dir="ltr" [href]="'tel:' + p.mobile">{{
+          p.mobile | phone | faNum
+        }}</a>
+      </span>
+      <span class="phone__actions">
+        <button
+          type="button"
+          class="phone__btn"
+          (click)="copy(p.mobile)"
+          [attr.aria-label]="'patientProfile.copy' | translate"
+          [title]="'patientProfile.copy' | translate"
+        >
+          <pb-icon name="copy" [size]="16" />
+        </button>
+        <a
+          class="phone__btn phone__btn--call"
+          [href]="'tel:' + p.mobile"
+          [attr.aria-label]="'patientProfile.call' | translate"
+          [title]="'patientProfile.call' | translate"
+        >
+          <pb-icon name="phone" [size]="16" />
+        </a>
+      </span>
+    </div>
+  }
+  @if (p.homePhone) {
+    <div class="phone">
+      <span class="phone__icon phone__icon--quiet"><pb-icon name="home" [size]="16" /></span>
+      <span class="phone__text">
+        <small>{{ 'field.homePhone' | translate }}</small>
+        <a class="phone__number phone__number--quiet" dir="ltr" [href]="'tel:' + p.homePhone">{{
+          p.homePhone | phone | faNum
+        }}</a>
+      </span>
+      <span class="phone__actions">
+        <button
+          type="button"
+          class="phone__btn"
+          (click)="copy(p.homePhone)"
+          [attr.aria-label]="'patientProfile.copy' | translate"
+          [title]="'patientProfile.copy' | translate"
+        >
+          <pb-icon name="copy" [size]="16" />
+        </button>
+      </span>
+    </div>
+  }
+  @if (!p.mobile && !p.homePhone) {
+    <p class="quiet">{{ 'patientProfile.noPhone' | translate }}</p>
+  }
+
+  @if (p.homeAddress || p.workAddress) {
+    <div class="addresses">
+      @if (p.homeAddress) {
+        <div class="address">
+          <pb-icon name="map-pin" [size]="15" />
+          <span>
+            <small>{{ 'field.homeAddress' | translate }}</small>
+            {{ p.homeAddress }}
+          </span>
+        </div>
+      }
+      @if (p.workAddress) {
+        <div class="address">
+          <pb-icon name="building" [size]="15" />
+          <span>
+            <small>{{ 'field.workAddress' | translate }}</small>
+            {{ p.workAddress }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+</section>
+
+<!-- ── Details: label on one edge, value on the other ───────────────── -->
+<section class="card" style="--_i: 1">
+  <h2 class="card__title">{{ 'patientProfile.details' | translate }}</h2>
+  <dl class="details">
+    @for (d of details(); track d.label) {
+      <div class="details__row">
+        <dt><pb-icon [name]="d.icon" [size]="15" />{{ d.label | translate }}</dt>
+        @if (d.value) {
+          <dd [class.ltr-nums]="d.ltr">{{ d.ltr ? (d.value | faNum) : d.value }}</dd>
+        } @else {
+          <dd class="details__none">{{ 'patientProfile.notRecorded' | translate }}</dd>
+        }
+      </div>
+    }
+  </dl>
+</section>
+
+<!-- ── Visits: from the first to the last ───────────────────────────── -->
+<section class="card" style="--_i: 2">
+  <h2 class="card__title">
+    {{ 'patientProfile.visits' | translate }}
+    @if (span(); as s) {
+      <span class="card__badge">{{ s }}</span>
+    }
+  </h2>
+  @if (p.firstVisitAt || p.lastVisitAt) {
+    <ol class="visits">
+      <li class="visit">
+        <span class="visit__dot" aria-hidden="true"></span>
+        <span class="visit__text">
+          <small>{{ 'patientProfile.first' | translate }}</small>
+          <strong>{{ p.firstVisitAt | jalali: 'long' }}</strong>
+          @if (firstAgo()) {
+            <span>{{ firstAgo() }}</span>
+          }
+        </span>
+      </li>
+      <li class="visit visit--last">
+        <span class="visit__dot" aria-hidden="true"></span>
+        <span class="visit__text">
+          <small>{{ 'patientProfile.last' | translate }}</small>
+          <strong>{{ p.lastVisitAt | jalali: 'long' }}</strong>
+          @if (lastAgo()) {
+            <span>{{ lastAgo() }}</span>
+          }
+        </span>
+      </li>
+    </ol>
+  } @else {
+    <p class="quiet">{{ 'patientProfile.noVisits' | translate }}</p>
+  }
+</section>

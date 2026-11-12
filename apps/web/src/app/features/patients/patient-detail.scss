@@ -121,26 +121,6 @@ pb-surface.hero-surface--archived {
     position: sticky;
     inset-block-start: var(--pb-space-4);
   }
-
-  /* In the narrow column a fact is its label over its value. */
-  .facts {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .facts__row {
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  dt {
-    min-width: 0;
-    font-size: 0.75rem;
-  }
-
-  dd {
-    color: var(--pb-graphite);
-    font-weight: 600;
-  }
 }
 
 /* ── Import issues ─────────────────────────────────────────────────── */

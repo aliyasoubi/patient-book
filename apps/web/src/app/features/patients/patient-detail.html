@@ -430,42 +430,7 @@
       </div>
 
       <aside class="detail__aside">
-        <pb-surface [title]="'patientDetail.details' | translate">
-          @if (detailRows().length === 0) {
-            <p class="card__empty">{{ 'patientDetail.noAdditionalInfo' | translate }}</p>
-          } @else {
-            <dl class="facts">
-              @for (row of detailRows(); track row.label) {
-                <div class="facts__row">
-                  <dt>
-                    <mat-icon aria-hidden="true">{{ row.icon }}</mat-icon>
-                    {{ row.label }}
-                  </dt>
-                  <dd [class.ltr-nums]="row.ltr">{{ row.value }}</dd>
-                </div>
-              }
-            </dl>
-          }
-        </pb-surface>
-
-        <pb-surface [title]="'patientDetail.visits' | translate">
-          <dl class="facts">
-            <div class="facts__row">
-              <dt>
-                <mat-icon aria-hidden="true">event_available</mat-icon>
-                {{ 'patientDetail.firstVisit' | translate }}
-              </dt>
-              <dd>{{ p.firstVisitAt | jalali: 'long' }}</dd>
-            </div>
-            <div class="facts__row">
-              <dt>
-                <mat-icon aria-hidden="true">event</mat-icon>
-                {{ 'patientDetail.lastVisit' | translate }}
-              </dt>
-              <dd>{{ p.lastVisitAt | jalali: 'long' }}</dd>
-            </div>
-          </dl>
-        </pb-surface>
+        <pb-patient-profile [patient]="p" />
 
         @if (p.notes) {
           <pb-surface [title]="'patientDetail.notes' | translate">

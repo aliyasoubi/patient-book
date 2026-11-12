@@ -507,7 +507,13 @@
     "count": "{{count}} دندان",
     "range": "{{from}} تا {{to}}",
     "group": "{{quadrant}}: {{numbers}}",
-    "groupSeparator": "؛ "
+    "groupSeparator": "؛ ",
+    "patientRight": "راست بیمار",
+    "patientLeft": "چپ بیمار",
+    "upperJaw": "فک بالا",
+    "lowerJaw": "فک پایین",
+    "selectedCount": "{{count}} دندان انتخاب شده",
+    "pickHint": "روی هر دندان بزنید تا انتخاب شود"
   },
   "labJaw": {
     "upper": "فک بالا",
@@ -1398,5 +1404,20 @@
     "empty": "رویدادی از این نوع نیست.",
     "from": "قبلی",
     "to": "جدید"
+  },
+  "patientProfile": {
+    "contact": "راه تماس",
+    "details": "مشخصات",
+    "visits": "مراجعات",
+    "call": "تماس",
+    "copy": "کپی شماره",
+    "copied": "شماره کپی شد.",
+    "noPhone": "شماره‌ای ثبت نشده",
+    "notRecorded": "ثبت نشده",
+    "first": "اولین مراجعه",
+    "last": "آخرین مراجعه",
+    "span": "{{years}} سال پرونده",
+    "spanMonths": "{{months}} ماه پرونده",
+    "noVisits": "مراجعه‌ای ثبت نشده"
   }
 }

@@ -1,13 +1,14 @@
 /*
- * The mouth as a chart: four quadrants around a cross — the midline down
- * the middle, the bite across — the patient's right on the viewer's left.
- * Each tooth is a rounded key, wider at the crown; a picked one fills with
- * the accent and gives a small spring. The jaw shortcuts sit under it.
+ * The mouth as the dentist faces it: the upper row over the lower, crowns
+ * meeting at the bite line across the middle, the midline down the centre,
+ * each row bending away from the bite toward the molars like an arch. A
+ * tooth's root is a quiet fill, its crown the part that is picked: white on a
+ * hairline, then the accent with a small spring.
  */
 
 @keyframes tooth-pick {
   40% {
-    scale: 1.12;
+    scale: 1.14;
   }
 }
 
@@ -21,122 +22,198 @@
   gap: var(--pb-space-3);
 }
 
-.chart__arches {
+.chart__mouth {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--pb-space-4) var(--pb-space-5);
-  padding: var(--pb-space-4);
-  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--pb-space-5) var(--pb-space-4);
+  overflow-x: auto;
+  border-radius: 20px;
   background: var(--pb-neutral-50, var(--mat-sys-surface-container-low));
+  scrollbar-width: thin;
 
-  /* The midline and the bite. */
-  &::before,
-  &::after {
+  /* The midline, down the centre. */
+  &::before {
     content: '';
     position: absolute;
-    background: var(--pb-neutral-200, var(--mat-sys-outline-variant));
+    inset-block: var(--pb-space-4);
+    inset-inline-start: 50%;
+    inline-size: 0;
+    border-inline-start: 1px dashed var(--pb-neutral-300, var(--mat-sys-outline-variant));
     pointer-events: none;
   }
 
-  &::before {
-    inset-block: var(--pb-space-3);
-    inset-inline-start: 50%;
-    inline-size: 1px;
-  }
-
+  /* The bite, across the middle. */
   &::after {
-    inset-inline: var(--pb-space-3);
+    content: '';
+    position: absolute;
+    inset-inline: var(--pb-space-4);
     inset-block-start: 50%;
-    block-size: 1px;
-  }
-
-  @media (max-width: 599px) {
-    grid-template-columns: minmax(0, 1fr);
-
-    &::before {
-      display: none;
-    }
-
-    &::after {
-      display: none;
-    }
+    block-size: 0;
+    border-block-start: 1px dashed var(--pb-neutral-300, var(--mat-sys-outline-variant));
+    pointer-events: none;
   }
 }
 
-.chart__quadrant {
+/* Which side is which, as the patient's: their right on the viewer's left. */
+.chart__side {
+  position: absolute;
+  inset-block-start: var(--pb-space-2);
+  color: var(--pb-neutral-400, var(--mat-sys-on-surface-variant));
+  font-size: 0.6875rem;
+  font-weight: 600;
+
+  &--right {
+    inset-inline-start: var(--pb-space-4);
+  }
+
+  &--left {
+    inset-inline-end: var(--pb-space-4);
+  }
+}
+
+.chart__jaw {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--pb-space-2);
-  min-inline-size: 0;
+  align-items: center;
 
-  /* The lower jaw's caption sits under its teeth, mirroring the upper. */
-  &:nth-child(n + 3) {
+  &[data-jaw='lower'] {
     flex-direction: column-reverse;
   }
 }
 
-.chart__caption {
+.chart__jaw-label {
   color: var(--pb-neutral-500, var(--mat-sys-on-surface-variant));
   font-size: 0.6875rem;
-  font-weight: 600;
-  text-align: center;
+  font-weight: 700;
 }
 
-.chart__teeth {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+.chart__row {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  min-inline-size: max-content;
+  margin-inline: auto;
 }
 
 .chart__tooth {
-  min-block-size: 44px;
-  padding: 0;
-  border: 1px solid var(--pb-neutral-200, var(--mat-sys-outline-variant));
-  border-radius: 12px 12px 9px 9px;
-  background: #fff;
-  box-shadow: var(--pb-shadow-xs);
-  color: var(--pb-graphite, var(--mat-sys-on-surface));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 1px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pb-neutral-500, var(--mat-sys-on-surface-variant));
   font: inherit;
-  font-size: 0.875rem;
-  font-weight: 700;
-  font-feature-settings: var(--pb-font-numeric);
   cursor: pointer;
-  transition:
-    background-color 180ms var(--pb-ease-standard),
-    border-color 180ms var(--pb-ease-standard),
-    color 180ms var(--pb-ease-standard),
-    box-shadow 220ms var(--pb-ease-standard),
-    translate 220ms var(--pb-ease-spring);
+  translate: 0 calc(var(--_lift, 0px) * -1);
+  transition: background-color 160ms var(--pb-ease-standard);
 
-  /* Lower teeth: the crown faces up, so the round end is at the top of the key. */
-  .chart__quadrant:nth-child(n + 3) & {
-    border-radius: 9px 9px 12px 12px;
+  /* A little room either side of the midline. */
+  &.is-midline {
+    margin-inline-start: 10px;
+  }
+
+  [data-jaw='lower'] & {
+    flex-direction: column-reverse;
+    translate: 0 var(--_lift, 0px);
   }
 
   &:hover {
-    border-color: var(--pb-neutral-300, var(--mat-sys-outline));
-    box-shadow: var(--pb-shadow-sm);
-    translate: 0 -1px;
+    background: color-mix(in srgb, #fff 80%, transparent);
   }
 
   &:focus-visible {
     outline: 2px solid var(--pb-brand, var(--mat-sys-primary));
-    outline-offset: 2px;
+    outline-offset: 1px;
+  }
+}
+
+.chart__shape {
+  display: block;
+  block-size: 64px;
+  overflow: visible;
+  transition: scale 260ms var(--pb-ease-spring);
+
+  /* The lower teeth: the same drawings, crowns up toward the bite. */
+  [data-jaw='lower'] & {
+    scale: 1 -1;
   }
 
-  &--on {
-    border-color: var(--pb-brand, var(--mat-sys-primary));
-    background: var(--pb-brand, var(--mat-sys-primary));
-    box-shadow: 0 3px 10px -3px color-mix(in srgb, var(--pb-brand, #ff6a00) 60%, transparent);
-    color: #fff;
-    animation: tooth-pick 320ms var(--pb-ease-spring);
-
-    &:hover {
-      border-color: var(--pb-brand-strong, var(--mat-sys-primary));
-      background: var(--pb-brand-strong, var(--mat-sys-primary));
-    }
+  .chart__tooth:hover & {
+    scale: 1.06;
   }
+
+  [data-jaw='lower'] .chart__tooth:hover & {
+    scale: 1.06 -1.06;
+  }
+}
+
+.chart__root {
+  fill: var(--pb-neutral-200, #e6e8eb);
+  stroke: var(--pb-neutral-300, #c9cdd3);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: fill 200ms var(--pb-ease-standard);
+}
+
+.chart__crown {
+  fill: #fff;
+  stroke: var(--pb-neutral-400, #9aa1ab);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  transition:
+    fill 200ms var(--pb-ease-standard),
+    stroke 200ms var(--pb-ease-standard);
+}
+
+.chart__num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-feature-settings: var(--pb-font-numeric);
+  transition: color 200ms var(--pb-ease-standard);
+}
+
+/* Picked: the crown takes the accent, the root a tint of it. */
+.chart__tooth--on {
+  color: var(--pb-brand-strong, var(--mat-sys-primary));
+
+  .chart__crown {
+    fill: var(--pb-brand, var(--mat-sys-primary));
+    stroke: var(--pb-brand-strong, var(--mat-sys-primary));
+  }
+
+  .chart__root {
+    fill: color-mix(in srgb, var(--pb-brand, #ff6a00) 22%, #fff);
+    stroke: color-mix(in srgb, var(--pb-brand, #ff6a00) 50%, transparent);
+  }
+
+  .chart__shape {
+    animation: tooth-pick 340ms var(--pb-ease-spring);
+  }
+
+  [data-jaw='lower'] & .chart__shape {
+    animation: none;
+  }
+}
+
+.chart__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pb-space-2);
+}
+
+.chart__count {
+  color: var(--pb-neutral-500, var(--mat-sys-on-surface-variant));
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 
 .chart__shortcuts {
@@ -146,6 +223,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .chart__shape,
   .chart__tooth {
     animation: none;
     transition-duration: 0ms;
