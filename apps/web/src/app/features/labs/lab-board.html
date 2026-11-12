@@ -92,6 +92,7 @@
     @if (!wide()) {
       <pb-segmented-button
         class="labs__columns-picker"
+        [stretch]="true"
         [options]="columnOptions"
         [value]="shownColumn()"
         (valueChange)="shownColumn.set($any($event))"

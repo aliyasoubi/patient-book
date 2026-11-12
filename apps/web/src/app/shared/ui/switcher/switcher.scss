@@ -11,6 +11,12 @@
 
 :host(.is-stretched) {
   display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+/* Sharing a narrow width: less padding, so four options still fit a phone. */
+:host(.is-stretched) .pb-switcher__option {
+  padding-inline: var(--pb-space-2);
 }
 
 /* The app reads right to left: the pill steps toward the left, one option at a time. */
