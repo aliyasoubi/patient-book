@@ -1,12 +1,10 @@
 add
 air
-apartment
 archive
 arrow_downward
 arrow_forward
 arrow_upward
 assignment_return
-badge
 box
 cake
 calendar_month
@@ -41,7 +39,6 @@ done
 edit
 edit_calendar
 error
-escalator_warning
 event
 event_available
 event_busy
@@ -114,6 +111,7 @@ person_add
 person_search
 phone_callback
 phone_missed
+pin
 pin_drop
 post
 radio

@@ -108,23 +108,37 @@
           </div>
         </header>
 
-        <div class="work">
-          <span class="work__label">{{ 'labForm.workTypes' | translate }}</span>
-          <pb-filter-chips
-            [options]="workTypeOptions"
-            [selected]="workTypeChips()"
-            (selectedChange)="setWorkTypes($event)"
-            [ariaLabel]="'labForm.workTypes' | translate"
-          />
-          @if (form.controls.workTypes.touched && form.controls.workTypes.invalid) {
-            <span class="work__error" role="alert">{{
-              'labForm.workTypesRequired' | translate
-            }}</span>
-          }
-        </div>
+        <!-- Work is made either tooth by tooth or for a whole jaw — never both
+             in one case — so the two are separate modes. Switching keeps what
+             was marked on the teeth, ready for when it is switched back. -->
+        <pb-switcher
+          kind="radio"
+          [options]="workModes"
+          [value]="isJawWork() ? 'jaw' : 'tooth'"
+          (valueChange)="setWorkMode($event)"
+          [ariaLabel]="'labForm.modesAria' | translate"
+        />
 
         @if (isJawWork()) {
-          <!-- Made per jaw: no teeth to pick. -->
+          <div
+            class="jaw-kinds"
+            role="radiogroup"
+            [attr.aria-label]="'labForm.jawWorkLabel' | translate"
+          >
+            @for (k of jawKinds; track k.value) {
+              <button
+                type="button"
+                class="jaw-kind"
+                role="radio"
+                [class.is-on]="form.controls.workTypes.value[0] === k.value"
+                [attr.aria-checked]="form.controls.workTypes.value[0] === k.value"
+                (click)="setWorkTypes([k.value])"
+              >
+                <span class="jaw-kind__icon"><pb-icon [name]="k.icon" [size]="20" /></span>
+                <span>{{ k.label | translate }}</span>
+              </button>
+            }
+          </div>
           <div class="work">
             <span class="work__label">{{ 'labForm.jaw' | translate }}</span>
             <pb-segmented-button
@@ -134,12 +148,22 @@
               [ariaLabel]="'labForm.jaw' | translate"
             />
           </div>
+          @if (form.controls.toothWork.value.length) {
+            <p class="kept">
+              <pb-icon name="info-circle" [size]="16" />
+              {{
+                'labForm.teethKept'
+                  | translate: { count: (form.controls.toothWork.value.length | faNum) }
+              }}
+            </p>
+          }
         } @else {
           <pb-tooth-work-picker
             [value]="form.controls.toothWork.value"
             (valueChange)="setToothWork($event)"
             [kinds]="toothWorkKinds"
             [brush]="brush()"
+            (brushChange)="setWorkTypes([$event])"
             [invalid]="form.controls.toothWork.touched && form.controls.toothWork.invalid"
             [ariaLabel]="'labForm.teeth' | translate"
           />
@@ -149,6 +173,11 @@
           @if (form.controls.toothWork.touched && form.controls.toothWork.invalid) {
             <span class="work__error" role="alert">{{ 'labForm.teethRequired' | translate }}</span>
           }
+        }
+        @if (form.controls.workTypes.touched && form.controls.workTypes.invalid) {
+          <span class="work__error" role="alert">{{
+            'labForm.workTypesRequired' | translate
+          }}</span>
         }
 
         <!-- The parts the clinic lends the lab for an implant crown, and owes back. -->

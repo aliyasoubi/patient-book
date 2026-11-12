@@ -136,7 +136,7 @@
 
 .chart__shape {
   display: block;
-  block-size: 64px;
+  block-size: 72px;
   overflow: visible;
   transition: scale 260ms var(--pb-ease-spring);
 
@@ -155,21 +155,34 @@
 }
 
 .chart__root {
-  fill: var(--pb-neutral-200, #e6e8eb);
-  stroke: var(--pb-neutral-300, #c9cdd3);
+  fill: #f1e9dc;
+  stroke: #d9cdb9;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
-  transition: fill 200ms var(--pb-ease-standard);
+  transition:
+    fill 200ms var(--pb-ease-standard),
+    stroke 200ms var(--pb-ease-standard);
 }
 
+/* Enamel: an ivory crown on a soft outline, as a tooth looks, not a box. */
 .chart__crown {
-  fill: #fff;
-  stroke: var(--pb-neutral-400, #9aa1ab);
+  fill: #fdfbf6;
+  stroke: #b9b2a6;
   stroke-width: 1.2;
   vector-effect: non-scaling-stroke;
   transition:
     fill 200ms var(--pb-ease-standard),
     stroke 200ms var(--pb-ease-standard);
+}
+
+/* The highlight on a front tooth, the grooves between a back tooth's cusps. */
+.chart__detail {
+  fill: none;
+  stroke: #cfc7ba;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 200ms var(--pb-ease-standard);
 }
 
 .chart__num {
@@ -191,6 +204,10 @@
   .chart__root {
     fill: color-mix(in srgb, var(--pb-brand, #ff6a00) 22%, #fff);
     stroke: color-mix(in srgb, var(--pb-brand, #ff6a00) 50%, transparent);
+  }
+
+  .chart__detail {
+    stroke: color-mix(in srgb, #fff 60%, transparent);
   }
 
   .chart__shape {

@@ -7,8 +7,8 @@ import type { ToothWork } from './teeth';
 import { type ToothWorkKind, PbToothWorkPicker } from './tooth-work-picker';
 
 const KINDS: ToothWorkKind[] = [
-  { value: 'crown', label: 'روکش', mark: 'ر', tone: 'sky' },
-  { value: 'laminate', label: 'لمینیت', mark: 'ل', tone: 'teal' },
+  { value: 'crown', label: 'روکش', mark: 'ر', tone: 'sky', icon: 'crown' },
+  { value: 'laminate', label: 'لمینیت', mark: 'ل', tone: 'teal', icon: 'square-half' },
 ];
 
 @Component({

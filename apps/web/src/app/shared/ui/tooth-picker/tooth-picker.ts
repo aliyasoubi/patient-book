@@ -52,13 +52,14 @@ import { mouthView } from './tooth-shapes';
                 >
                   <svg
                     class="chart__shape"
-                    viewBox="0 0 40 60"
+                    viewBox="0 0 40 64"
                     preserveAspectRatio="none"
                     [attr.width]="tooth.width"
                     aria-hidden="true"
                   >
                     <path class="chart__root" [attr.d]="tooth.root" />
                     <path class="chart__crown" [attr.d]="tooth.crown" />
+                    <path class="chart__detail" [attr.d]="tooth.detail" />
                   </svg>
                   <span class="chart__num">{{ tooth.position | faNum }}</span>
                 </button>

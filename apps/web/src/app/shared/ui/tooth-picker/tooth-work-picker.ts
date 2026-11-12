@@ -5,6 +5,8 @@ import { PersianNumberPipe, formatPersianCount } from '../../pipes/persian-numbe
 import { PbButton } from '../button/button';
 import { type ToothWork, jawTeeth, teethByWork, teethSummary, toothName } from './teeth';
 import { mouthView } from './tooth-shapes';
+import { PbIcon } from '../icon/icon';
+import type { LineIconName } from '../icon/line-icons';
 
 /** The categorical tints in styles.scss — a group, never a status. */
 export type ToothWorkTone =
@@ -18,6 +20,8 @@ export interface ToothWorkKind {
   /** i18n key of the one letter drawn on a tooth, so the chart never relies on colour alone. */
   mark: string;
   tone: ToothWorkTone;
+  /** Drawn on a marked tooth and on its tool, so the kind reads at a glance. */
+  icon: LineIconName;
 }
 
 interface WorkGroup {
@@ -40,7 +44,7 @@ interface WorkGroup {
 @Component({
   selector: 'pb-tooth-work-picker',
   standalone: true,
-  imports: [TranslatePipe, PersianNumberPipe, PbButton],
+  imports: [TranslatePipe, PersianNumberPipe, PbButton, PbIcon],
   template: `
     <div
       class="chart"
@@ -48,6 +52,28 @@ interface WorkGroup {
       [attr.aria-label]="ariaLabel()"
       [attr.aria-invalid]="invalid() || null"
     >
+      <!-- The tools: what a tap puts on a tooth. Picked here, used on the chart below. -->
+      <div class="tools" role="radiogroup" [attr.aria-label]="'tooth.toolsAria' | translate">
+        @for (kind of kinds(); track kind.value) {
+          <button
+            type="button"
+            class="tool"
+            role="radio"
+            [class.is-on]="brushKind()?.value === kind.value"
+            [attr.aria-checked]="brushKind()?.value === kind.value"
+            [style.--tooth-bg]="toneVar(kind.tone, 'bg')"
+            [style.--tooth-fg]="toneVar(kind.tone, 'fg')"
+            (click)="brushChange.emit(kind.value)"
+          >
+            <span class="tool__icon"><pb-icon [name]="kind.icon" [size]="18" /></span>
+            <span class="tool__label">{{ kind.label | translate }}</span>
+            @if (countOf(kind.value); as n) {
+              <span class="tool__count">{{ n | faNum }}</span>
+            }
+          </button>
+        }
+      </div>
+
       <div class="chart__mouth" dir="ltr">
         <span class="chart__side chart__side--right">{{ 'tooth.patientRight' | translate }}</span>
         <span class="chart__side chart__side--left">{{ 'tooth.patientLeft' | translate }}</span>
@@ -73,18 +99,22 @@ interface WorkGroup {
                 >
                   <svg
                     class="chart__shape"
-                    viewBox="0 0 40 60"
+                    viewBox="0 0 40 64"
                     preserveAspectRatio="none"
                     [attr.width]="tooth.width"
                     aria-hidden="true"
                   >
                     <path class="chart__root" [attr.d]="tooth.root" />
                     <path class="chart__crown" [attr.d]="tooth.crown" />
+                    <path class="chart__detail" [attr.d]="tooth.detail" />
                   </svg>
                   <span class="chart__num">{{ tooth.position | faNum }}</span>
-                  <span class="chart__mark" aria-hidden="true">{{
-                    kind ? (kind.mark | translate) : ''
-                  }}</span>
+                  <span class="chart__badge" aria-hidden="true">
+                    @if (kind) {
+                      <pb-icon [name]="kind.icon" [size]="12" [stroke]="2.2" />
+                      <span class="cdk-visually-hidden">{{ kind.mark | translate }}</span>
+                    }
+                  </span>
                 </button>
               }
             </div>
@@ -95,13 +125,6 @@ interface WorkGroup {
       <div class="chart__foot">
         <span class="chart__count">
           @if (brushKind(); as b) {
-            <span
-              class="chart__swatch"
-              aria-hidden="true"
-              [style.--tooth-bg]="toneVar(b.tone, 'bg')"
-              [style.--tooth-fg]="toneVar(b.tone, 'fg')"
-              >{{ b.mark | translate }}</span
-            >
             {{ 'tooth.brushHint' | translate: { kind: (b.label | translate) } }}
           }
         </span>
@@ -135,8 +158,8 @@ interface WorkGroup {
                 aria-hidden="true"
                 [style.--tooth-bg]="toneVar(group.kind.tone, 'bg')"
                 [style.--tooth-fg]="toneVar(group.kind.tone, 'fg')"
-                >{{ group.kind.mark | translate }}</span
-              >
+                ><pb-icon [name]="group.kind.icon" [size]="13" [stroke]="2.2"
+              /></span>
               <span class="chart__group-text">
                 <strong>{{ group.kind.label | translate }}</strong>
                 <span class="chart__group-count">{{ group.count }}</span>
@@ -162,6 +185,8 @@ export class PbToothWorkPicker {
   readonly ariaLabel = input.required<string>();
   readonly invalid = input(false);
   readonly valueChange = output<ToothWork[]>();
+  /** A tool picked on the chart's own palette. */
+  readonly brushChange = output<string>();
 
   /** The mouth, drawn as {@link PbToothPicker} draws it. */
   protected readonly jaws = computed(() => {
@@ -191,6 +216,11 @@ export class PbToothWorkPicker {
       summary: teethSummary(teeth, this.i18n),
     }));
   });
+
+  /** How many teeth carry a kind, for its tool. */
+  protected countOf(kind: string): number {
+    return this.value().filter((w) => w.workType === kind).length;
+  }
 
   protected kindOf(tooth: number): ToothWorkKind | null {
     const work = this.workByTooth().get(tooth);

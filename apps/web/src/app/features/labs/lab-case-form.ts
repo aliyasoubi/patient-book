@@ -45,6 +45,7 @@ import {
   IMPLANT_BRAND_KEYS,
   LAB_JAWS,
   LAB_TOOTH_WORK_TYPES,
+  LAB_WORK_TYPES,
   isJawWork,
   labJawLabel,
   defaultLabWaitDays,
@@ -56,24 +57,30 @@ import { toLatinDigits } from '../../shared/validators';
 import {
   PbButton,
   PbDateField,
-  PbFilterChips,
   PbIcon,
   PbIconButton,
   PbPage,
   PbPageHeader,
   PbSegmentedButton,
   PbSelectField,
+  PbSwitcher,
   PbTextField,
   PbTextareaField,
   PbToothWorkPicker,
   ToastService,
 } from '../../shared/ui';
-import type { SegmentOption, SelectOption, TextFieldOption, ToothWork } from '../../shared/ui';
+import type {
+  SegmentOption,
+  SelectOption,
+  SwitcherOption,
+  TextFieldOption,
+  ToothWork,
+} from '../../shared/ui';
 import {
+  JAW_WORK_ICONS,
   labToothWorkKinds,
   labTripKindOptions,
   labWaitOptions,
-  labWorkTypeOptions,
 } from './lab-options';
 import { markSubmitted } from '../../shared/ui/form-submitted';
 
@@ -128,13 +135,13 @@ const teethUnlessJawWork = (control: AbstractControl<LabToothWork[]>): Validatio
     PersianNumberPipe,
     PbButton,
     PbDateField,
-    PbFilterChips,
     PbIcon,
     PbIconButton,
     PbPage,
     PbPageHeader,
     PbSegmentedButton,
     PbSelectField,
+    PbSwitcher,
     PbTextField,
     RouterLink,
     PbTextareaField,
@@ -161,8 +168,18 @@ export class LabCaseForm implements HasUnsavedChanges {
   protected readonly isEdit = computed(() => !!this.id());
 
   protected readonly tripKindLabel = labTripKindLabel;
-  protected readonly workTypeOptions = labWorkTypeOptions();
   protected readonly toothWorkKinds = labToothWorkKinds();
+  /** The two ways work is made: tooth by tooth, or for a whole jaw. */
+  protected readonly workModes: SwitcherOption[] = [
+    { value: 'tooth', label: 'labForm.modeTooth', icon: 'dental' },
+    { value: 'jaw', label: 'labForm.modeJaw', icon: 'shield-half' },
+  ];
+  /** The work made for a whole jaw, each with its icon. */
+  protected readonly jawKinds = LAB_WORK_TYPES.filter((type) => isJawWork(type)).map((type) => ({
+    value: type,
+    label: labWorkTypeLabel(type),
+    icon: JAW_WORK_ICONS[type] ?? ('dental' as const),
+  }));
   protected readonly tripKindOptions = labTripKindOptions();
 
   protected readonly saving = signal(false);
@@ -215,14 +232,6 @@ export class LabCaseForm implements HasUnsavedChanges {
   protected readonly brush = computed(() =>
     this.isJawWork() ? null : (this.workTypesValue()[0] ?? LAB_TOOTH_WORK_TYPES[0] ?? null),
   );
-
-  /** The chips as they read: the kind chosen, or the one a tap would use. */
-  protected readonly workTypeChips = computed(() => {
-    const chosen = this.workTypesValue();
-    if (chosen.length) return chosen;
-    const brush = this.brush();
-    return brush ? [brush] : [];
-  });
 
   /** What the case makes, as it will be saved: the jaw's work, or whatever its teeth carry. */
   private readonly caseWork = computed<LabWorkType[]>(() => {
@@ -463,6 +472,11 @@ export class LabCaseForm implements HasUnsavedChanges {
     control.setValue(work.map((w) => ({ tooth: w.tooth, workType: w.workType as LabWorkType })));
     control.markAsDirty();
     control.markAsTouched();
+  }
+
+  /** Tooth by tooth, or the whole jaw: the jaw starts on its first kind, the teeth on theirs. */
+  protected setWorkMode(mode: string): void {
+    this.setWorkTypes(mode === 'jaw' ? [this.jawKinds[0]?.value ?? 'night_guard'] : []);
   }
 
   protected setWorkTypes(types: string[]): void {

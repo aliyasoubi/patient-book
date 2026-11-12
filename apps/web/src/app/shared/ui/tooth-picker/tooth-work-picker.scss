@@ -1,9 +1,94 @@
 /*
- * On top of tooth-picker.scss: a tooth marked with a kind of work takes that
- * kind's tint on its crown, outlined in the kind's ink, with the kind's
- * letter under its number — so the chart never relies on colour alone. The
- * legend under the chart reads the teeth back kind by kind.
+ * On top of tooth-picker.scss. Above the chart, the tools: one per kind of
+ * work, its icon on its tint, the teeth it is on counted beside it — pick one,
+ * then tap teeth. A marked tooth's crown takes its kind's tint, outlined in
+ * its ink, with the kind's icon in a badge by its number, so the chart reads
+ * without relying on colour alone. The legend under it reads the teeth back.
  */
+
+@keyframes badge-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+/* ── The tools ─────────────────────────────────────────────────────── */
+
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--pb-space-2);
+}
+
+.tool {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+  min-block-size: 48px;
+  padding: var(--pb-space-2);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--pb-neutral-600);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 200ms var(--pb-ease-standard),
+    background-color 200ms var(--pb-ease-standard),
+    color 200ms var(--pb-ease-standard),
+    box-shadow 220ms var(--pb-ease-standard);
+
+  &:hover {
+    box-shadow: var(--pb-shadow-sm);
+    color: var(--pb-graphite);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 2px;
+  }
+
+  /* The tool in hand: its ink on the edge, its tint behind. */
+  &.is-on {
+    border-color: var(--tooth-fg);
+    background: color-mix(in srgb, var(--tooth-bg) 60%, #fff);
+    box-shadow: 0 0 0 1px var(--tooth-fg);
+    color: var(--pb-graphite);
+  }
+}
+
+.tool__icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 10px;
+  background: var(--tooth-bg);
+  color: var(--tooth-fg);
+}
+
+.tool__label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.tool__count {
+  min-inline-size: 22px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--tooth-fg);
+  color: #fff;
+  font-size: 0.6875rem;
+  text-align: center;
+  animation: badge-pop 260ms var(--pb-ease-spring);
+}
+
+/* ── A marked tooth ────────────────────────────────────────────────── */
 
 .chart__tooth--on {
   color: var(--tooth-fg);
@@ -14,17 +99,35 @@
   }
 
   .chart__root {
-    fill: color-mix(in srgb, var(--tooth-bg) 60%, #fff);
+    fill: color-mix(in srgb, var(--tooth-bg) 55%, #fff);
     stroke: color-mix(in srgb, var(--tooth-fg) 40%, transparent);
+  }
+
+  .chart__detail {
+    stroke: color-mix(in srgb, var(--tooth-fg) 35%, transparent);
   }
 }
 
-.chart__mark {
-  min-block-size: 1em;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  line-height: 1;
+/* The kind's icon by the number: room kept on every tooth so rows line up. */
+.chart__badge {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+
+  pb-icon {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 20px;
+    block-size: 20px;
+    border-radius: 50%;
+    background: var(--tooth-fg);
+    color: #fff;
+    animation: badge-pop 280ms var(--pb-ease-spring);
+  }
 }
+
+/* ── The legend ────────────────────────────────────────────────────── */
 
 .chart__count {
   display: inline-flex;
@@ -54,12 +157,9 @@
   place-items: center;
   inline-size: 1.5rem;
   block-size: 1.5rem;
-  border: 1px solid var(--tooth-fg);
   border-radius: 7px;
   background: var(--tooth-bg);
   color: var(--tooth-fg);
-  font-size: 0.6875rem;
-  font-weight: 800;
 }
 
 .chart__group-text {
@@ -76,4 +176,11 @@
 .chart__group-teeth {
   color: var(--pb-neutral-500);
   font-size: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool__count,
+  .chart__badge pb-icon {
+    animation: none;
+  }
 }

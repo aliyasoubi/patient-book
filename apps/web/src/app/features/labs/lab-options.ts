@@ -11,6 +11,7 @@ import {
   labWorkTypeLabel,
 } from '../../shared/labels';
 import type { FilterChipOption, SelectOption, ToothWorkKind, ToothWorkTone } from '../../shared/ui';
+import type { LineIconName } from '../../shared/ui/icon/line-icons';
 
 /** The turnarounds as the book wrote them — «یک هفته»، «سه هفته» — not as a count of days. */
 const WAIT_LABELS: Partial<Record<number, string>> = {
@@ -64,11 +65,19 @@ export function labWorkTypeOptions(): FilterChipOption[] {
  * crown beside a laminate reads apart without relying on colour. Literal keys,
  * so the i18n check sees every one.
  */
-const TOOTH_WORK_LOOK: Partial<Record<LabWorkType, { mark: string; tone: ToothWorkTone }>> = {
-  crown: { mark: 'labWorkMark.crown', tone: 'sky' },
-  implant_crown: { mark: 'labWorkMark.implant_crown', tone: 'violet' },
-  laminate: { mark: 'labWorkMark.laminate', tone: 'teal' },
-  post: { mark: 'labWorkMark.post', tone: 'sand' },
+const TOOTH_WORK_LOOK: Partial<
+  Record<LabWorkType, { mark: string; tone: ToothWorkTone; icon: LineIconName }>
+> = {
+  crown: { mark: 'labWorkMark.crown', tone: 'sky', icon: 'crown' },
+  implant_crown: { mark: 'labWorkMark.implant_crown', tone: 'violet', icon: 'nut' },
+  laminate: { mark: 'labWorkMark.laminate', tone: 'teal', icon: 'square-half' },
+  post: { mark: 'labWorkMark.post', tone: 'sand', icon: 'pin' },
+};
+
+/** The work made for a whole jaw, each with its icon. */
+export const JAW_WORK_ICONS: Partial<Record<LabWorkType, LineIconName>> = {
+  night_guard: 'shield-half',
+  sx: 'template',
 };
 
 export function labToothWorkKinds(): ToothWorkKind[] {
