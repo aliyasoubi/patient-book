@@ -8,7 +8,7 @@
         ? ('patient.named' | translate: { name: row.patient.fullName, fileNo: row.patient.fileNo })
         : row?.recordedName || null
     "
-    [backLabel]="'common.back' | translate"
+    [backLabel]="'nav.labs' | translate"
     (back)="cancel()"
   />
 

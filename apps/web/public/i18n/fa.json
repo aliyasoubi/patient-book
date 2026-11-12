@@ -46,7 +46,8 @@
     "searching": "در حال جستجو",
     "percentSign": "٪",
     "retry": "تلاش دوباره",
-    "loadFailedTitle": "اطلاعات بارگذاری نشد"
+    "loadFailedTitle": "اطلاعات بارگذاری نشد",
+    "patientFile": "پرونده بیمار"
   },
   "auth": {
     "heading": "ورود به حساب کاربری",

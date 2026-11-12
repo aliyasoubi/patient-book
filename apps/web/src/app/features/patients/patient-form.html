@@ -13,7 +13,7 @@
               })
         : null
     "
-    [backLabel]="'common.back' | translate"
+    [backLabel]="(editing ? 'common.patientFile' : 'nav.patients') | translate"
     (back)="cancel()"
   />
 

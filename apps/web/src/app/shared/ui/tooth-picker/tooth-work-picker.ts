@@ -114,7 +114,7 @@ interface WorkGroup {
                   <span class="chart__num">{{ tooth.position | faNum }}</span>
                   <span class="chart__badge" aria-hidden="true">
                     @if (kind) {
-                      <pb-icon [name]="kind.icon" [size]="12" [stroke]="2.2" />
+                      <pb-icon [name]="kind.icon" [size]="11" [stroke]="2" />
                       <span class="cdk-visually-hidden">{{ kind.mark | translate }}</span>
                     }
                   </span>
