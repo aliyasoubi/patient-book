@@ -120,7 +120,7 @@
     background: var(--mat-sys-surface-container-low);
     font: var(--mat-sys-label-large);
     color: var(--mat-sys-on-surface-variant);
-    vertical-align: bottom;
+    vertical-align: middle;
   }
 
   // The item column stays in view while the months scroll past it.
@@ -190,14 +190,9 @@
     }
   }
 
-  &__month-name,
   &__month-year,
   &__month-note {
-    display: block;
-  }
-
-  &__month-year,
-  &__month-note {
+    margin-inline-start: var(--pb-space-1);
     font: var(--mat-sys-label-small);
   }
 

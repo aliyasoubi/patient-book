@@ -8,11 +8,11 @@
  * Spacing runs on the 4-step scale (`--pb-space-*`: 4 · 8 · 12 · 16 · 24 · 32).
  *
  * Motion, all of it soft:
- * - the mark traces itself (`pb-logo [drawIn]`), then heading and form rise;
+ * - the mark traces itself (`pb-logo [drawIn]`);
  * - two hairline rings turn behind the column, a dot riding each;
- * - the steps trade places sideways — forward toward the left (the reading
- *   direction), back toward the right — while the old one fades;
- * - a refused sign-in nudges the column once; its reason arrives as a toast.
+ * - the form rises on arrival and slides horizontally between steps;
+ * - the subtitle moves down on continue and up on back;
+ * - rejected credentials nudge the column once.
  */
 
 $column: 320px;
@@ -66,12 +66,6 @@ $narrow: 600px;
   min-block-size: 100dvh;
   padding: 72px var(--pb-space-5) 96px;
   overflow: hidden;
-}
-
-/* Staggered arrival: each element names its place with `--d`. */
-.login__rise {
-  animation: login-rise 700ms var(--pb-ease-emphasized) backwards;
-  animation-delay: calc(700ms + var(--d, 0) * 90ms);
 }
 
 /* ── Orbits ──────────────────────────────────────────────────────── */
@@ -151,7 +145,7 @@ $narrow: 600px;
   block-size: 72px;
   margin-block-end: var(--pb-space-6);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-md);
   transition:
     transform 450ms var(--pb-ease-spring),
@@ -175,18 +169,44 @@ $narrow: 600px;
   line-height: 1.5;
 }
 
+.login__subtitles {
+  overflow: clip;
+}
+
 .login__subtitle {
+  grid-area: 1 / 1;
+  align-self: center;
   margin: var(--pb-space-1) 0 0;
   font: var(--mat-sys-body-medium);
   line-height: 1.8;
   color: var(--pb-neutral-600);
+  transition:
+    opacity 200ms var(--pb-ease-standard),
+    translate 320ms var(--pb-ease-emphasized);
+
+  &:not(.is-active) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &[data-pos='next'] {
+    translate: 0 -12px;
+  }
+
+  &[data-pos='past'] {
+    translate: 0 12px;
+  }
 }
 
 /* ── Steps ───────────────────────────────────────────────────────── */
 
+.login__form {
+  animation: login-rise 700ms var(--pb-ease-emphasized) backwards;
+}
+
 /*
- * The steps share one grid cell; an inactive one waits on the side it will
- * come from. `minmax(0, 1fr)` holds the column at its width: an `auto` track
+ * The steps share one grid cell.
+ * `minmax(0, 1fr)` holds the column at its width: an `auto` track
  * would grow to the longest unbreakable thing inside — a long username in
  * the chip — and drag every field wider with it.
  */
@@ -195,8 +215,12 @@ $narrow: 600px;
   grid-template-columns: minmax(0, 1fr);
 }
 
-.login__step {
+.login__fields {
   grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  gap: var(--pb-space-4);
   transition:
     opacity 280ms var(--pb-ease-standard),
     translate 520ms var(--pb-ease-emphasized),
@@ -208,7 +232,6 @@ $narrow: 600px;
     pointer-events: none;
   }
 
-  /* Done with: gone right. Still to come: waiting left. (RTL reads right to left.) */
   &[data-pos='past'] {
     translate: 48px 0;
   }
@@ -216,13 +239,6 @@ $narrow: 600px;
   &[data-pos='next'] {
     translate: -48px 0;
   }
-}
-
-.login__fields {
-  display: flex;
-  flex-direction: column;
-  align-self: start;
-  gap: var(--pb-space-4);
 }
 
 /* ── Who is signing in ───────────────────────────────────────────── */
@@ -235,7 +251,7 @@ $narrow: 600px;
   padding: var(--pb-space-1) var(--pb-space-2) var(--pb-space-1) var(--pb-space-2);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 999px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
 }
 
@@ -246,7 +262,7 @@ $narrow: 600px;
   inline-size: 40px;
   block-size: 40px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--pb-brand) 14%, #fff);
+  background: color-mix(in srgb, var(--pb-brand) 14%, var(--pb-surface));
   color: var(--pb-brand-strong);
   /*
    * Optically centred: Inter, trimmed to the capital's own height, so the box
@@ -277,11 +293,11 @@ $narrow: 600px;
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
-  inline-size: 40px;
-  block-size: 40px;
+  inline-size: 44px;
+  block-size: 44px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
   color: var(--pb-neutral-600);
   cursor: pointer;
@@ -290,14 +306,35 @@ $narrow: 600px;
     color 150ms var(--pb-ease-standard),
     transform 300ms var(--pb-ease-spring);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--pb-neutral-200);
     color: var(--pb-graphite);
-    transform: rotate(-12deg);
   }
 
-  &:active {
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
     transform: scale(0.9);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+}
+
+.login__caps-lock {
+  margin: 0;
+  padding-inline: var(--pb-space-3);
+  font: var(--mat-sys-body-small);
+  line-height: 1.6;
+  color: var(--mat-sys-on-surface-variant);
+
+  &:not(:empty) {
+    margin-block-start: var(--pb-space-2);
   }
 }
 
@@ -308,6 +345,7 @@ $narrow: 600px;
 /* ── Footer ──────────────────────────────────────────────────────── */
 
 .login__notice {
+  animation: login-rise 700ms 1060ms var(--pb-ease-emphasized) backwards;
   position: absolute;
   inset-block-end: calc(var(--pb-space-5) + env(safe-area-inset-bottom));
   inset-inline: var(--pb-space-5);
@@ -338,15 +376,21 @@ $narrow: 600px;
 /* ── Reduced motion ──────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .login__rise,
+  .login__form,
+  .login__notice,
   .login__orbit,
   .login__column.is-shaking {
     animation: none;
   }
 
-  .login__step,
   .login__brand,
   .login__change {
     transition-duration: 0ms;
+  }
+
+  .login__subtitle[data-pos],
+  .login__fields[data-pos] {
+    transition: none;
+    translate: none;
   }
 }

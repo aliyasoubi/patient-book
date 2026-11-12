@@ -2,12 +2,23 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   CdkDrag,
   CdkDragDrop,
+  CdkDragStart,
   CdkDropList,
   CdkDropListGroup,
-  transferArrayItem,
 } from '@angular/cdk/drag-drop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  ApplicationRef,
+  Component,
+  ElementRef,
+  Injector,
+  afterNextRender,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,7 +26,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import type { PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   catchError,
@@ -43,9 +53,10 @@ import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dial
 import { EmptyState } from '../../shared/components/empty-state';
 import { LoadError } from '../../shared/components/load-error';
 import {
+  PbSwitcher,
+  PbAutoHeight,
   PbButton,
   PbFilterChips,
-  PbIcon,
   PbPage,
   PbPageHeader,
   PbPaginator,
@@ -56,8 +67,13 @@ import {
   PbSurface,
   ToastService,
 } from '../../shared/ui';
-import type { FilterChipOption, SegmentOption, SelectOption } from '../../shared/ui';
-import { LabCaseCard } from './lab-case-card';
+import type {
+  SwitcherOption,
+  FilterChipOption,
+  SegmentOption,
+  SelectOption,
+} from '../../shared/ui';
+import { LabCaseCard, LabCaseCardSkeleton } from './lab-case-card';
 import { LabBookDialog, LabBookDialogData } from './lab-book-dialog';
 import { LabReceiveDialog, LabReceiveDialogData } from './lab-receive-dialog';
 import { LabSendDialog, LabSendDialogData } from './lab-send-dialog';
@@ -129,6 +145,14 @@ const MOVES: Record<LabStage, readonly LabStage[]> = {
   delivered: [],
 };
 
+/** Which list of the board holds each column's cases. */
+const BOARD_KEY = {
+  at_lab: 'atLab',
+  at_clinic: 'atClinic',
+  booked: 'booked',
+  delivered: 'delivered',
+} as const satisfies Record<LabStage, keyof LabBoardData>;
+
 const EMPTY_BOARD: LabBoardData = {
   atLab: [],
   atClinic: [],
@@ -149,19 +173,19 @@ const WIDE_BOARD = '(min-width: 1360px)';
   selector: 'pb-lab-board',
   standalone: true,
   imports: [
+    PbSwitcher,
+    PbAutoHeight,
     ReactiveFormsModule,
     CdkDropListGroup,
     CdkDropList,
     CdkDrag,
     MatIconModule,
     MatMenuModule,
-    MatProgressBarModule,
     TranslatePipe,
     EmptyState,
     LoadError,
     PbButton,
     PbFilterChips,
-    PbIcon,
     PbPage,
     PbPageHeader,
     PbPaginator,
@@ -171,12 +195,16 @@ const WIDE_BOARD = '(min-width: 1360px)';
     PbSelectField,
     PbSurface,
     LabCaseCard,
+    LabCaseCardSkeleton,
   ],
   templateUrl: './lab-board.html',
   styleUrl: './lab-board.scss',
 })
 export class LabBoard {
   private readonly labs = inject(LabService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+  private readonly appRef = inject(ApplicationRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly listReturn = inject(ListReturn);
@@ -237,8 +265,10 @@ export class LabBoard {
     { value: 'overdue', label: 'labs.filterOverdue', icon: 'schedule', translate: true },
     { value: 'toBook', label: 'labs.filterToBook', icon: 'event_busy', translate: true },
   ];
-  protected readonly archiveFilter: FilterChipOption[] = [
-    { value: 'archived', label: 'labs.archivedOnly', icon: 'inventory_2', translate: true },
+  /** The board of work in hand, or the archive: two views, switched at the top. */
+  protected readonly views: SwitcherOption[] = [
+    { value: 'board', label: 'labs.viewBoard', icon: 'layout-dashboard' },
+    { value: 'archive', label: 'labs.viewArchive', icon: 'box' },
   ];
 
   private readonly labList = signal<Lab[]>([]);
@@ -331,7 +361,7 @@ export class LabBoard {
               )
             : this.labs
                 .board({ q: q || undefined, labId: labId || undefined })
-                .pipe(map((board) => this.data.set(board)));
+                .pipe(map((board) => this.moveCards(() => this.data.set(board))));
           // Keep what is on screen under a banner: an empty board reads as "nothing at the lab".
           return request.pipe(
             catchError(() => {
@@ -383,6 +413,84 @@ export class LabBoard {
         void this.router.navigateByUrl(tree, { replaceUrl: true });
       });
     });
+  }
+
+  /**
+   * Cards travel to where the new board puts them rather than vanishing from
+   * one column and appearing in another (FLIP). Before the new board renders,
+   * every card's place is noted; after, each card starts drawn at its old
+   * place and slides to its new one. A card crossing to another column lifts
+   * on the way — up a little, a touch larger — and settles; cards in its old
+   * column close the gap behind it; a card new to the board grows in where
+   * it lands.
+   */
+  private moveCards(apply: () => void, dropped?: string): void {
+    const root = this.host.nativeElement;
+    const cards = () => [...root.querySelectorAll<HTMLElement>('[data-case-id]')];
+    const before = new Map<string, DOMRect>();
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      for (const el of cards()) {
+        const rect = el.getBoundingClientRect();
+        if (rect.width) before.set(el.dataset['caseId']!, rect);
+      }
+    }
+    apply();
+    // A drop: render now, in the same frame the drag ends, so the card is
+    // already where its preview landed — no frame of it back in its old column.
+    if (dropped) this.appRef.tick();
+    if (!before.size) return;
+    const play = (): void => {
+      for (const el of cards()) {
+        const last = el.getBoundingClientRect();
+        if (!last.width) continue;
+        const id = el.dataset['caseId']!;
+        // The dropped card is already in place: its preview settled there.
+        if (id === dropped) continue;
+        const first = before.get(id);
+        if (!first) {
+          el.animate(
+            [
+              { opacity: 0, transform: 'scale(0.94)' },
+              { opacity: 1, transform: 'none' },
+            ],
+            {
+              duration: 360,
+              delay: 220,
+              easing: 'cubic-bezier(0.2, 0, 0, 1)',
+              fill: 'backwards',
+            },
+          );
+          continue;
+        }
+        const dx = first.left - last.left;
+        const dy = first.top - last.top;
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+        const across = Math.abs(dx) > 40;
+        el.style.position = 'relative';
+        el.style.zIndex = across ? '5' : '';
+        const run = el.animate(
+          across
+            ? [
+                { transform: `translate(${dx}px, ${dy}px)`, offset: 0 },
+                {
+                  transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 14}px) scale(1.03) rotate(${dx > 0 ? -1.2 : 1.2}deg)`,
+                  offset: 0.5,
+                },
+                { transform: 'none', offset: 1 },
+              ]
+            : [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+          { duration: across ? 560 : 340, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+        );
+        run.onfinish = run.oncancel = () => {
+          el.style.position = '';
+          el.style.zIndex = '';
+        };
+      }
+    };
+    // After a drop the new board is already drawn (the tick above): start
+    // the cards moving in this same frame, so none is ever painted unmoved.
+    if (dropped) play();
+    else afterNextRender(play, { injector: this.injector });
   }
 
   protected reload(): void {
@@ -547,17 +655,15 @@ export class LabBoard {
 
   // -- Dragging ---------------------------------------------------------------------
 
+  /** How many cards a column's skeleton shows on first load: about what it usually holds. */
+  protected skeletonCards(stage: LabStage): number[] {
+    const n = { at_lab: 3, at_clinic: 2, booked: 2, delivered: 1 }[stage];
+    return Array.from({ length: n }, (_, i) => i);
+  }
+
   /** The case being dragged, and the column it is over: they light the board up. */
   protected readonly dragging = signal<LabCase | null>(null);
   protected readonly over = signal<LabStage | null>(null);
-
-  /** What dropping on a column does, in the words of its button. */
-  protected readonly dropAction: Record<LabStage, string> = {
-    at_lab: 'labs.sendAgain',
-    at_clinic: 'labs.receive',
-    booked: 'labs.book',
-    delivered: 'labs.deliver',
-  };
 
   /** While dragging: whether this column takes the card ('target'), is its home, or is out of reach. */
   protected dropState(stage: LabStage): 'target' | 'home' | 'blocked' | null {
@@ -565,6 +671,15 @@ export class LabBoard {
     if (!c) return null;
     if (c.stage === stage) return 'home';
     return MOVES[c.stage].includes(stage) ? 'target' : 'blocked';
+  }
+
+  /** The dragged card's height, to hold its place in the column it left. */
+  protected readonly dragHeight = signal(0);
+
+  protected dragStarted(c: LabCase, event: CdkDragStart): void {
+    this.dragHeight.set(event.source.element.nativeElement.getBoundingClientRect().height);
+    this.over.set(c.stage);
+    this.dragging.set(c);
   }
 
   protected dragEnded(): void {
@@ -580,13 +695,22 @@ export class LabBoard {
     if (event.previousContainer === event.container) return;
     const c = event.item.data;
     const to = event.container.id as LabStage;
-    // Show the card where it was dropped while the command runs; the reload
-    // that follows puts it in its real place, or back where it came from.
-    transferArrayItem(
-      event.previousContainer.data,
-      event.container.data,
-      event.previousIndex,
-      event.currentIndex,
+    // The card stays where it was dropped while the command runs: the board
+    // is redrawn with it there at once, the cards around it easing aside.
+    // The reload that follows puts it in its real place, or back where it
+    // came from if the move is cancelled — travelling either way.
+    const key = BOARD_KEY;
+    const board = this.data();
+    const target = board[key[to]].filter((x) => x.id !== c.id);
+    target.splice(Math.min(event.currentIndex, target.length), 0, { ...c, stage: to });
+    this.moveCards(
+      () =>
+        this.data.set({
+          ...board,
+          [key[c.stage]]: board[key[c.stage]].filter((x) => x.id !== c.id),
+          [key[to]]: target,
+        }),
+      c.id,
     );
     if (c.stage === 'at_lab' && to === 'at_clinic') this.receive(c, () => this.reload());
     else if (c.stage === 'at_clinic' && to === 'at_lab') this.sendAgain(c, () => this.reload());

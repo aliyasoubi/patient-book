@@ -1,3 +1,4 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   Component,
   ElementRef,
@@ -79,7 +80,7 @@ interface DayCell {
   selector: 'pb-shamsi-calendar',
   standalone: true,
   host: { '[class.is-compact]': 'compact()' },
-  imports: [PbIcon, TranslatePipe],
+  imports: [MatTooltipModule, PbIcon, TranslatePipe],
   templateUrl: './shamsi-calendar.html',
   styleUrl: './shamsi-calendar.scss',
 })
@@ -225,12 +226,20 @@ export class PbShamsiCalendar {
     );
   }
 
+  /**
+   * «امروز» picks today, not just its month: whatever reads the chosen day —
+   * the dashboard's list under the calendar — follows. The month slides only
+   * when it actually changes.
+   */
   protected goToday(): void {
     const today = new Date();
-    this.direction.set(today > this.cursor() ? 1 : -1);
-    this.turn.update((t) => t + 1);
+    if (!isSameMonth(today, this.cursor())) {
+      this.direction.set(today > this.cursor() ? 1 : -1);
+      this.turn.update((t) => t + 1);
+    }
     this.cursor.set(today);
     this.view.set('days');
+    if (!this.outOfRange(today)) this.dateChange.emit(today);
   }
 
   protected openMonths(): void {

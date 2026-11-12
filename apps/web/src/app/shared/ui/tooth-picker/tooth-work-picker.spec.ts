@@ -37,14 +37,8 @@ function setup(value: ToothWork[] = []) {
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const host = fixture.componentInstance;
-  /** The tooth button for an FDI number: quadrant 1 is drawn 7…1, quadrant 2 1…7. */
-  const tooth = (fdi: number): HTMLButtonElement => {
-    const buttons = [...el.querySelectorAll<HTMLButtonElement>('.chart__tooth')];
-    const order = [1, 2, 4, 3].flatMap((q) =>
-      [1, 2, 3, 4, 5, 6, 7].map((n) => q * 10 + (q === 1 || q === 4 ? 8 - n : n)),
-    );
-    return buttons[order.indexOf(fdi)];
-  };
+  const tooth = (fdi: number): HTMLButtonElement =>
+    el.querySelector<HTMLButtonElement>(`button[data-fdi="${fdi}"]`)!;
   const tap = (fdi: number) => {
     tooth(fdi).click();
     fixture.detectChanges();
@@ -62,6 +56,18 @@ function setup(value: ToothWork[] = []) {
 }
 
 describe('PbToothWorkPicker', () => {
+  it('lets a wisdom tooth be marked separately from the jaw shortcut', () => {
+    const { host, tap, tooth, shortcut } = setup();
+    expect(tooth(18).classList).toContain('chart__tooth--wisdom');
+    tap(18);
+    expect(host.value()).toEqual([{ tooth: 18, workType: 'crown' }]);
+    shortcut(0);
+    expect(host.value()).toHaveLength(15);
+    expect(tooth(28).getAttribute('aria-pressed')).toBe('false');
+    shortcut(0);
+    expect(host.value()).toEqual([{ tooth: 18, workType: 'crown' }]);
+  });
+
   it('puts the chosen work on a tapped tooth, and a second tap takes it off', () => {
     const { host, tap, tooth } = setup();
     tap(16);

@@ -74,7 +74,7 @@ import { TranslateService } from '@ngx-translate/core';
       padding-inline: var(--pb-space-2) 10px;
       border: 1px solid var(--pb-neutral-200, var(--mat-sys-outline-variant));
       border-radius: 9px;
-      background: #fff;
+      background: var(--pb-surface);
       color: var(--pb-graphite, var(--mat-sys-on-surface));
       font-size: 0.8125rem;
       font-weight: 500;

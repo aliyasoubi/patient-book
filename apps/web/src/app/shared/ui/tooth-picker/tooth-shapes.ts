@@ -1,8 +1,8 @@
 import type { TranslateService } from '@ngx-translate/core';
 
-import { chartQuadrants, positionOf, toothName } from './teeth';
+import { chartQuadrants, positionOf, toothName, WISDOM_POSITION } from './teeth';
 
-export type ToothShapeKind = 'incisor' | 'lateral' | 'canine' | 'premolar' | 'molar';
+export type ToothShapeKind = 'incisor' | 'lateral' | 'canine' | 'premolar' | 'molar' | 'wisdom';
 
 /**
  * Each kind of tooth as it looks from the front, drawn upright for the upper
@@ -79,6 +79,17 @@ const SHAPES: Record<
     pulp: 'M10.8 9 C12.4 17 14 25 14.8 31 M29.2 9 C27.6 17 26 25 25.2 31 M20 16 L20 31',
     width: 50,
   },
+  wisdom: {
+    root: 'M10.5 37 C10.8 29 13.5 21 17.5 15 C19.2 12.4 21 11 22 12.6 C23.1 14.4 22.6 17.7 22.3 20.2 C24.4 17.8 26.1 16.6 27.3 18.4 C29.1 21.2 29.6 29.4 29 37 Z',
+    crown:
+      'M9 35 C6.6 36.5 5.5 40.5 6 45 C6.5 50.5 8.6 55.4 12.4 57.6 C14.5 58.8 16.4 57.5 18.1 56.3 C20 54.9 21.1 56.9 23.1 57.8 C25.4 58.8 28.1 57.9 30.5 55.8 C33.7 53 34.4 48.1 34.4 43.2 C34.4 39.8 33.2 36.8 31.1 35.5 C24.1 37.3 15.8 37.1 9 35 Z',
+    detail: 'M11.5 52.3 C14 50.5 17.2 50.3 19.3 51.9 C21.9 50.4 25.8 50 28.6 51.8',
+    shade:
+      'M29.5 38 C32.4 42.4 32.1 49.7 29.3 53.4 C28 55.3 26.5 56.6 24.9 57.6 C28.3 52.7 29.7 45 29.5 38 Z',
+    edge: '',
+    pulp: 'M20.4 16.2 C17.1 21.1 15.6 28.2 15.6 35.7 M26 21.8 C24.8 25.7 23.7 30.8 23.8 36.4',
+    width: 40,
+  },
 };
 
 /**
@@ -107,12 +118,14 @@ function shapeOf(position: number): ToothShapeKind {
   if (position === 2) return 'lateral';
   if (position === 3) return 'canine';
   if (position <= 5) return 'premolar';
+  if (position === WISDOM_POSITION) return 'wisdom';
   return 'molar';
 }
 
 export interface ToothView {
   fdi: number;
   position: number;
+  wisdom: boolean;
   kind: ToothShapeKind;
   crown: string;
   root: string;
@@ -125,7 +138,7 @@ export interface ToothView {
   lift: number;
   /** Its lean in degrees, square to that curve: back teeth fan out like a real arch. */
   tilt: number;
-  /** "6 upper right", for a screen reader and the hover title. */
+  /** "6 upper right", for a screen reader and the tooltip. */
   name: string;
 }
 
@@ -145,6 +158,7 @@ export function mouthView(i18n: TranslateService): JawView[] {
   const [upperRight, upperLeft, lowerRight, lowerLeft] = chartQuadrants(i18n);
   const view = (fdi: number): ToothView => {
     const position = positionOf(fdi);
+    const wisdom = position === WISDOM_POSITION;
     const kind = shapeOf(position);
     const quadrant = Math.floor(fdi / 10);
     const shape = { ...SHAPES[kind], ...(quadrant >= 3 ? LOWER[kind] : {}) };
@@ -154,6 +168,7 @@ export function mouthView(i18n: TranslateService): JawView[] {
     return {
       fdi,
       position,
+      wisdom,
       kind,
       crown: shape.crown,
       root: shape.root,
@@ -162,7 +177,7 @@ export function mouthView(i18n: TranslateService): JawView[] {
       edge: shape.edge,
       pulp: shape.pulp,
       width: shape.width,
-      lift: Math.round((position - 1) * (position - 1) * 0.7),
+      lift: wisdom ? 27 : Math.round((position - 1) * (position - 1) * 0.7),
       tilt: side * (position - 1) * 1.7,
       name: toothName(fdi, i18n),
     };

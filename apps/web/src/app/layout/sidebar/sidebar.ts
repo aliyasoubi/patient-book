@@ -23,6 +23,7 @@ import { roleLabel } from '../../shared/labels';
 import { PbAvatar, PbIcon, PbLogo } from '../../shared/ui';
 import { NAV_GROUP_LABELS, SHELL_NAV, type NavGroup } from '../shell-nav';
 import { SpotlightService } from '../spotlight/spotlight.service';
+import { SignOutService } from '../../core/services/sign-out.service';
 
 /**
  * The desktop and tablet sidebar: the brand with search and the collapse
@@ -43,6 +44,7 @@ import { SpotlightService } from '../spotlight/spotlight.service';
 })
 export class Sidebar {
   protected readonly auth = inject(AuthService);
+  private readonly signOut = inject(SignOutService);
   protected readonly spotlight = inject(SpotlightService);
 
   readonly collapsed = input(false);
@@ -133,7 +135,7 @@ export class Sidebar {
   }
 
   protected logout(): void {
-    this.auth.logout();
+    this.signOut.ask();
   }
 
   /** The menu closes on a press anywhere outside it, and on Escape. */

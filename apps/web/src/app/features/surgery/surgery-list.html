@@ -14,13 +14,43 @@
 
   <!-- ── The questions the desk asks of the list, most asked first ── -->
   <div class="views">
+    <!-- One question at a time: the everyday ones on the bar, the rarer ones
+         in the menu at its end. Picking from either moves the one selection. -->
     <div class="views__scroll">
-      <pb-switcher
-        [options]="views"
-        [value]="followUp()"
-        (valueChange)="setFollowUp($event)"
-        [ariaLabel]="'surgery.viewsAria' | translate"
-      />
+      <div class="views__bar">
+        <pb-switcher
+          [options]="views"
+          [value]="followUp()"
+          (valueChange)="setFollowUp($event)"
+          [ariaLabel]="'surgery.viewsAria' | translate"
+        />
+        <button
+          type="button"
+          class="view-more"
+          [class.is-active]="moreActive()"
+          [matMenuTriggerFor]="moreMenu"
+          [attr.aria-label]="'surgery.moreFilters' | translate"
+        >
+          <span>{{ moreLabel() | translate }}</span>
+          <pb-icon name="chevron-down" [size]="16" />
+        </button>
+        <mat-menu #moreMenu="matMenu">
+          @for (v of moreViews; track v.value) {
+            <button
+              mat-menu-item
+              type="button"
+              role="menuitemradio"
+              [attr.aria-checked]="followUp() === v.value"
+              (click)="setFollowUp(v.value)"
+            >
+              <mat-icon aria-hidden="true">{{
+                followUp() === v.value ? 'check' : v.icon
+              }}</mat-icon>
+              <span>{{ v.label | translate }}</span>
+            </button>
+          }
+        </mat-menu>
+      </div>
     </div>
     <pb-search-field
       class="views__search"
@@ -30,14 +60,9 @@
     />
   </div>
 
-  <!-- The rarer windows, and the switches for which rows are listed at all. -->
+  <!-- Switches for which rows are listed at all: each on or off, together
+       with whichever question is asked above. -->
   <div class="more">
-    <pb-filter-chips
-      [options]="moreViews"
-      [selected]="followUpSelected()"
-      (selectedChange)="setFollowUp($event[0] ?? '')"
-      [ariaLabel]="'surgery.moreFilters' | translate"
-    />
     <pb-filter-chips
       multiple
       [options]="rowFilters"
@@ -49,6 +74,8 @@
 
   <!-- ── The sheet: grouped by urgency, read from the top down ──────── -->
   <section class="sheet" [class.is-busy]="loading() && items().length > 0">
+    <!-- A new page, view or page size: the sheet eases to its new height. -->
+    <pb-auto-height>
     @if (failed()) {
       <!-- The previous rows stay under the banner: "nothing to follow up" and
            "the list could not be loaded" are different facts. -->
@@ -59,10 +86,23 @@
         (retry)="retry()"
       />
     } @else if (loading() && items().length === 0) {
-      <div class="sheet__skeleton" aria-hidden="true">
-        @for (i of [1, 2, 3, 4, 5]; track i) {
-          <span class="skeleton-row"></span>
-        }
+      <!-- The sheet to come: its header, a group line and rows on the real grid. -->
+      <div class="pb-skeleton" aria-hidden="true">
+        <div class="sheet__head">
+          <span>{{ 'surgery.colWhen' | translate }}</span>
+          <span>{{ 'surgery.colWho' | translate }}</span>
+          <span>{{ 'surgery.colWork' | translate }}</span>
+          <span>{{ 'surgery.colContact' | translate }}</span>
+          <span></span>
+        </div>
+        <div class="group">
+          <div class="group__head">
+            <span class="pb-skel" style="--w: 110px; --h: 12px"></span>
+          </div>
+          @for (i of [0, 1, 2, 3, 4, 5]; track i) {
+            <pb-follow-up-row-skeleton [style.--skel-i]="i" />
+          }
+        </div>
       </div>
     } @else if (items().length === 0) {
       <pb-empty-state
@@ -107,6 +147,7 @@
         </div>
       }
     }
+    </pb-auto-height>
   </section>
 
   @if (total() > 0) {

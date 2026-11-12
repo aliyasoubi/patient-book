@@ -102,7 +102,7 @@ $gutter: var(--pb-space-3);
   inline-size: 40px;
   block-size: 40px;
   border-radius: 12px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   transition:
     transform 400ms var(--pb-ease-spring),
@@ -144,7 +144,7 @@ $gutter: var(--pb-space-3);
     transform 160ms var(--pb-ease-standard);
 
   &:hover {
-    background: color-mix(in srgb, #fff 60%, transparent);
+    background: color-mix(in srgb, var(--pb-surface) 60%, transparent);
     color: var(--pb-graphite);
   }
 
@@ -176,7 +176,7 @@ $gutter: var(--pb-space-3);
   inset-inline: 0;
   inset-block-start: 0;
   border-radius: 12px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   opacity: 0;
   pointer-events: none;
@@ -234,7 +234,7 @@ $gutter: var(--pb-space-3);
     box-shadow 220ms var(--pb-ease-standard);
 
   &:hover {
-    background: color-mix(in srgb, #fff 55%, transparent);
+    background: color-mix(in srgb, var(--pb-surface) 55%, transparent);
     color: var(--pb-graphite);
   }
 
@@ -281,9 +281,12 @@ $gutter: var(--pb-space-3);
   border-radius: 8px;
   background: var(--pb-graphite);
   box-shadow: var(--pb-shadow-md);
-  color: #fff;
+  color: var(--pb-on-graphite);
+  /* Buttons don't take the page's font by default, and the tip is drawn on one. */
+  font-family: Vazirmatn, 'Segoe UI', Tahoma, sans-serif;
   font-size: 0.8125rem;
   font-weight: 500;
+  line-height: 1.6;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -337,7 +340,7 @@ $gutter: var(--pb-space-3);
 
   &:hover,
   &.is-open {
-    background: #fff;
+    background: var(--pb-surface);
     box-shadow: var(--pb-shadow-sm);
   }
 }
@@ -382,7 +385,7 @@ $gutter: var(--pb-space-3);
   padding: var(--pb-space-1);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 14px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-lg);
 
   // On the rail, it opens beside it rather than above a 52px button.

@@ -113,6 +113,18 @@ import { MatIconModule } from '@angular/material/icon';
     :host(.pb-surface--flush) .pb-surface__body {
       padding: var(--pb-space-4);
     }
+
+    /* Fill: the body takes all the height the surface is given (a board column). */
+    :host(.pb-surface--fill) {
+      display: flex;
+      flex-direction: column;
+    }
+
+    :host(.pb-surface--fill) .pb-surface__body {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+    }
   `,
 })
 export class PbSurface {

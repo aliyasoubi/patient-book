@@ -25,3 +25,27 @@ export class PatientGlance {
   readonly followUps = input(0);
   readonly labCases = input(0);
 }
+
+/**
+ * The four facts before the file has loaded: the same tiles (it shares
+ * PatientGlance's stylesheet), each with the shape of its icon, label,
+ * value and line.
+ */
+@Component({
+  selector: 'pb-patient-glance-skeleton',
+  standalone: true,
+  template: `
+    <section class="glance" aria-hidden="true">
+      @for (i of [0, 1, 2, 3]; track i) {
+        <div class="glance__item" [style.--skel-i]="i">
+          <span class="pb-skel" style="--w: 34px; --h: 34px; --r: 10px"></span>
+          <span class="pb-skel" style="--w: 50%; --h: 11px"></span>
+          <span class="pb-skel" style="--w: 36%; --h: 20px"></span>
+          <span class="pb-skel" style="--w: 70%; --h: 10px"></span>
+        </div>
+      }
+    </section>
+  `,
+  styleUrl: './patient-glance.scss',
+})
+export class PatientGlanceSkeleton {}

@@ -72,7 +72,7 @@ let nextId = 0;
       block-size: 22px;
       border: 1.5px solid var(--pb-neutral-300, var(--mat-sys-outline));
       border-radius: 7px;
-      background: #fff;
+      background: var(--pb-surface);
       transition:
         background-color 220ms var(--pb-ease-standard),
         border-color 220ms var(--pb-ease-standard),

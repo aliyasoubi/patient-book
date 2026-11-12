@@ -17,10 +17,11 @@
     (back)="cancel()"
   />
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
 
+  <!-- A record being opened: its form's outline until it is in; saving shows on the button. -->
+  @if (loading()) {
+    <pb-form-skeleton [steps]="[6, 2, 3, 1, 1]" />
+  } @else {
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pb-form">
     <div class="pb-form__main">
       <!-- ── 1. Identity ──────────────────────────────────────────── -->
@@ -278,7 +279,7 @@
 
     <!-- ── The file as it will read, and the save ───────────────────── -->
     <aside class="pb-form__aside">
-      <div class="pb-aside-card">
+      <pb-form-preview>
         <span class="preview__title">{{ 'patientForm.previewTitle' | translate }}</span>
         <div class="person">
           <span class="person__avatar" [attr.data-gender]="v().gender" aria-hidden="true">{{
@@ -323,7 +324,7 @@
               @if (selectedTreatmentNames().length) {
                 <span class="tags">
                   @for (name of selectedTreatmentNames(); track name) {
-                    <span class="tag">{{ name }}</span>
+                    <span class="tag" animate.leave="pb-preview-chip-out">{{ name }}</span>
                   }
                 </span>
               } @else {
@@ -333,17 +334,15 @@
           </div>
         </dl>
 
-        <div class="pb-reveal" [class.is-open]="!!v().medicalHistory">
-          <div>
-            <div class="alert">
-              <pb-icon name="alert-triangle" [size]="16" />
-              <span>
-                <strong>{{ 'patientForm.previewMedical' | translate }}</strong>
-                {{ v().medicalHistory }}
-              </span>
-            </div>
+        @if (v().medicalHistory; as history) {
+          <div class="alert">
+            <pb-icon name="alert-triangle" [size]="16" />
+            <span>
+              <strong>{{ 'patientForm.previewMedical' | translate }}</strong>
+              {{ history }}
+            </span>
           </div>
-        </div>
+        }
 
         <!-- How much of the file is filled in: a nudge, never a rule. -->
         <div class="complete">
@@ -371,7 +370,8 @@
             {{ 'common.cancel' | translate }}
           </pb-button>
         </div>
-      </div>
+      </pb-form-preview>
     </aside>
   </form>
+  }
 </pb-page>

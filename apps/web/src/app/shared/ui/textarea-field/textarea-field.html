@@ -23,21 +23,20 @@
     [readonly]="readonly()"
     [attr.maxlength]="maxlength()"
     [attr.aria-invalid]="showError() || null"
-    [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
+    [attr.aria-describedby]="message() || showInlineHint() ? messageId : null"
   ></textarea>
-  @if (showInlineHint()) {
-    <span class="ta__hint" [id]="id + '-hint'" [title]="hint()">{{ hint() }}</span>
-  }
   @if (readonly()) {
     <pb-icon class="ta__lock" name="lock" [size]="18" />
   }
 </div>
-<div class="ta__message-slot" [class.is-open]="!!message()">
+<!-- An error, or the hint once the box holds text: under the box, never
+     squeezed in beside what was typed. -->
+<div class="ta__message-slot" [class.is-open]="!!message() || showInlineHint()">
   <p
     class="ta__message"
     [class.ta__message--error]="messageIsError()"
     [id]="messageId"
-    [attr.aria-hidden]="message() ? null : 'true'"
+    [attr.aria-hidden]="message() || showInlineHint() ? null : 'true'"
   >
     {{ messageText() }}
   </p>

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { SurgeryQueueItem } from '../../core/models/common.model';
@@ -29,9 +29,9 @@ function open(followUpAppointmentAt: string | null = null) {
   const fixture = TestBed.createComponent(SurgeryBookDialog);
   fixture.detectChanges();
   const root = fixture.nativeElement as HTMLElement;
+  const input = root.querySelector('input') as HTMLInputElement;
 
   const type = (text: string) => {
-    const input = root.querySelector('input') as HTMLInputElement;
     input.value = text;
     input.dispatchEvent(new Event('input'));
     fixture.detectChanges();
@@ -42,10 +42,32 @@ function open(followUpAppointmentAt: string | null = null) {
     buttons[buttons.length - 1].click();
     fixture.detectChanges();
   };
-  return { type, confirm, close };
+  return { type, confirm, close, input, fixture };
 }
 
 describe('SurgeryBookDialog', () => {
+  it('shows the date example in words and the numeric format while editing', () => {
+    const { input, fixture, type } = open();
+    const i18n = TestBed.inject(TranslateService);
+    i18n.setTranslation('fa', {
+      calendar: { placeholder: 'مثلاً ۲۰ آبان ۱۴۰۵', editPlaceholder: '۱۴۰۵/۰۸/۲۰' },
+      day: { wednesday: 'چهارشنبه' },
+      month: { aban: 'آبان' },
+    });
+    i18n.use('fa');
+    fixture.detectChanges();
+    expect(input.placeholder).toBe('مثلاً ۲۰ آبان ۱۴۰۵');
+
+    input.dispatchEvent(new FocusEvent('focus'));
+    fixture.detectChanges();
+    expect(input.placeholder).toBe('۱۴۰۵/۰۸/۲۰');
+
+    type('۱۴۰۵/۰۸/۲۰');
+    input.dispatchEvent(new FocusEvent('blur'));
+    fixture.detectChanges();
+    expect(input.value).toBe('چهارشنبه ۲۰ آبان ۱۴۰۵');
+  });
+
   it('books with no day when the field is left empty', () => {
     const { confirm, close } = open();
     confirm();

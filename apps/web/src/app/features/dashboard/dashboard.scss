@@ -112,7 +112,7 @@
   padding: var(--pb-space-4) var(--pb-space-5);
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   color: var(--pb-graphite);
   text-decoration: none;
@@ -128,23 +128,23 @@
 
   &[data-tone='brand'] {
     --_tone: var(--pb-brand);
-    --_tint: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    --_tint: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
   }
 
   &[data-tone='warn'] {
     --_tone: var(--mat-sys-error);
-    --_tint: color-mix(in srgb, var(--mat-sys-error) 10%, #fff);
+    --_tint: color-mix(in srgb, var(--mat-sys-error) 10%, var(--pb-surface));
   }
 
   /* Today's calls, when there are any, is the card the morning starts from. */
   &[data-tone='brand']:not(.is-clear) {
     border-color: transparent;
     background: var(--pb-graphite);
-    color: #fff;
+    color: var(--pb-on-graphite);
 
     .focus__label,
     .focus__go {
-      color: color-mix(in srgb, #fff 75%, transparent);
+      color: color-mix(in srgb, var(--pb-on-graphite) 75%, transparent);
     }
 
     .focus__icon {
@@ -154,8 +154,8 @@
   }
 
   &.is-clear {
-    --_tone: #2e9e5b;
-    --_tint: color-mix(in srgb, #2e9e5b 12%, #fff);
+    --_tone: var(--pb-success);
+    --_tint: color-mix(in srgb, var(--pb-success) 12%, var(--pb-surface));
   }
 }
 
@@ -292,7 +292,7 @@ pb-dashboard-agenda {
 
   &[data-tone='warn'] {
     --_tone: var(--mat-sys-error);
-    --_tint: color-mix(in srgb, var(--mat-sys-error) 10%, #fff);
+    --_tint: color-mix(in srgb, var(--mat-sys-error) 10%, var(--pb-surface));
   }
 
   &[data-tone='caution'] {
@@ -348,8 +348,8 @@ pb-dashboard-agenda {
   inline-size: 22px;
   block-size: 22px;
   border-radius: 50%;
-  background: color-mix(in srgb, #2e9e5b 14%, #fff);
-  color: #2e9e5b;
+  background: color-mix(in srgb, var(--pb-success) 14%, var(--pb-surface));
+  color: var(--pb-success);
 }
 
 /* ── Skeletons: the shape of what is coming ───────────────────────── */

@@ -14,20 +14,16 @@
         }}</a>
       </span>
       <span class="phone__actions">
-        <button
-          type="button"
-          class="phone__btn"
-          (click)="copy(p.mobile)"
-          [attr.aria-label]="'patientProfile.copy' | translate"
-          [title]="'patientProfile.copy' | translate"
-        >
-          <pb-icon name="copy" [size]="16" />
-        </button>
+        <pb-copy-button
+          [value]="p.mobile"
+          [label]="'patientProfile.copy' | translate"
+          [doneLabel]="'patientProfile.copied' | translate"
+        />
         <a
           class="phone__btn phone__btn--call"
           [href]="'tel:' + p.mobile"
           [attr.aria-label]="'patientProfile.call' | translate"
-          [title]="'patientProfile.call' | translate"
+          [matTooltip]="'patientProfile.call' | translate"
         >
           <pb-icon name="phone" [size]="16" />
         </a>
@@ -44,15 +40,11 @@
         }}</a>
       </span>
       <span class="phone__actions">
-        <button
-          type="button"
-          class="phone__btn"
-          (click)="copy(p.homePhone)"
-          [attr.aria-label]="'patientProfile.copy' | translate"
-          [title]="'patientProfile.copy' | translate"
-        >
-          <pb-icon name="copy" [size]="16" />
-        </button>
+        <pb-copy-button
+          [value]="p.homePhone"
+          [label]="'patientProfile.copy' | translate"
+          [doneLabel]="'patientProfile.copied' | translate"
+        />
       </span>
     </div>
   }

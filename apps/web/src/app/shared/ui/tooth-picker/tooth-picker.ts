@@ -1,10 +1,11 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, computed, inject, input, output } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PersianNumberPipe } from '../../pipes/persian-number.pipe';
 import { PbButton } from '../button/button';
 import { PbIcon } from '../icon/icon';
-import { jawTeeth } from './teeth';
+import { jawShortcutTeeth } from './teeth';
 import { mouthView } from './tooth-shapes';
 
 /**
@@ -22,7 +23,7 @@ import { mouthView } from './tooth-shapes';
 @Component({
   selector: 'pb-tooth-picker',
   standalone: true,
-  imports: [TranslatePipe, PersianNumberPipe, PbButton, PbIcon],
+  imports: [MatTooltipModule, TranslatePipe, PersianNumberPipe, PbButton, PbIcon],
   template: `
     <div
       class="chart"
@@ -43,11 +44,13 @@ import { mouthView } from './tooth-shapes';
                   type="button"
                   class="chart__tooth"
                   [class.chart__tooth--on]="isSelected(tooth.fdi)"
-                  [class.is-midline]="i === 7"
+                  [class.chart__tooth--wisdom]="tooth.wisdom"
+                  [class.is-midline]="i === jaw.teeth.length / 2"
+                  [attr.data-fdi]="tooth.fdi"
                   [attr.data-kind]="tooth.kind"
                   [attr.aria-pressed]="isSelected(tooth.fdi)"
                   [attr.aria-label]="tooth.name"
-                  [title]="tooth.name"
+                  [matTooltip]="tooth.name"
                   [style.--_lift.px]="tooth.lift"
                   [style.--_tilt.deg]="tooth.tilt"
                   (click)="toggle(tooth.fdi)"
@@ -66,7 +69,12 @@ import { mouthView } from './tooth-shapes';
                     <path class="chart__edge" [attr.d]="tooth.edge || null" />
                     <path class="chart__detail" [attr.d]="tooth.detail" />
                   </svg>
-                  <span class="chart__num">{{ tooth.position | faNum }}</span>
+                  <span class="chart__num">
+                    {{ tooth.position | faNum }}
+                    @if (tooth.wisdom) {
+                      <span class="chart__wisdom-label">{{ 'tooth.wisdom' | translate }}</span>
+                    }
+                  </span>
                 </button>
               }
             </div>
@@ -84,7 +92,7 @@ import { mouthView } from './tooth-shapes';
         </span>
         <div class="chart__shortcuts">
           @if (!single()) {
-            <!-- On when every tooth of the jaw is chosen; a dash and a count when some are. -->
+            <!-- The shortcuts cover positions 1–7. Wisdom teeth are picked individually. -->
             @let upper = jawState('upper');
             @let lower = jawState('lower');
             <button
@@ -169,14 +177,14 @@ export class PbToothPicker {
 
   /** How much of a jaw is chosen, for its shortcut's state. */
   protected jawState(jaw: 'upper' | 'lower'): { count: number; total: number; full: boolean } {
-    const teeth = jawTeeth(jaw);
+    const teeth = jawShortcutTeeth(jaw);
     const count = teeth.filter((t) => this.selected().includes(t)).length;
     return { count, total: teeth.length, full: count === teeth.length };
   }
 
-  /** The whole jaw; once every tooth of it is chosen, the same button lets it go. */
+  /** Toggle positions 1–7 in this jaw. */
   protected toggleJaw(jaw: 'upper' | 'lower'): void {
-    const teeth = jawTeeth(jaw);
+    const teeth = jawShortcutTeeth(jaw);
     const chosen = this.selected();
     this.emit(
       teeth.every((t) => chosen.includes(t))

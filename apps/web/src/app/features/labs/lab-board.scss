@@ -18,17 +18,45 @@
   }
 }
 
+.board {
+  transition: opacity 200ms var(--pb-ease-standard);
+
+  /* A reload over cards already shown: they step back until the answer is in. */
+  &.is-busy {
+    opacity: 0.55;
+  }
+}
+
 .column {
   &--hidden {
     display: none;
   }
 
-  /** Tall enough to drop into while empty. */
+  /**
+   * A column is at least as tall as the screen, and a short one stays pinned
+   * while the page scrolls past a long one — so wherever the pointer is, the
+   * column under it takes the drop, down to its bottom, not only where its
+   * cards are.
+   */
+  @media (min-width: 1360px) {
+    position: sticky;
+    inset-block-start: var(--pb-space-4);
+  }
+
   &__cards {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: var(--pb-space-3);
-    min-height: 96px;
+    min-block-size: max(240px, calc(100dvh - 260px));
+  }
+
+  /* The place a dragged card left, held while it is over another column. */
+  &__held {
+    flex: none;
+    border-radius: 16px;
+    outline: 2px dashed var(--pb-neutral-300);
+    outline-offset: -2px;
   }
 
   /** Work that is back, parts still with the lab: listed under the lab's own cards. */
@@ -59,9 +87,9 @@
 
 /* ── Dragging ─────────────────────────────────────────────────────────
    Picked up, the card lifts and tilts under the pointer; its old place
-   stays as a dashed outline. Columns that take it are outlined and say what
-   the drop will do; the one under the pointer fills in; columns it cannot go
-   to fade back. */
+   stays held as a dashed outline, so the column it left does not move.
+   Columns that take it are outlined, the one under the pointer fills in,
+   and columns it cannot go to fade back. No words: the board says it. */
 .column {
   transition:
     opacity 220ms var(--pb-ease-standard),
@@ -80,44 +108,6 @@
   &--blocked {
     opacity: 0.45;
   }
-
-  /* Closed, the hint takes no room: its margin cancels the list's gap. */
-  &__cards > .pb-reveal {
-    margin-block-end: calc(-1 * var(--pb-space-3));
-  }
-
-  &__drop {
-    display: flex;
-    align-items: center;
-    gap: var(--pb-space-3);
-    margin-block-end: var(--pb-space-3);
-    padding: var(--pb-space-3);
-    border: 2px dashed color-mix(in srgb, var(--pb-brand) 45%, transparent);
-    border-radius: 14px;
-    color: var(--pb-brand-strong);
-    transition:
-      background-color 200ms var(--pb-ease-standard),
-      border-color 200ms var(--pb-ease-standard);
-
-    .column--over & {
-      border-color: var(--pb-brand);
-      background: #fff;
-    }
-
-    span {
-      display: flex;
-      flex-direction: column;
-    }
-
-    strong {
-      font-size: 0.875rem;
-    }
-
-    small {
-      color: var(--pb-neutral-500);
-      font-size: 0.75rem;
-    }
-  }
 }
 
 pb-lab-case-card.cdk-drag:not(.cdk-drag-disabled) {
@@ -126,24 +116,73 @@ pb-lab-case-card.cdk-drag:not(.cdk-drag-disabled) {
 
 .cdk-drag-preview {
   border-radius: 16px;
-  box-shadow: var(--pb-shadow-lg, 0 18px 40px -12px rgb(16 24 40 / 0.35));
   cursor: grabbing;
-  rotate: 1.5deg;
-  scale: 1.02;
+  /* Lifted, not snapped: the tilt, the size and the shadow ease in. */
+  animation: card-lift 240ms var(--pb-ease-emphasized) forwards;
 }
 
+@keyframes card-lift {
+  from {
+    rotate: 0deg;
+    scale: 1;
+    box-shadow: var(--pb-shadow-md);
+  }
+
+  to {
+    rotate: 1.5deg;
+    scale: 1.02;
+    box-shadow: var(--pb-shadow-lg, 0 18px 40px -12px rgb(16 24 40 / 0.35));
+  }
+}
+
+/* Its old place fades to a dashed outline rather than switching to one. */
 .cdk-drag-placeholder {
   border-radius: 16px;
   outline: 2px dashed var(--pb-neutral-300);
   outline-offset: -2px;
   opacity: 0.5;
   filter: grayscale(1);
+  animation: slot-fade 240ms var(--pb-ease-standard);
 }
 
-/* Let go: the card glides into its slot. The CDK animates the drop only when
-   the dragged card has a transform transition; without one it jumps there. */
+@keyframes slot-fade {
+  from {
+    outline-color: transparent;
+    opacity: 1;
+    filter: none;
+  }
+}
+
+/* Let go: the card glides into its slot and settles flat on the way. The CDK
+   animates the drop only when the card has a transform transition. */
 .cdk-drag-animating {
   transition: transform var(--pb-duration-medium) var(--pb-ease-emphasized);
+}
+
+.cdk-drag-preview.cdk-drag-animating {
+  animation: card-settle var(--pb-duration-medium) var(--pb-ease-emphasized) forwards;
+}
+
+@keyframes card-settle {
+  from {
+    rotate: 1.5deg;
+    scale: 1.02;
+    box-shadow: var(--pb-shadow-lg, 0 18px 40px -12px rgb(16 24 40 / 0.35));
+  }
+
+  to {
+    rotate: 0deg;
+    scale: 1;
+    box-shadow: var(--pb-shadow-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdk-drag-preview,
+  .cdk-drag-placeholder,
+  .cdk-drag-preview.cdk-drag-animating {
+    animation-duration: 1ms;
+  }
 }
 
 .archive {

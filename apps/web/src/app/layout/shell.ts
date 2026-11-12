@@ -17,12 +17,12 @@ import { filter, map, startWith } from 'rxjs';
 
 import { AuthService } from '../core/services/auth.service';
 import { PageScroll } from '../core/services/page-scroll.service';
-import { ThemeService } from '../core/services/theme.service';
 import { PbIcon, PbLogo } from '../shared/ui';
 import { SHELL_NAV } from './shell-nav';
 import { Sidebar } from './sidebar/sidebar';
 import { Spotlight } from './spotlight/spotlight';
 import { SpotlightService } from './spotlight/spotlight.service';
+import { SignOutService } from '../core/services/sign-out.service';
 
 /** A per-device convenience, not patient data — so `localStorage` is fine here. */
 const COLLAPSED_KEY = 'pb.sidebar.collapsed';
@@ -61,10 +61,8 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly pageScroll = inject(PageScroll);
   protected readonly auth = inject(AuthService);
+  private readonly signOut = inject(SignOutService);
   protected readonly spotlight = inject(SpotlightService);
-  // Injected only to apply the stored preference on boot: its constructor
-  // stamps the theme onto the document. Display mode is picked in Settings.
-  private readonly theme = inject(ThemeService);
 
   protected readonly isHandset = toSignal(
     this.breakpoints.observe([Breakpoints.Handset]).pipe(map((r) => r.matches)),
@@ -139,7 +137,7 @@ export class Shell {
   }
 
   protected logout(): void {
-    this.auth.logout();
+    this.signOut.ask();
   }
 
   /** Menus close on a press anywhere outside them, and on Escape. */

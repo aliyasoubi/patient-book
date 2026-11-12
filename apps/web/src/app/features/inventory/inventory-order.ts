@@ -8,7 +8,6 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { format as formatJalali } from 'date-fns-jalali';
 
@@ -45,7 +44,6 @@ function wholeOrBlank(control: AbstractControl<string>): ValidationErrors | null
   imports: [
     ReactiveFormsModule,
     MatIconModule,
-    MatProgressBarModule,
     TranslatePipe,
     EmptyState,
     LoadError,

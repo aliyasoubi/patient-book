@@ -74,11 +74,12 @@ export interface FilterChipOption {
       display: inline-flex;
       align-items: center;
       gap: var(--pb-space-2);
-      block-size: 36px;
+      /* A row that sets --pb-chip-height (beside a search box) gets chips of its height. */
+      block-size: var(--pb-chip-height, 36px);
       padding-inline: var(--pb-space-3) 14px;
       border: 1px solid color-mix(in srgb, var(--pb-neutral-300, #c9cdd3) 80%, transparent);
       border-radius: 999px;
-      background: #fff;
+      background: var(--pb-surface);
       color: var(--pb-neutral-600, var(--mat-sys-on-surface-variant));
       font: inherit;
       font-size: 0.8125rem;
@@ -108,7 +109,7 @@ export interface FilterChipOption {
 
       &.is-on {
         border-color: color-mix(in srgb, var(--pb-brand) 35%, transparent);
-        background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+        background: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
         color: var(--pb-brand-strong, var(--mat-sys-primary));
       }
     }

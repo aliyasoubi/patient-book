@@ -28,6 +28,7 @@ import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
 import { rialInput, rialValid, rialValue } from '../../shared/rial';
 import { toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
+import { formatInventoryExpiry, InventoryExpiryField } from './inventory-expiry';
 
 import {
   PbBanner,
@@ -106,6 +107,7 @@ const COPY: Record<
   selector: 'pb-inventory-movement-dialog',
   standalone: true,
   imports: [
+    InventoryExpiryField,
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
@@ -170,13 +172,10 @@ const COPY: Record<
             [maxlength]="60"
             [ltr]="true"
           />
-          <pb-text-field
+          <pb-inventory-expiry-field
             [control]="form.controls.expiry"
             [label]="'inventoryMove.expiry' | translate"
-            [hint]="'inventoryForm.expiryHint' | translate"
             [errorMessages]="traceableErrors"
-            [maxlength]="20"
-            [ltr]="true"
           />
           <pb-text-field
             [control]="form.controls.supplier"
@@ -647,7 +646,9 @@ export class InventoryMovementDialog {
     return [
       lot.lotNumber ?? this.i18n.instant('inventoryMove.noLotNumber'),
       lot.expiry
-        ? this.i18n.instant('inventory.expiresOn', { date: formatPersianNumber(lot.expiry) })
+        ? this.i18n.instant('inventory.expiresOn', {
+            date: formatInventoryExpiry(lot.expiry, this.i18n) ?? formatPersianNumber(lot.expiry),
+          })
         : null,
       this.i18n.instant('inventoryMove.lotLeft', { count: formatPersianNumber(lot.quantity) }),
     ]

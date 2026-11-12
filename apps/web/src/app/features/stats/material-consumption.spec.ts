@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -125,6 +125,18 @@ describe('MaterialConsumptionReport', () => {
     // No complete month yet: no average to show.
     expect(rows[1].querySelector('td.usage__average')?.textContent?.trim()).toBe('—');
     expect(text('.consumption__note')[0]).toContain('consumption.trackedFrom');
+  });
+
+  it('shows the recording start date with a Jalali month name', () => {
+    const { fixture, text } = render();
+    const i18n = TestBed.inject(TranslateService);
+    i18n.setTranslation('fa', {
+      consumption: { trackedFrom: 'ثبت مصرف از {{date}} شروع شده است' },
+      month: { mehr: 'مهر' },
+    });
+    i18n.use('fa');
+    fixture.detectChanges();
+    expect(text('.consumption__note')[0]).toContain('ثبت مصرف از ۲۰ مهر ۱۴۰۵ شروع شده است');
   });
 
   it('narrows to one shelf from its chip', () => {

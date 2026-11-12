@@ -4,7 +4,7 @@
   display: block;
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
 }
 

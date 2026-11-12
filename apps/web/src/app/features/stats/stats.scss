@@ -54,7 +54,7 @@
   padding: var(--pb-space-4) var(--pb-space-5);
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   color: var(--pb-graphite);
   text-decoration: none;
@@ -184,7 +184,7 @@
   transition: background-color 160ms var(--pb-ease-standard);
 
   &:hover {
-    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
   }
 
   pb-icon {
@@ -331,7 +331,7 @@
   font-weight: 700;
 
   li:first-child & {
-    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
     color: var(--pb-brand-strong);
   }
 }

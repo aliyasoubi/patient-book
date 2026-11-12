@@ -79,15 +79,15 @@ $gutter: var(--pb-space-3);
 
   // The page primitives' depths, pointed at the brand's.
   --pb-canvas: var(--pb-neutral-50);
-  --pb-card: #fff;
+  --pb-card: var(--pb-surface);
   --pb-card-border: color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   --pb-card-shadow: var(--pb-shadow-sm);
   --pb-well: var(--pb-neutral-100);
   --mat-sys-surface: var(--pb-neutral-50);
-  --mat-sys-surface-container-low: #fff;
+  --mat-sys-surface-container-low: var(--pb-surface);
   --mat-sys-surface-container: var(--pb-neutral-100);
-  --mat-sys-primary-container: color-mix(in srgb, var(--pb-brand) 14%, #fff);
-  --mat-sys-on-primary-container: #7a3300;
+  --mat-sys-primary-container: color-mix(in srgb, var(--pb-brand) 14%, var(--pb-surface));
+  --mat-sys-on-primary-container: var(--pb-brand-ink);
   --mat-sys-secondary-container: var(--pb-neutral-200);
   --mat-sys-on-secondary-container: var(--pb-graphite);
 
@@ -148,7 +148,7 @@ $gutter: var(--pb-space-3);
   overflow: hidden;
   padding-inline: var(--pb-space-5);
   border-block-end: 1px solid var(--pb-neutral-200);
-  background: color-mix(in srgb, #fff 70%, transparent);
+  background: color-mix(in srgb, var(--pb-surface) 70%, transparent);
 
   .is-handset & {
     justify-content: flex-start;
@@ -174,7 +174,7 @@ $gutter: var(--pb-space-3);
   padding-inline: var(--pb-space-4) var(--pb-space-2);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 12px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-xs);
   color: var(--pb-neutral-400);
   font: inherit;
@@ -249,7 +249,7 @@ $gutter: var(--pb-space-3);
   block-size: calc(64px + env(safe-area-inset-bottom));
   padding-block-end: env(safe-area-inset-bottom);
   border-block-start: 1px solid var(--pb-neutral-200);
-  background: color-mix(in srgb, #fff 88%, transparent);
+  background: color-mix(in srgb, var(--pb-surface) 88%, transparent);
   backdrop-filter: blur(12px);
 }
 
@@ -282,7 +282,7 @@ $gutter: var(--pb-space-3);
     transform 300ms var(--pb-ease-spring);
 
   .is-active & {
-    background: color-mix(in srgb, var(--pb-brand) 14%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 14%, var(--pb-surface));
     color: var(--pb-brand);
     transform: scale(1.04);
   }
@@ -312,7 +312,7 @@ $gutter: var(--pb-space-3);
   padding: var(--pb-space-2);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-lg);
 }
 

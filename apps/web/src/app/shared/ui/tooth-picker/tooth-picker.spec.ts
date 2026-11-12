@@ -28,19 +28,30 @@ function setup(single: boolean) {
   fixture.componentInstance.single.set(single);
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
-  /** The tooth button for an FDI number: quadrant 1 is drawn 7…1, quadrant 2 1…7. */
   const tap = (fdi: number) => {
-    const buttons = [...el.querySelectorAll<HTMLButtonElement>('.chart__tooth')];
-    const order = [1, 2, 4, 3].flatMap((q) =>
-      [1, 2, 3, 4, 5, 6, 7].map((n) => q * 10 + (q === 1 || q === 4 ? 8 - n : n)),
-    );
-    buttons[order.indexOf(fdi)].click();
+    el.querySelector<HTMLButtonElement>(`button[data-fdi="${fdi}"]`)!.click();
     fixture.detectChanges();
   };
   return { el, tap, selected: () => fixture.componentInstance.selected() };
 }
 
 describe('PbToothPicker', () => {
+  it('distinguishes all four wisdom teeth and lets them be selected', () => {
+    const { el, tap, selected } = setup(false);
+    const wisdom = [...el.querySelectorAll('.chart__tooth--wisdom')];
+    expect(wisdom.map((button) => button.getAttribute('data-fdi'))).toEqual([
+      '18',
+      '28',
+      '48',
+      '38',
+    ]);
+    expect(wisdom.every((button) => button.getAttribute('aria-label') === 'tooth.wisdomName')).toBe(
+      true,
+    );
+    tap(48);
+    expect(selected()).toEqual([48]);
+  });
+
   it('adds each tooth tapped, and offers the whole jaw', () => {
     const { el, tap, selected } = setup(false);
     tap(36);

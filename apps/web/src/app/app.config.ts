@@ -24,6 +24,7 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { PersianDatepickerIntl, PersianPaginatorIntl } from './core/i18n/material-intl';
 import { JALALI_DATE_FORMATS, JalaliDateAdapter } from './core/jalali/jalali-date-adapter';
 import { AuthService } from './core/services/auth.service';
+import { ThemeService } from './core/services/theme.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -48,6 +49,9 @@ export const appConfig: ApplicationConfig = {
       }),
       fallbackLang: 'fa',
       lang: 'fa',
+    }),
+    provideAppInitializer(() => {
+      inject(ThemeService);
     }),
     provideAppInitializer(() => firstValueFrom(inject(TranslateService).use('fa'))),
     provideAppInitializer(() => firstValueFrom(inject(AuthService).restoreSession())),

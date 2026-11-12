@@ -16,6 +16,8 @@ import { Component, computed, input } from '@angular/core';
   selector: 'pb-logo',
   standalone: true,
   host: {
+    // The mark is the brand's: orange whichever accent the app wears.
+    'data-accent': 'orange',
     '[class.pb-logo--draw]': 'drawIn()',
     '[style.width.px]': 'size()',
     '[style.height.px]': 'size()',

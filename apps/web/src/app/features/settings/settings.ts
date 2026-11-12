@@ -3,7 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
-import { ThemeService, ThemeMode } from '../../core/services/theme.service';
+import { Accent, ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { LabService } from '../../core/services/lab.service';
 import { roleLabel } from '../../shared/labels';
 import {
@@ -45,6 +45,11 @@ export class Settings {
     { value: 'system', label: 'settings.automatic', icon: 'device-desktop' },
     { value: 'light', label: 'settings.light', icon: 'sun' },
     { value: 'dark', label: 'settings.dark', icon: 'moon' },
+  ];
+  protected readonly accents: readonly { value: Accent; label: string }[] = [
+    { value: 'orange', label: 'settings.accentOrange' },
+    { value: 'sage', label: 'settings.accentSage' },
+    { value: 'dusk', label: 'settings.accentDusk' },
   ];
   /** The letter on the person's tile. */
   protected readonly initial = computed(() => (this.auth.user()?.fullName ?? '').trim().charAt(0));

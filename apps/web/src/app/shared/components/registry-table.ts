@@ -4,8 +4,13 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
+import { RouterLink } from '@angular/router';
+
 import { EmptyState } from './empty-state';
-import { PbIconButton, PbStatusChip } from '../ui';
+import { PersianNumberPipe } from '../pipes/persian-number.pipe';
+import { PhonePipe } from '../pipes/phone.pipe';
+import { PbIcon } from '../ui/icon/icon';
+import { PbIconButton } from '../ui/icon-button/icon-button';
 import type { RegistryCase } from '../../core/models/common.model';
 
 /**
@@ -21,8 +26,11 @@ import type { RegistryCase } from '../../core/models/common.model';
   imports: [
     MatMenuModule,
     MatTooltipModule,
+    RouterLink,
     EmptyState,
-    PbStatusChip,
+    PersianNumberPipe,
+    PhonePipe,
+    PbIcon,
     PbIconButton,
     MatIconModule,
     TranslatePipe,
@@ -39,6 +47,10 @@ export class RegistryTable {
   readonly canArchive = input(false);
   /** The rows are archived ones: offer restore instead of edit/archive. */
   readonly archived = input(false);
+  /** A first load is in flight: draw the cards to come. */
+  readonly loading = input(false);
+
+  protected readonly skeletonCards = Array.from({ length: 12 }, (_, i) => i);
 
   readonly edit = output<RegistryCase>();
   readonly archive = output<RegistryCase>();

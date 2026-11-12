@@ -1,3 +1,4 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, computed, inject, input } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,7 +19,7 @@ let nextId = 0;
 @Component({
   selector: 'pb-textarea-field',
   standalone: true,
-  imports: [ReactiveFormsModule, MatIconModule, PbIcon],
+  imports: [MatTooltipModule, ReactiveFormsModule, MatIconModule, PbIcon],
   templateUrl: './textarea-field.html',
   styleUrl: './textarea-field.scss',
 })
@@ -51,7 +52,7 @@ export class PbTextareaField {
     return this.errorsShown() && control.invalid && this.errorText() !== null;
   }
 
-  /** The hint, as the placeholder while empty and an in-box note after. */
+  /** The hint, as the placeholder while empty; once there is text, it moves under the box. */
   protected placeholderText(): string {
     return placeholderWithHint(this.placeholder(), this.hint());
   }
@@ -65,12 +66,12 @@ export class PbTextareaField {
   }
 
   protected messageIsError(): boolean {
-    if (this.message()) this.lastWasError = this.showError();
+    if (this.message() || this.showInlineHint()) this.lastWasError = !!this.message();
     return this.lastWasError;
   }
 
   protected messageText(): string {
-    const current = this.message();
+    const current = this.message() ?? (this.showInlineHint() ? this.hint() : null);
     if (current) this.lastMessage = current;
     return this.lastMessage;
   }

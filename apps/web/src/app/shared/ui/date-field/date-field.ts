@@ -17,7 +17,7 @@ import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { errorsRevealed } from '../form-submitted';
-import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
+import { firstErrorMessage } from '../field-errors';
 import { jalaliInWords } from '../../../core/jalali/jalali-words';
 import { PbIcon } from '../icon/icon';
 import { PbAutoHeight } from '../auto-height/auto-height';
@@ -70,6 +70,7 @@ export class PbDateField {
 
   private readonly field = viewChild<ElementRef<HTMLInputElement>>('field');
   private readonly calendar = viewChild(PbShamsiCalendar);
+  private readonly popover = viewChild<ElementRef<HTMLElement>>('popover');
 
   protected readonly id = `pb-date-${nextId++}`;
   protected readonly messageId = `${this.id}-message`;
@@ -77,6 +78,8 @@ export class PbDateField {
   private readonly errorsShown = errorsRevealed(() => this.control());
   protected readonly open = signal(false);
   protected readonly above = signal(false);
+  /** In a dialog: the calendar opens in the flow, growing the dialog, not over it. */
+  protected readonly inline = signal(false);
   /** What the box shows: the formatted value, or what is being typed. */
   protected readonly text = signal('');
   /** The typed text could not be read as a date. */
@@ -140,28 +143,19 @@ export class PbDateField {
     return control.invalid && this.errorsShown() && this.errorText() !== null;
   }
 
-  /** The hint, after the example date, as the placeholder while empty. */
-  protected withHint(placeholder: string): string {
-    return placeholderWithHint(placeholder, this.hint());
-  }
-
-  protected showInlineHint(): boolean {
-    // The example date is always the placeholder, so the hint is always a note.
-    return hintAsNote('date', this.hint(), this.control().value);
-  }
-
   protected message(): string | null {
     return this.showError() ? this.errorText() : null;
   }
 
+  /** The error if there is one, else the hint; the last one stays while the slot closes. */
   protected messageText(): string {
-    const current = this.message();
+    const current = this.message() ?? this.hint();
     if (current) this.lastMessage = current;
     return this.lastMessage;
   }
 
   protected messageIsError(): boolean {
-    if (this.message()) this.lastWasError = this.showError();
+    if (this.message() || this.hint()) this.lastWasError = !!this.message();
     return this.lastWasError;
   }
 
@@ -236,10 +230,28 @@ export class PbDateField {
 
   private openCalendar(): void {
     // Near the bottom of the screen, open upward rather than off its edge.
-    const rect = this.host.nativeElement.getBoundingClientRect();
+    const host = this.host.nativeElement;
+    const rect = host.getBoundingClientRect();
+    this.inline.set(!!host.closest('.mat-mdc-dialog-content, mat-dialog-content'));
     this.above.set(innerHeight - rect.bottom < 420 && rect.top > 420);
     this.open.set(true);
-    afterNextRender(() => this.calendar()?.focusCursor(), { injector: this.injector });
+    afterNextRender(
+      () => {
+        this.calendar()?.focusCursor();
+        // Grown into a scrolling dialog: bring the whole calendar into view once it has opened.
+        if (this.inline()) {
+          setTimeout(
+            () =>
+              this.popover()?.nativeElement.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth',
+              }),
+            300,
+          );
+        }
+      },
+      { injector: this.injector },
+    );
   }
 
   protected close(): void {

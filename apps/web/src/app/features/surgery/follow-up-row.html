@@ -9,7 +9,7 @@
     <strong class="when">{{ when() }}</strong>
     <span class="when__sub">
       <pb-icon name="calendar" [size]="13" />
-      <span class="ltr-nums">{{ date.jalali | faNum }}</span>
+      <span>{{ { jalali: date.jalali, precision: 'day' } | jalali: 'long' }}</span>
     </span>
   } @else if (it.prosthesisDue) {
     <!-- LEGACY: an imported note the backfill could not read. -->
@@ -78,7 +78,7 @@
   </span>
   <span class="work__line">
     @if (it.surgeryDate; as done) {
-      <span>{{ doneLabel(it.kind) | translate: { date: (done.jalali | faNum) } }}</span>
+      <span>{{ doneLabel(it.kind) | translate: { date: (done | jalali: 'long') } }}</span>
     }
     @if (!it.teethFdi.length && position()) {
       <span>{{ position() }}</span>
@@ -99,7 +99,11 @@
       {{ outcomeLabel(last.outcome) | translate }}
     </span>
     <span class="contact__line">
-      <span class="ltr-nums">{{ last.at | faNum }}</span>
+      @let called = last.at.split(' ');
+      <span>
+        {{ { jalali: called[0], precision: 'day' } | jalali: 'long' }}
+        <bdi>{{ called[1] | faNum }}</bdi>
+      </span>
       @if (last.by) {
         <span>· {{ last.by }}</span>
       }
@@ -115,7 +119,10 @@
   @if (it.nextContactAt; as next) {
     <span class="contact__next" [class.is-due]="callDue()">
       <pb-icon name="phone" [size]="12" />
-      {{ 'surgery.nextCall' | translate: { date: (next.jalali | faNum) } }}
+      {{
+        'surgery.nextCall'
+          | translate: { date: ({ jalali: next.jalali, precision: 'day' } | jalali: 'long') }
+      }}
     </span>
   }
 </div>

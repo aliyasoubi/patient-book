@@ -10,25 +10,23 @@
   </pb-page-header>
 
   <!-- ── Search + filter bar ───────────────────────────────────── -->
-  <pb-list-toolbar>
+  <pb-list-toolbar class="pb-rise">
     <pb-search-field
       [control]="searchControl"
       [placeholder]="'patients.searchPlaceholder' | translate"
       [ariaLabel]="'patients.searchAria' | translate"
     />
 
-    <pb-button
-      variant="stroked"
-      icon="tune"
-      class="list__filter-btn"
-      [class.is-active]="panelFilterCount() > 0"
-      [ariaExpanded]="filtersOpen()"
-      [badge]="panelFilterCount() > 0 ? (panelFilterCount() | faNum) : null"
+    <pb-filter-button
+      [open]="filtersOpen()"
+      [count]="panelFilterCount()"
+      [countText]="panelFilterCount() | faNum"
       [collapseBelow]="560"
-      (click)="filtersOpen.set(!filtersOpen())"
+      [ariaLabel]="'common.filters' | translate"
+      (openToggle)="filtersOpen.set(!filtersOpen())"
     >
       {{ 'common.filters' | translate }}
-    </pb-button>
+    </pb-filter-button>
 
     <!-- Set in the panel, or by the dashboard's needs-review tile. Shown
          here only while on, so a shorter register says why, and one tap
@@ -136,10 +134,7 @@
 
   <!-- One box for everything a fetch can replace, so the progress bar can lie
        over its top edge instead of pushing it down for the length of the request. -->
-  <div class="list__results">
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="list__progress" />
-    }
+  <div class="list__results pb-busy-dim pb-rise" style="--rise-d: 60ms" [class.is-busy]="loading() && patients().length > 0">
 
     <!-- A failed fetch keeps the previous rows (if any) under this banner: a
          blank register would read as "no patients", which is a different fact. -->
@@ -168,8 +163,8 @@
     } @else if (isCompact()) {
       <!-- Phone / small tablet: cards. A seven-column table is unusable here. -->
       <ul class="cards">
-        @for (patient of patients(); track patient.id) {
-          <li class="card" [class.card--archived]="patient.isArchived">
+        @for (patient of patients(); track patient.id; let i = $index) {
+          <li class="card pb-rise-row" [class.card--archived]="patient.isArchived" [style.--_i]="i">
             <a class="card__link" [routerLink]="['/patients', patient.id]">
               <div class="card__head">
                 <pb-avatar
@@ -205,7 +200,7 @@
                 }
                 <span class="card__meta-item">
                   <mat-icon aria-hidden="true">event</mat-icon>
-                  {{ patient.lastVisitAt | jalali }}
+                  {{ patient.lastVisitAt | jalali: 'long' }}
                 </span>
               </div>
 
@@ -228,6 +223,27 @@
               />
             }
           </li>
+        } @empty {
+          @if (loading()) {
+            <!-- First load on a phone: the cards to come, on the cards' own classes. -->
+            @for (n of [0, 1, 2, 3, 4]; track n) {
+              <li class="card pb-skeleton" aria-hidden="true" [style.--skel-i]="n">
+                <div class="card__link">
+                  <div class="card__head">
+                    <span class="pb-skel pb-skel--circle" style="--w: 40px; --h: 40px"></span>
+                    <div class="card__identity" style="flex: 1">
+                      <span class="pb-skel" style="--w: 58%; --h: 14px; margin-block-end: 6px"></span>
+                      <span class="pb-skel" style="--w: 36%; --h: 11px"></span>
+                    </div>
+                  </div>
+                  <div class="card__meta">
+                    <span class="pb-skel" style="--w: 110px; --h: 11px"></span>
+                    <span class="pb-skel" style="--w: 80px; --h: 11px"></span>
+                  </div>
+                </div>
+              </li>
+            }
+          }
         }
       </ul>
     } @else {
@@ -235,11 +251,12 @@
       <div #tableWrap class="table-wrap">
         <table
           mat-table
-          [dataSource]="patients()"
+          [dataSource]="tableRows()"
           [trackBy]="trackById"
           matSort
           [matSortActive]="headerSort().active"
           [matSortDirection]="headerSort().direction"
+          [matSortDisableClear]="!debouncedQuery()"
           (matSortChange)="onSortChange($event)"
           class="table"
         >
@@ -248,7 +265,11 @@
               {{ 'patients.fileNumber' | translate }}
             </th>
             <td mat-cell *matCellDef="let p">
+              @if (isSkel(p)) {
+                <span class="pb-skel" style="--w: 40px; --h: 13px"></span>
+              } @else {
               <a class="table__file" [routerLink]="['/patients', p.id]">{{ p.fileNo }}</a>
+              }
             </td>
           </ng-container>
 
@@ -257,6 +278,9 @@
               {{ 'patients.patientName' | translate }}
             </th>
             <td mat-cell *matCellDef="let p">
+              @if (isSkel(p)) {
+                <span class="table__identity"><span class="pb-skel" style="--w: 36px; --h: 36px; --r: 11px"></span><span class="table__name-block" style="flex: 1"><span class="pb-skel" style="--w: 62%; --h: 13px; margin-block-end: 6px"></span><span class="pb-skel" style="--w: 38%; --h: 10px"></span></span></span>
+              } @else {
               <a class="table__identity" [routerLink]="['/patients', p.id]">
                 <span class="table__avatar" [attr.data-gender]="p.gender" aria-hidden="true">{{
                   initialOf(p.fullName)
@@ -284,12 +308,16 @@
                   </span>
                 }
               </a>
+              }
             </td>
           </ng-container>
 
           <ng-container matColumnDef="contact">
             <th mat-header-cell *matHeaderCellDef>{{ 'patients.contact' | translate }}</th>
             <td mat-cell *matCellDef="let p">
+              @if (isSkel(p)) {
+                <span class="pb-skel" style="--w: 108px; --h: 12px"></span>
+              } @else {
               @if (p.mobile) {
                 <a class="table__phone" [href]="'tel:' + p.mobile">
                   <pb-icon name="phone" [size]="15" />
@@ -303,6 +331,7 @@
               } @else {
                 <span class="table__muted">—</span>
               }
+              }
             </td>
           </ng-container>
 
@@ -311,10 +340,14 @@
               {{ 'patients.age' | translate }}
             </th>
             <td mat-cell *matCellDef="let p">
+              @if (isSkel(p)) {
+                <span class="pb-skel" style="--w: 22px; --h: 12px"></span>
+              } @else {
               @if (p.age !== null) {
                 <span class="table__age">{{ p.age | faNum }}</span>
               } @else {
                 <span class="table__muted">—</span>
+              }
               }
             </td>
           </ng-container>
@@ -322,22 +355,30 @@
           <ng-container matColumnDef="treatments">
             <th mat-header-cell *matHeaderCellDef>{{ 'patients.treatments' | translate }}</th>
             <td mat-cell *matCellDef="let p">
+              @if (isSkel(p)) {
+                <span style="display: flex; gap: 6px"><span class="pb-skel pb-skel--pill" style="--w: 56px; --h: 22px"></span><span class="pb-skel pb-skel--pill" style="--w: 44px; --h: 22px"></span></span>
+              } @else {
               <pb-treatment-chips [treatments]="p.treatments" [max]="2" />
+              }
             </td>
           </ng-container>
 
           <ng-container matColumnDef="lastVisit">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="lastVisitAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="lastVisitAt" start="desc">
               {{ 'patients.lastVisit' | translate }}
             </th>
             <td mat-cell *matCellDef="let p">
+              @if (isSkel(p)) {
+                <span class="pb-skel" style="--w: 84px; --h: 12px"></span>
+              } @else {
               @if (p.lastVisitAt) {
                 <span class="table__visit">
                   <span class="table__ago">{{ p.lastVisitAt | ago }}</span>
-                  <span class="table__date">{{ p.lastVisitAt | jalali }}</span>
+                  <span class="table__date">{{ p.lastVisitAt | jalali: 'long' }}</span>
                 </span>
               } @else {
                 <span class="table__muted">{{ 'patients.noVisit' | translate }}</span>
+              }
               }
             </td>
           </ng-container>
@@ -349,21 +390,29 @@
               [attr.aria-label]="'patients.operations' | translate"
             ></th>
             <td mat-cell *matCellDef="let p" class="table__actions">
-              <!-- The call is one tap on the row; the rest wait in the menu. -->
-              @if (p.mobile) {
-                <a
-                  class="table__quick"
-                  [href]="'tel:' + p.mobile"
-                  [attr.aria-label]="callLabel(p.fullName)"
+              @if (isSkel(p)) {
+                <span class="pb-skel pb-skel--circle" style="--w: 28px; --h: 28px; margin-inline-start: auto"></span>
+              } @else {
+              <div class="table__action-buttons">
+                @if (p.mobile) {
+                  <a
+                    class="table__quick"
+                    [href]="'tel:' + p.mobile"
+                    [attr.aria-label]="callLabel(p.fullName)"
+                  >
+                    <pb-icon name="phone" [size]="16" />
+                  </a>
+                }
+                <!-- Same 36px rounded square as the call beside it: one row of actions. -->
+                <button
+                  type="button"
+                  class="table__quick table__quick--menu"
+                  [matMenuTriggerFor]="rowMenu"
+                  [attr.aria-label]="'patients.recordOperations' | translate"
                 >
-                  <pb-icon name="phone" [size]="16" />
-                </a>
-              }
-              <pb-icon-button
-                icon="more_vert"
-                [menu]="rowMenu"
-                [ariaLabel]="'patients.recordOperations' | translate"
-              />
+                  <pb-icon name="dots-vertical" [size]="18" />
+                </button>
+              </div>
               <mat-menu #rowMenu="matMenu">
                 <a mat-menu-item [routerLink]="['/patients', p.id]">
                   <mat-icon aria-hidden="true">visibility</mat-icon>
@@ -382,15 +431,20 @@
                   </a>
                 }
               </mat-menu>
+              }
             </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="columns(); sticky: true"></tr>
           <tr
             mat-row
-            *matRowDef="let row; columns: columns()"
-            class="table__row"
+            *matRowDef="let row; columns: columns(); let i = index"
+            class="table__row pb-rise-row"
+            [style.--_i]="i"
+            [attr.data-patient-id]="row.id"
             [class.table__row--archived]="row.isArchived"
+            [class.pb-skeleton]="isSkel(row)"
+            [style.--skel-i]="isSkel(row) ? $any(row).n : null"
           ></tr>
         </table>
       </div>

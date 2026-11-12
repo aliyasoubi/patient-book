@@ -12,8 +12,22 @@
     }
   </pb-page-header>
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
+  @if (loading() && items().length === 0) {
+    <!-- The order list to come: a supplier heading and its lines, on their own classes. -->
+    <section class="supplier pb-skeleton" aria-hidden="true">
+      <span class="pb-skel" style="--w: 160px; --h: 18px; margin-block-end: 12px"></span>
+      <ul class="supplier__items">
+        @for (i of [0, 1, 2, 3]; track i) {
+          <li class="line" [style.--skel-i]="i">
+            <div class="line__what" style="flex: 1">
+              <span class="pb-skel" style="--w: 48%; --h: 14px; margin-block-end: 8px"></span>
+              <span class="pb-skel" style="--w: 66%; --h: 11px"></span>
+            </div>
+            <span class="pb-skel" style="--w: 120px; --h: 48px; --r: 12px"></span>
+          </li>
+        }
+      </ul>
+    </section>
   }
   @if (failed()) {
     <pb-load-error [message]="'inventory.loadFailed' | translate" (retry)="load()" />

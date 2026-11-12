@@ -3,6 +3,8 @@
 @use './styles/brand';
 @use './styles/overlays';
 @use './styles/form-steps';
+@use './styles/skeleton';
+@use './styles/entrance';
 
 // Font faces are registered in angular.json's `styles` array rather than
 // imported here: their @font-face rules use paths relative to their own
@@ -184,16 +186,20 @@ html {
 }
 
 /**
- * The brand's roles on the root while the redesign is light-only, so every
- * screen and every overlay (rendered outside any screen) agrees. A dark pick
- * keeps the M3 dark roles until the dark design lands.
+ * The brand's roles on the root, in light and in dark (their tokens carry
+ * both), so every screen and every overlay — rendered outside any screen —
+ * agrees.
  */
-html:not([data-theme='dark']) {
+html {
   @include brand.roles;
 }
 
+@include brand.accents;
+
 @include overlays.material-panels;
 @include form-steps.styles;
+@include skeleton.styles;
+@include entrance.styles;
 
 /** Explicit dark/light override, used when the user picks one in settings. */
 html[data-theme='light'] {

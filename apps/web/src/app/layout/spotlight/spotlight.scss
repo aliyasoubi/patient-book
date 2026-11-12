@@ -78,7 +78,7 @@
 .spotlight__scrim {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--pb-graphite) 22%, transparent);
+  background: var(--pb-scrim);
   backdrop-filter: blur(10px) saturate(120%);
   animation: spotlight-scrim-in 260ms var(--pb-ease-standard) backwards;
 }
@@ -90,9 +90,9 @@
   inline-size: min(640px, 100%);
   max-block-size: min(560px, 76vh);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, #fff 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pb-surface) 70%, transparent);
   border-radius: 20px;
-  background: color-mix(in srgb, #fff 94%, transparent);
+  background: color-mix(in srgb, var(--pb-surface) 94%, transparent);
   box-shadow: var(--pb-shadow-lg);
   animation: spotlight-panel-in 420ms var(--pb-ease-spring) backwards;
 }
@@ -164,7 +164,7 @@ kbd {
   padding-inline: 6px;
   border: 1px solid var(--pb-neutral-300);
   border-radius: 6px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: 0 1px 0 var(--pb-neutral-300);
   font-family: var(--pb-font-latin);
   font-size: 0.6875rem;
@@ -218,7 +218,7 @@ kbd {
     box-shadow: inset 0 0 0 1px var(--pb-neutral-200);
 
     .spotlight__icon {
-      background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+      background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
       color: var(--pb-brand);
     }
 
@@ -308,7 +308,7 @@ kbd {
   padding: var(--pb-space-2) var(--pb-space-4);
   border: 1px solid var(--pb-neutral-300);
   border-radius: 999px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-xs);
   color: var(--pb-graphite);
   font: inherit;

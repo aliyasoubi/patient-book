@@ -1,5 +1,10 @@
 import type { ApiErrorCode, ApiErrorParams } from '../../../core/i18n/api-error-code';
-import type { EducationLevel, Gender, JalaliValue, PatientTreatment } from '../../../core/models/common.model';
+import type {
+  EducationLevel,
+  Gender,
+  JalaliValue,
+  PatientTreatment,
+} from '../../../core/models/common.model';
 
 /** Wire types mirroring the API. Dates arrive as Jalali strings plus an ISO value. */
 

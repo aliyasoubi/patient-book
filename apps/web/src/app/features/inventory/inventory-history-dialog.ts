@@ -1,3 +1,4 @@
+import { FaDatePipe } from '../../shared/pipes/jalali.pipe';
 import { Component, inject, signal } from '@angular/core';
 import {
   MatDialog,
@@ -6,7 +7,6 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -27,9 +27,10 @@ import {
   inventoryUnitLabel,
   TRACEABLE_CATEGORIES,
 } from '../../shared/labels';
-import { PbButton, PbIconButton, PbStatusChip } from '../../shared/ui';
+import { PbLoadingDots, PbButton, PbIconButton, PbStatusChip } from '../../shared/ui';
 import type { StatusTone } from '../../shared/ui';
 import { InventoryLotDialog, type InventoryLotDialogData } from './inventory-lot-dialog';
+import { InventoryExpiryPipe } from './inventory-expiry';
 
 const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
   ok: 'neutral',
@@ -49,9 +50,11 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
   selector: 'pb-inventory-history-dialog',
   standalone: true,
   imports: [
+    FaDatePipe,
+    PbLoadingDots,
+    InventoryExpiryPipe,
     MatDialogModule,
     MatIconModule,
-    MatProgressBarModule,
     TranslatePipe,
     LoadError,
     PersianCountPipe,
@@ -67,7 +70,7 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
     </h2>
     <mat-dialog-content>
       @if (loading()) {
-        <mat-progress-bar mode="indeterminate" />
+        <pb-loading-dots [block]="true" />
       }
       @if (failed()) {
         <pb-load-error [message]="'inventoryHistory.loadFailed' | translate" (retry)="load()" />
@@ -83,7 +86,10 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
                 }}</span>
                 @if (lot.expiry) {
                   <pb-status-chip [tone]="expiryTone(lot)" icon="event">
-                    {{ expiryLabel(lot.expiryState) | translate: { date: (lot.expiry | faNum) } }}
+                    {{
+                      expiryLabel(lot.expiryState)
+                        | translate: { date: (lot.expiry | inventoryExpiry) }
+                    }}
                   </pb-status-chip>
                 }
                 <span class="lot__quantity">
@@ -123,7 +129,7 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
                   }
                   @if (m.expiry) {
                     <span class="line__meta">{{
-                      'inventory.expiresOn' | translate: { date: (m.expiry | faNum) }
+                      'inventory.expiresOn' | translate: { date: (m.expiry | inventoryExpiry) }
                     }}</span>
                   }
                   @if (m.patient; as patient) {
@@ -155,7 +161,7 @@ const EXPIRY_TONE: Record<ExpiryState, StatusTone> = {
                   <span class="line__note" dir="auto">{{ m.note }}</span>
                 }
                 <span class="line__meta">
-                  {{ m.at | faNum }}
+                  {{ m.at | faDate }}
                   @if (m.by) {
                     · {{ m.by }}
                   }

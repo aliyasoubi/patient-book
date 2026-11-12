@@ -30,6 +30,8 @@
 
   .table-wrap {
     overflow: auto;
+    /* Room for the scrollbar always: rows arriving must not narrow the table. */
+    scrollbar-gutter: stable;
   }
 }
 
@@ -44,13 +46,6 @@
 
   // While any filter is on, the outline and label take the primary colour,
   // so the button reads as "set". Its height comes from pb-list-toolbar.
-  &__filter-btn {
-    &.is-active {
-      --mat-button-outlined-outline-color: var(--mat-sys-primary);
-      --mat-button-outlined-label-text-color: var(--mat-sys-primary);
-    }
-  }
-
   &__results {
     position: relative;
     display: flex;
@@ -127,7 +122,7 @@
   z-index: 0;
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
 }
 
@@ -138,7 +133,7 @@
   th {
     block-size: 48px;
     border-bottom-color: var(--pb-neutral-200);
-    background: color-mix(in srgb, #fff 92%, transparent);
+    background: color-mix(in srgb, var(--pb-surface) 92%, transparent);
     backdrop-filter: blur(8px);
     color: var(--pb-neutral-500);
     font-size: 0.75rem;
@@ -200,7 +195,7 @@
     transition: scale 260ms var(--pb-ease-spring);
 
     &[data-gender='female'] {
-      background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+      background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
       color: var(--pb-brand-strong);
     }
 
@@ -300,7 +295,14 @@
 
   &__actions {
     white-space: nowrap;
-    text-align: end;
+    vertical-align: middle;
+  }
+
+  &__action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--pb-space-1);
   }
 
   /* The row's call, shown on hover (always on touch). */
@@ -309,11 +311,9 @@
     place-items: center;
     inline-size: 36px;
     block-size: 36px;
-    margin-inline-end: var(--pb-space-1);
     border-radius: 10px;
-    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
     color: var(--pb-brand-strong);
-    vertical-align: middle;
     opacity: 0;
     scale: 0.85;
     transition:
@@ -329,6 +329,25 @@
     @media (hover: none) {
       opacity: 1;
       scale: 1;
+    }
+  }
+
+  /* The row menu: the call's twin in size and shape, quiet and always shown. */
+  &__quick--menu {
+    border: 0;
+    background: transparent;
+    color: var(--pb-neutral-500);
+    opacity: 1;
+    scale: 1;
+    cursor: pointer;
+    transition:
+      background-color 160ms var(--pb-ease-standard),
+      color 160ms var(--pb-ease-standard);
+
+    &:hover,
+    &[aria-expanded='true'] {
+      background: var(--pb-neutral-100);
+      color: var(--pb-graphite);
     }
   }
 

@@ -7,11 +7,13 @@ import { toLatinDigits } from '../../validators';
  * Teeth as the lab and surgery forms and their cards know them: FDI numbers (ISO 3950).
  * The tens digit is the quadrant — 1 upper right, 2 upper left, 3 lower left,
  * 4 lower right, by the patient's own sides — and the ones digit the tooth,
- * 1 at the midline to 7. The practice says "6 upper right" for `16`.
+ * 1 at the midline through 8 (the wisdom tooth). The practice says "6 upper right" for `16`.
  */
 export type Quadrant = 1 | 2 | 3 | 4;
 
-export const TOOTH_RANGE: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
+export const WISDOM_POSITION = 8;
+const SHORTCUT_POSITIONS = [1, 2, 3, 4, 5, 6, 7];
+const TOOTH_RANGE = [...SHORTCUT_POSITIONS, WISDOM_POSITION];
 
 /** Literal keys, not a template, so the i18n check sees every one. */
 export const QUADRANT_LABELS: Record<Quadrant, string> = {
@@ -35,7 +37,7 @@ export interface QuadrantView {
 /**
  * The chart's quadrants as the dentist sees the mouth: upper right, upper
  * left, lower right, lower left, the patient's right on the viewer's left and
- * each quadrant counting out from the midline — 7…1 | 1…7.
+ * each quadrant counting out from the midline — 8…1 | 1…8.
  */
 export function chartQuadrants(i18n: TranslateService): QuadrantView[] {
   return ([1, 2, 4, 3] as const).map((id) => {
@@ -51,7 +53,11 @@ export function chartQuadrants(i18n: TranslateService): QuadrantView[] {
 
 /** "6 upper right": a tooth as the practice says it, for a screen reader. */
 export function toothName(tooth: number, i18n: TranslateService): string {
-  return `${positionOf(tooth)} ${i18n.instant(QUADRANT_LABELS[quadrantOf(tooth)])}`;
+  const quadrant = i18n.instant(QUADRANT_LABELS[quadrantOf(tooth)]);
+  const position = positionOf(tooth);
+  return position === WISDOM_POSITION
+    ? i18n.instant('tooth.wisdomName', { quadrant })
+    : `${position} ${quadrant}`;
 }
 
 /**
@@ -79,10 +85,10 @@ export function teethByWork<T extends string>(
     .filter((group) => group.teeth.length);
 }
 
-/** Every tooth of one jaw: quadrants 1 and 2 are the upper, 3 and 4 the lower. */
-export function jawTeeth(jaw: 'upper' | 'lower'): number[] {
+/** The positions offered by the bulk shortcut; position 8 is picked individually. */
+export function jawShortcutTeeth(jaw: 'upper' | 'lower'): number[] {
   const quadrants: Quadrant[] = jaw === 'upper' ? [1, 2] : [3, 4];
-  return quadrants.flatMap((q) => TOOTH_RANGE.map((n) => q * 10 + n));
+  return quadrants.flatMap((q) => SHORTCUT_POSITIONS.map((n) => q * 10 + n));
 }
 
 /** Runs of consecutive tooth positions: [1,2,3,5] → [[1,3],[5,5]]. */
@@ -144,8 +150,8 @@ const RIGHT = /^(راست|right)$/;
 const LEFT = /^(چپ|left)$/;
 /** «هر دو طرف», folded to one token before reading. */
 const BOTH_SIDES = /^bothsides$/;
-/** One to seven, written out, in order. */
-const NUMBER_WORDS = [/^یک$/, /^دو$/, /^سه$/, /^چهار$/, /^پنج$/, /^شش$/, /^هفت$/];
+/** One to eight, written out, in order. */
+const NUMBER_WORDS = [/^یک$/, /^دو$/, /^سه$/, /^چهار$/, /^پنج$/, /^شش$/, /^هفت$/, /^(هشت|عقل)$/];
 /** «واحد»: the number before it counted implants, and named no tooth. */
 const UNITS = /^واحد$/;
 /** «و» glued to the word after it. */

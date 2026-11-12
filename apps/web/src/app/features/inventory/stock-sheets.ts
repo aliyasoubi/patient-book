@@ -60,9 +60,13 @@ export function suggestedOrder(item: Pick<InventoryItem, 'quantity' | 'minQuanti
  * `2028/07/15`, a Jalali `1407/05`. `null` when it is not a date yet.
  */
 export function expiryEnd(text: string): Date | null {
+  return parseStockExpiry(text)?.end ?? null;
+}
+
+export function parseStockExpiry(text: string) {
   const parts = toLatinDigits(text)
     .trim()
-    .split(/[\s/\-.]+/)
+    .split(/[\s/\-.٫]+/)
     .filter(Boolean);
   if (!parts.length || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p))) return null;
   const nums = parts.map(Number);
@@ -76,17 +80,22 @@ export function expiryEnd(text: string): Date | null {
     day = nums.length === 3 ? nums[0] : undefined;
   } else return null;
   if (month !== undefined && (month < 1 || month > 12)) return null;
+  if (day !== undefined && (day < 1 || day > 31)) return null;
+  let end: Date;
   if (year >= 1300 && year <= 1499) {
     const first = parseJalali(`${year}/${month ?? 1}/${day ?? 1}`, 'yyyy/M/d', new Date());
     if (!isValid(first)) return null;
-    return day ? first : month ? endOfJalaliMonth(first) : endOfJalaliYear(first);
+    end = day ? first : month ? endOfJalaliMonth(first) : endOfJalaliYear(first);
+    return { year, month, day, end, calendar: 'jalali' as const };
   }
   if (year < 1900 || year > 2199) return null;
-  return day
+  end = day
     ? new Date(year, month! - 1, day)
     : month
       ? new Date(year, month, 0)
       : new Date(year, 11, 31);
+  if (day !== undefined && end.getDate() !== day) return null;
+  return { year, month, day, end, calendar: 'gregory' as const };
 }
 
 /** An expiry already behind us — receiving stock like that is almost always a typo. */

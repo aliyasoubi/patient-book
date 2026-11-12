@@ -1,3 +1,4 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, inject, input, output, signal } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
@@ -36,7 +37,7 @@ export interface SelectOption {
 @Component({
   selector: 'pb-select-field',
   standalone: true,
-  imports: [ReactiveFormsModule, MatSelectModule, TranslatePipe, PbIcon],
+  imports: [MatTooltipModule, ReactiveFormsModule, MatSelectModule, TranslatePipe, PbIcon],
   templateUrl: './select-field.html',
   styleUrl: './select-field.scss',
 })

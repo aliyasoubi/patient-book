@@ -1,38 +1,95 @@
 /**
  * The Dentixo brand system, 60 / 30 / 10: fog grey for the ground,
  * graphite for type and hairlines, electric orange only where the eye should
- * land. Light mode only for now; screens adopt it one at a time, starting
- * with sign-in.
+ * land — in light and in dark, from one set of tokens.
  */
 
 /** The palette, as custom properties. Included once, on `html` (styles.scss). */
 @mixin tokens {
-  --pb-brand: #ff6a00;
-  --pb-brand-strong: #e65f00;
-  --pb-graphite: #2f2f33;
-  --pb-fog: #e6e8eb;
+  // Every token names its light and its dark value; `color-scheme` on the
+  // root (set by the theme switch, or by the OS) picks one. In dark the
+  // ratio holds: a graphite ground (60), fog type and hairlines (30), the
+  // same orange (10). Graphite and fog trade places, so anything drawn "in
+  // graphite" — type, a dark tile, a tooltip — turns light, and its white
+  // type turns dark (`--pb-on-graphite`).
+  @include orange;
+  --pb-graphite: light-dark(#2f2f33, #ececef);
+  --pb-on-graphite: light-dark(#fff, #1c1c20);
+  --pb-fog: light-dark(#e6e8eb, #18181b);
+  --pb-scrim: light-dark(rgb(47 47 51 / 22%), rgb(12 12 15 / 58%));
+  /* Paper: cards, fields, panels — white in light, a raised graphite in dark. */
+  --pb-surface: light-dark(#fff, #26262b);
 
-  --pb-neutral-50: #fafbfc;
-  --pb-neutral-100: #f5f6f8;
-  --pb-neutral-200: #e6e8eb;
-  --pb-neutral-300: #d1d5db;
-  --pb-neutral-400: #9ca3af;
-  --pb-neutral-600: #4b5563;
-  --pb-neutral-800: #2f2f33;
-  --pb-neutral-900: #1f1f23;
+  --pb-neutral-50: light-dark(#fafbfc, #202024);
+  --pb-neutral-100: light-dark(#f5f6f8, #2c2c31);
+  --pb-neutral-200: light-dark(#e6e8eb, #36363c);
+  --pb-neutral-300: light-dark(#d1d5db, #47474e);
+  --pb-neutral-400: light-dark(#9ca3af, #6e7078);
+  --pb-neutral-500: light-dark(#6b7280, #8f919a);
+  --pb-neutral-600: light-dark(#4b5563, #b0b2ba);
+  --pb-neutral-800: light-dark(#2f2f33, #e4e5e9);
+  --pb-neutral-900: light-dark(#1f1f23, #f3f4f6);
+
+  // What a status means, as a mark (a dot, a bar) and as type on the page.
+  --pb-success: light-dark(#1f9d55, #34c26f);
+  --pb-success-ink: light-dark(#17703d, #6fdc9a);
+  --pb-warn: light-dark(#e08a00, #f2a524);
+  --pb-warn-ink: light-dark(#8f5600, #f5c36a);
+  --pb-danger: light-dark(#e5484d, #ff6b70);
+  --pb-danger-ink: light-dark(#b4232a, #ff9296);
 
   // Elevation: soft and clean — wide, faint, neutral, never coloured. Each
   // step is a whisper of a contact shadow plus one wide diffuse one that sinks
   // below the element (negative spread), so edges read as lifted without a
   // dark rim. Each lifts a little further off the fog ground.
-  --pb-shadow-xs: 0 1px 2px rgb(31 31 35 / 0.03);
-  --pb-shadow-sm: 0 1px 2px rgb(31 31 35 / 0.03), 0 6px 16px -8px rgb(31 31 35 / 0.06);
-  --pb-shadow-md: 0 1px 3px rgb(31 31 35 / 0.03), 0 12px 28px -14px rgb(31 31 35 / 0.1);
-  --pb-shadow-lg: 0 2px 6px -2px rgb(31 31 35 / 0.04), 0 24px 56px -24px rgb(31 31 35 / 0.16);
+  --pb-shadow-xs: 0 1px 2px light-dark(rgb(31 31 35 / 0.03), rgb(0 0 0 / 0.3));
+  --pb-shadow-sm:
+    0 1px 2px light-dark(rgb(31 31 35 / 0.03), rgb(0 0 0 / 0.3)),
+    0 6px 16px -8px light-dark(rgb(31 31 35 / 0.06), rgb(0 0 0 / 0.45));
+  --pb-shadow-md:
+    0 1px 3px light-dark(rgb(31 31 35 / 0.03), rgb(0 0 0 / 0.35)),
+    0 12px 28px -14px light-dark(rgb(31 31 35 / 0.1), rgb(0 0 0 / 0.55));
+  --pb-shadow-lg:
+    0 2px 6px -2px light-dark(rgb(31 31 35 / 0.04), rgb(0 0 0 / 0.4)),
+    0 24px 56px -24px light-dark(rgb(31 31 35 / 0.16), rgb(0 0 0 / 0.65));
 
   // Latin as typed — usernames, passwords, ids — in Inter, with Latin digits
   // (`fonts/inter.css`). Persian in the same element still falls to Vazirmatn.
   --pb-font-latin: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/** The brand orange: the default accent, and always the logo's. */
+@mixin orange {
+  --pb-brand: #ff6a00;
+  --pb-brand-strong: light-dark(#e65f00, #ff8c42);
+  /* Type in the accent's own hue, on its 14% tint. */
+  --pb-brand-ink: light-dark(#7a3300, #ffb98a);
+}
+
+/**
+ * The accent — the 10 — can be one of two calmer hues instead of the
+ * orange (Settings → Appearance). Both are muted mid tones: quiet on the fog
+ * and on graphite, and dark enough under white type in either scheme.
+ * `data-accent` on the root picks one for the whole app; on any other
+ * element it repaints just that element — the swatches in Settings show
+ * their own hue that way. Included at the top level (styles.scss).
+ */
+@mixin accents {
+  [data-accent='orange'] {
+    @include orange;
+  }
+
+  [data-accent='sage'] {
+    --pb-brand: light-dark(#3d8a7b, #4a9a8a);
+    --pb-brand-strong: light-dark(#2f7266, #74c0ae);
+    --pb-brand-ink: light-dark(#1d4a41, #a8dccf);
+  }
+
+  [data-accent='dusk'] {
+    --pb-brand: light-dark(#5866c2, #6d7bd2);
+    --pb-brand-strong: light-dark(#4653a8, #9aa5ea);
+    --pb-brand-ink: light-dark(#283170, #c4caf3);
+  }
 }
 
 /**
@@ -43,8 +100,8 @@
 @mixin roles {
   --mat-sys-primary: var(--pb-brand);
   --mat-sys-on-primary: #fff;
-  --mat-sys-primary-container: color-mix(in srgb, var(--pb-brand) 14%, #fff);
-  --mat-sys-on-primary-container: #7a3300;
+  --mat-sys-primary-container: color-mix(in srgb, var(--pb-brand) 14%, var(--pb-surface));
+  --mat-sys-on-primary-container: var(--pb-brand-ink);
   --mat-sys-secondary-container: var(--pb-neutral-200);
   --mat-sys-on-secondary-container: var(--pb-graphite);
   --mat-sys-on-surface: var(--pb-graphite);
@@ -52,23 +109,23 @@
   --mat-sys-outline: var(--pb-neutral-400);
   --mat-sys-outline-variant: var(--pb-neutral-300);
   --mat-sys-surface: var(--pb-neutral-50);
-  --mat-sys-surface-container-lowest: #fff;
-  --mat-sys-surface-container-low: #fff;
+  --mat-sys-surface-container-lowest: var(--pb-surface);
+  --mat-sys-surface-container-low: var(--pb-surface);
   --mat-sys-surface-container: var(--pb-neutral-100);
   --mat-sys-surface-container-high: var(--pb-neutral-200);
   --mat-sys-surface-container-highest: var(--pb-neutral-200);
+  --mat-sys-error: var(--pb-danger);
   --mat-sys-level1: var(--pb-shadow-sm);
   --mat-sys-level2: var(--pb-shadow-md);
   --mat-sys-level3: var(--pb-shadow-lg);
 }
 
 /**
- * A screen drawn in the brand: the light scheme, the brand roles, and the
- * fog ground with graphite type, for everything inside the element.
+ * A screen drawn in the brand: the brand roles, and the fog ground with
+ * graphite type, for everything inside the element — in whichever scheme
+ * the root is in.
  */
 @mixin light-screen {
-  color-scheme: light;
-
   @include roles;
 
   background: var(--pb-fog);

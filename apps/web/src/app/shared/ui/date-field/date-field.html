@@ -13,9 +13,12 @@
       [id]="id"
       [class.date__control--words]="!!pretty()"
       [value]="pretty() ?? text()"
-      [placeholder]="withHint(placeholder() || ('calendar.placeholder' | translate))"
+      [placeholder]="
+        placeholder() ||
+        ((focused() ? 'calendar.editPlaceholder' : 'calendar.placeholder') | translate)
+      "
       [attr.aria-invalid]="showError() || null"
-      [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
+      [attr.aria-describedby]="message() || hint() ? messageId : null"
       [attr.aria-expanded]="open()"
       aria-haspopup="dialog"
       (input)="onInput($event)"
@@ -23,9 +26,6 @@
       (focus)="onFocus()"
       (blur)="onBlur()"
     />
-    @if (showInlineHint()) {
-      <span class="date__hint" [id]="id + '-hint'" [title]="hint()">{{ hint() }}</span>
-    }
     <button
       type="button"
       class="date__toggle"
@@ -39,13 +39,17 @@
   </div>
 
   @if (open()) {
+    <!-- Floating under the field; inside a dialog it opens in place instead,
+         so the dialog grows to hold it rather than hiding it in a scroll. -->
     <div
+      #popover
       class="date__popover"
-      [class.is-above]="above()"
+      [class.is-above]="above() && !inline()"
+      [class.is-inline]="inline()"
       role="dialog"
       [attr.aria-label]="label() || ('calendar.open' | translate)"
-      animate.enter="date__popover--in"
-      animate.leave="date__popover--out"
+      [animate.enter]="inline() ? 'date__popover--grow' : 'date__popover--in'"
+      [animate.leave]="inline() ? 'date__popover--shrink' : 'date__popover--out'"
     >
       <!-- A month of six weeks is a row taller than one of five: eased, not jumped. -->
       <pb-auto-height>
@@ -67,12 +71,14 @@
     </div>
   }
 </div>
-<div class="date__message-slot" [class.is-open]="!!message()">
+<!-- An error, or else the hint: always under the box, never inside it, where
+     it would crowd the date and the example. -->
+<div class="date__message-slot" [class.is-open]="!!message() || !!hint()">
   <p
     class="date__message"
     [class.date__message--error]="messageIsError()"
     [id]="messageId"
-    [attr.aria-hidden]="message() ? null : 'true'"
+    [attr.aria-hidden]="message() || hint() ? null : 'true'"
   >
     {{ messageText() }}
   </p>

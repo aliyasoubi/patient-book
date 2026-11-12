@@ -12,14 +12,16 @@
     [type]="visibleType()"
     [placeholder]="placeholderText()"
     [attr.autocomplete]="nativeAutocomplete()"
+    [attr.name]="nativeName()"
+    [attr.enterkeyhint]="enterKeyHint()"
+    [attr.autocapitalize]="ltr() ? 'none' : null"
+    [attr.spellcheck]="ltr() ? 'false' : null"
+    [readOnly]="readOnly()"
     [attr.dir]="ltr() ? 'ltr' : null"
     [attr.aria-invalid]="showError() || null"
-    [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
+    [attr.aria-describedby]="message() || showInlineHint() ? messageId : null"
     [class.pb-input__control--ltr]="ltr()"
   />
-  @if (showInlineHint()) {
-    <span class="pb-input__hint" [id]="id + '-hint'" [title]="hint()">{{ hint() }}</span>
-  }
   @if (type() === 'password') {
     <button
       class="pb-input__toggle"
@@ -34,12 +36,14 @@
     </button>
   }
 </div>
-<div class="pb-input__message-slot" [class.is-open]="!!message()">
+<!-- An error, or the hint once the box holds text: under the box, never
+     squeezed in beside what was typed. -->
+<div class="pb-input__message-slot" [class.is-open]="!!message() || showInlineHint()">
   <p
     class="pb-input__message"
     [class.pb-input__message--error]="messageIsError()"
     [id]="messageId"
-    [attr.aria-hidden]="message() ? null : 'true'"
+    [attr.aria-hidden]="message() || showInlineHint() ? null : 'true'"
   >
     {{ messageText() }}
   </p>

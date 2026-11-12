@@ -63,7 +63,7 @@
           <span
             class="toast__progress"
             aria-hidden="true"
-            [style.animation-duration.ms]="t.duration"
+            [style.--toast-duration]="t.duration + 'ms'"
             [class.toast__progress--restarted]="t.bump % 2 === 1"
             (animationend)="expire(t, $event)"
           ></span>

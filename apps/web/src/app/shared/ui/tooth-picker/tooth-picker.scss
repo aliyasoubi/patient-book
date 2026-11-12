@@ -125,7 +125,7 @@
   }
 
   &:hover {
-    background: color-mix(in srgb, #fff 80%, transparent);
+    background: color-mix(in srgb, var(--pb-surface) 80%, transparent);
   }
 
   &:focus-visible {
@@ -219,6 +219,44 @@
   transition: color 200ms var(--pb-ease-standard);
 }
 
+.chart__tooth--wisdom {
+  &:first-child {
+    margin-inline-end: var(--pb-space-1);
+  }
+
+  &:last-child {
+    margin-inline-start: var(--pb-space-1);
+  }
+
+  &:not(.chart__tooth--on) {
+    .chart__crown {
+      fill: #eaf1f7;
+      stroke: #8b9eaf;
+    }
+
+    .chart__root {
+      fill: #d8e2eb;
+      stroke: #a2b2c0;
+    }
+
+    .chart__pulp,
+    .chart__detail {
+      stroke: #a2b2c0;
+    }
+  }
+
+  .chart__num {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    direction: rtl;
+  }
+}
+
+.chart__wisdom-label {
+  font-size: 0.625rem;
+}
+
 /* Picked: the crown takes the accent, the root a tint of it. */
 .chart__tooth--on {
   color: var(--pb-brand-strong, var(--mat-sys-primary));
@@ -229,7 +267,7 @@
   }
 
   .chart__root {
-    fill: color-mix(in srgb, var(--pb-brand, #ff6a00) 22%, #fff);
+    fill: color-mix(in srgb, var(--pb-brand, #ff6a00) 22%, var(--pb-surface));
     stroke: color-mix(in srgb, var(--pb-brand, #ff6a00) 50%, transparent);
   }
 
@@ -277,7 +315,7 @@
   padding: var(--pb-space-1) var(--pb-space-3) var(--pb-space-1) var(--pb-space-2);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 999px;
-  background: #fff;
+  background: var(--pb-surface);
   color: var(--pb-neutral-600);
   font: inherit;
   font-size: 0.8125rem;
@@ -309,7 +347,7 @@
 
   &.is-full {
     border-color: var(--pb-brand);
-    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
     color: var(--pb-brand-strong);
   }
 }
@@ -321,7 +359,7 @@
   block-size: 18px;
   border: 1.5px solid var(--pb-neutral-300);
   border-radius: 6px;
-  background: #fff;
+  background: var(--pb-surface);
   color: transparent;
   transition:
     border-color 200ms var(--pb-ease-standard),

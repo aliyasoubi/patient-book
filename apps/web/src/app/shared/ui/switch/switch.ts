@@ -23,6 +23,7 @@ import { Component, booleanAttribute, input, linkedSignal, output } from '@angul
       type="button"
       role="switch"
       [attr.aria-checked]="on()"
+      [attr.aria-label]="ariaLabel() || null"
       [disabled]="disabled()"
       (click)="toggle()"
     >
@@ -92,7 +93,7 @@ import { Component, booleanAttribute, input, linkedSignal, output } from '@angul
       inline-size: 18px;
       block-size: 18px;
       border-radius: 50%;
-      background: #fff;
+      background: var(--pb-surface);
       box-shadow:
         0 1px 2px rgb(31 31 35 / 0.18),
         0 2px 6px rgb(31 31 35 / 0.08);
@@ -129,6 +130,8 @@ import { Component, booleanAttribute, input, linkedSignal, output } from '@angul
 })
 export class PbSwitch {
   readonly checked = input(false);
+  /** The switch's name when it has no visible label: the switch itself says on or off. */
+  readonly ariaLabel = input('');
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly checkedChange = output<boolean>();
 

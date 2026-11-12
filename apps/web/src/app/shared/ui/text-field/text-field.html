@@ -38,7 +38,7 @@
       [attr.autocomplete]="nativeAutocomplete()"
       [attr.dir]="ltr() ? 'ltr' : null"
       [attr.aria-invalid]="showError() || null"
-      [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
+      [attr.aria-describedby]="message() || showInlineHint() ? messageId : null"
       [class.tf__control--ltr]="ltr()"
       [class.tf__control--latin]="latin()"
       [matAutocomplete]="auto"
@@ -66,16 +66,13 @@
       [attr.autocomplete]="nativeAutocomplete()"
       [attr.dir]="ltr() ? 'ltr' : null"
       [attr.aria-invalid]="showError() || null"
-      [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
+      [attr.aria-describedby]="message() || showInlineHint() ? messageId : null"
       [class.tf__control--ltr]="ltr()"
       [class.tf__control--latin]="latin()"
       (input)="groupDigits($event)"
     />
   }
 
-  @if (showInlineHint()) {
-    <span class="tf__hint" [id]="id + '-hint'" [title]="hint()">{{ hint() }}</span>
-  }
   @if (type() === 'password') {
     <button
       class="tf__toggle"
@@ -89,12 +86,14 @@
     </button>
   }
 </div>
-<div class="tf__message-slot" [class.is-open]="!!message()">
+<!-- An error, or the hint once the box holds text: under the box, never
+     squeezed in beside what was typed. -->
+<div class="tf__message-slot" [class.is-open]="!!message() || showInlineHint()">
   <p
     class="tf__message"
     [class.tf__message--error]="messageIsError()"
     [id]="messageId"
-    [attr.aria-hidden]="message() ? null : 'true'"
+    [attr.aria-hidden]="message() || showInlineHint() ? null : 'true'"
   >
     {{ messageText() }}
   </p>

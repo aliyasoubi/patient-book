@@ -26,7 +26,7 @@
   inset-inline-start: var(--pb-space-1);
   inline-size: calc((100% - 2 * var(--pb-space-1)) / var(--_count, 2));
   border-radius: 10px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   translate: calc(var(--_index, 0) * -100%) 0;
   transition:

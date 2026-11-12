@@ -325,6 +325,17 @@ export const LINE_ICONS = {
     'M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
   ],
   'arrow-bar-to-down': ['M4 20l16 0', 'M12 14l0 -10', 'M12 14l4 -4', 'M12 14l-4 -4'],
+  'adjustments-horizontal': [
+    'M14 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0',
+    'M4 6l8 0',
+    'M16 6l4 0',
+    'M8 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0',
+    'M4 12l2 0',
+    'M10 12l10 0',
+    'M17 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0',
+    'M4 18l11 0',
+    'M19 18l1 0',
+  ],
 } as const satisfies Record<string, readonly string[]>;
 
 export type LineIconName = keyof typeof LINE_ICONS;

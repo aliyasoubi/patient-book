@@ -60,7 +60,8 @@
   text-align: right;
   letter-spacing: 0.02em;
 
-  /* At rest, the date in words reads right to left like the rest of the page. */
+  /* The written date and its example read right to left. */
+  &:placeholder-shown:not(:focus),
   &--words {
     direction: rtl;
     text-align: start;
@@ -92,7 +93,7 @@
   padding: var(--pb-space-4);
   border: 1px solid var(--pb-neutral-200, var(--mat-sys-outline-variant));
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-lg, 0 12px 32px -12px rgb(16 24 40 / 0.28));
   transform-origin: top center;
 
@@ -101,6 +102,52 @@
     inset-block-end: calc(100% + var(--pb-space-2));
     transform-origin: bottom center;
   }
+}
+
+/* In a dialog: part of the flow, full width, quieter — and it grows open. */
+.date__popover.is-inline {
+  position: relative;
+  inset: auto;
+  inline-size: auto;
+  max-inline-size: none;
+  margin-block-start: var(--pb-space-2);
+  box-shadow: none;
+  transform-origin: top center;
+}
+
+@keyframes date-grow {
+  from {
+    max-block-size: 0;
+    padding-block: 0;
+    opacity: 0;
+  }
+
+  to {
+    max-block-size: 480px;
+  }
+}
+
+@keyframes date-shrink {
+  from {
+    max-block-size: 480px;
+  }
+
+  to {
+    max-block-size: 0;
+    padding-block: 0;
+    margin-block-start: 0;
+    opacity: 0;
+  }
+}
+
+.date__popover--grow {
+  overflow: hidden;
+  animation: date-grow 320ms var(--pb-ease-emphasized);
+}
+
+.date__popover--shrink {
+  overflow: hidden;
+  animation: date-shrink 240ms var(--pb-ease-standard) forwards;
 }
 
 .date__popover--in {
@@ -137,11 +184,11 @@
   }
 
   &--primary {
-    background: color-mix(in srgb, var(--mat-sys-primary) 12%, #fff);
+    background: color-mix(in srgb, var(--mat-sys-primary) 12%, var(--pb-surface));
     color: var(--mat-sys-primary);
 
     &:hover {
-      background: color-mix(in srgb, var(--mat-sys-primary) 18%, #fff);
+      background: color-mix(in srgb, var(--mat-sys-primary) 18%, var(--pb-surface));
     }
   }
 }
@@ -169,11 +216,9 @@
   }
 
   .date__popover--in,
-  .date__popover--out {
+  .date__popover--out,
+  .date__popover--grow,
+  .date__popover--shrink {
     animation-duration: 1ms;
   }
-}
-
-.date__hint {
-  @include field.inline-hint;
 }

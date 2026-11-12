@@ -37,7 +37,7 @@
       @if (trackedNote(); as since) {
         <p class="consumption__note">
           <mat-icon aria-hidden="true">history</mat-icon>
-          {{ 'consumption.trackedFrom' | translate: { date: (since | faNum) } }}
+          {{ 'consumption.trackedFrom' | translate: { date: (since | jalali: 'long') } }}
         </p>
       }
 

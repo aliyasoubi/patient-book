@@ -1,3 +1,4 @@
+import { FaDatePipe } from '../../shared/pipes/jalali.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -20,7 +21,6 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DateAdapter } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { addDays } from 'date-fns-jalali';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
@@ -56,6 +56,7 @@ import {
 import { PersianNumberPipe, formatPersianCount } from '../../shared/pipes/persian-number.pipe';
 import { toLatinDigits } from '../../shared/validators';
 import {
+  PbFormSkeleton,
   PbAutoHeight,
   PbButton,
   PbDateField,
@@ -63,6 +64,7 @@ import {
   PbIconButton,
   PbPage,
   PbPageHeader,
+  PbFormPreview,
   PbSegmentedButton,
   PbSelectField,
   PbSwitcher,
@@ -130,9 +132,10 @@ const teethUnlessJawWork = (control: AbstractControl<LabToothWork[]>): Validatio
   selector: 'pb-lab-case-form',
   standalone: true,
   imports: [
+    FaDatePipe,
+    PbFormSkeleton,
     ReactiveFormsModule,
     MatIconModule,
-    MatProgressBarModule,
     TranslatePipe,
     PersianNumberPipe,
     PbAutoHeight,
@@ -142,6 +145,7 @@ const teethUnlessJawWork = (control: AbstractControl<LabToothWork[]>): Validatio
     PbIconButton,
     PbPage,
     PbPageHeader,
+    PbFormPreview,
     PbSegmentedButton,
     PbSelectField,
     PbSwitcher,

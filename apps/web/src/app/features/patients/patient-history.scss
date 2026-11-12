@@ -55,7 +55,7 @@
   padding: var(--pb-space-4);
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 18px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   animation: history-rise 420ms var(--pb-ease-emphasized) backwards;
 }
@@ -66,7 +66,7 @@
   inline-size: 40px;
   block-size: 40px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+  background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
   color: var(--pb-brand-strong);
 }
 
@@ -129,7 +129,7 @@
 
 .event {
   --_tone: var(--pb-brand);
-  --_tint: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+  --_tint: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
 
   position: relative;
   display: grid;
@@ -139,8 +139,8 @@
     backwards;
 
   &[data-kind='create'] {
-    --_tone: #17703d;
-    --_tint: color-mix(in srgb, #1f9d55 10%, #fff);
+    --_tone: var(--pb-success-ink);
+    --_tint: color-mix(in srgb, var(--pb-success) 10%, var(--pb-surface));
   }
 
   &[data-kind='archive'] {
@@ -155,7 +155,7 @@
   place-items: center;
   inline-size: 36px;
   block-size: 36px;
-  border: 2px solid #fff;
+  border: 2px solid var(--pb-surface);
   border-radius: 50%;
   background: var(--_tint);
   box-shadow: 0 0 0 1px var(--pb-neutral-200);
@@ -174,7 +174,7 @@
   padding: var(--pb-space-3) var(--pb-space-4);
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 16px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-xs);
   transition: box-shadow 220ms var(--pb-ease-standard);
 
@@ -270,7 +270,7 @@
   transition: background-color 160ms var(--pb-ease-standard);
 
   &:hover {
-    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
   }
 
   pb-icon {
@@ -321,11 +321,11 @@
 .diff__from {
   padding: 1px 7px;
   border-radius: 6px;
-  background: color-mix(in srgb, #e5484d 7%, #fff);
-  color: #b4232a;
+  background: color-mix(in srgb, var(--pb-danger) 7%, var(--pb-surface));
+  color: var(--pb-danger-ink);
   font-size: 0.8125rem;
   text-decoration: line-through;
-  text-decoration-color: color-mix(in srgb, #b4232a 50%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--pb-danger-ink) 50%, transparent);
 }
 
 .diff__arrow {
@@ -335,8 +335,8 @@
 .diff__to {
   padding: 1px 7px;
   border-radius: 6px;
-  background: color-mix(in srgb, #1f9d55 8%, #fff);
-  color: #17703d;
+  background: color-mix(in srgb, var(--pb-success) 8%, var(--pb-surface));
+  color: var(--pb-success-ink);
   font-size: 0.8125rem;
   font-weight: 700;
   text-decoration: none;

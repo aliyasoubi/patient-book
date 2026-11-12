@@ -1,0 +1,79 @@
+/**
+ * Loading, two ways, and never a bar or a spinner:
+ *
+ * - When we know what is coming, a skeleton of exactly that: the same rows,
+ *   cards and fields, at the same sizes, so the result lands in place and
+ *   nothing moves. Built from `.pb-skel` blocks inside each page's own
+ *   layout classes, sized with `--w` and `--h`.
+ * - When we don't, `<pb-loading-dots>` (shared/ui/loading-dots).
+ *
+ * Blocks pulse together in a soft wave (`--skel-i` staggers them), and the
+ * skeleton fades in after a beat, so a fast answer never flashes one.
+ */
+
+@keyframes pb-skel-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes pb-skel-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@mixin styles {
+  .pb-skel {
+    display: block;
+    flex: none;
+    inline-size: var(--w, 100%);
+    max-inline-size: 100%;
+    block-size: var(--h, 12px);
+    border-radius: var(--r, 7px);
+    background: color-mix(in srgb, var(--pb-graphite) 9%, transparent);
+    animation: pb-skel-pulse 1.5s calc(var(--skel-i, 0) * 110ms) ease-in-out infinite;
+  }
+
+  /* A column of lines spread over a fixed height, to match text that wraps. */
+  .skel-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+
+  .pb-skel--circle {
+    --r: 50%;
+  }
+
+  .pb-skel--pill {
+    --r: 999px;
+  }
+
+  /* A whole skeleton: appears after a beat, so a quick answer shows no flash. */
+  .pb-skeleton {
+    animation: pb-skel-in 300ms 180ms var(--pb-ease-standard) backwards;
+  }
+
+  /* A reload over results already shown: they step back until the answer is in. */
+  .pb-busy-dim {
+    transition: opacity 200ms var(--pb-ease-standard);
+
+    &.is-busy {
+      opacity: 0.55;
+    }
+  }
+
+  /* Results replacing a skeleton fade in where it stood. */
+  .pb-loaded {
+    animation: pb-skel-in 260ms var(--pb-ease-standard);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pb-skel,
+    .pb-skeleton,
+    .pb-loaded {
+      animation: none;
+    }
+  }
+}

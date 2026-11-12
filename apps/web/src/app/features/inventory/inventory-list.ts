@@ -382,7 +382,7 @@ export class InventoryList {
         data,
         autoFocus: 'first-tabbable',
         // An implant's use picks its tooth on the chart, which needs the room.
-        width: kind === 'use' && item.category === 'implant' ? '720px' : '480px',
+        width: kind === 'use' && item.category === 'implant' ? '850px' : '480px',
         maxWidth: '92vw',
       })
       .afterClosed()

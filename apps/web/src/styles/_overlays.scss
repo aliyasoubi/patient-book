@@ -13,7 +13,7 @@
   @include mat.menu-overrides(
     (
       container-shape: 16px,
-      container-color: #fff,
+      container-color: var(--pb-surface),
       container-elevation-shadow: var(--pb-shadow-lg),
       item-label-text-size: 0.875rem,
       item-hover-state-layer-color: var(--pb-neutral-100),
@@ -25,13 +25,13 @@
   @include mat.dialog-overrides(
     (
       container-shape: 24px,
-      container-color: #fff,
+      container-color: var(--pb-surface),
       container-elevation-shadow: var(--pb-shadow-lg),
     )
   );
   @include mat.select-overrides(
     (
-      panel-background-color: #fff,
+      panel-background-color: var(--pb-surface),
       container-elevation-shadow: var(--pb-shadow-lg),
       enabled-arrow-color: var(--pb-neutral-400),
       focused-arrow-color: var(--pb-brand),
@@ -39,7 +39,7 @@
   );
   @include mat.autocomplete-overrides(
     (
-      background-color: #fff,
+      background-color: var(--pb-surface),
       container-shape: 16px,
       container-elevation-shadow: var(--pb-shadow-lg),
     )
@@ -48,7 +48,8 @@
     (
       container-color: var(--pb-graphite),
       container-shape: 8px,
-      supporting-text-color: #fff,
+      supporting-text-color: var(--pb-on-graphite),
+      supporting-text-font: (Vazirmatn, 'Segoe UI', Tahoma, sans-serif),
       supporting-text-size: 0.8125rem,
     )
   );
@@ -84,8 +85,20 @@
     min-block-size: 40px;
     border-radius: 10px;
 
+    // A 20px icon beside 14px text, as in the sidebar; Material's 24px
+    // outweighs the label.
     .mat-icon {
+      inline-size: 20px;
+      block-size: 20px;
+      margin-inline-end: var(--pb-space-3);
       color: var(--pb-neutral-600);
+      font-size: 20px;
+    }
+
+    // Vazirmatn's letters sit high in their line box; one pixel down puts
+    // the word's body on the icon's centre line.
+    .mat-mdc-menu-item-text {
+      translate: 0 1px;
     }
   }
 
@@ -132,7 +145,7 @@
   }
 
   .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
-    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
 
     .mdc-list-item__primary-text {
       color: var(--pb-brand-strong);
@@ -164,7 +177,7 @@
 
   // A dialog's backdrop blurs the app behind it, like the spotlight.
   .cdk-overlay-dark-backdrop {
-    background: color-mix(in srgb, var(--pb-graphite) 22%, transparent);
+    background: var(--pb-scrim);
     backdrop-filter: blur(6px);
   }
 }

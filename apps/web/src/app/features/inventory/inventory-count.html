@@ -15,8 +15,24 @@
     />
   </div>
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
+  @if (loading() && items().length === 0) {
+    <!-- The shelf to come: its heading and rows, each with its counting field. -->
+    <section class="shelf pb-skeleton" aria-hidden="true">
+      <span class="pb-skel" style="--w: 140px; --h: 18px; margin-block-end: 12px"></span>
+      <ul class="sheet">
+        @for (i of [0, 1, 2, 3, 4]; track i) {
+          <li class="sheet__row" [style.--skel-i]="i">
+            <div class="sheet__what">
+              <span class="pb-skel" style="--w: 52%; --h: 14px; margin-block-end: 8px"></span>
+              <span class="pb-skel" style="--w: 34%; --h: 11px"></span>
+            </div>
+            <div class="sheet__fields">
+              <span class="pb-skel" style="--w: 160px; --h: 48px; --r: 12px"></span>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
   }
   @if (failed()) {
     <pb-load-error [message]="'inventory.loadFailed' | translate" (retry)="load()" />

@@ -42,56 +42,46 @@
           </div>
         </header>
 
-        <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pw">
+        <form [formGroup]="password.form" (ngSubmit)="password.submit()" novalidate class="pw">
           <pb-input
-            [control]="form.controls.currentPassword"
+            [control]="password.form.controls.currentPassword"
             [label]="'account.currentPassword' | translate"
             type="password"
             prefixIcon="lock"
             [ltr]="true"
             nativeAutocomplete="current-password"
-            [showErrors]="tried()"
-            [errorMessages]="currentPasswordErrors()"
+            [showErrors]="false"
+            [readOnly]="password.saving()"
           />
           <pb-input
-            [control]="form.controls.newPassword"
+            [control]="password.form.controls.newPassword"
             [label]="'account.newPassword' | translate"
             type="password"
             prefixIcon="key"
             [ltr]="true"
             nativeAutocomplete="new-password"
-            [showErrors]="tried()"
+            [showErrors]="false"
+            [readOnly]="password.saving()"
           />
           <pb-input
-            [control]="form.controls.confirmPassword"
+            [control]="password.form.controls.confirmPassword"
             [label]="'account.confirmPassword' | translate"
             type="password"
             prefixIcon="key"
             [ltr]="true"
             nativeAutocomplete="new-password"
-            [showErrors]="tried()"
+            [showErrors]="false"
+            [readOnly]="password.saving()"
           />
 
-          <ul class="rules">
-            @for (rule of rules(); track rule.key) {
-              <li class="rules__item" [class.is-met]="rule.met">
-                <span class="rules__tick" aria-hidden="true"
-                  ><pb-icon name="check" [size]="12" [stroke]="3"
-                /></span>
-                <span>{{ rule.key | translate }}</span>
-                <span class="visually-hidden">{{
-                  (rule.met ? 'account.ruleMet' : 'account.ruleUnmet') | translate
-                }}</span>
-              </li>
-            }
-          </ul>
+          <pb-password-rules [rules]="password.rules()" />
 
           <div class="pw__actions">
             <pb-button
               variant="flat"
               type="submit"
               icon="check"
-              [loading]="saving()"
+              [loading]="password.saving()"
               [shrinkWhileLoading]="true"
               [loadingText]="'account.savingLabel' | translate"
             >

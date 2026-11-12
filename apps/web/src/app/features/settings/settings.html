@@ -43,6 +43,27 @@
           (valueChange)="setTheme($any($event))"
           [ariaLabel]="'settings.displayMode' | translate"
         />
+
+        <!-- The accent: each swatch shows its own hue in the current scheme. -->
+        <div class="accents" role="radiogroup" [attr.aria-label]="'settings.accent' | translate">
+          <span class="accents__label" aria-hidden="true">{{ 'settings.accent' | translate }}</span>
+          @for (accent of accents; track accent.value) {
+            <button
+              type="button"
+              role="radio"
+              class="accent"
+              [attr.data-accent]="accent.value"
+              [class.is-on]="theme.accent() === accent.value"
+              [attr.aria-checked]="theme.accent() === accent.value"
+              (click)="theme.setAccent(accent.value)"
+            >
+              <span class="accent__swatch" aria-hidden="true">
+                <pb-icon name="check" [size]="14" />
+              </span>
+              <span class="accent__name">{{ accent.label | translate }}</span>
+            </button>
+          }
+        </div>
       </section>
     </div>
 
@@ -81,10 +102,8 @@
                 [checked]="lab.isActive"
                 [disabled]="labBusy() === lab.id"
                 (checkedChange)="setLabActive(lab, $event)"
-                [attr.aria-label]="lab.name"
-              >
-                {{ (lab.isActive ? 'settings.labActive' : 'settings.labInactive') | translate }}
-              </pb-switch>
+                [ariaLabel]="'settings.labActiveAria' | translate: { name: lab.name }"
+              />
             } @else if (!lab.isActive) {
               <span class="chip">{{ 'settings.labInactive' | translate }}</span>
             }

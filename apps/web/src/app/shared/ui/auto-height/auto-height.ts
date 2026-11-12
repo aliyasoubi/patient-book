@@ -17,7 +17,7 @@ import { Component, DestroyRef, ElementRef, afterNextRender, inject } from '@ang
     :host {
       display: block;
       min-inline-size: 0;
-      transition: height 320ms var(--pb-ease-standard);
+      transition: height var(--auto-height-timing, 320ms var(--pb-ease-standard));
     }
 
     :host(.is-moving) {
@@ -34,6 +34,10 @@ import { Component, DestroyRef, ElementRef, afterNextRender, inject } from '@ang
     @media (prefers-reduced-motion: reduce) {
       :host {
         transition: none;
+      }
+
+      :host(.is-moving) {
+        overflow: visible;
       }
     }
   `,

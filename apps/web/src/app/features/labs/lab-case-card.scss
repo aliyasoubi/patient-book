@@ -18,7 +18,7 @@
   overflow: hidden;
   border: 1px solid var(--pb-neutral-200);
   border-radius: 16px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   transition: box-shadow 220ms var(--pb-ease-standard);
 
@@ -208,7 +208,7 @@
 
   &[data-tone='success'],
   &[data-tone='success'] pb-icon {
-    color: #17703d;
+    color: var(--pb-success-ink);
   }
 }
 

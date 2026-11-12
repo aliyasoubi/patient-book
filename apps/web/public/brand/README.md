@@ -16,10 +16,11 @@ re-cut at any size without a design tool in the loop.
 | `dentixo-icon.svg`           | App-icon source, full bleed square.                              |
 | `dentixo-icon-maskable.svg`  | Android maskable source — mark held inside the safe zone.         |
 
-Rasterised outputs live one level up: `../favicon.svg`, `../favicon.ico`,
-`../apple-touch-icon.png`, `../icons/icon-{192,512}.png`,
-`../icons/icon-maskable-512.png`, all wired up in `src/index.html` and
-`../manifest.webmanifest`.
+The browser uses `../favicon.svg` with a multi-size `../favicon.ico` fallback.
+Android uses the standard and maskable 192px and 512px PNGs in `../icons/`,
+declared in `../manifest.webmanifest`. The 120px, 152px and 167px Apple touch
+icons live in `../icons/` alongside the root-level 180px `../apple-touch-icon.png`.
+The app declares all four sizes in `src/index.html` for iPhone and iPad.
 
 ## In the app
 
@@ -33,24 +34,11 @@ scales with the type tokens, and needs no second font.
 
 ## Colour
 
-The mark carries no colour of its own. In the app it inherits
-`--mat-sys-primary` — Slate, `#435e91` in light mode and `#acc7ff` in dark —
-and flips to `--mat-sys-on-primary` on the login screen's coloured panel.
-
-The only place a hex is pinned is the icon tile — `#5c77ac → #2a4678`, tones
-50 and 30 of the Slate ramp, matching the `theme-color` meta tags and the
-manifest — because a file on a phone's home screen can't resolve a CSS
-variable.
-
-The product palette is generated, not hand-picked: `src/styles/_theme-colors.scss`
-comes from the two seeds below, and every container/on-container pairing and
-the whole dark scheme fall out of them. To change the colour, regenerate the
-ramp from a new seed rather than editing hexes — including the three pinned
-above, which should track tones 50/30 of whatever the new primary ramp is.
-
-```bash
-cd apps/web && npx ng generate @angular/material:theme-color --primary-color='#435E91' --tertiary-color='#655975' --directory=src/styles/
-```
+The in-app mark inherits `--mat-sys-primary`. The favicon and launcher artwork
+use electric orange (`#ff6a00`) on graphite (`#2f2f33`) from
+`src/styles/_brand.scss`. The manifest and light browser chrome use the fog
+grey (`#e6e8eb`) of the login background. Update the SVGs, HTML theme colours
+and manifest together when changing these brand colours.
 
 ## Rules
 

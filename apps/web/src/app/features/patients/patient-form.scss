@@ -38,7 +38,7 @@
   padding-inline: var(--pb-space-4);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 999px;
-  background: #fff;
+  background: var(--pb-surface);
   color: var(--pb-neutral-600);
   font: inherit;
   font-size: 0.8125rem;
@@ -61,7 +61,7 @@
   &.is-on {
     border-color: var(--pb-graphite);
     background: var(--pb-graphite);
-    color: #fff;
+    color: var(--pb-on-graphite);
   }
 
   &.is-on[data-gender='female'] {
@@ -78,7 +78,7 @@
   transition: background-color 260ms var(--pb-ease-standard);
 
   &.is-filled {
-    background: color-mix(in srgb, #e08a00 9%, #fff);
+    background: color-mix(in srgb, var(--pb-warn) 9%, var(--pb-surface));
   }
 }
 
@@ -99,7 +99,7 @@
   padding: var(--pb-space-2);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 14px;
-  background: #fff;
+  background: var(--pb-surface);
   color: var(--pb-neutral-600);
   font: inherit;
   font-size: 0.8125rem;
@@ -124,7 +124,7 @@
 
   &.is-selected {
     border-color: color-mix(in srgb, var(--tx-fg) 45%, transparent);
-    background: color-mix(in srgb, var(--tx-fg) 7%, #fff);
+    background: color-mix(in srgb, var(--tx-fg) 7%, var(--pb-surface));
     color: var(--pb-graphite);
   }
 }
@@ -147,7 +147,7 @@
   }
 
   .is-selected & {
-    background: #fff;
+    background: var(--pb-surface);
   }
 }
 
@@ -236,7 +236,7 @@
     color 260ms var(--pb-ease-standard);
 
   &[data-gender='female'] {
-    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
     color: var(--pb-brand-strong);
   }
 }
@@ -336,8 +336,8 @@
   gap: var(--pb-space-2);
   padding: var(--pb-space-3);
   border-radius: 12px;
-  background: color-mix(in srgb, #e08a00 10%, #fff);
-  color: #8f5600;
+  background: color-mix(in srgb, var(--pb-warn) 10%, var(--pb-surface));
+  color: var(--pb-warn-ink);
   font-size: 0.8125rem;
   line-height: 1.7;
 

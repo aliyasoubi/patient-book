@@ -1,3 +1,5 @@
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -25,14 +27,13 @@ import { RegistryService, SurgeryQuery } from '../../core/services/registry.serv
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import { EmptyState } from '../../shared/components/empty-state';
 import { LoadError } from '../../shared/components/load-error';
+import { formatJalaliLong } from '../../shared/pipes/jalali.pipe';
+import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import {
-  formatPersianCount,
-  formatPersianNumber,
-  PersianNumberPipe,
-} from '../../shared/pipes/persian-number.pipe';
-import {
+  PbAutoHeight,
   PbButton,
   PbFilterChips,
+  PbIcon,
   PbPage,
   PbPageHeader,
   PbPaginator,
@@ -41,7 +42,7 @@ import {
   ToastService,
 } from '../../shared/ui';
 import type { FilterChipOption, SwitcherOption } from '../../shared/ui';
-import { FollowUpRow } from './follow-up-row';
+import { FollowUpRow, FollowUpRowSkeleton } from './follow-up-row';
 import type {
   FollowUpFilter,
   FollowUpState,
@@ -151,10 +152,12 @@ function readUrlFilters(params: ParamMap): UrlFilters {
   selector: 'pb-surgery-list',
   standalone: true,
   imports: [
+    PbAutoHeight,
     ReactiveFormsModule,
     EmptyState,
     LoadError,
     FollowUpRow,
+    FollowUpRowSkeleton,
     PersianNumberPipe,
     PbSearchField,
     PbSwitcher,
@@ -163,6 +166,9 @@ function readUrlFilters(params: ParamMap): UrlFilters {
     PbPaginator,
     PbButton,
     PbFilterChips,
+    PbIcon,
+    MatIconModule,
+    MatMenuModule,
     TranslatePipe,
   ],
   templateUrl: './surgery-list.html',
@@ -211,10 +217,13 @@ export class SurgeryList {
     ...(this.unlinkedOnly() ? ['unlinked'] : []),
     ...(this.archivedOnly() ? ['archived'] : []),
   ]);
-  protected readonly followUpSelected = computed(() => {
-    const value = this.followUp();
-    return value ? [value] : [];
-  });
+  /** One of the rarer questions is the one asked: the menu button holds the selection. */
+  protected readonly moreActive = computed(() =>
+    this.moreViews.some((v) => v.value === this.followUp()),
+  );
+  protected readonly moreLabel = computed(
+    () => this.moreViews.find((v) => v.value === this.followUp())?.label ?? 'surgery.moreViews',
+  );
   protected readonly page = signal(this.urlFilters.page);
   protected readonly limit = signal(this.urlFilters.limit);
 
@@ -362,7 +371,7 @@ export class SurgeryList {
       case 'booked':
         return item.followUpAppointmentAt
           ? this.i18n.instant('surgery.bookedOn', {
-              date: formatPersianNumber(item.followUpAppointmentAt),
+              date: formatJalaliLong(item.followUpAppointmentAt, this.i18n),
             })
           : this.i18n.instant('surgery.bookedNoDate');
       case 'declined':
@@ -411,15 +420,15 @@ export class SurgeryList {
     this.page.set(1);
   }
 
-  /**
-   * The patient's answer. "Booked" first asks for the day (which may be left
-   * empty); the other two apply at once. Every change can be taken back from
-   * the message that confirms it — the common slip is a tap on the wrong card.
-   */
+  /** Booking asks for a day, and closing a follow-up asks for confirmation. */
   protected setStatus(item: SurgeryQueueItem, status: FollowUpStatus): void {
     if (this.updating() || status === item.followUpStatus) return;
     if (status === 'booked') {
       this.bookAppointment(item);
+      return;
+    }
+    if (status === 'declined') {
+      this.confirmDecline(item);
       return;
     }
     this.saveStatus(
@@ -428,6 +437,33 @@ export class SurgeryList {
       item.followUpStatus,
       item.followUpAppointmentAt,
     );
+  }
+
+  private confirmDecline(item: SurgeryQueueItem): void {
+    const data: ConfirmData = {
+      title: this.i18n.instant('surgery.declineTitle'),
+      message: this.i18n.instant('surgery.declineMessage', {
+        name: item.recordedName || this.i18n.instant('patient.unnamed'),
+      }),
+      confirmLabel: this.i18n.instant('surgery.declineConfirm'),
+      tone: 'warn',
+    };
+    this.dialog
+      .open<ConfirmDialog, ConfirmData, boolean>(ConfirmDialog, {
+        data,
+        width: '420px',
+        maxWidth: '92vw',
+      })
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (confirmed !== true || this.updating()) return;
+        this.saveStatus(
+          item,
+          { followUpStatus: 'declined', expectedVersion: item.version },
+          item.followUpStatus,
+          item.followUpAppointmentAt,
+        );
+      });
   }
 
   /** A call was made: write down what it came to, and when to call again. */

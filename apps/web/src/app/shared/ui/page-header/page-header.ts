@@ -65,6 +65,10 @@ import { PbIcon } from '../icon/icon';
         background-color 180ms var(--pb-ease-standard),
         color 180ms var(--pb-ease-standard);
 
+      > span {
+        translate: 0 1px;
+      }
+
       pb-icon {
         transition: translate 220ms var(--pb-ease-spring);
       }

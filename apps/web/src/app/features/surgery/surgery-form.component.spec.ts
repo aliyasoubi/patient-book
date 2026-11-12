@@ -93,8 +93,20 @@ function open() {
     (fixture.componentInstance as unknown as { submit(): void }).submit();
     fixture.detectChanges();
   };
-  return { pick, save, registryNo, saveSurgery };
+  return { pick, save, registryNo, saveSurgery, fixture, root, form };
 }
+
+describe('SurgeryForm summary dates', () => {
+  it('shows the Jalali month name for the surgery and the follow-up call', () => {
+    const { fixture, root, form } = open();
+    const date = TestBed.inject<DateAdapter<Date>>(DateAdapter).parse('1404/08/15', 'yyyy/MM/dd');
+    form.patchValue({ surgeryDate: date, followUpMonths: '3' });
+    fixture.detectChanges();
+
+    expect(root.querySelector('.summary__facts')?.textContent).toContain('۱۵ آبان ۱۴۰۴');
+    expect(root.querySelector('.due__text strong')?.textContent?.trim()).toBe('۱۵ بهمن ۱۴۰۴');
+  });
+});
 
 describe('SurgeryForm patient and implant file', () => {
   it('puts a new implant row in the picked patient’s implant file', async () => {

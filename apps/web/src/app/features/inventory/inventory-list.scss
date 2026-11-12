@@ -26,7 +26,7 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   animation: store-rise 420ms var(--pb-ease-emphasized) backwards;
 
@@ -103,13 +103,13 @@
 
   .is-due[data-filter='reorder'] &,
   .is-due[data-filter='expiry'] & {
-    background: color-mix(in srgb, #e08a00 12%, #fff);
-    color: #8f5600;
+    background: color-mix(in srgb, var(--pb-warn) 12%, var(--pb-surface));
+    color: var(--pb-warn-ink);
   }
 
   .is-due[data-filter='out'] & {
-    background: color-mix(in srgb, #e5484d 10%, #fff);
-    color: #b4232a;
+    background: color-mix(in srgb, var(--pb-danger) 10%, var(--pb-surface));
+    color: var(--pb-danger-ink);
   }
 }
 
@@ -198,7 +198,7 @@
     box-shadow 220ms var(--pb-ease-standard);
 
   &:hover {
-    background: color-mix(in srgb, #fff 70%, transparent);
+    background: color-mix(in srgb, var(--pb-surface) 70%, transparent);
     color: var(--pb-graphite);
   }
 
@@ -209,7 +209,7 @@
 
   &.is-on {
     border-color: color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
-    background: #fff;
+    background: var(--pb-surface);
     box-shadow: var(--pb-shadow-sm);
     color: var(--pb-graphite);
   }
@@ -236,7 +236,7 @@
   }
 
   .is-on & {
-    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
     color: var(--pb-brand-strong);
   }
 }
@@ -253,10 +253,10 @@
   inline-size: 7px;
   block-size: 7px;
   border-radius: 50%;
-  background: #e08a00;
+  background: var(--pb-warn);
 
   &[data-tone='out'] {
-    background: #e5484d;
+    background: var(--pb-danger);
   }
 }
 
@@ -281,7 +281,7 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   transition: opacity 240ms var(--pb-ease-standard);
   animation: store-rise 420ms 120ms var(--pb-ease-emphasized) backwards;
@@ -292,7 +292,11 @@
   }
 }
 
+/* One height for everything in the head row: the search box and the chip beside it. */
 .panel__head {
+  --pb-search-height: 40px;
+  --pb-chip-height: 40px;
+
   display: flex;
   flex-wrap: wrap;
   align-items: center;

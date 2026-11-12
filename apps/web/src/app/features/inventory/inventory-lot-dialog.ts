@@ -9,6 +9,7 @@ import type { InventoryItemDetail, InventoryLot } from '../../core/models/common
 import { toLatinDigits } from '../../shared/validators';
 import { PbBanner, PbButton, PbTextField } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
+import { InventoryExpiryField } from './inventory-expiry';
 
 export interface InventoryLotDialogData {
   itemId: string;
@@ -25,7 +26,15 @@ export interface InventoryLotDialogData {
 @Component({
   selector: 'pb-inventory-lot-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, MatDialogModule, TranslatePipe, PbBanner, PbButton, PbTextField],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    TranslatePipe,
+    InventoryExpiryField,
+    PbBanner,
+    PbButton,
+    PbTextField,
+  ],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()">
       <h2 mat-dialog-title>{{ 'inventoryLot.title' | translate }}</h2>
@@ -40,13 +49,9 @@ export interface InventoryLotDialogData {
           [maxlength]="60"
           [ltr]="true"
         />
-        <pb-text-field
+        <pb-inventory-expiry-field
           [control]="form.controls.expiry"
-          [label]="'inventoryForm.expiry' | translate"
-          [hint]="'inventoryForm.expiryHint' | translate"
           [errorMessages]="requiredErrors"
-          [maxlength]="20"
-          [ltr]="true"
         />
       </mat-dialog-content>
       <mat-dialog-actions align="end">

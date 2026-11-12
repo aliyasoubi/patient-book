@@ -14,12 +14,6 @@
   }
 }
 
-@keyframes fu-pulse {
-  50% {
-    opacity: 0.45;
-  }
-}
-
 /* ── The bar and the chips ───────────────────────────────────────── */
 
 .views {
@@ -34,6 +28,57 @@
   max-inline-size: 100%;
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+.views__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+}
+
+/* The rarer questions: a segment of its own beside the bar, on the same fog
+   track; holding the selection, it is lifted like the bar's pill. */
+.view-more {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--pb-space-2);
+  block-size: 44px;
+  padding-inline: var(--pb-space-4) var(--pb-space-3);
+  border: 0;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--pb-neutral-300) 45%, transparent);
+  color: var(--pb-neutral-600);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 200ms var(--pb-ease-standard),
+    color 200ms var(--pb-ease-standard),
+    box-shadow 200ms var(--pb-ease-standard);
+
+  &:hover {
+    color: var(--pb-graphite);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 2px;
+  }
+
+  &.is-active {
+    background: var(--pb-surface);
+    box-shadow:
+      inset 0 0 0 4px color-mix(in srgb, var(--pb-neutral-300) 45%, transparent),
+      var(--pb-shadow-sm);
+    color: var(--pb-graphite);
+
+    pb-icon {
+      color: var(--pb-brand);
+    }
+  }
 }
 
 .views__search {
@@ -59,7 +104,7 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
   border-radius: 20px;
-  background: #fff;
+  background: var(--pb-surface);
   box-shadow: var(--pb-shadow-sm);
   transition: opacity 240ms var(--pb-ease-standard);
   animation: fu-rise 420ms 120ms var(--pb-ease-emphasized) backwards;
@@ -85,20 +130,6 @@
   }
 }
 
-.sheet__skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-2);
-  padding: var(--pb-space-4) var(--pb-space-5);
-}
-
-.skeleton-row {
-  block-size: 64px;
-  border-radius: 12px;
-  background: var(--pb-neutral-100);
-  animation: fu-pulse 1.4s ease-in-out infinite;
-}
-
 /* A group's heading: a dot in its colour, its name, how many. */
 .group__head {
   --_tone: var(--pb-neutral-400);
@@ -114,11 +145,11 @@
   font-weight: 800;
 
   &[data-state='overdue'] {
-    --_tone: #e5484d;
+    --_tone: var(--pb-danger);
   }
 
   &[data-state='due'] {
-    --_tone: #e08a00;
+    --_tone: var(--pb-warn);
   }
 
   &[data-state='pending'] {
@@ -126,7 +157,7 @@
   }
 
   &[data-state='booked'] {
-    --_tone: #1f9d55;
+    --_tone: var(--pb-success);
   }
 }
 
@@ -164,8 +195,7 @@ pb-follow-up-row {
   .views,
   .more,
   .sheet,
-  pb-follow-up-row,
-  .skeleton-row {
+  pb-follow-up-row {
     animation: none;
   }
 }

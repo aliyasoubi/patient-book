@@ -40,6 +40,7 @@ import {
   type TextFieldOption,
 } from '../../shared/ui';
 import { showOnFields } from './inventory-errors';
+import { InventoryExpiryField } from './inventory-expiry';
 import { markSubmitted } from '../../shared/ui/form-submitted';
 
 export interface InventoryItemDialogData {
@@ -111,6 +112,7 @@ export const MAX_SUGGESTIONS = 8;
   selector: 'pb-inventory-item-dialog',
   standalone: true,
   imports: [
+    InventoryExpiryField,
     ReactiveFormsModule,
     MatDialogModule,
     TranslatePipe,
@@ -220,13 +222,7 @@ export const MAX_SUGGESTIONS = 8;
           <!-- The stock counted now is the item's first batch; after that
                each delivery brings its own lot and expiry. -->
           @if (!item) {
-            <pb-text-field
-              [control]="form.controls.expiry"
-              [label]="'inventoryForm.expiry' | translate"
-              [hint]="'inventoryForm.expiryHint' | translate"
-              [maxlength]="20"
-              [ltr]="true"
-            />
+            <pb-inventory-expiry-field [control]="form.controls.expiry" />
             <pb-text-field
               [control]="form.controls.lotNumber"
               [label]="'inventoryMove.lotNumber' | translate"

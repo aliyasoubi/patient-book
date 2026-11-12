@@ -32,6 +32,7 @@ import type {
 } from '../../core/models/common.model';
 import { RegistryService } from '../../core/services/registry.service';
 import { LoadError } from '../../shared/components/load-error';
+import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import {
   INVENTORY_CATEGORIES,
   INVENTORY_CATEGORY_ICONS,
@@ -97,6 +98,7 @@ interface CategoryGroup {
     MatIconModule,
     TranslatePipe,
     PersianNumberPipe,
+    JalaliPipe,
     LoadError,
     PbFilterChips,
     PbListToolbar,
@@ -171,7 +173,7 @@ export class MaterialConsumptionReport {
   protected readonly trackedNote = computed(() => {
     const report = this.report();
     if (!report?.trackedFrom || report.months.every((m) => m.tracked)) return null;
-    return report.trackedFrom;
+    return { jalali: report.trackedFrom, precision: 'day' as const };
   });
 
   constructor() {

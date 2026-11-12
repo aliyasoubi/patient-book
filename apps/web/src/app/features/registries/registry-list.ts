@@ -3,7 +3,6 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import type { PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import {
   catchError,
   debounceTime,
@@ -29,8 +28,9 @@ import {
 import { RegistryTable } from '../../shared/components/registry-table';
 import { formatPersianCount } from '../../shared/pipes/persian-number.pipe';
 import {
-  PbButton,
+  PbAutoHeight,
   PbFilterChips,
+  PbSwitcher,
   PbPage,
   PbPageHeader,
   PbPaginator,
@@ -38,7 +38,7 @@ import {
   PbSearchField,
   ToastService,
 } from '../../shared/ui';
-import type { FilterChipOption } from '../../shared/ui';
+import type { FilterChipOption, SwitcherOption } from '../../shared/ui';
 import type { RegistryCase } from '../../core/models/common.model';
 
 /** Everything that differs between the two registers' screens. */
@@ -75,20 +75,31 @@ const KINDS: Record<
   selector: 'pb-registry-list',
   standalone: true,
   imports: [
+    PbAutoHeight,
     ReactiveFormsModule,
-    MatProgressBarModule,
     RegistryTable,
     LoadError,
     PbListToolbar,
     PbSearchField,
     PbPageHeader,
-    PbButton,
     PbFilterChips,
+    PbSwitcher,
     PbPage,
     PbPaginator,
     TranslatePipe,
   ],
   templateUrl: './registry-list.html',
+  styles: `
+    /* While a new order or page loads, the cards on screen step back. */
+    pb-registry-table {
+      display: block;
+      transition: opacity 200ms var(--pb-ease-standard);
+    }
+
+    pb-registry-table.is-busy {
+      opacity: 0.45;
+    }
+  `,
 })
 export class RegistryList {
   private readonly registry = inject(RegistryService);
@@ -130,6 +141,10 @@ export class RegistryList {
    * default: the highest numbers are the cases being worked on now.
    */
   protected readonly sortDir = signal<'ASC' | 'DESC'>('DESC');
+  protected readonly sortOptions: SwitcherOption[] = [
+    { value: 'DESC', label: 'registry.sortNewest', icon: 'arrow-down' },
+    { value: 'ASC', label: 'registry.sortOldest', icon: 'arrow-up' },
+  ];
 
   protected readonly loading = signal(false);
   /** The most recent request failed; whatever rows are shown are stale. */
@@ -225,8 +240,9 @@ export class RegistryList {
     this.limit.set(event.pageSize);
   }
 
-  protected toggleSort(): void {
-    this.sortDir.update((dir) => (dir === 'DESC' ? 'ASC' : 'DESC'));
+  protected setSort(dir: string): void {
+    if (dir !== 'ASC' && dir !== 'DESC') return;
+    this.sortDir.set(dir);
     this.page.set(1);
   }
 

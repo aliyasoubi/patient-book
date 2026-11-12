@@ -1,3 +1,4 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import {
@@ -41,7 +42,14 @@ export interface TextFieldOption {
 @Component({
   selector: 'pb-text-field',
   standalone: true,
-  imports: [ReactiveFormsModule, MatAutocompleteModule, MatIconModule, TranslatePipe, PbIcon],
+  imports: [
+    MatTooltipModule,
+    ReactiveFormsModule,
+    MatAutocompleteModule,
+    MatIconModule,
+    TranslatePipe,
+    PbIcon,
+  ],
   templateUrl: './text-field.html',
   styleUrl: './text-field.scss',
 })
@@ -108,7 +116,7 @@ export class PbTextField {
     return this.errorsShown() && control.invalid && this.errorText() !== null;
   }
 
-  /** The hint, as the placeholder while empty and an in-box note after. */
+  /** The hint, as the placeholder while empty; once there is text, it moves under the box. */
   protected placeholderText(): string {
     return placeholderWithHint(this.placeholder(), this.hint());
   }
@@ -122,12 +130,12 @@ export class PbTextField {
   }
 
   protected messageIsError(): boolean {
-    if (this.message()) this.lastWasError = this.showError();
+    if (this.message() || this.showInlineHint()) this.lastWasError = !!this.message();
     return this.lastWasError;
   }
 
   protected messageText(): string {
-    const current = this.message();
+    const current = this.message() ?? (this.showInlineHint() ? this.hint() : null);
     if (current) this.lastMessage = current;
     return this.lastMessage;
   }

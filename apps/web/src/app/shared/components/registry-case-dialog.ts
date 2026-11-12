@@ -4,7 +4,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 
@@ -81,7 +80,6 @@ const MIN_PATIENT_QUERY = 2;
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
-    MatProgressBarModule,
     PbTextField,
     PbButton,
     PbIconButton,
@@ -89,9 +87,6 @@ const MIN_PATIENT_QUERY = 2;
   ],
   template: `
     <h2 mat-dialog-title>{{ title | translate }}</h2>
-    @if (saving()) {
-      <mat-progress-bar mode="indeterminate" />
-    }
     <mat-dialog-content class="form">
       <pb-text-field
         [control]="form.controls.registryNo"

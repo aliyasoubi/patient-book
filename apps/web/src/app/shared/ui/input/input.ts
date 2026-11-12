@@ -1,3 +1,4 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { ReactiveFormsModule, type FormControl } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -33,7 +34,7 @@ let nextId = 0;
 @Component({
   selector: 'pb-input',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, PbIcon],
+  imports: [MatTooltipModule, ReactiveFormsModule, TranslatePipe, PbIcon],
   templateUrl: './input.html',
   styleUrl: './input.scss',
 })
@@ -49,6 +50,9 @@ export class PbInput {
   readonly hint = input<string | null>(null);
   /** The native `autocomplete` attribute (browser autofill). */
   readonly nativeAutocomplete = input<string>('off');
+  readonly nativeName = input<string | null>(null);
+  readonly enterKeyHint = input<string | null>(null);
+  readonly readOnly = input(false);
   /** Left-aligned LTR text — credentials, ids, phone numbers. */
   readonly ltr = input(false);
   /**
@@ -81,11 +85,11 @@ export class PbInput {
   }
 
   protected messageIsError(): boolean {
-    if (this.message()) this.lastWasError = this.showError();
+    if (this.message() || this.showInlineHint()) this.lastWasError = !!this.message();
     return this.lastWasError;
   }
 
-  /** The hint, as the placeholder while empty and an in-box note after. */
+  /** The hint, as the placeholder while empty; once there is text, it moves under the box. */
   protected placeholderText(): string {
     return placeholderWithHint(this.placeholder(), this.hint());
   }
@@ -99,7 +103,7 @@ export class PbInput {
   }
 
   protected messageText(): string {
-    const current = this.message();
+    const current = this.message() ?? (this.showInlineHint() ? this.hint() : null);
     if (current) this.lastMessage = current;
     return this.lastMessage;
   }

@@ -29,7 +29,7 @@
   padding: var(--pb-space-2);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 14px;
-  background: #fff;
+  background: var(--pb-surface);
   color: var(--pb-neutral-600);
   font: inherit;
   font-size: 0.8125rem;
@@ -55,7 +55,7 @@
   /* The tool in hand: its ink on the edge, its tint behind. */
   &.is-on {
     border-color: var(--tooth-fg);
-    background: color-mix(in srgb, var(--tooth-bg) 60%, #fff);
+    background: color-mix(in srgb, var(--tooth-bg) 60%, var(--pb-surface));
     box-shadow: 0 0 0 1px var(--tooth-fg);
     color: var(--pb-graphite);
   }
@@ -84,9 +84,10 @@
   block-size: 22px;
   padding: 0 6px;
   border-radius: 999px;
+  padding-top: 2px;
   line-height: 1;
   background: var(--tooth-fg);
-  color: #fff;
+  color: var(--pb-on-graphite);
   font-size: 0.6875rem;
   text-align: center;
   animation: badge-pop 260ms var(--pb-ease-spring);
@@ -103,7 +104,7 @@
   }
 
   .chart__root {
-    fill: color-mix(in srgb, var(--tooth-bg) 55%, #fff);
+    fill: color-mix(in srgb, var(--tooth-bg) 55%, var(--pb-surface));
     stroke: color-mix(in srgb, var(--tooth-fg) 40%, transparent);
   }
 
@@ -118,16 +119,23 @@
   place-items: center;
   inline-size: 22px;
   block-size: 22px;
+}
+
+/* The circle is its own box, a size up from the icon, so the icon keeps
+   room around it (5px each side) instead of filling the circle. */
+.chart__badge-dot {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: 50%;
+  background: var(--tooth-fg);
+  color: var(--pb-on-graphite);
+  animation: badge-pop 280ms var(--pb-ease-spring);
 
   pb-icon {
-    display: inline-grid;
-    place-items: center;
-    inline-size: 22px;
-    block-size: 22px;
-    border-radius: 50%;
-    background: var(--tooth-fg);
-    color: #fff;
-    animation: badge-pop 280ms var(--pb-ease-spring);
+    inline-size: 12px;
+    block-size: 12px;
   }
 }
 
@@ -184,7 +192,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tool__count,
-  .chart__badge pb-icon {
+  .chart__badge-dot {
     animation: none;
   }
 }

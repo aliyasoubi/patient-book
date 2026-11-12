@@ -88,6 +88,9 @@
   caret-color: var(--_ring);
 
   &::placeholder {
+    // Use the UI font even when typed values use the Latin font.
+    font-family: var(--mat-sys-body-large-font);
+    letter-spacing: normal;
     color: var(--mat-sys-on-surface-variant);
     opacity: 0.6;
   }
@@ -204,7 +207,7 @@
 /**
  * The hint, inside the box at its end, once the field has a value (while it
  * is empty the hint is the placeholder). Never wider than a share of the
- * box; the whole text is in its title.
+ * box; the tooltip shows the whole text.
  */
 @mixin inline-hint {
   // Its own width, up to the cap: the typed text gives way first.

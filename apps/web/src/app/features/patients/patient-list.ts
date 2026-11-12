@@ -17,7 +17,6 @@ import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/r
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import type { PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -52,6 +51,7 @@ import {
   referralKindIcon,
 } from '../../shared/labels';
 import {
+  PbFilterButton,
   PbAvatar,
   PbBanner,
   PbButton,
@@ -82,8 +82,16 @@ interface SortState {
 }
 
 const DEFAULT_SORT: SortState = { by: 'fileNo', dir: 'DESC' };
+const SORT_ANIMATION = 'patient-sort';
 
 /** The columns with a sort header; anything else in a URL is ignored. */
+/** Placeholder rows for a first load: as many as a page usually shows above the fold. */
+const SKELETON_ROWS = Array.from({ length: 8 }, (_, n) => ({
+  id: `skeleton-${n}`,
+  n: n % 4,
+  skeleton: true,
+}));
+
 const SORT_COLUMNS = ['fileNo', 'lastName', 'birthDate', 'lastVisitAt'];
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -219,6 +227,7 @@ function sameFilters(a: Filters, b: Filters): boolean {
   selector: 'pb-patient-list',
   standalone: true,
   imports: [
+    PbFilterButton,
     PhonePipe,
     AgoPipe,
     PbIcon,
@@ -227,7 +236,6 @@ function sameFilters(a: Filters, b: Filters): boolean {
     MatTableModule,
     MatSortModule,
     MatMenuModule,
-    MatProgressBarModule,
     MatTooltipModule,
     JalaliPipe,
     PersianNumberPipe,
@@ -310,6 +318,20 @@ export class PatientList {
   /** The most recent request failed; whatever rows are shown are stale. */
   protected readonly failed = signal(false);
   protected readonly patients = signal<Patient[]>([]);
+  /**
+   * The table's rows: the patients, or — on a first load, before there are
+   * any — placeholder rows drawn by the same columns, so the skeleton is the
+   * table itself and the answer lands in its place.
+   */
+  protected readonly tableRows = computed<Patient[]>(() =>
+    this.loading() && this.patients().length === 0
+      ? (SKELETON_ROWS as unknown as Patient[])
+      : this.patients(),
+  );
+
+  protected isSkel(row: unknown): boolean {
+    return (row as { skeleton?: boolean }).skeleton === true;
+  }
   protected readonly total = signal(0);
   /**
    * Stays up during a refetch, like the rows it counts: the previous result
@@ -333,7 +355,7 @@ export class PatientList {
    * starts from page 1: results for "Ali" on page 3 say nothing about page 3
    * of "Alireza", and can be empty while matches exist.
    */
-  private readonly debouncedQuery = toSignal(
+  protected readonly debouncedQuery = toSignal(
     this.searchControl.valueChanges.pipe(
       debounceTime(300),
       map((v) => v.trim()),
@@ -347,7 +369,9 @@ export class PatientList {
   protected readonly headerSort = computed<{ active: string; direction: SortDirection }>(() => {
     if (this.debouncedQuery() && !this.sortChosen()) return { active: '', direction: '' };
     const sort = this.sort();
-    return { active: sort.by, direction: sort.dir === 'ASC' ? 'asc' : 'desc' };
+    // The header names the patient's age, while the API orders by birth date.
+    const ascending = sort.by === 'birthDate' ? sort.dir === 'DESC' : sort.dir === 'ASC';
+    return { active: sort.by, direction: ascending ? 'asc' : 'desc' };
   });
 
   /**
@@ -502,10 +526,15 @@ export class PatientList {
     });
 
     let restored = false;
+    let renderedSort: string | undefined;
     this.fetchTrigger$
       .pipe(
         switchMap((query) =>
           this.service.list(query).pipe(
+            map((result) => ({
+              result,
+              sortKey: query.sortBy ? `${query.sortBy}:${query.sortDir}` : 'relevance',
+            })),
             // Keep the previous rows on screen under a banner rather than
             // blanking the register: a blank list reads as "no patients".
             catchError(() => {
@@ -517,7 +546,10 @@ export class PatientList {
         ),
         takeUntilDestroyed(),
       )
-      .subscribe((result) => {
+      .subscribe(({ result, sortKey }) => {
+        const reordered = renderedSort !== undefined && renderedSort !== sortKey;
+        if (reordered) this.animateSort();
+        renderedSort = sortKey;
         this.patients.set(result.items);
         this.total.set(result.total);
         this.loading.set(false);
@@ -638,10 +670,68 @@ export class PatientList {
       this.sort.set(DEFAULT_SORT);
       this.sortChosen.set(false);
     } else {
-      this.sort.set({ by: event.active, dir: event.direction === 'desc' ? 'DESC' : 'ASC' });
+      const ascending =
+        event.active === 'birthDate' ? event.direction === 'desc' : event.direction === 'asc';
+      this.sort.set({ by: event.active, dir: ascending ? 'ASC' : 'DESC' });
       this.sortChosen.set(true);
     }
     this.page.set(1);
+  }
+
+  private animateSort(): void {
+    const wrap = this.tableWrap()?.nativeElement;
+    if (!wrap) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const rows = () => Array.from(wrap.querySelectorAll<HTMLElement>('[data-patient-id]'));
+    const positions = new Map<string, number>();
+
+    if (!reducedMotion.matches && wrap.scrollTop === 0) {
+      for (const row of rows()) {
+        positions.set(row.dataset['patientId']!, row.getBoundingClientRect().top);
+      }
+    }
+
+    afterNextRender(
+      () => {
+        wrap.scrollTop = 0;
+        const current = rows();
+        for (const row of current) {
+          row
+            .getAnimations()
+            .find((animation) => animation.id === SORT_ANIMATION)
+            ?.cancel();
+        }
+        if (reducedMotion.matches) return;
+        const bottom = wrap.getBoundingClientRect().bottom;
+        const transitions: { row: HTMLElement; frames: Keyframe[] }[] = [];
+        for (const row of current) {
+          const top = row.getBoundingClientRect().top;
+          if (top >= bottom) break;
+          const previous = positions.get(row.dataset['patientId']!);
+          const offset = previous === undefined ? null : previous - top;
+          if (offset !== null && Math.abs(offset) < 1) continue;
+          // Nearby rows glide into place. Rows from another page or much
+          // farther down simply fade in, so they never fly across the table.
+          if (offset !== null && Math.abs(offset) <= 80) {
+            transitions.push({
+              row,
+              frames: [{ translate: `0 ${offset}px` }, { translate: '0 0' }],
+            });
+          } else {
+            const opacity = Number(getComputedStyle(row).opacity);
+            transitions.push({ row, frames: [{ opacity: opacity * 0.45 }, { opacity }] });
+          }
+        }
+        for (const { row, frames } of transitions) {
+          row.animate(frames, {
+            id: SORT_ANIMATION,
+            duration: 240,
+            easing: 'cubic-bezier(0.35, 0, 0.25, 1)',
+          });
+        }
+      },
+      { injector: this.injector },
+    );
   }
 
   protected onPage(event: PageEvent): void {

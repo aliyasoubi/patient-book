@@ -31,9 +31,7 @@
 }
 
 /*
- * Credentials and ids are Latin inside an RTL page, typed in Inter with
- * Latin digits, not the Persian ones Vazirmatn draws. A Persian placeholder
- * falls back to Vazirmatn by itself (Inter covers Latin ranges only).
+ * Credentials and ids are typed in Inter with Latin digits inside an RTL page.
  */
 .pb-input__control--ltr {
   direction: ltr;
@@ -88,8 +86,4 @@
   .pb-input__message-slot {
     transition-duration: 0ms;
   }
-}
-
-.pb-input__hint {
-  @include field.inline-hint;
 }

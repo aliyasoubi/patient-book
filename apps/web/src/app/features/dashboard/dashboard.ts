@@ -8,16 +8,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { JALALI_MONTH_KEYS, JALALI_WEEKDAY_KEYS } from '../../core/jalali/jalali-date-adapter';
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { LoadError } from '../../shared/components/load-error';
-import {
-  PbButton,
-  PbCountUp,
-  PbIcon,
-  PbShamsiCalendar,
-  type CalendarMarkTone,
-  type LineIconName,
-} from '../../shared/ui';
+import { PbButton, PbCountUp, PbIcon, type LineIconName } from '../../shared/ui';
 import type { DashboardSummary, FollowUpDue } from '../../core/models/common.model';
 import { DashboardAgenda } from './dashboard-agenda';
+import { DashboardDay } from './dashboard-day';
+import { DashboardRecent } from './dashboard-recent';
 
 /** How a count reads: `warn` is slipping, `caution` is routine work that is due. */
 export type WorkTone = 'brand' | 'warn' | 'caution' | 'neutral';
@@ -55,10 +50,11 @@ export interface WorkItem {
     TranslatePipe,
     LoadError,
     DashboardAgenda,
+    DashboardDay,
+    DashboardRecent,
     PbButton,
     PbCountUp,
     PbIcon,
-    PbShamsiCalendar,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -193,15 +189,6 @@ export class Dashboard {
         tone: 'neutral',
       },
     ];
-  });
-
-  /** The days of the coming week that have a follow-up, dotted on the calendar. */
-  protected readonly followUpMarks = computed(() => {
-    const marks = new Map<string, CalendarMarkTone>();
-    for (const item of this.followUps()) {
-      if (item.followUpDate) marks.set(item.followUpDate, 'brand');
-    }
-    return marks;
   });
 
   constructor() {

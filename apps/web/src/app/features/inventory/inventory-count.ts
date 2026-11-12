@@ -11,7 +11,6 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map, startWith, type Subscription } from 'rxjs';
 
@@ -66,7 +65,6 @@ const isCategory = (value: unknown): value is InventoryCategory =>
   imports: [
     ReactiveFormsModule,
     MatIconModule,
-    MatProgressBarModule,
     TranslatePipe,
     EmptyState,
     LoadError,

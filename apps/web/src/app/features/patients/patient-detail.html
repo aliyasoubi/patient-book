@@ -1,5 +1,50 @@
-@if (loading()) {
-  <mat-progress-bar mode="indeterminate" />
+@if (loading() && !patient()) {
+  <!-- The file to come, on the page's own classes: the header card, the four
+       facts, the tabs and their panel, and the contact card beside them. -->
+  <pb-page width="wide" class="pb-skeleton" aria-hidden="true">
+    <pb-surface class="hero-surface">
+      <header class="hero">
+        <span class="pb-skel pb-skel--circle" style="--w: 40px; --h: 40px"></span>
+        <span class="pb-skel" style="--w: 64px; --h: 64px; --r: 20px"></span>
+        <div class="hero__identity">
+          <span class="pb-skel" style="--w: 220px; --h: 26px; margin-block-end: 12px"></span>
+          <div class="hero__meta">
+            <span class="pb-skel pb-skel--pill" style="--w: 96px; --h: 28px"></span>
+            <span class="pb-skel pb-skel--pill" style="--w: 64px; --h: 28px"></span>
+            <span class="pb-skel pb-skel--pill" style="--w: 72px; --h: 28px"></span>
+          </div>
+        </div>
+        <div class="hero__actions">
+          <span class="pb-skel pb-skel--pill" style="--w: 120px; --h: 40px"></span>
+          <span class="pb-skel pb-skel--circle" style="--w: 40px; --h: 40px"></span>
+        </div>
+      </header>
+    </pb-surface>
+    <pb-patient-glance-skeleton />
+    <div class="detail">
+      <div class="detail__main">
+        <span class="pb-skel" style="--h: 48px; --r: 14px; margin-block-end: 16px"></span>
+        <pb-surface>
+          @for (i of [0, 1, 2, 3]; track i) {
+            <span
+              class="pb-skel"
+              [style.--skel-i]="i"
+              [style.--w]="['78%', '64%', '86%', '52%'][i]"
+              style="--h: 14px; margin-block: 14px"
+            ></span>
+          }
+        </pb-surface>
+      </div>
+      <aside class="detail__aside">
+        <pb-surface>
+          <span class="pb-skel" style="--w: 40%; --h: 12px; margin-block-end: 12px"></span>
+          <span class="pb-skel" style="--w: 70%; --h: 24px; margin-block-end: 20px"></span>
+          <span class="pb-skel" style="--w: 60%; --h: 12px; margin-block-end: 10px"></span>
+          <span class="pb-skel" style="--w: 80%; --h: 12px"></span>
+        </pb-surface>
+      </aside>
+    </div>
+  </pb-page>
 }
 
 @if (patient(); as p) {
@@ -146,11 +191,11 @@
 
     <!-- ── Who they are, at the side; their care in the main column ── -->
     <div class="detail">
-      <div class="detail__main">
+      <pb-auto-height class="detail__main">
         <!-- ── Tabs ──────────────────────────────────────────────────── -->
         <mat-tab-group
           class="detail__tabs"
-          animationDuration="200ms"
+          [animationDuration]="{ body: '0ms', header: '240ms' }"
           [mat-stretch-tabs]="isCompact()"
           mat-align-tabs="start"
           (selectedTabChange)="loadHistory()"
@@ -312,7 +357,7 @@
                             @if (f.surgeryDate; as done) {
                               {{
                                 surgeryDoneLabel(f.kind)
-                                  | translate: { date: (done.jalali | faNum) }
+                                  | translate: { date: (done | jalali: 'long') }
                               }}
                             }
                             @if (f.teethFdi.length) {
@@ -324,7 +369,7 @@
                                 'patientDetail.lastCall'
                                   | translate
                                     : {
-                                        when: (last.at | faNum),
+                                        when: (last.at | faDate),
                                         outcome: (contactOutcomeLabel(last.outcome) | translate),
                                       }
                               }}
@@ -388,7 +433,7 @@
                           @if (c.lab) {
                             <small
                               ><strong>{{ c.lab.name }}</strong> ·
-                              {{ c.trips[0]?.sentAt | faNum }}</small
+                              {{ c.trips[0]?.sentAt | faDate }}</small
                             >
                           }
                         </span>
@@ -427,7 +472,7 @@
             </mat-tab>
           }
         </mat-tab-group>
-      </div>
+      </pb-auto-height>
 
       <aside class="detail__aside">
         <pb-patient-profile [patient]="p" />
@@ -448,7 +493,7 @@
                     <span dir="auto">{{ sale.name }}</span>
                     <small>
                       {{ sale.quantity | faNum }} {{ unitLabel(sale.unit) | translate }} ·
-                      {{ sale.at | faNum }}
+                      {{ sale.at | faDate }}
                     </small>
                   </span>
                   @if (sale.unitPrice !== null) {

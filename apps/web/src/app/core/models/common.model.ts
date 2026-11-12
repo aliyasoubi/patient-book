@@ -94,7 +94,7 @@ export interface SurgeryQueueItem {
   hasNameMismatch: boolean;
   registeredName: string | null;
   patient: { id: string; fileNo: string; fullName: string; mobile: string | null } | null;
-  surgeryDate: { jalali: string; iso: string; precision: string; raw?: string | null } | null;
+  surgeryDate: JalaliValue | null;
   /** FDI numbers picked on the chart; empty on rows written before it. */
   teethFdi: number[];
   /** Legacy phrase, shown only when there are no `teethFdi`. */

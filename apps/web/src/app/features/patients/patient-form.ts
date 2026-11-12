@@ -4,7 +4,6 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, debounceTime, distinctUntilChanged, map, of, Subject, switchMap } from 'rxjs';
@@ -40,12 +39,14 @@ import type { EducationLevel, Gender } from '../../core/models/common.model';
 import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import {
+  PbFormSkeleton,
   PbBanner,
   PbButton,
   PbDateField,
   PbIcon,
   PbPage,
   PbPageHeader,
+  PbFormPreview,
   PbSelectField,
   PbStatusChip,
   PbTextField,
@@ -75,8 +76,8 @@ const DUPLICATE_REASON_KEYS: Readonly<Record<DuplicateReason, string>> = {
   selector: 'pb-patient-form',
   standalone: true,
   imports: [
+    PbFormSkeleton,
     ReactiveFormsModule,
-    MatProgressBarModule,
     PbBanner,
     PbStatusChip,
     PbTextField,
@@ -86,6 +87,7 @@ const DUPLICATE_REASON_KEYS: Readonly<Record<DuplicateReason, string>> = {
     PbButton,
     PbIcon,
     PbPageHeader,
+    PbFormPreview,
     MatIconModule,
     TranslatePipe,
     PbPage,

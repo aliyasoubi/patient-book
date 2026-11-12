@@ -224,6 +224,7 @@
   opacity: 0.35;
   transform-origin: right;
   animation: pb-toast-clock-a linear forwards;
+  animation-duration: var(--toast-duration);
 }
 
 /*
@@ -280,6 +281,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .toast__progress {
+    // The clock still controls dismissal when the progress bar is hidden.
+    visibility: hidden;
+    animation-duration: var(--toast-duration) !important;
+  }
+
   .toasts,
   .toast-slot,
   .toast.is-settling,

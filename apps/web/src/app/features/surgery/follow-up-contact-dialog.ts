@@ -3,7 +3,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DateAdapter } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import type {
@@ -13,7 +12,10 @@ import type {
 } from '../../core/models/common.model';
 import { RecordContactInput, RegistryService } from '../../core/services/registry.service';
 import { contactOutcomeLabel } from '../../shared/labels';
+import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import { PhonePipe } from '../../shared/pipes/phone.pipe';
+import { PbCopyButton } from '../../shared/ui/copy-button/copy-button';
 import { PbButton, PbDateField, PbFilterChips, PbTextareaField } from '../../shared/ui';
 import type { FilterChipOption } from '../../shared/ui';
 import { markSubmitted } from '../../shared/ui/form-submitted';
@@ -58,10 +60,12 @@ const HISTORY_SHOWN = 5;
   imports: [
     ReactiveFormsModule,
     MatDialogModule,
-    MatIconModule,
     TranslatePipe,
+    JalaliPipe,
     PersianNumberPipe,
+    PhonePipe,
     PbButton,
+    PbCopyButton,
     PbDateField,
     PbFilterChips,
     PbTextareaField,
@@ -70,20 +74,29 @@ const HISTORY_SHOWN = 5;
     <h2 mat-dialog-title>{{ 'followUpContact.title' | translate }}</h2>
     <mat-dialog-content class="call">
       <!-- Who, and the number to dial: read off the patient's file. -->
-      <div class="call__who">
-        <strong>{{ item.recordedName || ('patient.unnamed' | translate) }}</strong>
-        @if (item.patient; as patient) {
-          <span class="call__file">
-            {{ 'surgery.patientFile' | translate: { fileNo: patient.fileNo } }}
-          </span>
-          @if (patient.mobile) {
-            <span class="call__phone" dir="ltr">
-              <mat-icon aria-hidden="true">smartphone</mat-icon>
-              {{ patient.mobile | faNum }}
-            </span>
+      <!-- One card: who on the start side (initial, name, file), the number to
+           dial on the end side, large, with copy and call beside it. -->
+      <div class="who">
+        <span class="who__avatar" aria-hidden="true">{{ initial }}</span>
+        <span class="who__text">
+          <strong>{{ item.recordedName || ('patient.unnamed' | translate) }}</strong>
+          @if (item.patient; as patient) {
+            <small>{{ 'surgery.patientFile' | translate: { fileNo: patient.fileNo } }}</small>
+          } @else {
+            <small class="who__warn">{{ 'followUpContact.noPhone' | translate }}</small>
           }
-        } @else {
-          <span class="call__no-phone">{{ 'followUpContact.noPhone' | translate }}</span>
+        </span>
+        @if (item.patient?.mobile; as mobile) {
+          <span class="who__phone">
+            <a class="who__number" dir="ltr" [href]="'tel:' + mobile">{{
+              mobile | phone | faNum
+            }}</a>
+            <pb-copy-button
+              [value]="mobile"
+              [label]="'patientProfile.copy' | translate"
+              [doneLabel]="'patientProfile.copied' | translate"
+            />
+          </span>
         }
       </div>
 
@@ -93,7 +106,11 @@ const HISTORY_SHOWN = 5;
           <ul>
             @for (c of history(); track $index) {
               <li>
-                <span class="call__when">{{ c.at | faNum }}</span>
+                @let called = c.at.split(' ');
+                <span class="call__when">
+                  {{ { jalali: called[0], precision: 'day' } | jalali: 'long' }}
+                  <bdi>{{ called[1] | faNum }}</bdi>
+                </span>
                 @if (c.by) {
                   <span>{{ c.by }}</span>
                 }
@@ -109,7 +126,9 @@ const HISTORY_SHOWN = 5;
         <p class="call__hint">{{ 'followUpContact.historyFailed' | translate }}</p>
       }
 
-      <span class="call__label">{{ 'followUpContact.outcome' | translate }}</span>
+      <span class="call__label call__label--field">{{
+        'followUpContact.outcome' | translate
+      }}</span>
       <pb-filter-chips
         [options]="outcomes"
         [selected]="outcome() ? [outcome()!] : []"
@@ -152,7 +171,7 @@ const HISTORY_SHOWN = 5;
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <pb-button variant="text" type="button" (click)="ref.close()">
+      <pb-button variant="text" tone="neutral" type="button" (click)="ref.close()">
         {{ 'action.cancel' | translate }}
       </pb-button>
       <pb-button
@@ -172,36 +191,76 @@ const HISTORY_SHOWN = 5;
       flex-direction: column;
       gap: var(--pb-space-3);
     }
-    .call__who {
+    .who {
       display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: var(--pb-space-1) var(--pb-space-3);
-      margin-bottom: var(--pb-space-2);
+      align-items: center;
+      gap: var(--pb-space-3);
+      margin-block-end: var(--pb-space-2);
+      padding: var(--pb-space-3);
+      border-radius: 14px;
+      background: var(--pb-neutral-50);
+    }
+    .who__avatar {
+      display: inline-grid;
+      flex: 0 0 auto;
+      place-items: center;
+      inline-size: 40px;
+      block-size: 40px;
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
+      color: var(--pb-brand-strong);
+      font-weight: 800;
+    }
+    .who__text {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      gap: 2px;
+      min-inline-size: 0;
       strong {
-        font: var(--mat-sys-title-medium);
+        overflow: hidden;
+        color: var(--pb-graphite);
+        font-size: 1rem;
+        font-weight: 800;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      small {
+        color: var(--pb-neutral-500);
+        font-size: 0.75rem;
+        font-weight: 600;
       }
     }
-    .call__file,
-    .call__no-phone,
+    .who__warn {
+      color: var(--mat-sys-tertiary) !important;
+    }
+    .who__phone {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: var(--pb-space-2);
+    }
+    .who__number {
+      color: var(--pb-graphite);
+      font-size: 1.0625rem;
+      font-weight: 800;
+      font-feature-settings: var(--pb-font-numeric);
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      &:hover {
+        color: var(--pb-brand-strong);
+      }
+    }
+    .call__label--field {
+      margin-inline-start: var(--pb-space-3);
+      color: var(--mat-sys-on-surface);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
     .call__hint,
     .call__label {
       font: var(--mat-sys-body-small);
       color: var(--mat-sys-on-surface-variant);
-    }
-    .call__no-phone {
-      color: var(--mat-sys-tertiary);
-    }
-    .call__phone {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--pb-space-1);
-      font: var(--mat-sys-title-medium);
-      font-feature-settings: var(--pb-font-numeric);
-      user-select: all;
-      mat-icon {
-        font-size: var(--pb-icon-sm);
-      }
     }
     .call__history {
       display: flex;
@@ -251,6 +310,8 @@ export class FollowUpContactDialog {
   private readonly registry = inject(RegistryService);
 
   protected readonly item = this.data.item;
+  /** The letter on the patient's tile. */
+  protected readonly initial = (this.item.recordedName || '').trim().charAt(0);
   protected readonly outcomes = OUTCOMES;
   protected readonly soon = SOON;
   protected readonly outcomeLabel = contactOutcomeLabel;

@@ -1,3 +1,4 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, computed, inject, input } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -6,7 +7,7 @@ import { timeAgo } from '../../shared/pipes/ago.pipe';
 import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { formatPersianCount, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { PhonePipe } from '../../shared/pipes/phone.pipe';
-import { ToastService } from '../../shared/ui';
+import { PbCopyButton } from '../../shared/ui/copy-button/copy-button';
 import { PbIcon } from '../../shared/ui/icon/icon';
 import type { LineIconName } from '../../shared/ui/icon/line-icons';
 import type { Patient } from './data/patient.model';
@@ -28,13 +29,20 @@ interface Detail {
 @Component({
   selector: 'pb-patient-profile',
   standalone: true,
-  imports: [JalaliPipe, PersianNumberPipe, PhonePipe, PbIcon, TranslatePipe],
+  imports: [
+    MatTooltipModule,
+    JalaliPipe,
+    PersianNumberPipe,
+    PhonePipe,
+    PbCopyButton,
+    PbIcon,
+    TranslatePipe,
+  ],
   templateUrl: './patient-profile.html',
   styleUrl: './patient-profile.scss',
 })
 export class PatientProfile {
   private readonly i18n = inject(TranslateService);
-  private readonly toast = inject(ToastService);
 
   readonly patient = input.required<Patient>();
 
@@ -70,11 +78,4 @@ export class PatientProfile {
         })
       : this.i18n.instant('patientProfile.spanMonths', { months: formatPersianCount(months) });
   });
-
-  protected copy(number: string): void {
-    void navigator.clipboard?.writeText(number).then(
-      () => this.toast.success(this.i18n.instant('patientProfile.copied')),
-      () => undefined,
-    );
-  }
 }

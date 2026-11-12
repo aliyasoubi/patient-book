@@ -107,6 +107,7 @@
     font-size: 1.75rem;
     font-weight: 800;
     line-height: 1.1;
+    font-feature-settings: var(--pb-font-numeric);
   }
 
   span {
@@ -132,7 +133,7 @@
   --_tone: var(--pb-brand);
 
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px var(--pb-space-2);
   padding: var(--pb-space-2) var(--pb-space-3);
@@ -172,17 +173,31 @@
   font-weight: 600;
 }
 
+.legend__metrics {
+  display: grid;
+  grid-template-columns: auto minmax(4.5ch, auto);
+  align-items: center;
+  gap: 6px;
+  font-feature-settings: var(--pb-font-numeric);
+}
+
 .legend__value {
   color: var(--pb-graphite);
+  font-size: 0.9375rem;
   font-weight: 800;
+  line-height: 1.2;
+  text-align: left;
 }
 
 .legend__share {
-  min-inline-size: 4ch;
-  color: var(--pb-neutral-500);
-  font-size: 0.75rem;
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  font-size: 0.6875rem;
   font-weight: 600;
-  text-align: end;
+  line-height: 1.3;
+  text-align: center;
 }
 
 .legend__bar {

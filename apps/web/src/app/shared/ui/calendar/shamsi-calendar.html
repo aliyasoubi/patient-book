@@ -54,7 +54,7 @@
     @case ('days') {
       <div class="cal__weekdays" aria-hidden="true">
         @for (w of weekdays(); track w.full) {
-          <span [class.is-holiday]="w.holiday" [attr.title]="w.full">{{ w.short }}</span>
+          <span [class.is-holiday]="w.holiday" [matTooltip]="w.full">{{ w.short }}</span>
         }
       </div>
 

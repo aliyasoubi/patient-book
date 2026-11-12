@@ -19,13 +19,13 @@ import { join } from 'node:path';
 const PUBLIC = process.argv[2];
 
 /** SVG rasterises at `density` DPI; scale it so the render is native, not upsampled. */
-async function render(svgPath, size) {
+async function render(svgPath, size, { opaque = false } = {}) {
   const svg = await readFile(svgPath);
   const intrinsic = Number(/width="(\d+)"/.exec(svg.toString())?.[1] ?? 48);
-  return sharp(svg, { density: Math.ceil((72 * size) / intrinsic) })
-    .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .png({ compressionLevel: 9 })
-    .toBuffer();
+  const image = sharp(svg, { density: Math.ceil((72 * size) / intrinsic) })
+    .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+  if (opaque) image.removeAlpha();
+  return image.png({ compressionLevel: 9 }).toBuffer();
 }
 
 /**
@@ -71,12 +71,16 @@ await writeFile(join(PUBLIC, 'favicon.ico'), buildIco(icoImages));
 
 const targets = [
   [icon, 180, 'apple-touch-icon.png'],
+  [icon, 120, 'icons/apple-touch-icon-120.png'],
+  [icon, 152, 'icons/apple-touch-icon-152.png'],
+  [icon, 167, 'icons/apple-touch-icon-167.png'],
   [icon, 192, 'icons/icon-192.png'],
   [icon, 512, 'icons/icon-512.png'],
+  [maskable, 192, 'icons/icon-maskable-192.png'],
   [maskable, 512, 'icons/icon-maskable-512.png'],
 ];
 for (const [src, size, out] of targets) {
-  await writeFile(join(PUBLIC, out), await render(src, size));
+  await writeFile(join(PUBLIC, out), await render(src, size, { opaque: true }));
 }
 
 console.log('favicon.ico  ', icoSizes.map((s, i) => `${s}px=${icoImages[i].data.length}B`).join('  '));

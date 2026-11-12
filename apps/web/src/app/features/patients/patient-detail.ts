@@ -1,4 +1,4 @@
-import { PatientGlance } from './patient-glance';
+import { PatientGlance, PatientGlanceSkeleton } from './patient-glance';
 import { PatientHistory } from './patient-history';
 import { PatientProfile } from './patient-profile';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -8,7 +8,6 @@ import { Router, RouterLink } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, finalize, map, of, Subject, switchMap } from 'rxjs';
@@ -20,7 +19,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { RegistryKind, RegistryService } from '../../core/services/registry.service';
 import { LabService } from '../../core/services/lab.service';
-import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
+import { formatJalaliLong, JalaliPipe, FaDatePipe } from '../../shared/pipes/jalali.pipe';
 import {
   formatPersianNumber,
   PersianCountPipe,
@@ -49,6 +48,7 @@ import { isHandledByCaller } from '../../core/interceptors/error.interceptor';
 import { placedImplantLine } from '../../shared/placed-implant';
 import { LoadError } from '../../shared/components/load-error';
 import {
+  PbAutoHeight,
   PbBanner,
   PbButton,
   PbIconButton,
@@ -70,18 +70,20 @@ import type { StatusTone } from '../../shared/ui';
   selector: 'pb-patient-detail',
   standalone: true,
   imports: [
+    FaDatePipe,
     PatientGlance,
+    PatientGlanceSkeleton,
     PatientHistory,
     PatientProfile,
     RouterLink,
     MatMenuModule,
     MatTabsModule,
-    MatProgressBarModule,
     MatDialogModule,
     JalaliPipe,
     PersianCountPipe,
     PersianNumberPipe,
     LoadError,
+    PbAutoHeight,
     PbButton,
     PbSurface,
     PbBanner,
@@ -182,7 +184,7 @@ export class PatientDetail {
       case 'booked':
         return f.followUpAppointmentAt
           ? this.i18n.instant('surgery.bookedOn', {
-              date: formatPersianNumber(f.followUpAppointmentAt),
+              date: formatJalaliLong(f.followUpAppointmentAt, this.i18n),
             })
           : this.i18n.instant('surgery.bookedNoDate');
       case 'declined':
@@ -190,7 +192,7 @@ export class PatientDetail {
       default:
         return f.followUpDate
           ? this.i18n.instant('patientDetail.followUpOn', {
-              date: formatPersianNumber(f.followUpDate.jalali),
+              date: formatJalaliLong(f.followUpDate.jalali, this.i18n),
             })
           : this.i18n.instant('surgeryForm.noFollowUp');
     }

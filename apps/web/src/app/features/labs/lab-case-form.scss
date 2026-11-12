@@ -42,7 +42,7 @@
   inline-size: 32px;
   block-size: 32px;
   border-radius: 9px;
-  background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+  background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
   color: var(--pb-brand-strong);
   font-weight: 800;
 }
@@ -92,9 +92,9 @@
   gap: var(--pb-space-3);
   margin-block-start: var(--pb-space-2);
   padding: var(--pb-space-2) var(--pb-space-2) var(--pb-space-2) var(--pb-space-3);
-  border: 1px solid color-mix(in srgb, #1f9d55 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pb-success) 25%, transparent);
   border-radius: 12px;
-  background: color-mix(in srgb, #1f9d55 6%, #fff);
+  background: color-mix(in srgb, var(--pb-success) 6%, var(--pb-surface));
 }
 
 .linked__icon {
@@ -103,8 +103,8 @@
   inline-size: 30px;
   block-size: 30px;
   border-radius: 9px;
-  background: #fff;
-  color: #17703d;
+  background: var(--pb-surface);
+  color: var(--pb-success-ink);
 }
 
 .linked__text {
@@ -119,7 +119,7 @@
   }
 
   small {
-    color: #17703d;
+    color: var(--pb-success-ink);
     font-size: 0.75rem;
     font-weight: 600;
   }
@@ -166,7 +166,7 @@
   inline-size: 44px;
   block-size: 44px;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+  background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
   color: var(--pb-brand-strong);
 }
 
@@ -223,7 +223,7 @@
   gap: var(--pb-space-3);
   padding: var(--pb-space-3);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--pb-brand) 8%, #fff);
+  background: color-mix(in srgb, var(--pb-brand) 8%, var(--pb-surface));
 }
 
 .due__icon {
@@ -232,7 +232,7 @@
   inline-size: 36px;
   block-size: 36px;
   border-radius: 11px;
-  background: #fff;
+  background: var(--pb-surface);
   color: var(--pb-brand-strong);
 }
 
@@ -300,11 +300,11 @@
   margin-block-start: 5px;
   border: 2px solid var(--pb-brand);
   border-radius: 50%;
-  background: #fff;
+  background: var(--pb-surface);
 
   .is-back & {
-    border-color: #1f9d55;
-    background: #1f9d55;
+    border-color: var(--pb-success);
+    background: var(--pb-success);
   }
 }
 
@@ -334,7 +334,7 @@
   align-items: center;
   gap: 6px;
   margin: 0;
-  color: #17703d;
+  color: var(--pb-success-ink);
   font-size: 0.8125rem;
   font-weight: 700;
 }
@@ -355,7 +355,7 @@
   padding: var(--pb-space-2) var(--pb-space-3);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 14px;
-  background: #fff;
+  background: var(--pb-surface);
   color: var(--pb-neutral-600);
   font: inherit;
   font-size: 0.875rem;
@@ -373,7 +373,7 @@
 
   &.is-on {
     border-color: var(--pb-brand);
-    background: color-mix(in srgb, var(--pb-brand) 8%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 8%, var(--pb-surface));
     color: var(--pb-graphite);
   }
 }
@@ -414,9 +414,29 @@
 
 /* ── Height that eases rather than jumps ───────────────────────────── */
 
-.work-body,
-.sum-body {
+.work-body {
   --auto-gap: var(--pb-space-4);
+}
+
+.work-content {
+  --auto-height-timing: 300ms cubic-bezier(0.35, 0, 0.25, 1);
+}
+
+// Sibling animations each follow the same curve without re-measuring an animating height.
+.implant-parts {
+  margin-block-start: var(--pb-space-1);
+  transition:
+    grid-template-rows var(--auto-height-timing),
+    margin-block-start var(--auto-height-timing),
+    opacity 200ms var(--pb-ease-standard);
+
+  &.is-open {
+    margin-block-start: var(--pb-space-4);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 /* A work mode: its own column, faded in when switched to. */

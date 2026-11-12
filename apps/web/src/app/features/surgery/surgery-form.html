@@ -12,10 +12,11 @@
     (back)="cancel()"
   />
 
-  @if (saving() || loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
 
+  <!-- A record being opened: its form's outline until it is in; saving shows on the button. -->
+  @if (loading()) {
+    <pb-form-skeleton [steps]="[2, 3, 3]" />
+  } @else {
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pb-form">
     <div class="pb-form__main">
       <!-- ── 1. Who, what, when ───────────────────────────────────── -->
@@ -67,10 +68,7 @@
             <pb-text-field
               [control]="form.controls.recordedName"
               [label]="'surgeryForm.recordedName' | translate"
-              [hint]="
-                (linkedPatient() ? 'surgeryForm.patientLinked' : 'surgeryForm.patientHint')
-                  | translate
-              "
+              [hint]="linkedPatient() ? null : ('surgeryForm.patientHint' | translate)"
               prefixIcon="person_search"
               [maxlength]="160"
               [options]="patientOptions()"
@@ -223,7 +221,7 @@
 
     <!-- ── The follow-up as it will be saved, and the save ──────────── -->
     <aside class="pb-form__aside">
-      <div class="pb-aside-card">
+      <pb-form-preview>
         <header class="summary__head">
           <span class="summary__kind"
             ><mat-icon aria-hidden="true">{{ kindIcon(form.controls.kind.value) }}</mat-icon></span
@@ -252,7 +250,7 @@
           </div>
           <div class="fact">
             <dt>{{ 'surgeryForm.summaryDate' | translate }}</dt>
-            <dd class="ltr-nums">
+            <dd>
               {{ surgeryDateText() ?? ('surgeryForm.summaryEmpty' | translate) }}
             </dd>
           </div>
@@ -262,7 +260,7 @@
               @if (teethValue().length) {
                 <span class="fact__teeth">
                   @for (tooth of teethValue(); track tooth) {
-                    <span class="fact__tooth">{{ tooth | faNum }}</span>
+                    <span class="fact__tooth" animate.leave="pb-preview-chip-out">{{ tooth | faNum }}</span>
                   }
                 </span>
               } @else {
@@ -310,7 +308,8 @@
             {{ submitLabel() | translate }}
           </pb-button>
         </div>
-      </div>
+      </pb-form-preview>
     </aside>
   </form>
+  }
 </pb-page>

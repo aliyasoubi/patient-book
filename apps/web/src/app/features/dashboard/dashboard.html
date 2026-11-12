@@ -126,10 +126,18 @@
         </ul>
       </section>
 
-      <!-- ── The month, follow-up days marked ───────────────────── -->
-      <section class="panel panel--compact dash__rise" style="--d: 6" [attr.aria-label]="'calendar.title' | translate">
-        <pb-shamsi-calendar [selected]="null" [marks]="followUpMarks()" [compact]="true" />
-      </section>
+      <!-- ── The month: follow-up days dotted, a tap lists that day ─ -->
+      <pb-dashboard-day
+        class="panel panel--compact dash__rise"
+        style="--d: 6"
+        role="region"
+        [attr.aria-label]="'calendar.title' | translate"
+        [items]="followUps()"
+        [loading]="followUpsLoading()"
+      />
+
+      <!-- ── The files opened this session, one tap back ─────────── -->
+      <pb-dashboard-recent class="panel panel--compact dash__rise" style="--d: 7" />
     </div>
   </div>
 </div>

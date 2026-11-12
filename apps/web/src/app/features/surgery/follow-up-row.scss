@@ -1,13 +1,14 @@
 /*
  * A row of the follow-up sheet. The column template comes from the page
- * (`--fu-columns`), shared with the header above. The edge colour, the
- * "when" headline and the avatar tint all follow the follow-up's state.
+ * (`--fu-columns`), shared with the header above. The state shows in one
+ * place only — a dot and the "when" headline in its colour — so a page of
+ * late rows reads calm, not as a wall of red; the group header above
+ * already says which group it is.
  */
 
 :host {
   --_edge: var(--pb-neutral-300);
   --_ink: var(--pb-graphite);
-  --_tint: var(--pb-neutral-100);
 
   position: relative;
   display: grid;
@@ -20,17 +21,6 @@
   transition:
     background-color 160ms var(--pb-ease-standard),
     opacity 200ms var(--pb-ease-standard);
-
-  /* The urgency edge, at the reading start. */
-  &::before {
-    content: '';
-    position: absolute;
-    inset-block: 10px;
-    inset-inline-start: 0;
-    inline-size: 4px;
-    border-radius: 0 4px 4px 0;
-    background: var(--_edge);
-  }
 }
 
 :host(:hover) {
@@ -42,27 +32,23 @@
 }
 
 :host([data-state='overdue']) {
-  --_edge: #e5484d;
-  --_ink: #b4232a;
-  --_tint: color-mix(in srgb, #e5484d 10%, #fff);
+  --_edge: var(--pb-danger);
+  --_ink: var(--pb-danger-ink);
 }
 
 :host([data-state='due']) {
-  --_edge: #e08a00;
-  --_ink: #8f5600;
-  --_tint: color-mix(in srgb, #e08a00 12%, #fff);
+  --_edge: var(--pb-warn);
+  --_ink: var(--pb-warn-ink);
 }
 
 :host([data-state='pending']) {
   --_edge: var(--pb-brand);
   --_ink: var(--pb-graphite);
-  --_tint: color-mix(in srgb, var(--pb-brand) 10%, #fff);
 }
 
 :host([data-state='booked']) {
-  --_edge: #1f9d55;
-  --_ink: #17703d;
-  --_tint: color-mix(in srgb, #1f9d55 10%, #fff);
+  --_edge: var(--pb-success);
+  --_ink: var(--pb-success-ink);
 }
 
 /* Settled or called off: still listed, but it reads as done. */
@@ -86,10 +72,23 @@
 
 /* ── When ── */
 .when {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pb-space-2);
   color: var(--_ink);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 800;
   line-height: 1.3;
+
+  /* The state's dot. */
+  &::before {
+    content: '';
+    flex: 0 0 auto;
+    inline-size: 8px;
+    block-size: 8px;
+    border-radius: 50%;
+    background: var(--_edge);
+  }
 
   &--quiet {
     color: var(--pb-neutral-500);
@@ -102,6 +101,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding-inline-start: 16px;
   color: var(--pb-neutral-500);
   font-size: 0.75rem;
 
@@ -124,8 +124,8 @@
   inline-size: 40px;
   block-size: 40px;
   border-radius: 13px;
-  background: var(--_tint);
-  color: var(--_ink);
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
   font-size: 1rem;
   font-weight: 800;
   transition: scale 260ms var(--pb-ease-spring);
@@ -156,7 +156,7 @@
 
 .who__warn {
   display: inline-grid;
-  color: #e5484d;
+  color: var(--pb-danger);
 }
 
 .who__line {
@@ -202,7 +202,7 @@
     color 160ms var(--pb-ease-standard);
 
   &:hover {
-    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
     color: var(--pb-brand-strong);
   }
 }
@@ -211,7 +211,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #8f5600;
+  color: var(--pb-warn-ink);
   font-size: 0.75rem;
   font-weight: 600;
 
@@ -290,18 +290,18 @@
   font-weight: 700;
 
   &[data-outcome='booked'] {
-    background: color-mix(in srgb, #1f9d55 10%, #fff);
-    color: #17703d;
+    background: color-mix(in srgb, var(--pb-success) 10%, var(--pb-surface));
+    color: var(--pb-success-ink);
   }
 
   &[data-outcome='declined'] {
-    background: color-mix(in srgb, #e5484d 8%, #fff);
-    color: #b4232a;
+    background: color-mix(in srgb, var(--pb-danger) 8%, var(--pb-surface));
+    color: var(--pb-danger-ink);
   }
 
   &[data-outcome='call_later'] {
-    background: color-mix(in srgb, #e08a00 10%, #fff);
-    color: #8f5600;
+    background: color-mix(in srgb, var(--pb-warn) 10%, var(--pb-surface));
+    color: var(--pb-warn-ink);
   }
 }
 
@@ -332,7 +332,7 @@
   font-size: 0.75rem;
 
   &.is-due {
-    color: #8f5600;
+    color: var(--pb-warn-ink);
     font-weight: 700;
   }
 }
@@ -351,10 +351,10 @@
   gap: 6px;
   block-size: 36px;
   padding-inline: var(--pb-space-3);
-  border: 1px solid color-mix(in srgb, var(--pb-brand) 30%, transparent);
+  border: 1px solid var(--pb-neutral-200);
   border-radius: 11px;
-  background: color-mix(in srgb, var(--pb-brand) 8%, #fff);
-  color: var(--pb-brand-strong);
+  background: var(--pb-surface);
+  color: var(--pb-graphite);
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -365,8 +365,12 @@
     box-shadow 200ms var(--pb-ease-standard),
     scale 150ms var(--pb-ease-standard);
 
+  pb-icon {
+    color: var(--pb-brand);
+  }
+
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--pb-brand) 14%, #fff);
+    border-color: var(--pb-neutral-300);
     box-shadow: var(--pb-shadow-sm);
   }
 

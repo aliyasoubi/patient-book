@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   chartQuadrants,
-  jawTeeth,
+  jawShortcutTeeth,
   teethByQuadrant,
   teethByWork,
   teethFromPhrase,
@@ -48,11 +48,11 @@ describe('teethByQuadrant', () => {
   });
 });
 
-describe('jawTeeth', () => {
+describe('jawShortcutTeeth', () => {
   it('is fourteen teeth, never the other jaw', () => {
-    expect(jawTeeth('upper')).toHaveLength(14);
-    expect(jawTeeth('upper').every((t) => t < 30)).toBe(true);
-    expect(jawTeeth('lower').every((t) => t > 30)).toBe(true);
+    expect(jawShortcutTeeth('upper')).toHaveLength(14);
+    expect(jawShortcutTeeth('upper').every((t) => t < 30 && t % 10 !== 8)).toBe(true);
+    expect(jawShortcutTeeth('lower').every((t) => t > 30 && t % 10 !== 8)).toBe(true);
   });
 });
 
@@ -75,9 +75,10 @@ describe('chartQuadrants', () => {
       'lower right',
       'lower left',
     ]);
-    expect(quadrants[0].teeth).toEqual([17, 16, 15, 14, 13, 12, 11]);
-    expect(quadrants[1].teeth).toEqual([21, 22, 23, 24, 25, 26, 27]);
-    expect(quadrants[2].teeth).toEqual([47, 46, 45, 44, 43, 42, 41]);
+    expect(quadrants[0].teeth).toEqual([18, 17, 16, 15, 14, 13, 12, 11]);
+    expect(quadrants[1].teeth).toEqual([21, 22, 23, 24, 25, 26, 27, 28]);
+    expect(quadrants[2].teeth).toEqual([48, 47, 46, 45, 44, 43, 42, 41]);
+    expect(quadrants[3].teeth).toEqual([31, 32, 33, 34, 35, 36, 37, 38]);
   });
 });
 
@@ -131,8 +132,7 @@ describe('teethFromPhrase', () => {
     expect(teethFromPhrase('۶')).toEqual([]);
     // A size, not a tooth.
     expect(teethFromPhrase('زیمر ۴.۱ در ۱۲')).toEqual([]);
-    // A wisdom tooth the chart does not hold, and a number that is no tooth.
-    expect(teethFromPhrase('۸ راست پایین')).toEqual([]);
+    // A number that is no tooth.
     expect(teethFromPhrase('۵۲')).toEqual([]);
     // No jaw, for all its sides.
     expect(teethFromPhrase('۵و۶ سمت راست')).toEqual([]);
@@ -142,6 +142,13 @@ describe('teethFromPhrase', () => {
     expect(teethFromPhrase('زیمر')).toEqual([]);
     expect(teethFromPhrase('')).toEqual([]);
   });
+});
+
+it('reads wisdom teeth written as a position or an FDI number', () => {
+  expect(teethFromPhrase('۸ راست پایین')).toEqual([48]);
+  expect(teethFromPhrase('هشت بالا چپ')).toEqual([28]);
+  expect(teethFromPhrase('دندان عقل بالا راست')).toEqual([18]);
+  expect(teethFromPhrase('۳۸')).toEqual([38]);
 });
 
 describe('teethFromPhrase, as the books wrote it', () => {

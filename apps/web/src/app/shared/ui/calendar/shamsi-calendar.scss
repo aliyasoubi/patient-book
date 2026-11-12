@@ -93,7 +93,7 @@
   padding: var(--pb-space-1) var(--pb-space-3);
   border: 1px solid var(--pb-neutral-200, var(--mat-sys-outline-variant));
   border-radius: 999px;
-  background: #fff;
+  background: var(--pb-surface);
   color: var(--_ink);
   font: inherit;
   font-size: 0.8125rem;
@@ -241,7 +241,7 @@
   }
 
   &[data-tone='success'] {
-    background: #2e9e5b;
+    background: var(--pb-success);
   }
 
   &[data-tone='neutral'] {
@@ -249,7 +249,7 @@
   }
 
   .is-selected & {
-    background: #fff;
+    background: var(--pb-surface);
   }
 }
 

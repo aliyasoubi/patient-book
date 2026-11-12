@@ -9,11 +9,7 @@ export type FieldReader<T> = readonly [labelKey: string, read: (record: T) => un
  * Label keys of the fields that differ between two copies of a record — what
  * a conflict message lists so the user knows what someone else changed.
  */
-export function changedFields<T>(
-  before: T,
-  after: T,
-  fields: readonly FieldReader<T>[],
-): string[] {
+export function changedFields<T>(before: T, after: T, fields: readonly FieldReader<T>[]): string[] {
   return fields.filter(([, read]) => read(before) !== read(after)).map(([key]) => key);
 }
 

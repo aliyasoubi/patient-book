@@ -355,7 +355,7 @@ export class PatientQueryBuilder {
       ).orderBy('file_num', dto.sortDir, 'NULLS LAST');
     } else {
       qb.orderBy(column, dto.sortDir, 'NULLS LAST');
-      qb.addOrderBy('p.fileNo', 'ASC');
     }
+    qb.addOrderBy('p.fileNo', 'ASC');
   }
 }

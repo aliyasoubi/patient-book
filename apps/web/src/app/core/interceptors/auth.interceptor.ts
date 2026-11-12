@@ -36,7 +36,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         !(error instanceof HttpErrorResponse) ||
         error.status !== 401 ||
         !isApiCall ||
-        !isRefreshable
+        !isRefreshable ||
+        // A rejected current password is a form error; the session is still valid.
+        (req.url.endsWith('/auth/change-password') &&
+          error.error?.code === 'ERR_CURRENT_PASSWORD_WRONG')
       ) {
         return throwError(() => error);
       }

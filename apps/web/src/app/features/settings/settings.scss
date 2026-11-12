@@ -27,6 +27,97 @@ pb-page {
   }
 }
 
+/* ── The accent: three swatches under the display mode ───────────────── */
+
+.accents {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pb-space-2);
+  margin-block-start: var(--pb-space-4);
+}
+
+.accents__label {
+  flex-basis: 100%;
+  color: var(--pb-neutral-500);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.accent {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--pb-space-2);
+  block-size: 44px;
+  padding-inline: var(--pb-space-2) var(--pb-space-3);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 12px;
+  background: var(--pb-surface);
+  color: var(--pb-neutral-600);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 220ms var(--pb-ease-standard),
+    background-color 220ms var(--pb-ease-standard),
+    color 220ms var(--pb-ease-standard),
+    scale 150ms var(--pb-ease-standard);
+
+  &:hover:not(.is-on) {
+    background: var(--pb-neutral-50);
+    color: var(--pb-graphite);
+  }
+
+  &:active {
+    scale: 0.97;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 2px;
+  }
+
+  &.is-on {
+    border-color: var(--pb-brand);
+    background: color-mix(in srgb, var(--pb-brand) 8%, var(--pb-surface));
+    color: var(--pb-graphite);
+  }
+}
+
+/* The hue, and a tick that grows in when it is the one chosen. */
+.accent__swatch {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  background: var(--pb-brand);
+  color: #fff;
+
+  pb-icon {
+    opacity: 0;
+    scale: 0.4;
+    transition:
+      opacity 180ms var(--pb-ease-standard),
+      scale 320ms var(--pb-ease-spring);
+  }
+
+  .is-on & pb-icon {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accent,
+  .accent__swatch pb-icon {
+    transition: none;
+  }
+}
+
 /* ── Labs: a tile each, as many to a row as fit ────────────────────────── */
 
 .labs {
@@ -46,7 +137,7 @@ pb-page {
   padding: var(--pb-space-2) var(--pb-space-3) var(--pb-space-2) var(--pb-space-2);
   border: 1px solid var(--pb-neutral-200);
   border-radius: 14px;
-  background: #fff;
+  background: var(--pb-surface);
   transition:
     background-color 220ms var(--pb-ease-standard),
     box-shadow 260ms var(--pb-ease-standard);
@@ -66,8 +157,8 @@ pb-page {
   block-size: 8px;
   margin-inline-start: var(--pb-space-1);
   border-radius: 50%;
-  background: #2e9e5b;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #2e9e5b 16%, transparent);
+  background: var(--pb-success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pb-success) 16%, transparent);
   transition:
     background-color 220ms var(--pb-ease-standard),
     box-shadow 220ms var(--pb-ease-standard);

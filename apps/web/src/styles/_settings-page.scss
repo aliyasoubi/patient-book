@@ -23,7 +23,7 @@
     padding: var(--pb-space-5);
     border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
     border-radius: 20px;
-    background: #fff;
+    background: var(--pb-surface);
     box-shadow: var(--pb-shadow-sm);
     animation: settings-rise 460ms calc(var(--_i, 0) * 70ms) var(--pb-ease-emphasized) backwards;
   }
@@ -109,7 +109,7 @@
     inline-size: 56px;
     block-size: 56px;
     border-radius: 18px;
-    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    background: color-mix(in srgb, var(--pb-brand) 12%, var(--pb-surface));
     color: var(--pb-brand-strong);
     font-size: 1.375rem;
     font-weight: 800;
@@ -148,7 +148,7 @@
     }
 
     &--brand {
-      background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+      background: color-mix(in srgb, var(--pb-brand) 10%, var(--pb-surface));
       color: var(--pb-brand-strong);
     }
   }

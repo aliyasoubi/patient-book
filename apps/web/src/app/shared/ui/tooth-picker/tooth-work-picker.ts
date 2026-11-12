@@ -1,9 +1,10 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, computed, inject, input, output } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PersianNumberPipe, formatPersianCount } from '../../pipes/persian-number.pipe';
 import { PbButton } from '../button/button';
-import { type ToothWork, jawTeeth, teethByWork, teethSummary, toothName } from './teeth';
+import { type ToothWork, jawShortcutTeeth, teethByWork, teethSummary, toothName } from './teeth';
 import { mouthView } from './tooth-shapes';
 import { PbIcon } from '../icon/icon';
 import type { LineIconName } from '../icon/line-icons';
@@ -44,7 +45,7 @@ interface WorkGroup {
 @Component({
   selector: 'pb-tooth-work-picker',
   standalone: true,
-  imports: [TranslatePipe, PersianNumberPipe, PbButton, PbIcon],
+  imports: [MatTooltipModule, TranslatePipe, PersianNumberPipe, PbButton, PbIcon],
   template: `
     <div
       class="chart"
@@ -88,14 +89,16 @@ interface WorkGroup {
                   type="button"
                   class="chart__tooth"
                   [class.chart__tooth--on]="!!kind"
-                  [class.is-midline]="i === 7"
+                  [class.chart__tooth--wisdom]="tooth.wisdom"
+                  [class.is-midline]="i === jaw.teeth.length / 2"
+                  [attr.data-fdi]="tooth.fdi"
                   [style.--tooth-bg]="kind ? toneVar(kind.tone, 'bg') : null"
                   [style.--tooth-fg]="kind ? toneVar(kind.tone, 'fg') : null"
                   [style.--_lift.px]="tooth.lift"
                   [style.--_tilt.deg]="tooth.tilt"
                   [attr.aria-pressed]="!!kind"
                   [attr.aria-label]="toothLabel(tooth.fdi, kind)"
-                  [title]="toothLabel(tooth.fdi, kind)"
+                  [matTooltip]="toothLabel(tooth.fdi, kind)"
                   (click)="tap(tooth.fdi)"
                 >
                   <svg
@@ -112,10 +115,17 @@ interface WorkGroup {
                     <path class="chart__edge" [attr.d]="tooth.edge || null" />
                     <path class="chart__detail" [attr.d]="tooth.detail" />
                   </svg>
-                  <span class="chart__num">{{ tooth.position | faNum }}</span>
+                  <span class="chart__num">
+                    {{ tooth.position | faNum }}
+                    @if (tooth.wisdom) {
+                      <span class="chart__wisdom-label">{{ 'tooth.wisdom' | translate }}</span>
+                    }
+                  </span>
                   <span class="chart__badge" aria-hidden="true">
                     @if (kind) {
-                      <pb-icon [name]="kind.icon" [size]="11" [stroke]="2" />
+                      <span class="chart__badge-dot"
+                        ><pb-icon [name]="kind.icon" [size]="12" [stroke]="2"
+                      /></span>
                       <span class="cdk-visually-hidden">{{ kind.mark | translate }}</span>
                     }
                   </span>
@@ -287,7 +297,7 @@ export class PbToothWorkPicker {
    * is free and the work in hand is on some of them — the next press takes it off.
    */
   protected jawState(jaw: 'upper' | 'lower'): { count: number; total: number; full: boolean } {
-    const teeth = jawTeeth(jaw);
+    const teeth = jawShortcutTeeth(jaw);
     const work = this.workByTooth();
     const brush = this.brushKind()?.value;
     const count = teeth.filter((t) => work.has(t)).length;
@@ -302,7 +312,7 @@ export class PbToothWorkPicker {
   protected toggleJaw(jaw: 'upper' | 'lower'): void {
     const brush = this.brushKind()?.value;
     if (!brush) return;
-    const teeth = jawTeeth(jaw);
+    const teeth = jawShortcutTeeth(jaw);
     const work = this.workByTooth();
     const free = teeth.filter((t) => !work.has(t));
     this.emit(

@@ -14,6 +14,7 @@ import {
 import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { PbIcon } from '../../shared/ui/icon/icon';
 import { PbIconButton } from '../../shared/ui/icon-button/icon-button';
+import { InventoryExpiryPipe } from './inventory-expiry';
 
 /** The rarer moves; use and receive have their own buttons on the row. */
 const MENU_MOVES: readonly InventoryMovementKind[] = ['discard', 'count'];
@@ -34,6 +35,7 @@ const MENU_MOVES: readonly InventoryMovementKind[] = ['discard', 'count'];
   selector: 'pb-stock-row',
   standalone: true,
   imports: [
+    InventoryExpiryPipe,
     MatIconModule,
     MatMenuModule,
     MatTooltipModule,

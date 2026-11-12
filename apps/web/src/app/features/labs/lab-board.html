@@ -1,5 +1,16 @@
 <pb-page class="labs" width="wide">
   <pb-page-header [title]="'labs.title' | translate" [subtitle]="'labs.subtitle' | translate">
+    <!-- Two views of the same work, not a filter: the board of work in hand,
+         or the archive. The filters below belong to the board, so they go
+         with it. -->
+    @if (canEdit) {
+      <pb-switcher
+        [options]="views"
+        [value]="archivedOnly() ? 'archive' : 'board'"
+        (valueChange)="setArchived($event === 'archive')"
+        [ariaLabel]="'labs.viewsAria' | translate"
+      />
+    }
     @if (canEdit) {
       <!-- Icon-only on the narrowest screens; the label crowds the title. -->
       <pb-button link="/labs/new" icon="add" [collapseBelow]="560">
@@ -34,21 +45,8 @@
         [ariaLabel]="'labs.focusAria' | translate"
       />
     }
-    <!-- Separate from the board's question: it changes which cases are shown at all. -->
-    @if (canEdit) {
-      <pb-filter-chips
-        multiple
-        [options]="archiveFilter"
-        [selected]="archivedOnly() ? ['archived'] : []"
-        (selectedChange)="setArchived($event.length > 0)"
-        [ariaLabel]="'common.filters' | translate"
-      />
-    }
   </pb-list-toolbar>
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
 
   <!-- A failed fetch keeps the cards on screen under this banner; "nothing at
        the lab" and "the board could not be loaded" are different facts. -->
@@ -60,6 +58,7 @@
     @if (!loading() && !failed() && archived().length === 0) {
       <pb-empty-state icon="inventory_2" [title]="'labs.archiveEmpty' | translate" />
     } @else {
+      <pb-auto-height>
       <ul class="archive">
         @for (c of archived(); track c.id) {
           <li>
@@ -70,8 +69,15 @@
               (restore)="restore(c)"
             />
           </li>
+        } @empty {
+          @if (loading()) {
+            @for (n of [0, 1, 2, 3, 4, 5]; track n) {
+              <li><pb-lab-case-card-skeleton class="pb-skeleton" [style.--skel-i]="n % 3" /></li>
+            }
+          }
         }
       </ul>
+      </pb-auto-height>
       @if (archivedTotal() > 0) {
         <pb-paginator
           [length]="archivedTotal()"
@@ -100,11 +106,11 @@
       />
     }
 
-    <div class="board" cdkDropListGroup>
+    <div class="board" cdkDropListGroup [class.is-busy]="loading() && !isEmpty()">
       @for (column of columns(); track column.stage) {
         @let drop = dropState(column.stage);
         <pb-surface
-          class="pb-surface--low column"
+          class="pb-surface--low pb-surface--fill column"
           [class.column--hidden]="!wide() && shownColumn() !== column.stage"
           [class.column--target]="drop === 'target'"
           [class.column--blocked]="drop === 'blocked'"
@@ -124,30 +130,19 @@
             (cdkDropListEntered)="over.set(column.stage)"
             (cdkDropListExited)="over.set(null)"
           >
-            <!-- While a card is dragged, a column that takes it says what the drop will do.
-                 Inside the list, at its top, so the list's own edges do not move. -->
-            <div
-              class="pb-reveal"
-              [class.is-open]="drop === 'target'"
-              [attr.inert]="drop === 'target' ? null : ''"
-            >
-              <div>
-                <div class="column__drop">
-                  <pb-icon name="arrow-bar-to-down" [size]="18" />
-                  <span>
-                    <strong>{{ dropAction[column.stage] | translate }}</strong>
-                    <small>{{ 'labs.dropHere' | translate }}</small>
-                  </span>
-                </div>
-              </div>
-            </div>
             @for (c of column.cases; track c.id) {
+              <!-- The card is over another column: its place here stays held, so
+                   nothing under it moves until it is actually dropped. -->
+              @if (dragging()?.id === c.id && over() !== column.stage) {
+                <div class="column__held" [style.block-size.px]="dragHeight()"></div>
+              }
               <pb-lab-case-card
+                [attr.data-case-id]="c.id"
                 cdkDrag
                 [cdkDragData]="c"
                 [cdkDragDisabled]="!canEdit || !wide() || c.stage === 'delivered'"
                 [draggable]="canEdit && wide() && c.stage !== 'delivered'"
-                (cdkDragStarted)="dragging.set(c)"
+                (cdkDragStarted)="dragStarted(c, $event)"
                 (cdkDragEnded)="dragEnded()"
                 [labCase]="c"
                 [canEdit]="canEdit"
@@ -161,6 +156,12 @@
                 (archive)="archive(c)"
               />
             } @empty {
+              @if (loading()) {
+                <!-- First load: the cards to come, as cards. -->
+                @for (n of skeletonCards(column.stage); track n) {
+                  <pb-lab-case-card-skeleton class="pb-skeleton" [style.--skel-i]="n" />
+                }
+              } @else {
               <!-- Under the overdue filter the other columns are not empty, only not asked about. -->
               <p class="column__empty">
                 {{
@@ -172,6 +173,7 @@
                   ) | translate
                 }}
               </p>
+              }
             }
           </div>
 

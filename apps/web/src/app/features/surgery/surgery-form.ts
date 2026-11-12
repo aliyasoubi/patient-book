@@ -13,7 +13,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators, type FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { DateAdapter } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
@@ -44,12 +43,14 @@ import { ApiErrorTranslator } from '../../core/i18n/api-error.translator';
 import type { ApiErrorBody } from '../../core/i18n/api-error-code';
 import type { SurgeryKind, SurgeryQueueItem } from '../../core/models/common.model';
 import {
+  PbFormSkeleton,
   PbButton,
   PbDateField,
   PbIcon,
   PbIconButton,
   PbPage,
   PbPageHeader,
+  PbFormPreview,
   PbSelectField,
   PbTextField,
   PbTextareaField,
@@ -106,8 +107,8 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
   selector: 'pb-surgery-form',
   standalone: true,
   imports: [
+    PbFormSkeleton,
     ReactiveFormsModule,
-    MatProgressBarModule,
     PbTextField,
     PbTextareaField,
     PbSelectField,
@@ -115,6 +116,7 @@ export function changedSurgeryFields(before: SurgeryQueueItem, after: SurgeryQue
     PbButton,
     PbIcon,
     PbPageHeader,
+    PbFormPreview,
     TranslatePipe,
     PbPage,
     PbIconButton,
@@ -230,7 +232,7 @@ export class SurgeryForm implements HasUnsavedChanges {
   /** The surgery's day as the summary shows it. */
   protected readonly surgeryDateText = computed(() => {
     const date = this.surgeryDateValue();
-    return date ? this.dateAdapter.format(date, 'yyyy/MM/dd') : null;
+    return date ? this.dateAdapter.format(date, 'd MMMM yyyy') : null;
   });
 
   /** The day the follow-up call falls on, once there is a date to count from. */
@@ -238,7 +240,7 @@ export class SurgeryForm implements HasUnsavedChanges {
     const date = this.surgeryDateValue();
     const months = Number(this.followUpMonthsValue());
     if (!date || !months) return null;
-    return this.dateAdapter.format(this.dateAdapter.addCalendarMonths(date, months), 'yyyy/MM/dd');
+    return this.dateAdapter.format(this.dateAdapter.addCalendarMonths(date, months), 'd MMMM yyyy');
   });
   /**
    * LEGACY: the row's imported prosthesis note, shown when no date can be
@@ -280,13 +282,11 @@ export class SurgeryForm implements HasUnsavedChanges {
   /** What the chosen months resolve to, so the dentist sees the date, not just "3". */
   protected readonly followUpHint = computed(() => {
     this.i18n.currentLang();
-    const date = this.surgeryDateValue();
     const months = Number(this.followUpMonthsValue());
-    if (date && months) {
-      const due = this.dateAdapter.addCalendarMonths(date, months);
-      // The adapter already renders Persian numerals.
+    const due = this.followUpDueText();
+    if (due) {
       return this.i18n.instant('surgeryForm.followUpOn', {
-        date: this.dateAdapter.format(due, 'yyyy/MM/dd'),
+        date: due,
       });
     }
     if (!months) return null;

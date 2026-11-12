@@ -1,44 +1,48 @@
-@if (cases().length === 0) {
+@if (loading() && cases().length === 0) {
+  <!-- The cards to come, drawn with the same classes and sizes as the real ones. -->
+  <ul class="registry pb-skeleton" aria-hidden="true">
+    @for (n of skeletonCards; track n) {
+      <li class="case" [style.--skel-i]="n % 4">
+        <header class="case__head">
+          <span class="pb-skel" style="--w: 64px; --h: 30px; --r: 10px"></span>
+          <span class="pb-skel pb-skel--circle" style="--w: 20px; --h: 20px"></span>
+        </header>
+        <span class="pb-skel" style="--w: 58%; --h: 15px; margin-block: 5px"></span>
+        <footer class="case__foot">
+          <span class="pb-skel" style="--w: 84px; --h: 11px; margin-block: 4px"></span>
+          <span class="pb-skel" style="--w: 92px; --h: 11px; margin-block: 4px"></span>
+        </footer>
+      </li>
+    }
+  </ul>
+} @else if (cases().length === 0) {
   <pb-empty-state
     [icon]="icon()"
     [title]="emptyTitle() || ('registry.emptyDefault' | translate)"
     [hint]="emptyHint()"
   />
 } @else {
+  <!-- Cards in a grid that fills the width: the register number as the
+       card's headline, the name under it, the file and phone at its foot. -->
   <ul class="registry">
-    @for (c of cases(); track c.id) {
-      <li class="registry__row" [class.registry__row--unlinked]="!c.patientId">
-        <span class="registry__no">
-          <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
-          <span class="ltr-nums">{{ c.registryNo }}</span>
-        </span>
-
-        <div class="registry__body">
-          <strong class="registry__name">{{
-            c.recordedName || ('patient.unnamed' | translate)
-          }}</strong>
-
-          @if (c.patient) {
-            <pb-status-chip icon="link" [link]="['/patients', c.patient.id]">
-              {{ 'registry.patientFile' | translate: { fileNo: c.patient.fileNo } }}
-              @if (patientName(c) !== c.recordedName) {
-                <span class="registry__alias">({{ patientName(c) }})</span>
-              }
-            </pb-status-chip>
-          } @else {
-            <span class="registry__unlinked" [matTooltip]="'registry.unlinkedTooltip' | translate">
-              <mat-icon aria-hidden="true">link_off</mat-icon>
-              <span>{{ 'registry.unlinked' | translate }}</span>
-            </span>
-          }
-        </div>
-
-        <div class="registry__meta">
-          <!-- One menu per row, same pattern as the patient and surgery
-               lists; which items it holds follows the caller's permissions. -->
+    @for (c of cases(); track c.id; let i = $index) {
+      <li
+        class="case"
+        [class.case--unlinked]="!c.patientId"
+        [style.--i]="i < 24 ? i : 24"
+        animate.enter="case--in"
+      >
+        <header class="case__head">
+          <span class="case__no">
+            <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+            <span>{{ c.registryNo | faNum }}</span>
+          </span>
+          <!-- One menu per card; which items it holds follows the caller's permissions. -->
           @if (hasActions()) {
             <pb-icon-button
+              class="case__menu"
               icon="more_vert"
+              size="compact"
               [menu]="rowMenu"
               [ariaLabel]="'registry.rowActions' | translate"
             />
@@ -64,7 +68,31 @@
               }
             </mat-menu>
           }
-        </div>
+        </header>
+
+        <strong class="case__name">{{ c.recordedName || ('patient.unnamed' | translate) }}</strong>
+        @if (c.patient && patientName(c) !== c.recordedName) {
+          <span class="case__alias">{{ patientName(c) }}</span>
+        }
+
+        <footer class="case__foot">
+          @if (c.patient) {
+            <a class="case__file" [routerLink]="['/patients', c.patient.id]">
+              <pb-icon name="folder" [size]="14" />
+              {{ 'registry.patientFile' | translate: { fileNo: (c.patient.fileNo | faNum) } }}
+            </a>
+          } @else {
+            <span class="case__unlinked" [matTooltip]="'registry.unlinkedTooltip' | translate">
+              <pb-icon name="alert-triangle" [size]="14" />
+              {{ 'registry.unlinked' | translate }}
+            </span>
+          }
+          @if (c.mobile) {
+            <a class="case__phone" dir="ltr" [href]="'tel:' + c.mobile">{{
+              c.mobile | phone | faNum
+            }}</a>
+          }
+        </footer>
       </li>
     }
   </ul>

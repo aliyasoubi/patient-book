@@ -12,22 +12,16 @@
       [ariaLabel]="ui().searchAria | translate"
     />
 
-    <!-- One sort key, so a direction toggle rather than a sort menu: the
-         label names the key, the arrow shows the current order, and the
-         accessible name says both. On a phone it folds to the arrow beside
-         the search, as the patient list's filter button does. -->
-    <pb-button
-      variant="stroked"
-      [icon]="sortDir() === 'DESC' ? 'arrow_downward' : 'arrow_upward'"
-      [ariaLabel]="
-        (sortDir() === 'DESC' ? 'registry.sortDescAria' : 'registry.sortAscAria') | translate
-      "
-      [collapseBelow]="560"
-      [tooltip]="'registry.sortByNumber' | translate"
-      (click)="toggleSort()"
-    >
-      {{ 'registry.sortByNumber' | translate }}
-    </pb-button>
+    <!-- One sort key, the register number, so the order is a two-way
+         switch: newest first or oldest first, both named, the current one
+         lifted. -->
+    <pb-switcher
+      kind="radio"
+      [options]="sortOptions"
+      [value]="sortDir()"
+      (valueChange)="setSort($event)"
+      [ariaLabel]="'registry.sortByNumber' | translate"
+    />
 
     <!-- Independent toggles on a list are M3 filter chips, not checkboxes. -->
     <pb-filter-chips
@@ -39,9 +33,6 @@
     />
   </pb-list-toolbar>
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
 
   <!-- A failed fetch keeps the previous rows (if any) under this banner; it is
        never rendered as the table's empty state, which would claim the
@@ -57,8 +48,12 @@
 
   <!-- Rows already on screen stay through a reload or a failure; the table's
        own empty state only ever follows a completed, successful fetch. -->
-  @if ((!loading() && !failed()) || cases().length > 0) {
+  @if (!failed() || cases().length > 0) {
+    <!-- A new page or page size: the list eases to its new height. -->
+    <pb-auto-height>
     <pb-registry-table
+      [loading]="loading()"
+      [class.is-busy]="loading() && cases().length > 0"
       [cases]="cases()"
       [icon]="ui().icon"
       [emptyTitle]="ui().emptyTitle | translate"
@@ -70,6 +65,7 @@
       (archive)="archive($event)"
       (restore)="restore($event)"
     />
+    </pb-auto-height>
   }
 
   @if (total() > 0) {

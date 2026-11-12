@@ -2,6 +2,7 @@ import { Component, computed, input, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import { PbCountUp } from '../../shared/ui/count-up/count-up';
 
 export interface DonutPart {
   key: string;
@@ -19,7 +20,7 @@ export interface DonutPart {
 @Component({
   selector: 'pb-stats-donut',
   standalone: true,
-  imports: [PersianCountPipe, PersianNumberPipe, TranslatePipe],
+  imports: [PbCountUp, PersianCountPipe, PersianNumberPipe, TranslatePipe],
   template: `
     <div class="donut">
       <svg class="donut__ring" viewBox="0 0 120 120" aria-hidden="true">
@@ -42,13 +43,14 @@ export interface DonutPart {
         }
       </svg>
       <div class="donut__centre">
-        @if (activeArc(); as a) {
-          <strong>{{ a.count | faCount }}</strong>
-          <span>{{ a.label | translate }}</span>
-        } @else {
-          <strong>{{ total() | faCount }}</strong>
-          <span>{{ totalLabel() | translate }}</span>
-        }
+        <strong>
+          <pb-count-up
+            [value]="activeArc()?.count ?? total()"
+            [duration]="340"
+            [animateInitial]="false"
+          />
+        </strong>
+        <span>{{ activeArc()?.label ?? totalLabel() | translate }}</span>
       </div>
     </div>
 
@@ -64,10 +66,12 @@ export interface DonutPart {
         >
           <span class="legend__dot" aria-hidden="true"></span>
           <span class="legend__label">{{ arc.label | translate }}</span>
-          <span class="legend__value">{{ arc.count | faCount }}</span>
-          <span class="legend__share"
-            >{{ arc.share | faNum }}{{ 'common.percentSign' | translate }}</span
-          >
+          <span class="legend__metrics">
+            <span class="legend__value" dir="ltr">{{ arc.count | faCount }}</span>
+            <span class="legend__share" dir="ltr">
+              {{ arc.share | faNum }}{{ 'common.percentSign' | translate }}
+            </span>
+          </span>
           <span class="legend__bar" aria-hidden="true"
             ><span class="legend__fill" [style.inline-size.%]="arc.share"></span
           ></span>

@@ -161,13 +161,12 @@ export const TOOTH_WORK_TYPES: readonly LabWorkType[] = [
 ];
 
 /**
- * The teeth a lab case can name, in FDI notation (ISO 3950): the quadrant —
+ * Permanent teeth in FDI notation (ISO 3950): the quadrant —
  * 1 upper right, 2 upper left, 3 lower left, 4 lower right, as the patient's
- * own sides — then the tooth from the midline, 1 to 7. Wisdom teeth are not
- * offered: the practice does not send them to the lab.
+ * own sides — then the tooth from the midline, 1 through 8.
  */
 export const LAB_TOOTH_NUMBERS: readonly number[] = [1, 2, 3, 4].flatMap((q) =>
-  [1, 2, 3, 4, 5, 6, 7].map((n) => q * 10 + n),
+  [1, 2, 3, 4, 5, 6, 7, 8].map((n) => q * 10 + n),
 );
 
 /**

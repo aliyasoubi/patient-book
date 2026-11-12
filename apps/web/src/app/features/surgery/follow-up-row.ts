@@ -13,6 +13,7 @@ import {
   surgeryKindIcon,
   surgeryKindLabel,
 } from '../../shared/labels';
+import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import { PhonePipe } from '../../shared/pipes/phone.pipe';
 import { placedImplantLine } from '../../shared/placed-implant';
@@ -39,6 +40,7 @@ import { PbIconButton } from '../../shared/ui/icon-button/icon-button';
     MatIconModule,
     MatMenuModule,
     MatTooltipModule,
+    JalaliPipe,
     PersianNumberPipe,
     PhonePipe,
     PbIcon,
@@ -103,3 +105,45 @@ export class FollowUpRow {
     () => this.item().status !== 'cancelled' && !!this.item().followUpDate,
   );
 }
+
+/**
+ * A follow-up row before it has loaded: the row's own grid and cells (it
+ * shares FollowUpRow's stylesheet), each holding the shape of what will be
+ * there — the date, the patient, the work, the last call and the call button.
+ */
+@Component({
+  selector: 'pb-follow-up-row-skeleton',
+  standalone: true,
+  host: { 'aria-hidden': 'true' },
+  template: `
+    <!-- Heights match a typical row: two lines of date, a name over its phone
+         and file, the work over its two-line detail, the last call. -->
+    <div class="cell cell--when">
+      <span class="pb-skel" style="--w: 72%; --h: 15px; margin-block: 2px 3px"></span>
+      <span class="pb-skel" style="--w: 54%; --h: 11px; margin-block: 4px 5px"></span>
+    </div>
+    <div class="cell cell--who">
+      <span class="pb-skel" style="--w: 40px; --h: 40px; --r: 13px"></span>
+      <span class="who skel-col" style="flex: 1; block-size: 51px">
+        <span class="pb-skel" style="--w: 58%; --h: 14px"></span>
+        <span class="pb-skel" style="--w: 78%; --h: 11px"></span>
+      </span>
+    </div>
+    <div class="cell cell--work">
+      <span class="pb-skel" style="--w: 62%; --h: 14px; margin-block: 5px"></span>
+      <span class="skel-col" style="block-size: 43px">
+        <span class="pb-skel" style="--w: 88%; --h: 11px"></span>
+        <span class="pb-skel" style="--w: 52%; --h: 11px"></span>
+      </span>
+    </div>
+    <div class="cell cell--contact">
+      <span class="pb-skel" style="--w: 56%; --h: 11px; margin-block: 5px 6px"></span>
+    </div>
+    <div class="cell cell--actions">
+      <span class="pb-skel" style="--w: 92px; --h: 36px; --r: 11px"></span>
+      <span class="pb-skel pb-skel--circle" style="--w: 24px; --h: 24px"></span>
+    </div>
+  `,
+  styleUrl: './follow-up-row.scss',
+})
+export class FollowUpRowSkeleton {}

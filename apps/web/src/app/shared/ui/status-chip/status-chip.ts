@@ -123,27 +123,27 @@ export type StatusTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error'
     /* Tones are a soft tint with a hairline of the same hue: the meaning
        reads at a glance without a block of colour in every row. */
     :host([data-tone='primary']) {
-      --_bg: color-mix(in srgb, var(--pb-brand, #ff6a00) 9%, #fff);
+      --_bg: color-mix(in srgb, var(--pb-brand, #ff6a00) 9%, var(--pb-surface));
       --_edge: color-mix(in srgb, var(--pb-brand, #ff6a00) 22%, transparent);
       color: var(--pb-brand-strong, var(--mat-sys-primary));
     }
 
     :host([data-tone='success']) {
-      --_bg: color-mix(in srgb, #1f9d55 9%, #fff);
-      --_edge: color-mix(in srgb, #1f9d55 22%, transparent);
-      color: #17703d;
+      --_bg: color-mix(in srgb, var(--pb-success) 9%, var(--pb-surface));
+      --_edge: color-mix(in srgb, var(--pb-success) 22%, transparent);
+      color: var(--pb-success-ink);
     }
 
     :host([data-tone='warning']) {
-      --_bg: color-mix(in srgb, #e08a00 10%, #fff);
-      --_edge: color-mix(in srgb, #e08a00 26%, transparent);
-      color: #8f5600;
+      --_bg: color-mix(in srgb, var(--pb-warn) 10%, var(--pb-surface));
+      --_edge: color-mix(in srgb, var(--pb-warn) 26%, transparent);
+      color: var(--pb-warn-ink);
     }
 
     :host([data-tone='error']) {
-      --_bg: color-mix(in srgb, #e5484d 8%, #fff);
-      --_edge: color-mix(in srgb, #e5484d 22%, transparent);
-      color: #b4232a;
+      --_bg: color-mix(in srgb, var(--pb-danger) 8%, var(--pb-surface));
+      --_edge: color-mix(in srgb, var(--pb-danger) 22%, transparent);
+      color: var(--pb-danger-ink);
     }
   `,
 })

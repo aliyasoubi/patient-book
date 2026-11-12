@@ -1,3 +1,5 @@
+import { FaDatePipe } from '../../shared/pipes/jalali.pipe';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -33,6 +35,8 @@ import type { LineIconName, StatusTone } from '../../shared/ui';
   selector: 'pb-lab-case-card',
   standalone: true,
   imports: [
+    FaDatePipe,
+    MatTooltipModule,
     NgTemplateOutlet,
     RouterLink,
     MatIconModule,
@@ -49,7 +53,7 @@ import type { LineIconName, StatusTone } from '../../shared/ui';
       <!-- Who: the name first, then the file and the lab in quiet text. -->
       <header class="card__head">
         @if (draggable()) {
-          <span class="card__grip" aria-hidden="true" [title]="'labs.dragHandle' | translate">
+          <span class="card__grip" aria-hidden="true" [matTooltip]="'labs.dragHandle' | translate">
             <pb-icon name="grip-vertical" [size]="16" />
           </span>
         }
@@ -153,7 +157,7 @@ import type { LineIconName, StatusTone } from '../../shared/ui';
                     {{ 'labs.dueToday' | translate }}
                   }
                   @default {
-                    {{ 'labs.dueOn' | translate: { date: (trip()?.expectedAt | faNum) } }}
+                    {{ 'labs.dueOn' | translate: { date: (trip()?.expectedAt | faDate) } }}
                   }
                 }
               }
@@ -170,7 +174,7 @@ import type { LineIconName, StatusTone } from '../../shared/ui';
                     {{
                       'labs.appointmentPassed'
                         | translate
-                          : { date: (c.appointmentAt | faNum), count: (daysPast() | faNum) }
+                          : { date: (c.appointmentAt | faDate), count: (daysPast() | faNum) }
                     }}
                   }
                   @case ('due_today') {
@@ -180,13 +184,13 @@ import type { LineIconName, StatusTone } from '../../shared/ui';
                     {{
                       'labs.appointmentOn'
                         | translate
-                          : { date: (c.appointmentAt | faNum), count: (c.appointmentDays | faNum) }
+                          : { date: (c.appointmentAt | faDate), count: (c.appointmentDays | faNum) }
                     }}
                   }
                 }
               }
               @case ('delivered') {
-                {{ 'labs.deliveredOn' | translate: { date: (c.deliveredAt | faNum) } }}
+                {{ 'labs.deliveredOn' | translate: { date: (c.deliveredAt | faDate) } }}
               }
             }
           </span>
@@ -212,7 +216,7 @@ import type { LineIconName, StatusTone } from '../../shared/ui';
                   {{ 'labs.partsDueToday' | translate }}
                 }
                 @case ('on_time') {
-                  {{ 'labs.partsDueOn' | translate: { date: (c.partsDueAt | faNum) } }}
+                  {{ 'labs.partsDueOn' | translate: { date: (c.partsDueAt | faDate) } }}
                 }
                 @default {
                   {{ 'labs.partsOwed' | translate }}
@@ -469,3 +473,39 @@ export class LabCaseCard {
     }
   });
 }
+
+/**
+ * A lab card before it has loaded: the same card, with the same classes and
+ * sizes as LabCaseCard (it shares its stylesheet) — who, what, when and the
+ * next move — so the real card lands in its place without a shift.
+ */
+@Component({
+  selector: 'pb-lab-case-card-skeleton',
+  standalone: true,
+  template: `
+    <!-- Heights match a typical card: a name over its file and lab, a line of
+         work over its teeth, where it stands, and the next move. -->
+    <article class="card" aria-hidden="true">
+      <header class="card__head">
+        <div class="card__who skel-col" style="block-size: 70px">
+          <span class="pb-skel" style="--w: 55%; --h: 15px"></span>
+          <span class="pb-skel" style="--w: 40%; --h: 11px"></span>
+          <span class="pb-skel" style="--w: 62%; --h: 11px"></span>
+        </div>
+      </header>
+      <div class="card__work skel-col" style="block-size: 43px">
+        <span class="pb-skel" style="--w: 46%; --h: 13px"></span>
+        <span class="pb-skel" style="--w: 64%; --h: 11px"></span>
+      </div>
+      <div class="card__status skel-col" style="block-size: 35px; justify-content: flex-end">
+        <span class="pb-skel" style="--w: 38%; --h: 13px"></span>
+        <span class="pb-skel" style="--w: 26%; --h: 11px"></span>
+      </div>
+      <div class="card__actions">
+        <span class="pb-skel" style="--h: 40px; --r: 999px"></span>
+      </div>
+    </article>
+  `,
+  styleUrl: './lab-case-card.scss',
+})
+export class LabCaseCardSkeleton {}

@@ -1,6 +1,6 @@
 <!-- ── Item ─────────────────────────────────────────────────────── -->
 <div class="cell cell--item">
-  <span class="thumb" aria-hidden="true">
+  <span class="thumb" [class.thumb--ok]="status().tone === 'ok'" aria-hidden="true">
     <mat-icon>{{ categoryIcons[item().category] }}</mat-icon>
   </span>
   <span class="what">
@@ -13,7 +13,7 @@
         <span class="what__spec" dir="auto">{{ item().spec }}</span>
       }
       @if (item().notes) {
-        <span class="what__notes" dir="auto" [title]="item().notes">{{ item().notes }}</span>
+        <span class="what__notes" dir="auto" [matTooltip]="item().notes ?? ''">{{ item().notes }}</span>
       }
     </span>
   </span>
@@ -48,10 +48,10 @@
 
 <!-- ── Expiry ───────────────────────────────────────────────────── -->
 <div class="cell cell--expiry">
-  @if (item().expiry) {
+  @if (item().expiry | inventoryExpiry; as expiry) {
     <span class="expiry" [attr.data-state]="item().expiryState">
       <pb-icon name="hourglass" [size]="14" />
-      <span class="ltr-nums">{{ item().expiry | faNum }}</span>
+      <span>{{ expiry }}</span>
     </span>
   } @else {
     <span class="expiry expiry--none">{{ 'inventory.noExpiry' | translate }}</span>

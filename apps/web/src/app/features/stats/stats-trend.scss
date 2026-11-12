@@ -110,7 +110,7 @@
 }
 
 .trend__point {
-  fill: #fff;
+  fill: var(--pb-surface);
   stroke: var(--pb-brand);
   stroke-width: 2;
   transform-box: fill-box;
@@ -158,7 +158,7 @@
   border-radius: 12px;
   background: var(--pb-graphite);
   box-shadow: var(--pb-shadow-md);
-  color: #fff;
+  color: var(--pb-on-graphite);
   pointer-events: none;
   translate: 50% calc(-100% - 14px);
   transition:
@@ -173,7 +173,7 @@
 }
 
 .trend__tip-month {
-  color: color-mix(in srgb, #fff 70%, transparent);
+  color: color-mix(in srgb, var(--pb-on-graphite) 70%, transparent);
   font-size: 0.6875rem;
 }
 

@@ -8,36 +8,36 @@
   <main class="login__column" [class.is-shaking]="shaking()" (animationend)="stopShaking($event)">
     <!--
       A plain link (the app router would send `/` straight back to the
-      dashboard), and out of the Tab order: on this page Tab walks only the
-      fields and the button.
+      dashboard), and out of the form's Tab order.
     -->
     <a class="login__brand" href="/" tabindex="-1" [attr.aria-label]="'auth.homeLink' | translate">
       <pb-logo [size]="44" [drawIn]="true" />
     </a>
 
-    <!-- Each step's heading and fields share one cell and trade places: forward slides left, back right. -->
-    <div class="login__stack login__heads login__rise" style="--d: 1">
-      <header class="login__step" [class.is-active]="step() === 1" [attr.data-pos]="pos(1)">
-        <h1 class="login__title" [attr.aria-hidden]="step() !== 1">
-          {{ 'auth.heading' | translate }}
-        </h1>
-        <p class="login__subtitle" [attr.aria-hidden]="step() !== 1">
-          {{ 'auth.subheading' | translate }}
+    <header class="login__heads">
+      <h1 class="login__title">{{ 'auth.heading' | translate }}</h1>
+      <div class="login__stack login__subtitles">
+        <p
+          class="login__subtitle"
+          [class.is-active]="step() === 1"
+          [attr.data-pos]="pos(1)"
+          [attr.aria-hidden]="step() !== 1"
+        >
+          {{ 'auth.usernameHelp' | translate }}
         </p>
-      </header>
-      <header class="login__step" [class.is-active]="step() === 2" [attr.data-pos]="pos(2)">
-        <h1 class="login__title" [attr.aria-hidden]="step() !== 2">
-          {{ 'auth.welcome' | translate }}
-        </h1>
-        <p class="login__subtitle" [attr.aria-hidden]="step() !== 2">
-          {{ 'auth.passwordStep' | translate }}
+        <p
+          class="login__subtitle"
+          [class.is-active]="step() === 2"
+          [attr.data-pos]="pos(2)"
+          [attr.aria-hidden]="step() !== 2"
+        >
+          {{ 'auth.passwordHelp' | translate }}
         </p>
-      </header>
-    </div>
+      </div>
+    </header>
 
     <form
-      class="login__form login__rise"
-      style="--d: 2"
+      class="login__form"
       [formGroup]="form"
       (ngSubmit)="submit()"
       (keydown)="trackCapsLock($event)"
@@ -48,7 +48,7 @@
       <!-- Both steps stay in the form, so a password manager sees an ordinary username + password pair. -->
       <div class="login__stack">
         <section
-          class="login__step login__fields"
+          class="login__fields"
           [class.is-active]="step() === 1"
           [attr.data-pos]="pos(1)"
           [inert]="step() !== 1"
@@ -57,16 +57,19 @@
             [control]="form.controls.username"
             [label]="'auth.username' | translate"
             [showErrors]="tried().username"
+            [errorMessages]="{ required: ('auth.usernameRequired' | translate) }"
             [placeholder]="'auth.usernameHint' | translate"
             prefixIcon="user"
             [ltr]="true"
             nativeAutocomplete="username"
+            nativeName="username"
+            enterKeyHint="go"
           />
           <pb-button
             class="login__cta"
             variant="flat"
             size="large"
-            type="submit"
+            [type]="step() === 1 ? 'submit' : 'button'"
             icon="arrow-left"
             [forward]="true"
             [raised]="true"
@@ -77,7 +80,7 @@
         </section>
 
         <section
-          class="login__step login__fields"
+          class="login__fields"
           [class.is-active]="step() === 2"
           [attr.data-pos]="pos(2)"
           [inert]="step() !== 2"
@@ -85,34 +88,42 @@
           <div class="login__who">
             <span class="login__avatar" aria-hidden="true">{{ initial() }}</span>
             <span class="login__who-name" dir="ltr">{{ username() }}</span>
-            <!-- Out of the Tab order too; Escape does the same from the keyboard. -->
             <button
               class="login__change"
               type="button"
-              tabindex="-1"
+              [disabled]="loading()"
               [attr.aria-label]="'auth.changeUser' | translate"
               (click)="back()"
             >
               <pb-icon name="pencil" [size]="16" />
             </button>
           </div>
-          <pb-input
-            [control]="form.controls.password"
-            [label]="'auth.password' | translate"
-            [showErrors]="tried().password"
-            [toggleInTabOrder]="false"
-            type="password"
-            prefixIcon="lock"
-            [ltr]="true"
-            [placeholder]="'auth.passwordHint' | translate"
-            [hint]="capsLock() ? ('auth.capsLock' | translate) : null"
-            nativeAutocomplete="current-password"
-          />
+          <div>
+            <pb-input
+              [control]="form.controls.password"
+              [label]="'auth.password' | translate"
+              [showErrors]="tried().password"
+              [errorMessages]="{ required: ('auth.passwordRequired' | translate) }"
+              [readOnly]="loading()"
+              type="password"
+              prefixIcon="lock"
+              [ltr]="true"
+              [placeholder]="'auth.passwordHint' | translate"
+              nativeAutocomplete="current-password"
+              nativeName="password"
+              enterKeyHint="go"
+            />
+            <p
+              class="login__caps-lock"
+              role="status"
+              [textContent]="capsLock() ? ('auth.capsLock' | translate) : ''"
+            ></p>
+          </div>
           <pb-button
             class="login__cta"
             variant="flat"
             size="large"
-            type="submit"
+            [type]="step() === 2 ? 'submit' : 'button'"
             icon="login-2"
             [forward]="true"
             [raised]="true"
@@ -125,10 +136,13 @@
           </pb-button>
         </section>
       </div>
+      <span class="visually-hidden" role="status">
+        {{ loading() ? ('auth.signingIn' | translate) : '' }}
+      </span>
     </form>
   </main>
 
-  <p class="login__notice login__rise" style="--d: 4">
+  <p class="login__notice">
     <pb-icon name="shield-lock" [size]="14" />
     <span>{{ 'auth.confidentialNotice' | translate }}</span>
   </p>
