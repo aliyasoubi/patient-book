@@ -402,3 +402,28 @@
     color: var(--pb-neutral-400);
   }
 }
+
+/* ── Height that eases rather than jumps ───────────────────────────── */
+
+.work-body,
+.sum-body {
+  --auto-gap: var(--pb-space-4);
+}
+
+/* A work mode: its own column, faded in when switched to. */
+.mode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-4);
+}
+
+.mode--in {
+  animation: mode-in 320ms var(--pb-ease-emphasized);
+}
+
+@keyframes mode-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}

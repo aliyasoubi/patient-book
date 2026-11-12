@@ -55,6 +55,7 @@ import {
 import { PersianNumberPipe, formatPersianCount } from '../../shared/pipes/persian-number.pipe';
 import { toLatinDigits } from '../../shared/validators';
 import {
+  PbAutoHeight,
   PbButton,
   PbDateField,
   PbIcon,
@@ -133,6 +134,7 @@ const teethUnlessJawWork = (control: AbstractControl<LabToothWork[]>): Validatio
     MatProgressBarModule,
     TranslatePipe,
     PersianNumberPipe,
+    PbAutoHeight,
     PbButton,
     PbDateField,
     PbIcon,

@@ -14,11 +14,14 @@ import {
 } from '@angular/core';
 import { type FormControl, type ValidationErrors } from '@angular/forms';
 import { DateAdapter } from '@angular/material/core';
+import { getDate, getDay, getMonth, getYear } from 'date-fns-jalali';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { errorsRevealed } from '../form-submitted';
 import { firstErrorMessage, hintAsNote, placeholderWithHint } from '../field-errors';
+import { JALALI_MONTH_KEYS, JALALI_WEEKDAY_KEYS } from '../../../core/jalali/jalali-date-adapter';
 import { PbIcon } from '../icon/icon';
+import { PbAutoHeight } from '../auto-height/auto-height';
 import { PbShamsiCalendar, type CalendarView } from '../calendar/shamsi-calendar';
 
 let nextId = 0;
@@ -48,7 +51,7 @@ const VIEW_FOR: Record<'month' | 'year' | 'multi-year', CalendarView> = {
 @Component({
   selector: 'pb-date-field',
   standalone: true,
-  imports: [PbIcon, PbShamsiCalendar, TranslatePipe],
+  imports: [PbAutoHeight, PbIcon, PbShamsiCalendar, TranslatePipe],
   templateUrl: './date-field.html',
   styleUrl: './date-field.scss',
 })
@@ -79,8 +82,24 @@ export class PbDateField {
   protected readonly text = signal('');
   /** The typed text could not be read as a date. */
   private readonly unreadable = signal(false);
+  /** The caret is in the box: it shows the date as digits, ready to edit. */
+  protected readonly focused = signal(false);
   /** Bumped when the control's value or state changes, to re-read it in the template. */
   private readonly tick = signal(0);
+
+  /**
+   * At rest a picked date reads as words — «پنجشنبه ۲۱ آبان ۱۴۰۵» — with its
+   * weekday, so nobody has to work out what ۱۴۰۵/۰۸/۲۱ is; in the caret it
+   * turns back into digits to edit. Text that is not a date stays as typed.
+   */
+  protected readonly pretty = computed(() => {
+    this.i18n.currentLang();
+    const value = this.value();
+    if (this.focused() || this.unreadable() || !value || !this.adapter.isValid(value)) return null;
+    const weekday = this.i18n.instant(`day.${JALALI_WEEKDAY_KEYS[getDay(value)]}`);
+    const month = this.i18n.instant(JALALI_MONTH_KEYS[getMonth(value)]);
+    return `${weekday} ${getDate(value)} ${month} ${getYear(value)}`;
+  });
 
   protected readonly calendarView = computed(() => VIEW_FOR[this.startView()]);
   protected readonly value = computed(() => {
@@ -174,7 +193,12 @@ export class PbDateField {
     }
   }
 
+  protected onFocus(): void {
+    this.focused.set(true);
+  }
+
   protected onBlur(): void {
+    this.focused.set(false);
     this.commitText();
     this.control().markAsTouched();
     this.tick.update((t) => t + 1);

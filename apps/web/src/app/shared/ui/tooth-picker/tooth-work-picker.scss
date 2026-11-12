@@ -78,9 +78,13 @@
 }
 
 .tool__count {
+  display: inline-grid;
+  place-items: center;
   min-inline-size: 22px;
-  padding: 1px 6px;
+  block-size: 22px;
+  padding: 0 6px;
   border-radius: 999px;
+  line-height: 1;
   background: var(--tooth-fg);
   color: #fff;
   font-size: 0.6875rem;

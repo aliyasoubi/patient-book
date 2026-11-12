@@ -11,7 +11,8 @@
       inputmode="numeric"
       autocomplete="off"
       [id]="id"
-      [value]="text()"
+      [class.date__control--words]="!!pretty()"
+      [value]="pretty() ?? text()"
       [placeholder]="withHint(placeholder() || ('calendar.placeholder' | translate))"
       [attr.aria-invalid]="showError() || null"
       [attr.aria-describedby]="message() ? messageId : showInlineHint() ? id + '-hint' : null"
@@ -19,6 +20,7 @@
       aria-haspopup="dialog"
       (input)="onInput($event)"
       (keydown)="onKeydown($event)"
+      (focus)="onFocus()"
       (blur)="onBlur()"
     />
     @if (showInlineHint()) {
@@ -45,12 +47,15 @@
       animate.enter="date__popover--in"
       animate.leave="date__popover--out"
     >
-      <pb-shamsi-calendar
-        [selected]="value()"
-        [startView]="calendarView()"
-        [showToday]="false"
-        (dateChange)="pick($event)"
-      />
+      <!-- A month of six weeks is a row taller than one of five: eased, not jumped. -->
+      <pb-auto-height>
+        <pb-shamsi-calendar
+          [selected]="value()"
+          [startView]="calendarView()"
+          [showToday]="false"
+          (dateChange)="pick($event)"
+        />
+      </pb-auto-height>
       <footer class="date__foot">
         <button type="button" class="date__chip" (click)="clear()">
           {{ 'calendar.clear' | translate }}

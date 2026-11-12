@@ -175,6 +175,32 @@
     stroke 200ms var(--pb-ease-standard);
 }
 
+/* Depth in flat layers: the canal in the root, the crown's shaded side, the
+   translucent biting edge. Each is a wash over whatever colour the tooth is. */
+.chart__pulp {
+  fill: none;
+  stroke: #b49b78;
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart__shade {
+  fill: #2f2f33;
+  fill-opacity: 0.07;
+}
+
+.chart__edge {
+  fill: #8fa9bb;
+  fill-opacity: 0.2;
+  transition: fill-opacity 200ms var(--pb-ease-standard);
+
+  .chart__tooth--on & {
+    fill-opacity: 0;
+  }
+}
+
 /* The highlight on a front tooth, the grooves between a back tooth's cusps. */
 .chart__detail {
   fill: none;

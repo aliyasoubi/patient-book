@@ -105,7 +105,10 @@ interface WorkGroup {
                     aria-hidden="true"
                   >
                     <path class="chart__root" [attr.d]="tooth.root" />
+                    <path class="chart__pulp" [attr.d]="tooth.pulp" />
                     <path class="chart__crown" [attr.d]="tooth.crown" />
+                    <path class="chart__shade" [attr.d]="tooth.shade" />
+                    <path class="chart__edge" [attr.d]="tooth.edge || null" />
                     <path class="chart__detail" [attr.d]="tooth.detail" />
                   </svg>
                   <span class="chart__num">{{ tooth.position | faNum }}</span>

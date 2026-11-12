@@ -59,6 +59,13 @@
   direction: ltr;
   text-align: right;
   letter-spacing: 0.02em;
+
+  /* At rest, the date in words reads right to left like the rest of the page. */
+  &--words {
+    direction: rtl;
+    text-align: start;
+    letter-spacing: 0;
+  }
 }
 
 .date__toggle {

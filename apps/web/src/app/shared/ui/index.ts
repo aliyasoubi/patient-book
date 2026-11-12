@@ -6,6 +6,7 @@
 export { PbInput } from './input/input';
 export { PbIcon } from './icon/icon';
 export { PbCountUp } from './count-up/count-up';
+export { PbAutoHeight } from './auto-height/auto-height';
 export { PbShamsiCalendar } from './calendar/shamsi-calendar';
 export type { CalendarMarkTone, CalendarView } from './calendar/shamsi-calendar';
 export { PbToastHost } from './toast/toast-host';
