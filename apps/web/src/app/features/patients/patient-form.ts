@@ -43,13 +43,11 @@ import {
   PbBanner,
   PbButton,
   PbDateField,
-  PbFieldGrid,
-  PbFormActions,
+  PbIcon,
   PbPage,
   PbPageHeader,
   PbSelectField,
   PbStatusChip,
-  PbSurface,
   PbTextField,
   PbTextareaField,
   ToastService,
@@ -62,6 +60,8 @@ import {
   mergeTreatments,
 } from './patient-form.utils';
 import { AuthService } from '../../core/services/auth.service';
+import { PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
+import { PhonePipe } from '../../shared/pipes/phone.pipe';
 import { markSubmitted } from '../../shared/ui/form-submitted';
 
 /** Literal keys, so the i18n check can see every one is translated. */
@@ -84,13 +84,13 @@ const DUPLICATE_REASON_KEYS: Readonly<Record<DuplicateReason, string>> = {
     PbSelectField,
     PbDateField,
     PbButton,
-    PbSurface,
+    PbIcon,
     PbPageHeader,
     MatIconModule,
     TranslatePipe,
     PbPage,
-    PbFieldGrid,
-    PbFormActions,
+    PersianNumberPipe,
+    PhonePipe,
   ],
   templateUrl: './patient-form.html',
   styleUrl: './patient-form.scss',
@@ -170,6 +170,60 @@ export class PatientForm implements HasUnsavedChanges {
     firstVisitAt: [null as Date | null],
     lastVisitAt: [null as Date | null],
     notes: [''],
+  });
+
+  /** The whole form as it stands, for the preview beside it. */
+  protected readonly v = toSignal(this.form.valueChanges.pipe(map(() => this.form.getRawValue())), {
+    initialValue: this.form.getRawValue(),
+  });
+
+  protected readonly previewName = computed(() =>
+    [this.v().firstName, this.v().lastName]
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(' '),
+  );
+
+  protected readonly previewInitial = computed(() => (this.previewName() || '').charAt(0));
+
+  /** Whole years since the birth date, once there is one. */
+  protected readonly previewAge = computed(() => {
+    const birth = this.v().birthDate;
+    if (!birth) return null;
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const beforeBirthday =
+      now.getMonth() < birth.getMonth() ||
+      (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
+    if (beforeBirthday) age--;
+    return age >= 0 && age < 130 ? age : null;
+  });
+
+  protected readonly selectedTreatmentNames = computed(() => {
+    const chosen = this.selectedTreatments();
+    return this.treatmentTypes()
+      .filter((type) => chosen.has(type.code))
+      .map((type) => type.nameFa);
+  });
+
+  /** How much of the file is filled in, of the fields a front desk is asked for. */
+  protected readonly completeness = computed(() => {
+    const v = this.v();
+    const filled = [
+      v.fileNo,
+      v.firstName,
+      v.lastName,
+      v.fatherName,
+      v.nationalId,
+      v.gender !== 'unknown',
+      v.birthDate,
+      v.mobile,
+      v.homeAddress,
+      v.occupation,
+      v.education !== 'unknown',
+      v.referralSourceName,
+    ].filter(Boolean).length;
+    return Math.round((filled / 12) * 100);
   });
 
   private readonly referralTyped = toSignal(this.form.controls.referralSourceName.valueChanges, {
@@ -369,6 +423,12 @@ export class PatientForm implements HasUnsavedChanges {
     if (!jalali || jalali.split('/').length !== 3) return null;
     const parsed = this.dateAdapter.parse(jalali, 'yyyy/MM/dd');
     return parsed && this.dateAdapter.isValid(parsed) ? parsed : null;
+  }
+
+  /** A gender chip. */
+  protected setGender(value: string): void {
+    this.form.controls.gender.setValue(value as Gender);
+    this.form.controls.gender.markAsDirty();
   }
 
   protected toggleTreatment(code: string): void {

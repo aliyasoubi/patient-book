@@ -6,13 +6,6 @@
  * day of the call — with the save under it, always in reach.
  */
 
-@keyframes sf-rise {
-  from {
-    opacity: 0;
-    translate: 0 10px;
-  }
-}
-
 @keyframes sf-pop {
   from {
     opacity: 0;
@@ -20,101 +13,11 @@
   }
 }
 
-.sf {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-4);
-
-  @media (min-width: 1100px) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
-    align-items: start;
-  }
-}
-
-.sf__main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-4);
-  min-inline-size: 0;
-}
-
-/* ── A step ────────────────────────────────────────────────────────── */
-
-.step {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-4);
-  padding: var(--pb-space-5);
-  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: var(--pb-shadow-sm);
-  animation: sf-rise 460ms calc(var(--_i, 0) * 70ms) var(--pb-ease-emphasized) backwards;
-}
-
-.step__head {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--pb-space-3);
-}
-
-.step__num {
-  display: inline-grid;
-  flex: 0 0 auto;
-  place-items: center;
-  inline-size: 32px;
-  block-size: 32px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
-  color: var(--pb-brand-strong);
-  font-size: 0.9375rem;
-  font-weight: 800;
-}
-
-.step__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.step__title {
-  margin: 0;
-  color: var(--pb-graphite);
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.step__hint {
-  margin: 0;
-  color: var(--pb-neutral-500);
-  font-size: 0.8125rem;
-}
-
-.step__sub {
-  margin: var(--pb-space-2) 0 var(--pb-space-3);
-  padding-block-start: var(--pb-space-4);
-  border-block-start: 1px dashed var(--pb-neutral-200);
-  color: var(--pb-graphite);
-  font-size: 0.875rem;
-  font-weight: 700;
-}
-
-.row {
-  display: grid;
-  gap: var(--pb-space-3) var(--pb-space-4);
-  align-items: start;
-}
+/* ── Rows ── */
 
 .row--who {
   @media (min-width: 760px) {
     grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
-  }
-}
-
-.row--three {
-  @media (min-width: 760px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -330,26 +233,6 @@
 
 /* ── The summary beside the form ───────────────────────────────────── */
 
-.summary {
-  animation: sf-rise 460ms 120ms var(--pb-ease-emphasized) backwards;
-
-  @media (min-width: 1100px) {
-    position: sticky;
-    inset-block-start: var(--pb-space-4);
-  }
-}
-
-.summary__card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-4);
-  padding: var(--pb-space-5);
-  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: var(--pb-shadow-md);
-}
-
 .summary__head {
   display: flex;
   align-items: center;
@@ -502,17 +385,7 @@
   }
 }
 
-.summary__actions {
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-start;
-  gap: var(--pb-space-2);
-  padding-block-start: var(--pb-space-2);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .step,
-  .summary,
   .fact__tooth {
     animation: none;
   }

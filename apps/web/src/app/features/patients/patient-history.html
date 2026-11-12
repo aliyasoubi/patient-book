@@ -1,0 +1,125 @@
+@if (state() === 'failed') {
+  <pb-load-error [message]="'patientDetail.historyFailed' | translate" (retry)="retry.emit()" />
+} @else if (state() !== 'loaded') {
+  <div class="skeleton" aria-hidden="true">
+    @for (i of [1, 2, 3]; track i) {
+      <span class="skeleton__row"></span>
+    }
+  </div>
+} @else if (!entries().length) {
+  <p class="quiet">{{ 'patientDetail.noHistory' | translate }}</p>
+} @else {
+  <!-- ── How much has happened, and the last of it ─────────────────── -->
+  @if (overview(); as o) {
+    <div class="overview">
+      <span class="overview__icon"><pb-icon name="history" [size]="20" /></span>
+      <span class="overview__text">
+        <strong>{{ 'patientHistory.changes' | translate: { count: o.count } }}</strong>
+        <span>{{ 'patientHistory.lastEdit' | translate: { when: o.when, who: o.who } }}</span>
+      </span>
+      <span class="overview__created">{{
+        'patientHistory.created' | translate: { date: o.created }
+      }}</span>
+    </div>
+  }
+
+  @if (filterOptions().length > 1) {
+    <pb-filter-chips
+      class="filters"
+      [options]="filterOptions()"
+      [selected]="filter() ? [filter()] : []"
+      (selectedChange)="setFilter($event)"
+      [ariaLabel]="'patientHistory.filtersAria' | translate"
+    />
+  }
+
+  <!-- ── The log, by day ───────────────────────────────────────────── -->
+  @for (day of days(); track day.key) {
+    <section class="day">
+      <h3 class="day__label">{{ day.label }}</h3>
+      <ol class="events">
+        @for (event of day.events; track event.id; let i = $index) {
+          <li class="event" [attr.data-kind]="event.kind" [style.--_i]="i">
+            <span class="event__who" [class.is-system]="event.system" aria-hidden="true">
+              @if (event.system) {
+                <pb-icon name="settings" [size]="16" />
+              } @else {
+                {{ event.initial }}
+              }
+            </span>
+
+            <div class="event__card">
+              <header class="event__head">
+                <span class="event__badge">{{ event.action }}</span>
+                <span class="event__actor">{{ event.actor }}</span>
+                @if (event.changes.length && event.kind !== 'archive') {
+                  <span class="event__count">{{
+                    countLabel(
+                      event.kind === 'create'
+                        ? 'patientHistory.createdWith'
+                        : 'patientHistory.fieldsChanged',
+                      event.changes.length
+                    )
+                  }}</span>
+                }
+                <time class="event__time">{{ event.time }}</time>
+              </header>
+
+              @if (event.kind === 'create') {
+                <!-- What the record began with: a grid of the filled-in fields. -->
+                <dl class="facts">
+                  @for (c of event.changes; track c.key; let n = $index) {
+                    @if (n < firstFields || expanded().has(event.id)) {
+                      <div class="facts__item">
+                        <dt>{{ c.label }}</dt>
+                        <dd>{{ c.to }}</dd>
+                      </div>
+                    }
+                  }
+                </dl>
+                @if (event.changes.length > firstFields) {
+                  <button type="button" class="more" (click)="toggle(event.id)">
+                    {{
+                      expanded().has(event.id)
+                        ? ('patientHistory.showLess' | translate)
+                        : countLabel('patientHistory.showAll', event.changes.length)
+                    }}
+                    <pb-icon
+                      name="chevron-down"
+                      [size]="15"
+                      [class.is-flipped]="expanded().has(event.id)"
+                    />
+                  </button>
+                }
+              } @else {
+                <!-- An edit: each field it touched, the old value struck beside the new. -->
+                <ul class="diffs">
+                  @for (c of event.changes; track c.key) {
+                    <li class="diff">
+                      <span class="diff__field">{{ c.label }}</span>
+                      <span class="diff__values">
+                        @if (c.from !== null) {
+                          <del
+                            class="diff__from"
+                            [attr.aria-label]="'patientHistory.from' | translate"
+                            >{{ c.from }}</del
+                          >
+                          <pb-icon class="diff__arrow" name="arrow-left" [size]="14" />
+                        }
+                        <ins class="diff__to" [attr.aria-label]="'patientHistory.to' | translate">{{
+                          c.to
+                        }}</ins>
+                      </span>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </li>
+        }
+      </ol>
+    </section>
+  } @empty {
+    <p class="quiet">{{ 'patientHistory.empty' | translate }}</p>
+  }
+}

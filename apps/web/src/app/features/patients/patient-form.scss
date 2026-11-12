@@ -1,12 +1,89 @@
-@use '../../../styles/surface';
+/*
+ * A patient's file as five numbered steps (styles/_form-steps.scss), with a
+ * live preview beside them: the file as it will read — name, file number,
+ * gender and age, mobile, treatments, and the medical history it must not
+ * hide — how complete it is, and the save.
+ */
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pb-space-4);
+@keyframes pf-pop {
+  from {
+    opacity: 0;
+    scale: 0.5;
+  }
 }
 
-/* ── Treatment toggles ─────────────────────────────────────────────── */
+/* ── Gender: three chips ───────────────────────────────────────────── */
+
+.choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pb-space-3);
+}
+
+.choice__label {
+  color: var(--pb-graphite);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pb-space-2);
+}
+
+.chip {
+  block-size: 38px;
+  padding-inline: var(--pb-space-4);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--pb-neutral-600);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 200ms var(--pb-ease-standard),
+    background-color 200ms var(--pb-ease-standard),
+    color 200ms var(--pb-ease-standard);
+
+  &:hover {
+    color: var(--pb-graphite);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 2px;
+  }
+
+  &.is-on {
+    border-color: var(--pb-graphite);
+    background: var(--pb-graphite);
+    color: #fff;
+  }
+
+  &.is-on[data-gender='female'] {
+    border-color: var(--pb-brand);
+    background: var(--pb-brand);
+  }
+}
+
+/* The medical history: a warning's tint once there is something in it. */
+.medical {
+  padding: var(--pb-space-3);
+  border-radius: 16px;
+  background: var(--pb-neutral-50);
+  transition: background-color 260ms var(--pb-ease-standard);
+
+  &.is-filled {
+    background: color-mix(in srgb, #e08a00 9%, #fff);
+  }
+}
+
+/* ── Treatments ────────────────────────────────────────────────────── */
+
 .treatments {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -14,61 +91,96 @@
 }
 
 .treatment {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--pb-space-2);
-  padding: var(--pb-space-3) var(--pb-space-3);
-  @include surface.outlined;
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-label-large);
-  letter-spacing: var(--mat-sys-label-large-tracking);
+  min-block-size: 52px;
+  padding: var(--pb-space-2);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--pb-neutral-600);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-align: start;
   cursor: pointer;
   transition:
-    background-color var(--pb-duration-short) var(--pb-ease-standard),
+    border-color 200ms var(--pb-ease-standard),
+    background-color 200ms var(--pb-ease-standard),
+    color 200ms var(--pb-ease-standard),
     box-shadow 220ms var(--pb-ease-standard);
 
-  /* Hover lifts the card on a soft shadow; its edge stays as it is. */
   &:hover {
-    box-shadow: var(--pb-shadow-md);
+    box-shadow: var(--pb-shadow-sm);
+    color: var(--pb-graphite);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--mat-sys-primary);
+    outline: 2px solid var(--pb-brand);
     outline-offset: 2px;
   }
 
   &.is-selected {
-    border-color: var(--tx-fg);
-    background: var(--tx-bg);
+    border-color: color-mix(in srgb, var(--tx-fg) 45%, transparent);
+    background: color-mix(in srgb, var(--tx-fg) 7%, #fff);
+    color: var(--pb-graphite);
+  }
+}
 
-    .treatment__icon {
-      color: var(--tx-fg);
-    }
+.treatment__icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 34px;
+  block-size: 34px;
+  border-radius: 10px;
+  background: var(--pb-neutral-100);
+  color: var(--tx-fg);
+
+  .mat-icon {
+    inline-size: 18px;
+    block-size: 18px;
+    font-size: 18px;
+    font-variation-settings: 'wght' 300;
   }
 
-  &__icon {
-    font-size: var(--pb-icon-sm);
-    flex: 0 0 auto;
-    color: var(--mat-sys-on-surface-variant);
+  .is-selected & {
+    background: #fff;
   }
+}
 
-  &__label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.treatment__label {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
-  &__check {
-    font-size: var(--pb-icon-xs);
-    color: var(--tx-fg);
+.treatment__check {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 50%;
+  background: var(--tx-fg);
+  color: #fff;
+  opacity: 0;
+  scale: 0.4;
+  transition:
+    opacity 180ms var(--pb-ease-standard),
+    scale 320ms var(--pb-ease-spring);
+
+  .is-selected & {
+    opacity: 1;
+    scale: 1;
   }
 }
 
 /* ── Possibly already on file ──────────────────────────────────────── */
-/* An empty live region takes no room, so the form's gap does not double. */
 .duplicates:empty {
   display: none;
 }
@@ -86,15 +198,183 @@
   list-style: none;
 }
 
-.duplicates__item {
+.duplicates__item,
+.duplicates__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--pb-space-2);
 }
 
-.duplicates__meta {
-  display: inline-flex;
+/* ── The preview ───────────────────────────────────────────────────── */
+
+.preview__title {
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-3);
+}
+
+.person__avatar {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: 18px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  font-size: 1.375rem;
+  font-weight: 800;
+  transition:
+    background-color 260ms var(--pb-ease-standard),
+    color 260ms var(--pb-ease-standard);
+
+  &[data-gender='female'] {
+    background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+    color: var(--pb-brand-strong);
+  }
+}
+
+.person__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-inline-size: 0;
+
+  strong {
+    overflow: hidden;
+    color: var(--pb-graphite);
+    font-size: 1.0625rem;
+    font-weight: 800;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+.person__meta {
+  display: flex;
   flex-wrap: wrap;
-  gap: var(--pb-space-1);
+  gap: 4px var(--pb-space-2);
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+}
+
+.person__file {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  font-weight: 700;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.facts__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pb-space-2);
+  padding-block: var(--pb-space-2);
+  border-block-start: 1px solid var(--pb-neutral-100);
+
+  dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--pb-neutral-500);
+    font-size: 0.75rem;
+
+    pb-icon {
+      color: var(--pb-neutral-400);
+    }
+  }
+
+  dd {
+    margin: 0;
+    color: var(--pb-graphite);
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  &--stack {
+    flex-direction: column;
+  }
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 7px;
+  background: var(--pb-neutral-100);
+  font-size: 0.75rem;
+  animation: pf-pop 280ms var(--pb-ease-spring) backwards;
+}
+
+.quiet {
+  color: var(--pb-neutral-400);
+  font-weight: 500;
+}
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pb-space-2);
+  padding: var(--pb-space-3);
+  border-radius: 12px;
+  background: color-mix(in srgb, #e08a00 10%, #fff);
+  color: #8f5600;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+
+  strong {
+    display: block;
+  }
+}
+
+.complete__head {
+  display: flex;
+  justify-content: space-between;
+  margin-block-end: 6px;
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+
+  strong {
+    color: var(--pb-graphite);
+  }
+}
+
+.complete__bar {
+  display: block;
+  block-size: 6px;
+  border-radius: 999px;
+  background: var(--pb-neutral-100);
+}
+
+.complete__fill {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--pb-brand);
+  transition: inline-size 500ms var(--pb-ease-emphasized);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tag {
+    animation: none;
+  }
 }

@@ -1,4 +1,4 @@
-<pb-page width="form">
+<pb-page width="wide">
   <!-- On edit, whose record this is: the title alone does not say. -->
   @let editing = original();
   <pb-page-header
@@ -21,238 +21,357 @@
     <mat-progress-bar mode="indeterminate" />
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="form">
-    <!-- ── Identity ──────────────────────────────────────────────── -->
-    <pb-surface icon="badge" [title]="'patientForm.identity' | translate">
-      <pb-field-grid>
-        <pb-text-field
-          [control]="form.controls.fileNo"
-          [label]="'patientForm.fileNumber' | translate"
-          prefixIcon="folder"
-          [ltr]="true"
-          inputmode="numeric"
-        />
-
-        <pb-text-field
-          [control]="form.controls.firstName"
-          [label]="'patientForm.firstName' | translate"
-          [options]="firstNameMatches()"
-        />
-
-        <pb-text-field
-          [control]="form.controls.lastName"
-          [label]="'patientForm.lastName' | translate"
-          [options]="lastNameMatches()"
-        />
-
-        <pb-text-field
-          [control]="form.controls.fatherName"
-          [label]="'patientForm.fatherName' | translate"
-        />
-
-        <pb-text-field
-          [control]="form.controls.nationalId"
-          [label]="'patientForm.nationalId' | translate"
-          [ltr]="true"
-          inputmode="numeric"
-          [maxlength]="10"
-          [hint]="'patientForm.tenDigits' | translate"
-        />
-
-        <pb-select-field
-          [control]="form.controls.gender"
-          [options]="genderOptions"
-          [label]="'patientForm.gender' | translate"
-        />
-
-        <pb-date-field
-          [control]="form.controls.birthDate"
-          [label]="'patientForm.birthDate' | translate"
-          startView="multi-year"
-          [placeholder]="'patientForm.birthDatePlaceholder' | translate"
-          [hint]="'patientForm.jalaliDate' | translate"
-        />
-      </pb-field-grid>
-    </pb-surface>
-
-    <!-- ── Possibly already on file ─────────────────────────────── -->
-    <!-- Between identity and contact: the national id and names are typed
-         just above, the mobile just below. A warning, never a block. The live
-         region stays in the DOM so the banner's arrival is announced. -->
-    <div class="duplicates" aria-live="polite">
-      @if (duplicates().length > 0) {
-        <pb-banner
-          tone="warning"
-          icon="person_search"
-          [title]="'patientForm.duplicates.title' | translate"
-        >
-          <p class="duplicates__hint">{{ 'patientForm.duplicates.hint' | translate }}</p>
-          <ul class="duplicates__list">
-            @for (d of duplicates(); track d.id) {
-              <li class="duplicates__item">
-                <pb-status-chip icon="folder" [link]="['/patients', d.id]">
-                  {{ d.fullName || ('patient.unnamed' | translate) }}
-                </pb-status-chip>
-                <span class="duplicates__meta">
-                  <span>{{ 'patients.file' | translate: { fileNo: d.fileNo } }}</span>
-                  @if (d.fatherName) {
-                    <span aria-hidden="true">·</span>
-                    <span>{{ 'patients.childOf' | translate: { name: d.fatherName } }}</span>
-                  }
-                  <span aria-hidden="true">·</span>
-                  <strong>{{ duplicateReasons(d) }}</strong>
-                </span>
-                @if (d.archived) {
-                  <pb-status-chip tone="neutral" icon="inventory_2">
-                    {{ 'patients.archived' | translate }}
-                  </pb-status-chip>
-                }
-              </li>
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pb-form">
+    <div class="pb-form__main">
+      <!-- ── 1. Identity ──────────────────────────────────────────── -->
+      <section class="pb-step" style="--_i: 0">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 1 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'patientForm.identity' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'patientForm.identityHint' | translate }}</p>
+          </div>
+        </header>
+        <div class="pb-grid pb-grid--3">
+          <pb-text-field
+            [control]="form.controls.fileNo"
+            [label]="'patientForm.fileNumber' | translate"
+            prefixIcon="folder"
+            [ltr]="true"
+            inputmode="numeric"
+          />
+          <pb-text-field
+            [control]="form.controls.firstName"
+            [label]="'patientForm.firstName' | translate"
+            [options]="firstNameMatches()"
+          />
+          <pb-text-field
+            [control]="form.controls.lastName"
+            [label]="'patientForm.lastName' | translate"
+            [options]="lastNameMatches()"
+          />
+          <pb-text-field
+            [control]="form.controls.fatherName"
+            [label]="'patientForm.fatherName' | translate"
+          />
+          <pb-text-field
+            [control]="form.controls.nationalId"
+            [label]="'patientForm.nationalId' | translate"
+            [ltr]="true"
+            inputmode="numeric"
+            [maxlength]="10"
+            [hint]="'patientForm.tenDigits' | translate"
+          />
+          <pb-date-field
+            [control]="form.controls.birthDate"
+            [label]="'patientForm.birthDate' | translate"
+            startView="multi-year"
+            [placeholder]="'patientForm.birthDatePlaceholder' | translate"
+            [hint]="'patientForm.jalaliDate' | translate"
+          />
+        </div>
+        <!-- Three answers, one tap each. -->
+        <div class="choice">
+          <span class="choice__label">{{ 'patientForm.gender' | translate }}</span>
+          <div class="chips" role="radiogroup" [attr.aria-label]="'patientForm.gender' | translate">
+            @for (option of genderOptions; track option.value) {
+              <button
+                type="button"
+                class="chip"
+                role="radio"
+                [attr.data-gender]="option.value"
+                [class.is-on]="v().gender === option.value"
+                [attr.aria-checked]="v().gender === option.value"
+                (click)="setGender(option.value)"
+              >
+                {{ option.label | translate }}
+              </button>
             }
-          </ul>
-        </pb-banner>
-      } @else if (duplicateCheckFailed()) {
-        <pb-banner tone="warning" size="compact" icon="cloud_off">
-          {{ 'patientForm.duplicates.failed' | translate }}
-        </pb-banner>
-      }
-    </div>
+          </div>
+        </div>
+      </section>
 
-    <!-- ── Contact ───────────────────────────────────────────────── -->
-    <pb-surface icon="contact_phone" [title]="'patientForm.contact' | translate">
-      <pb-field-grid>
-        <pb-text-field
-          [control]="form.controls.mobile"
-          [label]="'patientForm.mobile' | translate"
-          prefixIcon="smartphone"
-          [ltr]="true"
-          inputmode="tel"
-          [maxlength]="11"
-          [hint]="'patientForm.mobileHint' | translate"
-        />
+      <!-- ── Possibly already on file ─────────────────────────────────
+           Under identity: the national id and names are typed just above.
+           A warning, never a block. The live region stays in the DOM so the
+           banner's arrival is announced. -->
+      <div class="duplicates" aria-live="polite">
+        @if (duplicates().length > 0) {
+          <pb-banner
+            tone="warning"
+            icon="person_search"
+            [title]="'patientForm.duplicates.title' | translate"
+          >
+            <p class="duplicates__hint">{{ 'patientForm.duplicates.hint' | translate }}</p>
+            <ul class="duplicates__list">
+              @for (d of duplicates(); track d.id) {
+                <li class="duplicates__item">
+                  <pb-status-chip icon="folder" [link]="['/patients', d.id]">
+                    {{ d.fullName || ('patient.unnamed' | translate) }}
+                  </pb-status-chip>
+                  <span class="duplicates__meta">
+                    <span>{{ 'patients.file' | translate: { fileNo: d.fileNo } }}</span>
+                    @if (d.fatherName) {
+                      <span aria-hidden="true">·</span>
+                      <span>{{ 'patients.childOf' | translate: { name: d.fatherName } }}</span>
+                    }
+                    <span aria-hidden="true">·</span>
+                    <strong>{{ duplicateReasons(d) }}</strong>
+                  </span>
+                  @if (d.archived) {
+                    <pb-status-chip tone="neutral" icon="inventory_2">
+                      {{ 'patients.archived' | translate }}
+                    </pb-status-chip>
+                  }
+                </li>
+              }
+            </ul>
+          </pb-banner>
+        } @else if (duplicateCheckFailed()) {
+          <pb-banner tone="warning" size="compact" icon="cloud_off">
+            {{ 'patientForm.duplicates.failed' | translate }}
+          </pb-banner>
+        }
+      </div>
 
-        <pb-text-field
-          [control]="form.controls.homePhone"
-          [label]="'patientForm.homePhone' | translate"
-          prefixIcon="call"
-          [ltr]="true"
-          inputmode="tel"
-          [errorMessages]="homePhoneErrors()"
-        />
+      <!-- ── 2. Contact ───────────────────────────────────────────── -->
+      <section class="pb-step" style="--_i: 1">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 2 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'patientForm.contact' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'patientForm.contactHint' | translate }}</p>
+          </div>
+        </header>
+        <div class="pb-grid pb-grid--2">
+          <pb-text-field
+            [control]="form.controls.mobile"
+            [label]="'patientForm.mobile' | translate"
+            prefixIcon="smartphone"
+            [ltr]="true"
+            inputmode="tel"
+            [maxlength]="11"
+            [hint]="'patientForm.mobileHint' | translate"
+          />
+          <pb-text-field
+            [control]="form.controls.homePhone"
+            [label]="'patientForm.homePhone' | translate"
+            prefixIcon="call"
+            [ltr]="true"
+            inputmode="tel"
+            [errorMessages]="homePhoneErrors()"
+          />
+          <pb-textarea-field
+            [control]="form.controls.homeAddress"
+            [label]="'patientForm.homeAddress' | translate"
+            [rows]="2"
+          />
+          <pb-textarea-field
+            [control]="form.controls.workAddress"
+            [label]="'patientForm.workAddress' | translate"
+            [rows]="2"
+          />
+        </div>
+      </section>
 
+      <!-- ── 3. Background ────────────────────────────────────────── -->
+      <section class="pb-step" style="--_i: 2">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 3 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'patientForm.additional' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'patientForm.additionalHint' | translate }}</p>
+          </div>
+        </header>
+        <div class="pb-grid pb-grid--3">
+          <pb-text-field
+            [control]="form.controls.occupation"
+            [label]="'patientForm.occupation' | translate"
+          />
+          <pb-select-field
+            [control]="form.controls.education"
+            [options]="educationOptions"
+            [label]="'patientForm.education' | translate"
+          />
+          <pb-text-field
+            [control]="form.controls.referralSourceName"
+            [label]="'patientForm.referral' | translate"
+            [options]="referralMatches()"
+            [hint]="'patientForm.newReferralHint' | translate"
+          />
+          <pb-date-field
+            [control]="form.controls.firstVisitAt"
+            [label]="'patientForm.firstVisit' | translate"
+            [placeholder]="'patientForm.visitDatePlaceholder' | translate"
+            [hint]="'patientForm.jalaliDate' | translate"
+          />
+          <pb-date-field
+            [control]="form.controls.lastVisitAt"
+            [label]="'patientForm.lastVisit' | translate"
+            [placeholder]="'patientForm.visitDatePlaceholder' | translate"
+            [hint]="'patientForm.jalaliDate' | translate"
+          />
+        </div>
+        <!-- What a dentist must not miss: set apart in the warning's tint. -->
+        <div class="medical" [class.is-filled]="!!v().medicalHistory">
+          <pb-textarea-field
+            [control]="form.controls.medicalHistory"
+            [label]="'patientForm.medicalHistory' | translate"
+            [rows]="2"
+            prefixIcon="medical_information"
+            [placeholder]="'patientForm.medicalHistoryPlaceholder' | translate"
+            [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
+            [readonly]="!canEditClinicalNotes"
+          />
+        </div>
+      </section>
+
+      <!-- ── 4. Treatments ────────────────────────────────────────── -->
+      <section class="pb-step" style="--_i: 3">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 4 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'patientForm.treatments' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'patientForm.treatmentsHint' | translate }}</p>
+          </div>
+        </header>
+        <div class="treatments">
+          @for (type of treatmentTypes(); track type.id) {
+            <button
+              type="button"
+              class="treatment"
+              [class.is-selected]="isSelected(type.code)"
+              [style.--tx-fg]="color(type.color).fg"
+              [attr.aria-pressed]="isSelected(type.code)"
+              (click)="toggleTreatment(type.code)"
+            >
+              <span class="treatment__icon"
+                ><mat-icon aria-hidden="true">{{ type.icon }}</mat-icon></span
+              >
+              <span class="treatment__label">{{ type.nameFa }}</span>
+              <span class="treatment__check" aria-hidden="true"
+                ><pb-icon name="check" [size]="13" [stroke]="2.6"
+              /></span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <!-- ── 5. Notes ─────────────────────────────────────────────── -->
+      <section class="pb-step" style="--_i: 4">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 5 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'patientForm.notesSection' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'patientForm.notesHint' | translate }}</p>
+          </div>
+        </header>
         <pb-textarea-field
-          class="pb-field-grid__full"
-          [control]="form.controls.homeAddress"
-          [label]="'patientForm.homeAddress' | translate"
-          [rows]="2"
-        />
-
-        <pb-textarea-field
-          class="pb-field-grid__full"
-          [control]="form.controls.workAddress"
-          [label]="'patientForm.workAddress' | translate"
-          [rows]="2"
-        />
-      </pb-field-grid>
-    </pb-surface>
-
-    <!-- ── Background ────────────────────────────────────────────── -->
-    <pb-surface icon="badge" [title]="'patientForm.additional' | translate">
-      <pb-field-grid>
-        <pb-text-field
-          [control]="form.controls.occupation"
-          [label]="'patientForm.occupation' | translate"
-        />
-
-        <pb-select-field
-          [control]="form.controls.education"
-          [options]="educationOptions"
-          [label]="'patientForm.education' | translate"
-        />
-
-        <pb-text-field
-          [control]="form.controls.referralSourceName"
-          [label]="'patientForm.referral' | translate"
-          [options]="referralMatches()"
-          [hint]="'patientForm.newReferralHint' | translate"
-        />
-
-        <pb-date-field
-          [control]="form.controls.firstVisitAt"
-          [label]="'patientForm.firstVisit' | translate"
-          [placeholder]="'patientForm.visitDatePlaceholder' | translate"
-          [hint]="'patientForm.jalaliDate' | translate"
-        />
-
-        <pb-date-field
-          [control]="form.controls.lastVisitAt"
-          [label]="'patientForm.lastVisit' | translate"
-          [placeholder]="'patientForm.visitDatePlaceholder' | translate"
-          [hint]="'patientForm.jalaliDate' | translate"
-        />
-
-        <pb-textarea-field
-          class="pb-field-grid__full"
-          [control]="form.controls.medicalHistory"
-          [label]="'patientForm.medicalHistory' | translate"
-          [rows]="2"
-          prefixIcon="medical_information"
-          [placeholder]="'patientForm.medicalHistoryPlaceholder' | translate"
+          [control]="form.controls.notes"
+          [label]="'patientForm.internalNotes' | translate"
+          [rows]="3"
           [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
           [readonly]="!canEditClinicalNotes"
         />
-      </pb-field-grid>
-    </pb-surface>
+      </section>
+    </div>
 
-    <!-- ── Treatments ────────────────────────────────────────────── -->
-    <pb-surface icon="dentistry" [title]="'patientForm.treatments' | translate">
-      <div class="treatments">
-        @for (type of treatmentTypes(); track type.id) {
-          <button
-            type="button"
-            class="treatment"
-            [class.is-selected]="isSelected(type.code)"
-            [style.--tx-bg]="color(type.color).bg"
-            [style.--tx-fg]="color(type.color).fg"
-            [attr.aria-pressed]="isSelected(type.code)"
-            (click)="toggleTreatment(type.code)"
+    <!-- ── The file as it will read, and the save ───────────────────── -->
+    <aside class="pb-form__aside">
+      <div class="pb-aside-card">
+        <span class="preview__title">{{ 'patientForm.previewTitle' | translate }}</span>
+        <div class="person">
+          <span class="person__avatar" [attr.data-gender]="v().gender" aria-hidden="true">{{
+            previewInitial()
+          }}</span>
+          <span class="person__text">
+            <strong>{{ previewName() || ('patientForm.previewUnnamed' | translate) }}</strong>
+            <span class="person__meta">
+              @if (v().fileNo) {
+                <span class="person__file">{{
+                  'patients.file' | translate: { fileNo: (v().fileNo | faNum) }
+                }}</span>
+              }
+              @if (v().gender !== 'unknown') {
+                <span>{{ genderLabel(v().gender) | translate }}</span>
+              }
+              @if (previewAge(); as age) {
+                <span>{{ 'patientForm.previewAge' | translate: { age: (age | faNum) } }}</span>
+              }
+            </span>
+          </span>
+        </div>
+
+        <dl class="facts">
+          <div class="facts__row">
+            <dt>
+              <pb-icon name="phone" [size]="14" />{{ 'patientForm.previewMobile' | translate }}
+            </dt>
+            <dd class="ltr-nums" dir="ltr">{{ (v().mobile | phone) || '—' }}</dd>
+          </div>
+          <div class="facts__row">
+            <dt>
+              <pb-icon name="user" [size]="14" />{{ 'patientForm.previewNationalId' | translate }}
+            </dt>
+            <dd class="ltr-nums">{{ (v().nationalId | faNum) || '—' }}</dd>
+          </div>
+          <div class="facts__row facts__row--stack">
+            <dt>
+              <pb-icon name="dental" [size]="14" />{{ 'patientForm.previewTreatments' | translate }}
+            </dt>
+            <dd>
+              @if (selectedTreatmentNames().length) {
+                <span class="tags">
+                  @for (name of selectedTreatmentNames(); track name) {
+                    <span class="tag">{{ name }}</span>
+                  }
+                </span>
+              } @else {
+                <span class="quiet">{{ 'patientForm.previewNoTreatments' | translate }}</span>
+              }
+            </dd>
+          </div>
+        </dl>
+
+        <div class="pb-reveal" [class.is-open]="!!v().medicalHistory">
+          <div>
+            <div class="alert">
+              <pb-icon name="alert-triangle" [size]="16" />
+              <span>
+                <strong>{{ 'patientForm.previewMedical' | translate }}</strong>
+                {{ v().medicalHistory }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- How much of the file is filled in: a nudge, never a rule. -->
+        <div class="complete">
+          <span class="complete__head">
+            <span>{{ 'patientForm.previewComplete' | translate }}</span>
+            <strong>{{ completeness() | faNum }}{{ 'common.percentSign' | translate }}</strong>
+          </span>
+          <span class="complete__bar"
+            ><span class="complete__fill" [style.inline-size.%]="completeness()"></span
+          ></span>
+        </div>
+
+        <div class="pb-aside-card__actions">
+          <pb-button
+            variant="flat"
+            type="submit"
+            icon="save"
+            [disabled]="loading()"
+            [loading]="saving()"
+            [loadingText]="'patientForm.savingLabel' | translate"
           >
-            <mat-icon class="treatment__icon" aria-hidden="true">{{ type.icon }}</mat-icon>
-            <span class="treatment__label">{{ type.nameFa }}</span>
-            @if (isSelected(type.code)) {
-              <mat-icon class="treatment__check" aria-hidden="true">check</mat-icon>
-            }
-          </button>
-        }
+            {{ submitLabel() | translate }}
+          </pb-button>
+          <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
+            {{ 'common.cancel' | translate }}
+          </pb-button>
+        </div>
       </div>
-    </pb-surface>
-
-    <!-- ── Notes ─────────────────────────────────────────────────── -->
-    <pb-surface icon="edit_note" [title]="'patientForm.notesSection' | translate">
-      <pb-textarea-field
-        [control]="form.controls.notes"
-        [label]="'patientForm.internalNotes' | translate"
-        [rows]="3"
-        [hint]="canEditClinicalNotes ? null : ('common.clinicalReadOnly' | translate)"
-        [readonly]="!canEditClinicalNotes"
-      />
-    </pb-surface>
-
-    <!-- ── Actions ───────────────────────────────────────────────── -->
-    <pb-form-actions>
-      <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
-        {{ 'common.cancel' | translate }}
-      </pb-button>
-      <pb-button
-        variant="flat"
-        type="submit"
-        icon="save"
-        [disabled]="loading()"
-        [loading]="saving()"
-        [loadingText]="'patientForm.savingLabel' | translate"
-      >
-        {{ submitLabel() | translate }}
-      </pb-button>
-    </pb-form-actions>
+    </aside>
   </form>
 </pb-page>

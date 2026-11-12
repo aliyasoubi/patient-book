@@ -16,15 +16,15 @@
     <mat-progress-bar mode="indeterminate" />
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="sf">
-    <div class="sf__main">
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="pb-form">
+    <div class="pb-form__main">
       <!-- ── 1. Who, what, when ───────────────────────────────────── -->
-      <section class="step" style="--_i: 0">
-        <header class="step__head">
-          <span class="step__num">{{ 1 | faNum }}</span>
-          <div class="step__titles">
-            <h2 class="step__title">{{ 'surgeryForm.stepWho' | translate }}</h2>
-            <p class="step__hint">{{ 'surgeryForm.stepWhoHint' | translate }}</p>
+      <section class="pb-step" style="--_i: 0">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 1 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'surgeryForm.stepWho' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'surgeryForm.stepWhoHint' | translate }}</p>
           </div>
         </header>
 
@@ -60,7 +60,7 @@
           </div>
         }
 
-        <div class="row row--who">
+        <div class="pb-grid row--who">
           <!-- Typing searches the patient book; picking a name links the row
                to that file. Typing another name over it unlinks it. -->
           <div class="who">
@@ -107,12 +107,12 @@
       </section>
 
       <!-- ── 2. The teeth, and for an implant its file ─────────────── -->
-      <section class="step" style="--_i: 1">
-        <header class="step__head">
-          <span class="step__num">{{ 2 | faNum }}</span>
-          <div class="step__titles">
-            <h2 class="step__title">{{ 'surgeryForm.stepTeeth' | translate }}</h2>
-            <p class="step__hint">{{ 'surgeryForm.stepTeethHint' | translate }}</p>
+      <section class="pb-step" style="--_i: 1">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 2 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'surgeryForm.stepTeeth' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'surgeryForm.stepTeethHint' | translate }}</p>
           </div>
         </header>
 
@@ -140,8 +140,8 @@
 
         <div class="pb-reveal" [class.is-open]="isImplant()" [attr.inert]="isImplant() ? null : ''">
           <div>
-            <h3 class="step__sub">{{ 'surgeryForm.stepImplant' | translate }}</h3>
-            <div class="row row--three">
+            <h3 class="pb-step__sub">{{ 'surgeryForm.stepImplant' | translate }}</h3>
+            <div class="pb-grid pb-grid--3">
               <pb-text-field
                 [control]="form.controls.implantRegistryNo"
                 [label]="'surgeryForm.implantRegistryNo' | translate"
@@ -172,12 +172,12 @@
       </section>
 
       <!-- ── 3. When to call, and anything else ────────────────────── -->
-      <section class="step" style="--_i: 2">
-        <header class="step__head">
-          <span class="step__num">{{ 3 | faNum }}</span>
-          <div class="step__titles">
-            <h2 class="step__title">{{ 'surgeryForm.stepFollowUp' | translate }}</h2>
-            <p class="step__hint">{{ 'surgeryForm.stepFollowUpHint' | translate }}</p>
+      <section class="pb-step" style="--_i: 2">
+        <header class="pb-step__head">
+          <span class="pb-step__num">{{ 3 | faNum }}</span>
+          <div class="pb-step__titles">
+            <h2 class="pb-step__title">{{ 'surgeryForm.stepFollowUp' | translate }}</h2>
+            <p class="pb-step__hint">{{ 'surgeryForm.stepFollowUpHint' | translate }}</p>
           </div>
         </header>
 
@@ -222,8 +222,8 @@
     </div>
 
     <!-- ── The follow-up as it will be saved, and the save ──────────── -->
-    <aside class="summary">
-      <div class="summary__card">
+    <aside class="pb-form__aside">
+      <div class="pb-aside-card">
         <header class="summary__head">
           <span class="summary__kind"
             ><mat-icon aria-hidden="true">{{ kindIcon(form.controls.kind.value) }}</mat-icon></span
@@ -296,7 +296,7 @@
           </span>
         </div>
 
-        <div class="summary__actions">
+        <div class="pb-aside-card__actions">
           <pb-button variant="text" type="button" (click)="cancel()" [disabled]="saving()">
             {{ 'common.cancel' | translate }}
           </pb-button>

@@ -2,7 +2,6 @@ add
 air
 apartment
 archive
-arrow_back
 arrow_downward
 arrow_forward
 arrow_upward
@@ -26,7 +25,6 @@ cleaning_services
 close
 cloud_off
 colorize
-contact_phone
 content_copy
 content_cut
 crown
@@ -42,7 +40,6 @@ diamond
 done
 edit
 edit_calendar
-edit_note
 error
 escalator_warning
 event
@@ -104,6 +101,7 @@ move_to_inbox
 note
 notes
 outbox
+overview
 pages
 palette
 password
@@ -132,6 +130,7 @@ send
 settings
 share
 shopping_cart
+skeleton
 sort
 speed
 star_shine
@@ -149,7 +148,6 @@ table
 tabs
 tag
 task_alt
-timeline
 toast
 today
 tune

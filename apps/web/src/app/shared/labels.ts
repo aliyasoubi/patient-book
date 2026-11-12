@@ -293,6 +293,8 @@ export function fieldLabel(key: string): string {
       return 'field.fullName';
     case 'resolvedIssue':
       return 'field.resolvedIssue';
+    case 'fatherName':
+      return 'field.fatherName';
     case 'recordedName':
       return 'field.recordedName';
     default:

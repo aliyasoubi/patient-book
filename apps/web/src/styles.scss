@@ -2,6 +2,7 @@
 @use './styles/theme-colors' as theme;
 @use './styles/brand';
 @use './styles/overlays';
+@use './styles/form-steps';
 
 // Font faces are registered in angular.json's `styles` array rather than
 // imported here: their @font-face rules use paths relative to their own
@@ -192,6 +193,7 @@ html:not([data-theme='dark']) {
 }
 
 @include overlays.material-panels;
+@include form-steps.styles;
 
 /** Explicit dark/light override, used when the user picks one in settings. */
 html[data-theme='light'] {

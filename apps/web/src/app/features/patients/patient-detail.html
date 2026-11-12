@@ -418,58 +418,11 @@
           @if (auth.can('viewHistory')) {
             <mat-tab [label]="'patientDetail.historyTab' | translate">
               <div class="tab">
-                <pb-surface>
-                  @if (historyState() === 'failed') {
-                    <pb-load-error
-                      [message]="'patientDetail.historyFailed' | translate"
-                      (retry)="retryHistory()"
-                    />
-                  } @else if (historyState() !== 'loaded') {
-                    <p class="card__empty">{{ 'patientDetail.historyLoading' | translate }}</p>
-                  } @else if (history().length === 0) {
-                    <p class="card__empty">{{ 'patientDetail.noHistory' | translate }}</p>
-                  } @else {
-                    <ol class="timeline">
-                      @for (entry of history(); track entry.id) {
-                        <li class="timeline__item">
-                          <span class="timeline__dot" [attr.data-action]="entry.action"></span>
-                          <div class="timeline__body">
-                            <div class="timeline__head">
-                              <strong>{{ actionLabel(entry.action) }}</strong>
-                              <span class="timeline__who">{{
-                                entry.fullName ??
-                                  entry.username ??
-                                  ((entry.userId ? 'audit.deletedUser' : 'audit.systemUser')
-                                    | translate)
-                              }}</span>
-                              <time class="timeline__when" [attr.datetime]="entry.createdAt">{{
-                                stamp(entry.createdAt)
-                              }}</time>
-                            </div>
-                            @for (change of changeEntries(entry.changes); track change[0]) {
-                              <div class="timeline__change">
-                                <span class="timeline__field">{{ changeLabel(change[0]) }}</span>
-                                @if (asChange(change[1]); as diff) {
-                                  <span class="timeline__from">{{
-                                    formatValue(diff.from, change[0])
-                                  }}</span>
-                                  <mat-icon aria-hidden="true">arrow_back</mat-icon>
-                                  <span class="timeline__to">{{
-                                    formatValue(diff.to, change[0])
-                                  }}</span>
-                                } @else {
-                                  <span class="timeline__to">{{
-                                    formatValue(change[1], change[0])
-                                  }}</span>
-                                }
-                              </div>
-                            }
-                          </div>
-                        </li>
-                      }
-                    </ol>
-                  }
-                </pb-surface>
+                <pb-patient-history
+                  [entries]="history()"
+                  [state]="historyState()"
+                  (retry)="retryHistory()"
+                />
               </div>
             </mat-tab>
           }

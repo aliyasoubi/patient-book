@@ -1,0 +1,359 @@
+/*
+ * The record's history as a log book. A line on top with the count and the
+ * last change; then each day under its own label, its events on a thread
+ * down the start edge — the author's initial on the thread, the event in a
+ * card beside it, its badge coloured by what it was: green for the record
+ * being made, orange for an edit, graphite for archive and restore.
+ */
+
+@keyframes history-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@keyframes history-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-4);
+}
+
+.quiet {
+  margin: 0;
+  padding: var(--pb-space-4);
+  color: var(--pb-neutral-500);
+  font-size: 0.875rem;
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-3);
+}
+
+.skeleton__row {
+  block-size: 72px;
+  border-radius: 16px;
+  background: var(--pb-neutral-100);
+  animation: history-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── The line on top ───────────────────────────────────────────────── */
+
+.overview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pb-space-3);
+  padding: var(--pb-space-4);
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-sm);
+  animation: history-rise 420ms var(--pb-ease-emphasized) backwards;
+}
+
+.overview__icon {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pb-brand) 12%, #fff);
+  color: var(--pb-brand-strong);
+}
+
+.overview__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    color: var(--pb-graphite);
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  span {
+    color: var(--pb-neutral-500);
+    font-size: 0.8125rem;
+  }
+}
+
+.overview__created {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--pb-neutral-100);
+  color: var(--pb-neutral-600);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ── Days and events ───────────────────────────────────────────────── */
+
+.day__label {
+  margin: 0 0 var(--pb-space-2);
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.events {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  /* The thread the events hang on. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 18px;
+    inset-inline-start: 17px;
+    inline-size: 2px;
+    border-radius: 2px;
+    background: var(--pb-neutral-200);
+  }
+}
+
+.event {
+  --_tone: var(--pb-brand);
+  --_tint: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: var(--pb-space-3);
+  animation: history-rise 380ms calc(min(var(--_i, 0), 8) * 50ms) var(--pb-ease-emphasized)
+    backwards;
+
+  &[data-kind='create'] {
+    --_tone: #17703d;
+    --_tint: color-mix(in srgb, #1f9d55 10%, #fff);
+  }
+
+  &[data-kind='archive'] {
+    --_tone: var(--pb-graphite);
+    --_tint: var(--pb-neutral-100);
+  }
+}
+
+.event__who {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--_tint);
+  box-shadow: 0 0 0 1px var(--pb-neutral-200);
+  color: var(--_tone);
+  font-size: 0.875rem;
+  font-weight: 800;
+
+  &.is-system {
+    background: var(--pb-neutral-100);
+    color: var(--pb-neutral-500);
+  }
+}
+
+.event__card {
+  min-inline-size: 0;
+  padding: var(--pb-space-3) var(--pb-space-4);
+  border: 1px solid color-mix(in srgb, var(--pb-neutral-300) 55%, transparent);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--pb-shadow-xs);
+  transition: box-shadow 220ms var(--pb-ease-standard);
+
+  &:hover {
+    box-shadow: var(--pb-shadow-sm);
+  }
+}
+
+.event__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pb-space-2);
+}
+
+.event__badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--_tint);
+  color: var(--_tone);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.event__actor {
+  color: var(--pb-graphite);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.event__count {
+  color: var(--pb-neutral-500);
+  font-size: 0.75rem;
+}
+
+.event__time {
+  margin-inline-start: auto;
+  color: var(--pb-neutral-400);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-feature-settings: var(--pb-font-numeric);
+}
+
+/* ── A new record: the fields it began with ────────────────────────── */
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--pb-space-2);
+  margin: var(--pb-space-3) 0 0;
+}
+
+.facts__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+  padding: var(--pb-space-2) var(--pb-space-3);
+  border-radius: 10px;
+  background: var(--pb-neutral-50);
+  animation: history-rise 300ms var(--pb-ease-emphasized) backwards;
+
+  dt {
+    color: var(--pb-neutral-500);
+    font-size: 0.6875rem;
+  }
+
+  dd {
+    overflow: hidden;
+    margin: 0;
+    color: var(--pb-graphite);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-block-start: var(--pb-space-2);
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pb-brand-strong);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms var(--pb-ease-standard);
+
+  &:hover {
+    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+  }
+
+  pb-icon {
+    transition: rotate 300ms var(--pb-ease-spring);
+  }
+
+  pb-icon.is-flipped {
+    rotate: 180deg;
+  }
+}
+
+/* ── An edit: the old value struck beside the new ──────────────────── */
+
+.diffs {
+  display: flex;
+  flex-direction: column;
+  margin: var(--pb-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diff {
+  display: grid;
+  grid-template-columns: minmax(96px, 150px) minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--pb-space-3);
+  padding-block: 6px;
+  border-block-start: 1px dashed var(--pb-neutral-100);
+
+  &:first-child {
+    border-block-start: 0;
+  }
+}
+
+.diff__field {
+  color: var(--pb-neutral-500);
+  font-size: 0.8125rem;
+}
+
+.diff__values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--pb-space-2);
+  min-inline-size: 0;
+}
+
+.diff__from {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, #e5484d 7%, #fff);
+  color: #b4232a;
+  font-size: 0.8125rem;
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, #b4232a 50%, transparent);
+}
+
+.diff__arrow {
+  color: var(--pb-neutral-400);
+}
+
+.diff__to {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, #1f9d55 8%, #fff);
+  color: #17703d;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  .diff {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overview,
+  .event,
+  .facts__item,
+  .skeleton__row {
+    animation: none;
+  }
+}

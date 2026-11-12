@@ -829,7 +829,21 @@
         "name": "نام یکسان",
         "mobile": "موبایل یکسان"
       }
-    }
+    },
+    "identityHint": "شماره پرونده، نام و مشخصات هویتی بیمار",
+    "contactHint": "شماره‌هایی که با آن با بیمار تماس گرفته می‌شود و نشانی‌ها",
+    "additionalHint": "شغل، تحصیلات، نحوه آشنایی، مراجعات و سابقه بیماری",
+    "treatmentsHint": "درمان‌هایی که برای این بیمار ثبت می‌شود",
+    "notesHint": "یادداشت داخلی، فقط برای کادر مطب",
+    "previewTitle": "پیش‌نمایش پرونده",
+    "previewUnnamed": "بیمار جدید",
+    "previewAge": "{{age}} ساله",
+    "previewComplete": "تکمیل پرونده",
+    "previewNoTreatments": "هنوز درمانی انتخاب نشده",
+    "previewMedical": "سابقه بیماری",
+    "previewMobile": "موبایل",
+    "previewNationalId": "کد ملی",
+    "previewTreatments": "درمان‌ها"
   },
   "patientDetail": {
     "backAria": "بازگشت به فهرست بیماران",
@@ -1367,5 +1381,22 @@
     "daysAgo": "{{count}} روز پیش",
     "monthsAgo": "{{count}} ماه پیش",
     "yearsAgo": "{{count}} سال پیش"
+  },
+  "patientHistory": {
+    "changes": "{{count}} رویداد",
+    "lastEdit": "آخرین تغییر {{when}}، توسط {{who}}",
+    "created": "پرونده در {{date}} ساخته شد",
+    "filterAll": "همه",
+    "filterEdits": "ویرایش‌ها",
+    "filterCreate": "ساخت پرونده",
+    "filterArchive": "بایگانی و بازگردانی",
+    "filtersAria": "نوع رویداد",
+    "fieldsChanged": "{{count}} مورد تغییر کرد",
+    "createdWith": "با {{count}} مورد ثبت شد",
+    "showAll": "نمایش همه ({{count}})",
+    "showLess": "نمایش کمتر",
+    "empty": "رویدادی از این نوع نیست.",
+    "from": "قبلی",
+    "to": "جدید"
   }
 }

@@ -1,4 +1,5 @@
 import { PatientGlance } from './patient-glance';
+import { PatientHistory } from './patient-history';
 import { formatPhone } from '../../shared/pipes/phone.pipe';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
@@ -19,9 +20,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { RegistryKind, RegistryService } from '../../core/services/registry.service';
 import { LabService } from '../../core/services/lab.service';
-import { JalaliPipe, jalaliStamp } from '../../shared/pipes/jalali.pipe';
+import { JalaliPipe } from '../../shared/pipes/jalali.pipe';
 import {
-  formatPersianCount,
   formatPersianNumber,
   PersianCountPipe,
   PersianNumberPipe,
@@ -33,7 +33,6 @@ import {
 } from '../../shared/components/registry-case-dialog';
 import {
   educationLabel,
-  fieldLabel,
   genderIcon,
   genderLabel,
   contactOutcomeLabel,
@@ -72,6 +71,7 @@ import type { StatusTone } from '../../shared/ui';
   standalone: true,
   imports: [
     PatientGlance,
+    PatientHistory,
     RouterLink,
     MatMenuModule,
     MatTabsModule,
@@ -542,76 +542,5 @@ export class PatientDetail {
         this.toast.success(done());
         if (this.stillShowing(patientId)) this.load(patientId);
       });
-  }
-
-  /** When a history entry happened: the day and the time. */
-  protected readonly stamp = jalaliStamp;
-
-  /** Field name in an audit entry. Falls back to the raw key when unmapped. */
-  protected changeLabel(key: string): string {
-    return this.i18n.instant(fieldLabel(key));
-  }
-
-  protected actionLabel(action: string): string {
-    switch (action) {
-      case 'create':
-        return this.i18n.instant('auditAction.create');
-      case 'update':
-        return this.i18n.instant('auditAction.update');
-      case 'delete':
-        return this.i18n.instant('auditAction.delete');
-      case 'restore':
-        return this.i18n.instant('auditAction.restore');
-      default:
-        return this.i18n.instant('auditAction.other');
-    }
-  }
-
-  protected changeEntries(changes: AuditEntry['changes']): [string, unknown][] {
-    return changes ? Object.entries(changes) : [];
-  }
-
-  protected asChange(value: unknown): { from?: unknown; to?: unknown } | null {
-    return value && typeof value === 'object' && ('from' in value || 'to' in value)
-      ? (value as { from?: unknown; to?: unknown })
-      : null;
-  }
-
-  protected formatValue(value: unknown, field: string): string {
-    if (value === null || value === undefined || value === '') return '—';
-
-    if (field === 'gender' && typeof value === 'string') {
-      return this.i18n.instant(genderLabel(value));
-    }
-    if (field === 'education' && typeof value === 'string') {
-      return this.i18n.instant(educationLabel(value));
-    }
-    if (field === 'resolvedIssue' && typeof value === 'string') return this.changeLabel(value);
-    if (field === 'isArchived' && typeof value === 'boolean') {
-      return value
-        ? this.i18n.instant('archive.statusArchived')
-        : this.i18n.instant('archive.statusActive');
-    }
-    if (field === 'referralSource' && typeof value === 'object') {
-      const name = (value as { name?: unknown }).name;
-      return typeof name === 'string' ? name : this.i18n.instant('value.notRecorded');
-    }
-    if (field === 'treatments' && Array.isArray(value)) {
-      const count = formatPersianCount(value.length);
-      return this.i18n.instant('audit.treatmentCount', { count });
-    }
-    if (field === 'dataIssues' && Array.isArray(value)) {
-      const count = formatPersianCount(value.length);
-      return this.i18n.instant('audit.issueCount', { count });
-    }
-    if (typeof value === 'boolean') {
-      return value ? this.i18n.instant('value.yes') : this.i18n.instant('value.no');
-    }
-    if (Array.isArray(value)) {
-      const count = formatPersianCount(value.length);
-      return this.i18n.instant('value.itemCount', { count });
-    }
-    if (typeof value === 'object') return this.i18n.instant('value.recordedDetails');
-    return String(value);
   }
 }
