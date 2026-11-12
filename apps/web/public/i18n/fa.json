@@ -531,7 +531,8 @@
     "selectedCount": "{{count}} دندان انتخاب شده",
     "pickHint": "روی هر دندان بزنید تا انتخاب شود",
     "brushHint": "هر ضربه «{{kind}}» را روی دندان می‌گذارد",
-    "toolsAria": "نوع کار روی دندان"
+    "toolsAria": "نوع کار روی دندان",
+    "jawCount": "{{count}} از {{total}}"
   },
   "labJaw": {
     "upper": "فک بالا",

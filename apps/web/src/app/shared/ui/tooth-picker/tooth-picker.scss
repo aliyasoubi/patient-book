@@ -262,7 +262,90 @@
 .chart__shortcuts {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--pb-space-1);
+  align-items: center;
+  gap: var(--pb-space-2);
+}
+
+/* A whole-jaw shortcut as a toggle: off, part of the jaw (a dash and a count),
+   or all of it (filled, ticked) — its state readable at a glance. */
+.jaw-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pb-space-2);
+  min-block-size: 36px;
+  padding: var(--pb-space-1) var(--pb-space-3) var(--pb-space-1) var(--pb-space-2);
+  border: 1px solid var(--pb-neutral-200);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--pb-neutral-600);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 200ms var(--pb-ease-standard),
+    background-color 200ms var(--pb-ease-standard),
+    color 200ms var(--pb-ease-standard);
+
+  &:hover:not(:disabled) {
+    color: var(--pb-graphite);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pb-brand);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &.is-part {
+    border-color: color-mix(in srgb, var(--pb-brand) 45%, transparent);
+    color: var(--pb-graphite);
+  }
+
+  &.is-full {
+    border-color: var(--pb-brand);
+    background: color-mix(in srgb, var(--pb-brand) 10%, #fff);
+    color: var(--pb-brand-strong);
+  }
+}
+
+.jaw-toggle__mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 18px;
+  block-size: 18px;
+  border: 1.5px solid var(--pb-neutral-300);
+  border-radius: 6px;
+  background: #fff;
+  color: transparent;
+  transition:
+    border-color 200ms var(--pb-ease-standard),
+    background-color 200ms var(--pb-ease-standard),
+    color 200ms var(--pb-ease-standard),
+    scale 260ms var(--pb-ease-spring);
+
+  .is-part & {
+    border-color: var(--pb-brand);
+    color: var(--pb-brand);
+  }
+
+  .is-full & {
+    border-color: var(--pb-brand);
+    background: var(--pb-brand);
+    color: #fff;
+    scale: 1.08;
+  }
+}
+
+.jaw-toggle__count {
+  color: var(--pb-neutral-500);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-feature-settings: var(--pb-font-numeric);
 }
 
 @media (prefers-reduced-motion: reduce) {

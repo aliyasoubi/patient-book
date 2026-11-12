@@ -132,20 +132,50 @@ interface WorkGroup {
           }
         </span>
         <div class="chart__shortcuts">
-          <pb-button
-            variant="text"
-            tone="neutral"
+          <!-- On when the jaw has no free tooth left for the work in hand; a dash
+               and a count when some of its teeth are marked. -->
+          @let upper = jawState('upper');
+          @let lower = jawState('lower');
+          <button
+            type="button"
+            class="jaw-toggle"
+            [class.is-full]="upper.full"
+            [class.is-part]="!upper.full && upper.count > 0"
+            [attr.aria-pressed]="upper.full"
             [disabled]="!brushKind()"
             (click)="toggleJaw('upper')"
-            >{{ 'tooth.wholeUpper' | translate }}</pb-button
           >
-          <pb-button
-            variant="text"
-            tone="neutral"
+            <span class="jaw-toggle__mark" aria-hidden="true">
+              <pb-icon [name]="upper.full ? 'check' : 'minus'" [size]="12" />
+            </span>
+            {{ 'tooth.wholeUpper' | translate }}
+            @if (!upper.full && upper.count > 0) {
+              <span class="jaw-toggle__count">{{
+                'tooth.jawCount'
+                  | translate: { count: (upper.count | faNum), total: (upper.total | faNum) }
+              }}</span>
+            }
+          </button>
+          <button
+            type="button"
+            class="jaw-toggle"
+            [class.is-full]="lower.full"
+            [class.is-part]="!lower.full && lower.count > 0"
+            [attr.aria-pressed]="lower.full"
             [disabled]="!brushKind()"
             (click)="toggleJaw('lower')"
-            >{{ 'tooth.wholeLower' | translate }}</pb-button
           >
+            <span class="jaw-toggle__mark" aria-hidden="true">
+              <pb-icon [name]="lower.full ? 'check' : 'minus'" [size]="12" />
+            </span>
+            {{ 'tooth.wholeLower' | translate }}
+            @if (!lower.full && lower.count > 0) {
+              <span class="jaw-toggle__count">{{
+                'tooth.jawCount'
+                  | translate: { count: (lower.count | faNum), total: (lower.total | faNum) }
+              }}</span>
+            }
+          </button>
           <pb-button variant="text" tone="neutral" [disabled]="!value().length" (click)="clear()">{{
             'tooth.clear' | translate
           }}</pb-button>
@@ -249,6 +279,19 @@ export class PbToothWorkPicker {
     } else if (brush) {
       this.emit([...this.value().filter((w) => w.tooth !== tooth), { tooth, workType: brush }]);
     }
+  }
+
+  /**
+   * How much of a jaw is marked, for its shortcut's state: full once no tooth
+   * is free and the work in hand is on some of them — the next press takes it off.
+   */
+  protected jawState(jaw: 'upper' | 'lower'): { count: number; total: number; full: boolean } {
+    const teeth = jawTeeth(jaw);
+    const work = this.workByTooth();
+    const brush = this.brushKind()?.value;
+    const count = teeth.filter((t) => work.has(t)).length;
+    const full = count === teeth.length && teeth.some((t) => work.get(t) === brush);
+    return { count, total: teeth.length, full };
   }
 
   /**

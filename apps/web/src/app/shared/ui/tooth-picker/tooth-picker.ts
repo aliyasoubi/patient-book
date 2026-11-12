@@ -3,6 +3,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { PersianNumberPipe } from '../../pipes/persian-number.pipe';
 import { PbButton } from '../button/button';
+import { PbIcon } from '../icon/icon';
 import { jawTeeth } from './teeth';
 import { mouthView } from './tooth-shapes';
 
@@ -21,7 +22,7 @@ import { mouthView } from './tooth-shapes';
 @Component({
   selector: 'pb-tooth-picker',
   standalone: true,
-  imports: [TranslatePipe, PersianNumberPipe, PbButton],
+  imports: [TranslatePipe, PersianNumberPipe, PbButton, PbIcon],
   template: `
     <div
       class="chart"
@@ -82,12 +83,47 @@ import { mouthView } from './tooth-shapes';
         </span>
         <div class="chart__shortcuts">
           @if (!single()) {
-            <pb-button variant="text" tone="neutral" (click)="toggleJaw('upper')">{{
-              'tooth.wholeUpper' | translate
-            }}</pb-button>
-            <pb-button variant="text" tone="neutral" (click)="toggleJaw('lower')">{{
-              'tooth.wholeLower' | translate
-            }}</pb-button>
+            <!-- On when every tooth of the jaw is chosen; a dash and a count when some are. -->
+            @let upper = jawState('upper');
+            @let lower = jawState('lower');
+            <button
+              type="button"
+              class="jaw-toggle"
+              [class.is-full]="upper.full"
+              [class.is-part]="!upper.full && upper.count > 0"
+              [attr.aria-pressed]="upper.full"
+              (click)="toggleJaw('upper')"
+            >
+              <span class="jaw-toggle__mark" aria-hidden="true">
+                <pb-icon [name]="upper.full ? 'check' : 'minus'" [size]="12" />
+              </span>
+              {{ 'tooth.wholeUpper' | translate }}
+              @if (!upper.full && upper.count > 0) {
+                <span class="jaw-toggle__count">{{
+                  'tooth.jawCount'
+                    | translate: { count: (upper.count | faNum), total: (upper.total | faNum) }
+                }}</span>
+              }
+            </button>
+            <button
+              type="button"
+              class="jaw-toggle"
+              [class.is-full]="lower.full"
+              [class.is-part]="!lower.full && lower.count > 0"
+              [attr.aria-pressed]="lower.full"
+              (click)="toggleJaw('lower')"
+            >
+              <span class="jaw-toggle__mark" aria-hidden="true">
+                <pb-icon [name]="lower.full ? 'check' : 'minus'" [size]="12" />
+              </span>
+              {{ 'tooth.wholeLower' | translate }}
+              @if (!lower.full && lower.count > 0) {
+                <span class="jaw-toggle__count">{{
+                  'tooth.jawCount'
+                    | translate: { count: (lower.count | faNum), total: (lower.total | faNum) }
+                }}</span>
+              }
+            </button>
           }
           <pb-button
             variant="text"
@@ -128,6 +164,13 @@ export class PbToothPicker {
     } else {
       this.emit(this.single() ? [tooth] : [...this.selected(), tooth]);
     }
+  }
+
+  /** How much of a jaw is chosen, for its shortcut's state. */
+  protected jawState(jaw: 'upper' | 'lower'): { count: number; total: number; full: boolean } {
+    const teeth = jawTeeth(jaw);
+    const count = teeth.filter((t) => this.selected().includes(t)).length;
+    return { count, total: teeth.length, full: count === teeth.length };
   }
 
   /** The whole jaw; once every tooth of it is chosen, the same button lets it go. */

@@ -46,7 +46,12 @@ describe('PbToothPicker', () => {
     tap(36);
     tap(37);
     expect(selected()).toEqual([36, 37]);
-    expect(el.querySelectorAll('.chart__shortcuts pb-button').length).toBe(3);
+    // Both jaws offered as toggles; the lower one shows it is partly chosen.
+    const jaws = el.querySelectorAll('.jaw-toggle');
+    expect(jaws.length).toBe(2);
+    expect(jaws[0].classList).not.toContain('is-part');
+    expect(jaws[1].classList).toContain('is-part');
+    expect(jaws[1].getAttribute('aria-pressed')).toBe('false');
   });
 
   it('holds to one tooth when single: a tap picks it in place of the last', () => {
@@ -57,6 +62,7 @@ describe('PbToothPicker', () => {
     tap(46);
     expect(selected()).toEqual([]);
     // Only «clear»: a whole jaw is never one tooth.
+    expect(el.querySelectorAll('.jaw-toggle').length).toBe(0);
     expect(el.querySelectorAll('.chart__shortcuts pb-button').length).toBe(1);
   });
 });
