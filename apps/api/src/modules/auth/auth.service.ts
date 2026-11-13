@@ -6,7 +6,12 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
 import { BCRYPT_COST, User } from '../users/user.entity';
-import { AuthTokens, ChangePasswordDto, JwtPayload } from './dto/auth.dto';
+import {
+  AuthTokens,
+  ChangePasswordDto,
+  JWT_ALGORITHM,
+  JwtPayload,
+} from './dto/auth.dto';
 import type { AppConfig } from '../../config/configuration';
 import { AppException } from '../../application/errors/app.exception';
 import { ErrorCode } from '../../domain';
@@ -43,7 +48,11 @@ export class AuthService {
    * and the bcrypt comparison runs either way, so the response neither reveals
    * which usernames exist nor leaks it through timing.
    */
-  async login(username: string, password: string): Promise<AuthTokens> {
+  async login(
+    username: string,
+    password: string,
+    ip?: string,
+  ): Promise<AuthTokens> {
     const user = await this.users
       .createQueryBuilder('u')
       .addSelect('u.passwordHash')
@@ -58,9 +67,12 @@ export class AuthService {
     if (!user || !ok) {
       await this.audit.record({
         userId: user?.id ?? null,
-        username,
+        // Only a name that is an account's. What was typed for an unknown one
+        // is sometimes a password in the wrong box, and this table is kept.
+        username: user?.username ?? null,
         action: 'login_failed',
         entity: 'auth',
+        ip,
       });
       throw AppException.unauthorized(ErrorCode.InvalidCredentials);
     }
@@ -79,6 +91,7 @@ export class AuthService {
           action: 'login',
           entity: 'auth',
           entityId: user.id,
+          ip,
         },
         manager,
       );
@@ -93,6 +106,7 @@ export class AuthService {
     try {
       payload = await this.jwt.verifyAsync<JwtPayload>(refreshToken, {
         secret: jwtConfig.refreshSecret,
+        algorithms: [JWT_ALGORITHM],
       });
     } catch {
       throw AppException.unauthorized(ErrorCode.SessionExpired);
@@ -153,6 +167,7 @@ export class AuthService {
     try {
       payload = await this.jwt.verifyAsync<JwtPayload>(refreshToken, {
         secret: jwtConfig.refreshSecret,
+        algorithms: [JWT_ALGORITHM],
       });
     } catch {
       // Idempotent logout: an expired/invalid cookie is still cleared by the
@@ -178,10 +193,12 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync(payload, {
         secret: jwtConfig.secret,
+        algorithm: JWT_ALGORITHM,
         expiresIn: jwtConfig.expiresIn as ExpiresIn,
       }),
       this.jwt.signAsync(payload, {
         secret: jwtConfig.refreshSecret,
+        algorithm: JWT_ALGORITHM,
         expiresIn: jwtConfig.refreshExpiresIn as ExpiresIn,
       }),
     ]);

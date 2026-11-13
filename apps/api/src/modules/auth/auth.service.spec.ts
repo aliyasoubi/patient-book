@@ -117,7 +117,12 @@ describe('AuthService login', () => {
 
     expect(unknownUserMs).toBeGreaterThan(realCompareMs * 0.5);
     expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'login_failed', userId: null }),
+      // The typed name is not kept: it is sometimes a password.
+      expect.objectContaining({
+        action: 'login_failed',
+        userId: null,
+        username: null,
+      }),
     );
   });
 });

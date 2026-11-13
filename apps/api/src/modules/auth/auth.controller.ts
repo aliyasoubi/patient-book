@@ -37,11 +37,13 @@ export class AuthController {
   @ApiOperation({ summary: 'Sign in' })
   async login(
     @Body() dto: LoginDto,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<AuthSession> {
     const { refreshToken, ...session } = await this.auth.login(
       dto.username,
       dto.password,
+      request.ip,
     );
     this.setRefreshCookie(response, refreshToken);
     return session;
@@ -69,6 +71,9 @@ export class AuthController {
     return user;
   }
 
+  // The current password is asked for again here, so this is a second place
+  // to guess it from — with a stolen access token, at the general limit.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('change-password')
   @HttpCode(204)
   @ApiOperation({ summary: 'Change password' })
