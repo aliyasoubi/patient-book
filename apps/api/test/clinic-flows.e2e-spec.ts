@@ -89,7 +89,10 @@ describeIfWritable('clinic flows (e2e)', () => {
     }).compile();
     app = moduleRef.createNestApplication();
     configureApp(app);
-    await app.init();
+    // Listening for the whole suite, on a free port. Left to itself the test
+    // client starts the server for a request and closes it after, and a
+    // request sent meanwhile is cut off: "socket hang up", in whichever test.
+    await app.listen(0);
     db = app.get(DataSource);
 
     const users = db.getRepository(User);
