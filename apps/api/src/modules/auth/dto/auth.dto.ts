@@ -19,6 +19,7 @@ export class ChangePasswordDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(128)
   currentPassword!: string;
 
   @ApiProperty({ minLength: 10 })
@@ -27,6 +28,12 @@ export class ChangePasswordDto {
   @MaxLength(128)
   newPassword!: string;
 }
+
+/**
+ * The one algorithm tokens are signed with, and the only one accepted back:
+ * named on both sides rather than left to the library's defaults.
+ */
+export const JWT_ALGORITHM = 'HS256';
 
 export interface JwtPayload {
   sub: string;

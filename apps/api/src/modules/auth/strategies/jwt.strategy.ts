@@ -6,7 +6,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
 
 import { User } from '../../users/user.entity';
-import type { JwtPayload } from '../dto/auth.dto';
+import { JWT_ALGORITHM, type JwtPayload } from '../dto/auth.dto';
 import type { AppConfig } from '../../../config/configuration';
 import { AppException } from '../../../application/errors/app.exception';
 import { ErrorCode } from '../../../domain';
@@ -30,6 +30,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: config.get<AppConfig['jwt']>('jwt')!.secret,
+      algorithms: [JWT_ALGORITHM],
     });
   }
 

@@ -13,6 +13,14 @@ import { AppException } from '../../../application/errors/app.exception';
 import { DomainError, ErrorCode, ErrorParams } from '../../../domain';
 import { ErrorResponse, FieldError } from '../error-response';
 import { ValidationException } from '../validation.exception';
+import type { RequestUser } from '../../../modules/auth/strategies/jwt.strategy';
+
+/** Refused requests worth a line in the log: 401, 403 and 429. */
+const REFUSALS: ReadonlySet<number> = new Set([
+  HttpStatus.UNAUTHORIZED,
+  HttpStatus.FORBIDDEN,
+  HttpStatus.TOO_MANY_REQUESTS,
+]);
 
 /** Postgres SQLSTATE codes worth translating rather than leaking. */
 const PG_UNIQUE_VIOLATION = '23505';
@@ -61,14 +69,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // `statusCode` is a plain number on the wire; compare it as one.
     const serverError: number = HttpStatus.INTERNAL_SERVER_ERROR;
+    // The path without its query: a search carries a patient's name, national
+    // id or phone, and none of that belongs in the process log.
+    const line = `${request.method} ${request.path} -> ${resolved.statusCode} ${resolved.code}`;
     if (resolved.statusCode >= serverError) {
       // The response body deliberately carries no detail, so this is the only
       // record of what actually failed — keep the value itself when a thrown
       // non-Error leaves us no stack to print.
       this.logger.error(
-        `${request.method} ${request.url} -> ${resolved.statusCode} ${resolved.code}`,
+        line,
         exception instanceof Error ? exception.stack : String(exception),
       );
+    } else if (REFUSALS.has(resolved.statusCode)) {
+      // Someone trying doors — no session, the wrong role, too many requests —
+      // is otherwise invisible: say who and from where, once per refusal.
+      const userId = (request as Request & { user?: RequestUser }).user?.id;
+      this.logger.warn(`${line} user=${userId ?? '-'} ip=${request.ip ?? '-'}`);
     }
 
     const body: ErrorResponse = {
