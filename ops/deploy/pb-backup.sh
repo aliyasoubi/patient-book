@@ -89,11 +89,14 @@ fail() {
 }
 
 prune() {
-  local dir="$1" keep="$2" removed=0
-  # Timestamped names contain no spaces, so this stays safe.
-  for old in $(ls -1t "$dir"/*.enc 2>/dev/null | tail -n +$((keep + 1))); do
+  local dir="$1" keep="$2" removed=0 old
+  # Read whole lines, not words: the file names have no spaces, but the
+  # directory may (PB_OFFSITE_DIR on a share or an rclone mount, "My Drive"),
+  # and word-splitting it would make rm miss every old file while still
+  # counting it as pruned.
+  while IFS= read -r old; do
     rm -f "$old" && removed=$((removed + 1))
-  done
+  done < <(ls -1t "$dir"/*.enc 2>/dev/null | tail -n +$((keep + 1)))
   [[ $removed -gt 0 ]] && log "pruned $removed old backup(s) from $(basename "$dir")"
   return 0
 }
