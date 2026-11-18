@@ -22,3 +22,13 @@ RUN npm run build --workspace=web
 FROM caddy:2-alpine AS runtime
 COPY --from=build /repo/apps/web/dist/web/browser /srv
 COPY ops/deploy/Caddyfile /etc/caddy/Caddyfile
+
+# The bundle reads its own version from index.html (core/version). Written
+# here rather than built into the bundle, so a release that changes only the
+# API still reuses the cached Angular build above.
+ARG APP_VERSION=dev
+RUN case "$APP_VERSION" in ''|*[!A-Za-z0-9._+-]*) \
+      echo "APP_VERSION must look like v1.4.0, not '$APP_VERSION'" >&2; exit 1 ;; \
+    esac \
+ && sed -i "s|name=\"app-version\" content=\"dev\"|name=\"app-version\" content=\"$APP_VERSION\"|" /srv/index.html \
+ && grep -qF "name=\"app-version\" content=\"$APP_VERSION\"" /srv/index.html

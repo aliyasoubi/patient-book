@@ -25,7 +25,8 @@ import { ThemeService } from '../core/services/theme.service';
 import { GlobalSearch } from './global-search';
 import { roleLabel } from '../shared/labels';
 import type { UserRole } from '../core/models/common.model';
-import { PbAvatar, PbIconButton, PbLogo } from '../shared/ui';
+import { AppVersion } from '../core/version/app-version';
+import { PbAvatar, PbButton, PbIconButton, PbLogo } from '../shared/ui';
 
 export interface NavItem {
   path: string;
@@ -113,6 +114,7 @@ function navItems(): NavItem[] {
     MatIconModule,
     TranslatePipe,
     PbIconButton,
+    PbButton,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
@@ -122,6 +124,7 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly pageScroll = inject(PageScroll);
   protected readonly auth = inject(AuthService);
+  protected readonly appVersion = inject(AppVersion);
   // Injected only to apply the stored preference on boot — its constructor is
   // what stamps the theme onto the document. The shell never reads it; display
   // mode is picked in settings, so there is exactly one place in the app that

@@ -1,5 +1,10 @@
 export interface AppConfig {
   env: string;
+  /**
+   * The release this build is: its git tag (`v1.4.0`), or what `git describe`
+   * says between tags. Stamped into the image at build time; `dev` otherwise.
+   */
+  version: string;
   port: number;
   corsOrigin: string[];
   /** Reverse-proxy hops to trust when reading the client IP. 0 disables. */
@@ -81,6 +86,20 @@ const ianaTimeZone = (
   return zone;
 };
 
+/**
+ * The version is sent as a response header, where a newline would split it
+ * into a second header, so only what a tag or `git describe` produces passes.
+ */
+const releaseVersion = (value: string | undefined, name: string): string => {
+  const version = value?.trim() || 'dev';
+  if (!/^[\w.+-]{1,64}$/.test(version)) {
+    throw new Error(
+      `${name} must look like v1.4.0, not ${JSON.stringify(version)}`,
+    );
+  }
+  return version;
+};
+
 const looksLikePlaceholder = (value: string): boolean =>
   /(?:change[-_ ]?me|insecure|example|default)/i.test(value);
 
@@ -141,6 +160,7 @@ export function buildConfiguration(
   const runtime = env.NODE_ENV ?? 'development';
   const config: AppConfig = {
     env: runtime,
+    version: releaseVersion(env.APP_VERSION, 'APP_VERSION'),
     port: positiveInteger(env.API_PORT, 3000, 'API_PORT'),
     corsOrigin: csv(
       env.CORS_ORIGIN,

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'node:path';
 
@@ -22,6 +22,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { PasswordChangeGuard } from './modules/auth/guards/password-change.guard';
 import { AllExceptionsFilter } from './presentation/http/filters/all-exceptions.filter';
 import { HealthController } from './presentation/http/health.controller';
+import { AppVersionInterceptor } from './presentation/http/app-version.interceptor';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { HealthController } from './presentation/http/health.controller';
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_INTERCEPTOR, useClass: AppVersionInterceptor },
   ],
 })
 export class AppModule {}

@@ -177,6 +177,18 @@ describeIfWritable('clinic flows (e2e)', () => {
       const anonymous = await http().get('/api/auth/me').expect(401);
       expect((anonymous.body as ErrorBody).code).toBe(ErrorCode.Unauthorized);
     });
+
+    it('names the release to a signed-in client, and to nobody else', async () => {
+      const me = await asAdmin(http().get('/api/auth/me')).expect(200);
+      expect(me.headers['x-app-version']).toBe(
+        process.env.APP_VERSION?.trim() || 'dev',
+      );
+
+      const anonymous = await http().get('/api/auth/me').expect(401);
+      expect(anonymous.headers).not.toHaveProperty('x-app-version');
+      const health = await http().get('/api/health').expect(200);
+      expect(health.headers).not.toHaveProperty('x-app-version');
+    });
   });
 
   // ── Patient write path ───────────────────────────────────────────

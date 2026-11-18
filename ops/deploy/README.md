@@ -164,11 +164,45 @@ The preview runs everything in a transaction and rolls it back, so it is
 exactly what `--apply` writes. It prints file and register numbers, never
 names. Running it again changes nothing.
 
+## Releases
+
+A release is a git tag, `vMAJOR.MINOR.PATCH`, on a commit of `main`. Publish
+it on GitHub: **Releases → Draft a new release**, type the new tag, target
+`main`, and **Generate release notes**, which lists every pull request merged
+since the last one. The tag is the version; nothing in the repository is
+bumped for it.
+
+| Goes up | When the release…                                       | Rolling back past it      |
+| ------- | ------------------------------------------------------- | ------------------------- |
+| MAJOR   | has migrations that drop, rename or rewrite stored data | needs the pre-deploy dump |
+| MINOR   | adds something staff can do                             | runs the older release    |
+| PATCH   | only fixes                                              | runs the older release    |
+
+Every image is built as a version: the tag, or between tags what
+`git describe` says (`v1.4.0-3-g7b4b038`, `-dirty` if tracked files were
+edited on the server). Signed-in replies name it in an `X-App-Version`
+header. A tab still running another release shows «به‌روزرسانی» in its top
+bar, and a page whose code went with a deploy loads itself from scratch
+instead of doing nothing when clicked.
+
 ## Shipping a change
 
 ```bash
-git pull && ./ops/deploy/deploy.sh
+./ops/deploy/ship.sh v1.4.0
 ```
+
+It fetches the tags, refuses anything that is not a release on `main` or a
+checkout with local edits, checks the tag out and runs `deploy.sh` as that
+version. Run it bare to list the releases and what ran here when (each good
+deploy adds a line to `ops/deploy/deploys.log`).
+
+From GitHub it is **Actions → Deploy → Run workflow**, with the version. The
+workflow checks that the tag exists and that CI passed on it, then runs the
+same `ship.sh` on the server over SSH ([The Deploy button](#the-deploy-button)).
+
+A plain `git pull && ./ops/deploy/deploy.sh` still works and ships whatever
+`main` is, under its `git describe` name. After `ship.sh` the checkout is on
+a tag, where `git pull` cannot run: `git checkout main` first.
 
 Migrations run as their own one-shot service that the API waits on, so the
 schema is always current before new code serves a request. Just before them,
@@ -195,34 +229,60 @@ Dropping or renaming a column, or rewriting data already stored, goes in a
 later release, once code that no longer uses it is live. That keeps the
 first, quick rollback below always available.
 
+### The Deploy button
+
+The workflow's key may run exactly one thing on the server. Its line in the
+deploy account's `~/.ssh/authorized_keys` starts with that command:
+
+```text
+restrict,command="/opt/patient-book/ops/deploy/ship.sh --ssh" ssh-ed25519 AAAA… github-deploy
+```
+
+`restrict` turns off forwarding and terminals for the key. `command=` runs
+`ship.sh --ssh` whatever the workflow asks to run, and what it asked for —
+the version — reaches `ship.sh` as text, which accepts a release name and
+nothing else. A leaked key can therefore ship a release on `main`, or roll
+back to one within the same major version, and do nothing more.
+
+Moving a server from the button that ran `git pull && ./ops/deploy/deploy.sh`,
+once, in this order:
+
+1. On the server, `git checkout main && git pull`, so the checkout has
+   `ops/deploy/ship.sh`.
+2. In `authorized_keys`, replace the key's `command="…"` with the one above,
+   keeping the key itself. From then on an old run of the workflow, which
+   sends no version, is refused with nothing changed.
+3. Publish `v1.0.0` on `main` ([Releases](#releases)). Once CI has passed on
+   it, run the Deploy workflow with `v1.0.0`.
+
+Releases start at the first one that has `ship.sh`, so the button can always
+go back to any of them.
+
 ### Rolling back a release
 
-Find the commit that ran before the last pull — the line before the newest
-`pull` in:
+`./ops/deploy/ship.sh` with no version lists what ran here and when; the
+release before the last line is the one to go back to.
+
+**Within the same major version** (the usual case), ship that release. The
+data stays as it is, including what was written since the deploy:
 
 ```bash
-git reflog -n 10
+./ops/deploy/ship.sh v1.3.0
 ```
 
-**If the release only added to the schema** (the usual case), run that
-commit again. The data stays as it is, including what was written since the
-deploy:
-
-```bash
-git checkout <commit> && ./ops/deploy/deploy.sh
-```
-
-**If its migrations dropped, renamed or rewrote data**, or the older code
-fails on the new schema, go back to the dump taken just before the deploy.
-Everything written since then leaves the live database, so note what staff
-recorded in between; it stays readable in `patient_book_before_restore`.
+**Going back below a major version**, `ship.sh` refuses: that release's
+migrations dropped, renamed or rewrote data. Do the same when an older
+release fails on the new schema for any other reason. Go back to the dump
+taken just before the deploy. Everything written since then leaves the live
+database, so note what staff recorded in between; it stays readable in
+`patient_book_before_restore`.
 
 1. Build the older release, without deploying it. The restore runs `migrate`
    from the images the checkout last built, and those must be the older
    release's, or they would apply the very migrations you are undoing:
 
    ```bash
-   git checkout <commit> && docker compose -f compose.prod.yml build
+   git checkout v1.3.0 && PB_VERSION=v1.3.0 docker compose -f compose.prod.yml build
    ```
 
 2. Follow [Real recovery](#real-recovery) with the newest file in
