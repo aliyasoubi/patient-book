@@ -7,7 +7,11 @@ import {
   LOCALE_ID,
 } from '@angular/core';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withNavigationErrorHandler,
+} from '@angular/router';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatDatepickerIntl } from '@angular/material/datepicker';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
@@ -22,9 +26,11 @@ import { firstValueFrom } from 'rxjs';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { versionInterceptor } from './core/interceptors/version.interceptor';
 import { PersianDatepickerIntl, PersianPaginatorIntl } from './core/i18n/material-intl';
 import { JALALI_DATE_FORMATS, JalaliDateAdapter } from './core/jalali/jalali-date-adapter';
 import { AuthService } from './core/services/auth.service';
+import { reloadOnStaleChunk } from './core/version/stale-chunk';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -33,10 +39,18 @@ export const appConfig: ApplicationConfig = {
 
     // No router scroll restoration: it moves the window, and the window never
     // scrolls here. The shell resets the page on navigation, and the patient
-    // list restores its own offset (see PageScroll).
-    provideRouter(routes, withComponentInputBinding()),
+    // list restores its own offset (see PageScroll). A page whose code went
+    // with the last deploy is loaded from scratch (see reloadOnStaleChunk).
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withNavigationErrorHandler((error) => reloadOnStaleChunk(error)),
+    ),
 
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor, errorInterceptor])),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor, versionInterceptor, errorInterceptor]),
+    ),
     provideTranslateService({
       loader: provideTranslateHttpLoader({
         prefix: './i18n/',

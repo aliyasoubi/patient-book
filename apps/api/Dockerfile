@@ -43,6 +43,11 @@ WORKDIR /repo
 COPY --from=deps  /repo             ./
 COPY --from=build /repo/apps/api/dist apps/api/dist
 
+# The release, from deploy.sh (`git describe`), for the version header the web
+# app compares with its own. Last, so a new version reuses every layer above.
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 USER node
 EXPOSE 3000
 

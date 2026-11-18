@@ -12,6 +12,12 @@ x-logging: &logging
     max-size: "10m"
     max-file: "5"
 
+# The release each image is built as: deploy.sh sets PB_VERSION from git, and
+# a build run by hand is `dev`. Baked into the images, not set at runtime, so
+# a restore that starts older images reports the release they really are.
+x-version-arg: &version-arg
+  APP_VERSION: ${PB_VERSION:-dev}
+
 x-api-env: &api-env
   NODE_ENV: production
   API_PORT: 3000
@@ -71,6 +77,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+      args: *version-arg
     image: patient-book-api:latest
     command: ["node", "apps/api/dist/database/run-migrations.js", "run"]
     environment:
@@ -93,6 +100,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+      args: *version-arg
     image: patient-book-api:latest
     restart: unless-stopped
     # PID 1 in a container gets no default signal handlers, so without this
@@ -125,6 +133,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args: *version-arg
     image: patient-book-web:latest
     restart: unless-stopped
     environment:

@@ -43,7 +43,7 @@ async function bootstrap(): Promise<void> {
         'API for a dental practice patient register. Errors return a stable ' +
           "`code` plus `params`; all wording is the client's responsibility.",
       )
-      .setVersion('1.0.0')
+      .setVersion(config.get<string>('version')!)
       .addBearerAuth()
       .build();
     SwaggerModule.setup(

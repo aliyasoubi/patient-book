@@ -61,6 +61,19 @@
 
       <span class="spacer"></span>
 
+      <!-- Another release answered: this tab still runs the one it loaded. -->
+      @if (appVersion.updateReady()) {
+        <pb-button
+          animate.enter="pb-enter"
+          variant="stroked"
+          icon="refresh"
+          [collapseBelow]="599"
+          [tooltip]="'app.updateHint' | translate"
+          (click)="appVersion.reload()"
+          >{{ 'app.update' | translate }}</pb-button
+        >
+      }
+
       <pb-icon-button
         class="topbar__avatar-btn"
         [menu]="userMenu"

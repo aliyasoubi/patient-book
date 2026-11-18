@@ -91,4 +91,20 @@ describe('buildConfiguration', () => {
       'CLINIC_TIMEZONE',
     );
   });
+
+  it('is version dev unless a build stamped one', () => {
+    expect(buildConfiguration({}).version).toBe('dev');
+    expect(buildConfiguration({ APP_VERSION: 'v1.4.0' }).version).toBe(
+      'v1.4.0',
+    );
+    expect(
+      buildConfiguration({ APP_VERSION: 'v1.4.0-3-g7b4b038-dirty' }).version,
+    ).toBe('v1.4.0-3-g7b4b038-dirty');
+  });
+
+  it('refuses a version that could not travel as a header', () => {
+    expect(() =>
+      buildConfiguration({ APP_VERSION: 'v1.4.0\r\nSet-Cookie: x' }),
+    ).toThrow('APP_VERSION');
+  });
 });

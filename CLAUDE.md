@@ -48,6 +48,15 @@ npm run i18n:check    # also rejects hard-coded Persian text in .ts/.html
 npm run icons:check   # a new Material Symbol needs `npm run icons:build --workspace=web`
 ```
 
+## Releases
+
+A release is a tag `vMAJOR.MINOR.PATCH` on `main`, published as a GitHub
+Release. The tag is the version; nothing in the repo is bumped for it, and
+the `package.json` versions mean nothing. MAJOR when migrations drop, rename
+or rewrite stored data, MINOR for something new staff can do, PATCH for
+fixes only. The server ships one with `./ops/deploy/ship.sh v1.4.0`
+(`ops/deploy/README.md`, "Releases").
+
 ## Conventions that bite
 
 - **TypeORM relation + id column pairs** (`referralSource`/`referralSourceId`,
@@ -56,10 +65,11 @@ npm run icons:check   # a new Material Symbol needs `npm run icons:build --works
   path, change the id and drop the loaded relation (or don't load it).
 - **Edits are versioned.** Updates lock the row and check `expectedVersion`;
   a write path that reads, changes and saves a whole entity must lock it too.
-- **Migrations only add within a release.** New columns are nullable or have
-  a default. A drop, a rename or a rewrite of stored data ships a release
-  later, so rolling back is just running the previous commit
-  (`ops/deploy/README.md`, "Rolling back a release").
+- **Migrations only add within a major version.** New columns are nullable
+  or have a default. A drop, a rename or a rewrite of stored data ships a
+  release later, as the next major version, so rolling back within one is
+  just shipping the previous release (`ops/deploy/README.md`, "Rolling back
+  a release").
 - **Stock moves only through a movement.** Never write
   `inventory_items.quantity`, its expiry or `inventory_lots.quantity`
   directly: work out the batch changes with `receive`/`take`/`count`

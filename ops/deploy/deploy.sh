@@ -18,7 +18,20 @@ cd "$REPO_ROOT"
 
 compose() { docker compose -f "$COMPOSE_FILE" "$@"; }
 
-echo "→ building images"
+# The release this is. ship.sh passes the tag it checked out; otherwise git
+# says: the tag on a release commit (v1.4.0), how far past one a pull of main
+# is (v1.4.0-3-g7b4b038), and -dirty when tracked files were edited here. The
+# images carry it, and open tabs compare it with their own to offer a reload.
+if [[ -z "${PB_VERSION:-}" ]]; then
+  PB_VERSION="$(git describe --tags --match 'v[0-9]*' --always --dirty 2>/dev/null || echo dev)"
+fi
+if [[ ! "$PB_VERSION" =~ ^[A-Za-z0-9._+-]{1,64}$ ]]; then
+  echo "✗  PB_VERSION must look like v1.4.0, not '$PB_VERSION'" >&2
+  exit 1
+fi
+export PB_VERSION
+
+echo "→ building images for $PB_VERSION"
 compose build
 
 # After the build, so a failed build costs no dump, and right before `up`,
@@ -104,7 +117,11 @@ if [[ ! -f /etc/systemd/system/patient-book-drill.service ]]; then
   echo "!  backups here are not restore-tested yet. Run once: sudo ./ops/deploy/install.sh" >&2
 fi
 
+# What ran here and when: the list ship.sh shows when choosing a release to
+# go back to. Gitignored, so checking out another release leaves it in place.
+printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M')" "$PB_VERSION" >>"$REPO_ROOT/ops/deploy/deploys.log"
+
 echo
 compose ps
 echo
-echo "✓  deployed"
+echo "✓  deployed $PB_VERSION"
