@@ -3,21 +3,61 @@ name: Deploy
 # Manual only, on purpose: this ships to a live server holding real patient
 # records for one clinic. CI (ci.yml) already gates every push with tests,
 # migrations, and e2e; this workflow is the separate, deliberate "go" button
-# a human presses once they're happy with what's on main.
+# a human presses for one release, by name. Rolling back is the same button
+# with the release before.
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release to ship, e.g. v1.4.0 (an older one rolls back)"
+        required: true
+        type: string
+
+# One deploy at a time: a second press waits rather than building alongside.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  checks: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      # No checkout needed — the VPS pulls its own copy of `main`. This
-      # workflow only has to open the SSH connection; the server-side
-      # authorized_keys entry ignores whatever command we send and always
-      # runs `cd /opt/patient-book && git pull && ./ops/deploy/deploy.sh`.
-      # That forced command is what limits this key to exactly one action
-      # even if the private key were ever to leak.
+      # Refused here, before the server is touched: a name that is not a
+      # release, a tag that does not exist, or a commit CI did not pass. The
+      # server checks the name again and that the tag is on main (ship.sh).
+      - name: Check the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ ! "$VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::'$VERSION' is not a release; releases are tags like v1.4.0"
+            exit 1
+          fi
+          if ! sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$VERSION" --jq .sha 2>/dev/null)" ||
+            [[ -z "$sha" ]]; then
+            echo "::error::there is no $VERSION; publish it as a GitHub Release first"
+            exit 1
+          fi
+          passed="$(gh api "repos/$GITHUB_REPOSITORY/commits/$sha/check-runs?check_name=ci" \
+            --jq '[.check_runs[] | select(.conclusion == "success")] | length')"
+          if [[ "$passed" -eq 0 ]]; then
+            echo "::error::CI has not passed on $VERSION ($sha)"
+            exit 1
+          fi
+          echo "$VERSION is ${sha:0:7}, and CI passed on it"
+
+      # No checkout needed — the VPS fetches its own copy. The server-side
+      # authorized_keys entry lets this key run exactly one thing,
+      # `ops/deploy/ship.sh --ssh`, which reads the version sent below and
+      # takes nothing else from it (ops/deploy/README.md, "The Deploy
+      # button"). That forced command is what limits this key to shipping a
+      # release on main even if the private key were ever to leak.
       - name: Set up deploy key
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -28,13 +68,14 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy (git pull && ops/deploy/deploy.sh on the VPS)
+      - name: Ship ${{ inputs.version }} (ops/deploy/ship.sh on the VPS)
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          VERSION: ${{ inputs.version }}
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" "this command is ignored server-side"
+            "$DEPLOY_USER@$DEPLOY_HOST" "$VERSION"
 
       - name: Clean up deploy key
         if: always()

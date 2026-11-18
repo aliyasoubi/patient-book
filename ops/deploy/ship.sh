@@ -5,6 +5,8 @@
 #
 #   ./ops/deploy/ship.sh            # the releases, and what ran here when
 #   ./ops/deploy/ship.sh v1.4.0     # deploy exactly that release
+#   ./ops/deploy/ship.sh --ssh      # the Deploy button: the deploy key's forced
+#                                   # command, the version from what was sent
 #
 # Only a tag on main ships, so what runs is always a commit that went through
 # a pull request and has a GitHub Release saying what it changed. Going back
@@ -25,6 +27,15 @@ main() {
   local repo_root
   repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
   cd "$repo_root"
+
+  # The Deploy button. Its key may only run `ship.sh --ssh`, and the version
+  # the workflow sent arrives as the command it asked for. That text is never
+  # run: it is taken as the version, and anything but a release name is
+  # refused below, before it reaches git.
+  if [[ "${1:-}" == "--ssh" ]]; then
+    [[ -n "${SSH_ORIGINAL_COMMAND:-}" ]] || fail "send the version to ship, e.g. v1.4.0"
+    set -- "$SSH_ORIGINAL_COMMAND"
+  fi
 
   git fetch --quiet --tags origin main
 
@@ -76,9 +87,11 @@ main() {
     exit 1
   fi
 
-  # The Deploy button runs `git pull`, which needs a branch, not a tag.
-  echo
-  echo "!  The checkout is on $tag. Before the next deploy from GitHub: git checkout main"
+  # A plain `git pull` needs a branch; ship.sh itself does not.
+  if [[ -z "${SSH_ORIGINAL_COMMAND:-}" ]]; then
+    echo
+    echo "   The checkout is on $tag. For a plain git pull: git checkout main first."
+  fi
 }
 
 main "$@"; exit

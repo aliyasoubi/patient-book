@@ -54,8 +54,8 @@ A release is a tag `vMAJOR.MINOR.PATCH` on `main`, published as a GitHub
 Release. The tag is the version; nothing in the repo is bumped for it, and
 the `package.json` versions mean nothing. MAJOR when migrations drop, rename
 or rewrite stored data, MINOR for something new staff can do, PATCH for
-fixes only. The server ships one with `./ops/deploy/ship.sh v1.4.0`
-(`ops/deploy/README.md`, "Releases").
+fixes only. The Deploy workflow on GitHub ships one by name; on the server
+it is `./ops/deploy/ship.sh v1.4.0` (`ops/deploy/README.md`, "Releases").
 
 ## Conventions that bite
 

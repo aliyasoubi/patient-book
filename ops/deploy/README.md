@@ -196,10 +196,13 @@ checkout with local edits, checks the tag out and runs `deploy.sh` as that
 version. Run it bare to list the releases and what ran here when (each good
 deploy adds a line to `ops/deploy/deploys.log`).
 
-`ship.sh` leaves the checkout on the tag, and the Deploy button below runs
-`git pull`, which needs a branch: `git checkout main` before using the
-button again. A plain `git pull && ./ops/deploy/deploy.sh` still works and
-ships whatever `main` is, under its `git describe` name.
+From GitHub it is **Actions → Deploy → Run workflow**, with the version. The
+workflow checks that the tag exists and that CI passed on it, then runs the
+same `ship.sh` on the server over SSH ([The Deploy button](#the-deploy-button)).
+
+A plain `git pull && ./ops/deploy/deploy.sh` still works and ships whatever
+`main` is, under its `git describe` name. After `ship.sh` the checkout is on
+a tag, where `git pull` cannot run: `git checkout main` first.
 
 Migrations run as their own one-shot service that the API waits on, so the
 schema is always current before new code serves a request. Just before them,
@@ -225,6 +228,35 @@ new schema: add tables, and columns that are nullable or have a default.
 Dropping or renaming a column, or rewriting data already stored, goes in a
 later release, once code that no longer uses it is live. That keeps the
 first, quick rollback below always available.
+
+### The Deploy button
+
+The workflow's key may run exactly one thing on the server. Its line in the
+deploy account's `~/.ssh/authorized_keys` starts with that command:
+
+```text
+restrict,command="/opt/patient-book/ops/deploy/ship.sh --ssh" ssh-ed25519 AAAA… github-deploy
+```
+
+`restrict` turns off forwarding and terminals for the key. `command=` runs
+`ship.sh --ssh` whatever the workflow asks to run, and what it asked for —
+the version — reaches `ship.sh` as text, which accepts a release name and
+nothing else. A leaked key can therefore ship a release on `main`, or roll
+back to one within the same major version, and do nothing more.
+
+Moving a server from the button that ran `git pull && ./ops/deploy/deploy.sh`,
+once, in this order:
+
+1. On the server, `git checkout main && git pull`, so the checkout has
+   `ops/deploy/ship.sh`.
+2. In `authorized_keys`, replace the key's `command="…"` with the one above,
+   keeping the key itself. From then on an old run of the workflow, which
+   sends no version, is refused with nothing changed.
+3. Publish `v1.0.0` on `main` ([Releases](#releases)). Once CI has passed on
+   it, run the Deploy workflow with `v1.0.0`.
+
+Releases start at the first one that has `ship.sh`, so the button can always
+go back to any of them.
 
 ### Rolling back a release
 
