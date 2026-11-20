@@ -33,7 +33,6 @@ import {
 import {
   educationLabel,
   fieldLabel,
-  genderIcon,
   genderLabel,
   contactOutcomeLabel,
   inventoryUnitLabel,
@@ -65,6 +64,22 @@ import type {
   SurgeryQueueItem,
 } from '../../core/models/common.model';
 import type { StatusTone } from '../../shared/ui';
+
+interface FactRow {
+  label: string;
+  value: string;
+  /** Digits that read left to right: phone numbers. */
+  ltr?: boolean;
+  /** Long text, an address: takes the group's full width. */
+  wide?: boolean;
+}
+
+/** The rows the record actually holds, in the order given. */
+function factRows(
+  rows: [label: string, value: string | null | undefined, opts?: Partial<FactRow>][],
+): FactRow[] {
+  return rows.flatMap(([label, value, opts]) => (value ? [{ ...opts, label, value }] : []));
+}
 
 @Component({
   selector: 'pb-patient-detail',
@@ -131,7 +146,6 @@ export class PatientDetail {
   });
 
   protected readonly genderLabel = genderLabel;
-  protected readonly genderIcon = genderIcon;
   protected readonly educationLabel = educationLabel;
   protected readonly color = treatmentColor;
 
@@ -220,30 +234,41 @@ export class PatientDetail {
     return c.timeliness === 'overdue' ? 'error' : 'primary';
   }
 
-  /** Grouped for the "details" tab, skipping anything the record does not hold. */
-  protected readonly detailRows = computed(() => {
+  private readonly jalali = new JalaliPipe();
+
+  /**
+   * The information tab's two groups — who the patient is, and where to reach
+   * them — skipping anything the record does not hold. Mobile, national id
+   * and the visits sit in the header instead, where every tab shows them.
+   */
+  protected readonly personalRows = computed(() => {
     this.i18n.currentLang();
     const p = this.patient();
     if (!p) return [];
-    const rows: { icon: string; label: string; value: string; ltr?: boolean }[] = [];
-    const push = (icon: string, label: string, value: string | null | undefined, ltr = false) => {
-      if (value) rows.push({ icon, label, value, ltr });
-    };
+    return factRows([
+      [this.i18n.instant('field.fatherName'), p.fatherName],
+      [
+        this.i18n.instant('field.birthDate'),
+        p.birthDate ? this.jalali.transform(p.birthDate, 'long') : null,
+      ],
+      [
+        this.i18n.instant('field.education'),
+        p.education !== 'unknown' ? this.i18n.instant(educationLabel(p.education)) : p.educationRaw,
+      ],
+      [this.i18n.instant('field.occupation'), p.occupation],
+      [this.i18n.instant('field.referralSource'), p.referralSource?.name ?? null],
+    ]);
+  });
 
-    push('badge', this.i18n.instant('field.nationalId'), p.nationalId, true);
-    push('escalator_warning', this.i18n.instant('field.fatherName'), p.fatherName);
-    push('work', this.i18n.instant('field.occupation'), p.occupation);
-    push(
-      'school',
-      this.i18n.instant('field.education'),
-      p.education !== 'unknown' ? this.i18n.instant(educationLabel(p.education)) : p.educationRaw,
-    );
-    push('smartphone', this.i18n.instant('field.mobile'), p.mobile, true);
-    push('call', this.i18n.instant('field.homePhone'), p.homePhone, true);
-    push('home', this.i18n.instant('field.homeAddress'), p.homeAddress);
-    push('apartment', this.i18n.instant('field.workAddress'), p.workAddress);
-    push('share', this.i18n.instant('field.referralSource'), p.referralSource?.name ?? null);
-    return rows;
+  protected readonly contactRows = computed(() => {
+    this.i18n.currentLang();
+    const p = this.patient();
+    if (!p) return [];
+    return factRows([
+      [this.i18n.instant('field.homePhone'), p.homePhone, { ltr: true }],
+      [this.i18n.instant('field.homeAddress'), p.homeAddress, { wide: true }],
+      [this.i18n.instant('field.workAddress'), p.workAddress, { wide: true }],
+    ]);
   });
 
   /**
