@@ -196,6 +196,13 @@
     min-width: 0;
   }
 
+  /* Read out at the desk, so it stands a shade above the rest of the line. */
+  &__price {
+    color: var(--mat-sys-on-surface);
+    font-weight: 500;
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
   &__notes {
     max-width: 32ch;
     overflow: hidden;

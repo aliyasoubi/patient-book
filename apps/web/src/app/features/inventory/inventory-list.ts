@@ -404,6 +404,11 @@ export class InventoryList {
     return EXPIRY_TONE[item.expiryState ?? 'ok'];
   }
 
+  /** What one sells to a patient for, in rials: only on an item sold to patients. */
+  protected salePrice(item: InventoryItem): number | null {
+    return item.soldToPatients ? (item.salePrice ?? null) : null;
+  }
+
   /** Red only for an item kept stocked — one with a reorder level; the rest just say so. */
   protected outTone(item: InventoryItem): StatusTone {
     return item.minQuantity !== null ? 'error' : 'neutral';
