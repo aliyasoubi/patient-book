@@ -5,8 +5,13 @@
 @if (patient(); as p) {
   <pb-page>
     <!-- ── Hero ──────────────────────────────────────────────────── -->
-    <!-- A card like the panels below it: the record's header, not a well. -->
-    <pb-surface class="hero-surface" [class.hero-surface--archived]="p.isArchived">
+    <!-- A card like the panels below it: the record's header, not a well.
+         Tinted from the avatar's corner in the avatar's own tone. -->
+    <pb-surface
+      class="hero-surface"
+      [class.hero-surface--archived]="p.isArchived"
+      [attr.data-tone]="p.gender"
+    >
       <header class="hero">
         <pb-icon-button
           icon="arrow_forward"
@@ -18,19 +23,18 @@
 
         <div class="hero__identity">
           <h1>{{ p.fullName || ('patient.unnamed' | translate) }}</h1>
+          <!-- The file number finds the paper file, so it is the one chip;
+               the rest is a quiet line of plain text. -->
           <div class="hero__meta">
-            <pb-status-chip icon="folder">
+            <pb-status-chip icon="folder" tone="primary">
               {{ 'patientDetail.file' | translate: { fileNo: p.fileNo } }}
             </pb-status-chip>
-            <pb-status-chip [icon]="genderIcon(p.gender)">
-              {{ genderLabel(p.gender) | translate }}
-            </pb-status-chip>
-            @if (p.age !== null) {
-              <pb-status-chip icon="cake">
-                {{ 'patientDetail.age' | translate: { age: (p.age | faNum) } }}
-                <small>({{ p.birthDate | jalali: 'long' }})</small>
-              </pb-status-chip>
-            }
+            <span class="hero__meta-text">
+              <span>{{ genderLabel(p.gender) | translate }}</span>
+              @if (p.age !== null) {
+                <span>{{ 'patientDetail.age' | translate: { age: (p.age | faNum) } }}</span>
+              }
+            </span>
             @if (p.isArchived) {
               <pb-status-chip icon="inventory_2" tone="warning">
                 {{ 'patientDetail.archived' | translate }}
@@ -83,6 +87,30 @@
           </mat-menu>
         </div>
       </header>
+
+      <!-- What the front desk looks for first, readable from every tab. -->
+      <dl class="hero__facts">
+        @if (p.mobile) {
+          <div class="hero__fact">
+            <dt>{{ 'field.mobile' | translate }}</dt>
+            <dd class="ltr-nums">{{ p.mobile }}</dd>
+          </div>
+        }
+        @if (p.nationalId) {
+          <div class="hero__fact">
+            <dt>{{ 'field.nationalId' | translate }}</dt>
+            <dd class="ltr-nums">{{ p.nationalId }}</dd>
+          </div>
+        }
+        <div class="hero__fact">
+          <dt>{{ 'patientDetail.firstVisit' | translate }}</dt>
+          <dd>{{ p.firstVisitAt | jalali: 'long' }}</dd>
+        </div>
+        <div class="hero__fact">
+          <dt>{{ 'patientDetail.lastVisit' | translate }}</dt>
+          <dd>{{ p.lastVisitAt | jalali: 'long' }}</dd>
+        </div>
+      </dl>
     </pb-surface>
 
     <!-- ── Alerts ────────────────────────────────────────────────── -->
@@ -144,51 +172,50 @@
     >
       <mat-tab [label]="'patientDetail.informationTab' | translate">
         <div class="tab">
-          <pb-surface [title]="'patientDetail.details' | translate">
-            @if (detailRows().length === 0) {
-              <p class="card__empty">{{ 'patientDetail.noAdditionalInfo' | translate }}</p>
-            } @else {
-              <dl class="facts">
-                @for (row of detailRows(); track row.label) {
-                  <div class="facts__row">
-                    <dt>
-                      <mat-icon aria-hidden="true">{{ row.icon }}</mat-icon>
-                      {{ row.label }}
-                    </dt>
-                    <dd [class.ltr-nums]="row.ltr">{{ row.value }}</dd>
-                  </div>
-                }
-              </dl>
-            }
-          </pb-surface>
-
-          <pb-surface [title]="'patientDetail.visits' | translate">
-            <dl class="facts">
-              <div class="facts__row">
-                <dt>
-                  <mat-icon aria-hidden="true">event_available</mat-icon>
-                  {{ 'patientDetail.firstVisit' | translate }}
-                </dt>
-                <dd>{{ p.firstVisitAt | jalali: 'long' }}</dd>
-              </div>
-              <div class="facts__row">
-                <dt>
-                  <mat-icon aria-hidden="true">event</mat-icon>
-                  {{ 'patientDetail.lastVisit' | translate }}
-                </dt>
-                <dd>{{ p.lastVisitAt | jalali: 'long' }}</dd>
-              </div>
-            </dl>
-          </pb-surface>
+          <!-- Label above value, one group per card: read down, not across. -->
+          @if (personalRows().length || contactRows().length) {
+            <div class="tab__columns">
+              @if (personalRows().length) {
+                <pb-surface [title]="'patientDetail.personal' | translate" icon="person">
+                  <dl class="facts">
+                    @for (row of personalRows(); track row.label) {
+                      <div class="facts__item" [class.facts__item--wide]="row.wide">
+                        <dt>{{ row.label }}</dt>
+                        <dd [class.ltr-nums]="row.ltr">{{ row.value }}</dd>
+                      </div>
+                    }
+                  </dl>
+                </pb-surface>
+              }
+              @if (contactRows().length) {
+                <pb-surface [title]="'patientDetail.contact' | translate" icon="home">
+                  <dl class="facts">
+                    @for (row of contactRows(); track row.label) {
+                      <div class="facts__item" [class.facts__item--wide]="row.wide">
+                        <dt>{{ row.label }}</dt>
+                        <dd [class.ltr-nums]="row.ltr">{{ row.value }}</dd>
+                      </div>
+                    }
+                  </dl>
+                </pb-surface>
+              }
+            </div>
+          }
 
           @if (p.notes) {
-            <pb-surface [title]="'patientDetail.notes' | translate">
+            <pb-surface [title]="'patientDetail.notes' | translate" icon="notes">
               <p class="card__note">{{ p.notes }}</p>
             </pb-surface>
           }
 
+          @if (!personalRows().length && !contactRows().length && !p.notes && !purchases().length) {
+            <pb-surface>
+              <p class="card__empty">{{ 'patientDetail.noAdditionalInfo' | translate }}</p>
+            </pb-surface>
+          }
+
           @if (purchases().length) {
-            <pb-surface [title]="'patientDetail.purchases' | translate">
+            <pb-surface [title]="'patientDetail.purchases' | translate" icon="shopping_cart">
               <ul class="registry">
                 @for (sale of purchases(); track $index) {
                   <li>
@@ -256,8 +283,8 @@
       </mat-tab>
 
       <mat-tab [label]="'patientDetail.specializedTab' | translate">
-        <div class="tab">
-          <pb-surface [title]="'patientDetail.implantBook' | translate">
+        <div class="tab tab__columns">
+          <pb-surface [title]="'patientDetail.implantBook' | translate" icon="deployed_code">
             @if (p.implantCases?.length) {
               <ul class="registry">
                 @for (c of p.implantCases; track c.id) {
@@ -295,7 +322,7 @@
             }
           </pb-surface>
 
-          <pb-surface [title]="'patientDetail.orthoBook' | translate">
+          <pb-surface [title]="'patientDetail.orthoBook' | translate" icon="straighten">
             @if (p.orthoCases?.length) {
               <ul class="registry">
                 @for (c of p.orthoCases; track c.id) {
@@ -345,7 +372,7 @@
           }
         </ng-template>
         <div class="tab">
-          <pb-surface [title]="'patientDetail.followUps' | translate">
+          <pb-surface [title]="'patientDetail.followUps' | translate" icon="event_available">
             @if (followUpsState() === 'failed') {
               <pb-load-error
                 [message]="'patientDetail.followUpsFailed' | translate"
@@ -421,7 +448,7 @@
           }
         </ng-template>
         <div class="tab">
-          <pb-surface [title]="'patientDetail.labWork' | translate">
+          <pb-surface [title]="'patientDetail.labWork' | translate" icon="science">
             @if (labState() === 'failed') {
               <pb-load-error
                 [message]="'patientDetail.labWorkFailed' | translate"

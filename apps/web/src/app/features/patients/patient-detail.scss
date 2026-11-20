@@ -6,9 +6,37 @@
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────── */
-// pb-surface (tonal) draws the box; an archived record dims and steps one
-// container tone down. `pb-surface.` so this outranks the component's own
-// tonal background.
+// pb-surface draws the card; this washes its avatar corner (inline-start,
+// top) with the avatar's own tone, so the header reads as the record's face
+// rather than one more panel. `pb-surface.` so these outrank the component's
+// own background.
+pb-surface.hero-surface {
+  --hero-tint: var(--mat-sys-primary-container);
+
+  padding: var(--pb-space-5);
+  background:
+    radial-gradient(
+      // The app is right to left: inline-start is the right edge.
+      120% 160% at 100% 0%,
+      color-mix(in srgb, var(--hero-tint) 55%, transparent),
+      transparent 55%
+    ),
+    var(--pb-card);
+
+  &[data-tone='female'] {
+    --hero-tint: var(--mat-sys-tertiary-container);
+  }
+
+  &[data-tone='unknown'] {
+    --hero-tint: var(--mat-sys-surface-container-high);
+  }
+
+  @media (max-width: 700px) {
+    padding: var(--pb-space-4);
+  }
+}
+
+// An archived record dims and steps one container tone down, no wash.
 pb-surface.hero-surface--archived {
   background: var(--mat-sys-surface-container);
   opacity: 0.85;
@@ -41,10 +69,49 @@ pb-surface.hero-surface--archived {
   &__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--pb-space-2);
+    align-items: center;
+    gap: var(--pb-space-2) var(--pb-space-3);
+  }
 
-    pb-status-chip small {
-      opacity: 0.75;
+  &__meta-text {
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+
+    > span + span::before {
+      content: '·';
+      margin-inline: var(--pb-space-2);
+    }
+  }
+
+  /* Label above value, in columns under a hairline. */
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--pb-space-4) var(--pb-space-5);
+    margin: var(--pb-space-5) 0 0;
+    padding-top: var(--pb-space-4);
+    border-top: 1px solid var(--mat-sys-outline-variant);
+
+    @media (max-width: 700px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: var(--pb-space-4);
+    }
+  }
+
+  &__fact {
+    min-width: 0;
+
+    dt {
+      margin-bottom: var(--pb-space-1);
+      font: var(--mat-sys-body-medium);
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    // As in `.facts dd` below, the shorthand keeps phone digits close.
+    dd {
+      margin: 0;
+      font: var(--mat-sys-title-medium);
+      color: var(--mat-sys-on-surface);
     }
   }
 
@@ -117,6 +184,14 @@ pb-surface.hero-surface--archived {
   padding-top: var(--pb-space-4);
 }
 
+/* Cards side by side when there is room, stacked on a phone; a pair stays
+   the same height so their tops and bottoms line up. */
+.tab__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: var(--pb-space-3);
+}
+
 /* An M3 large badge: a pill, secondary-container, label-small. */
 .tab__badge {
   display: inline-grid;
@@ -156,46 +231,33 @@ pb-surface.hero-surface--archived {
   white-space: pre-wrap;
 }
 
+/* Label above value: the eye runs down a column of values instead of
+   hopping between a label and a value far across the row. */
 .facts {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2px var(--pb-space-5);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--pb-space-4) var(--pb-space-5);
 
-  &__row {
-    display: flex;
-    align-items: baseline;
-    gap: var(--pb-space-3);
-    padding: var(--pb-space-2) 0;
-    border-bottom: 1px solid var(--mat-sys-outline-variant);
-
-    &:last-child {
-      border-bottom: none;
-    }
+  &__item--wide {
+    grid-column: 1 / -1;
   }
 
   dt {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--pb-space-2);
-    flex: 0 0 auto;
-    min-width: 118px;
+    margin-bottom: var(--pb-space-1);
     font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
-
-    .material-symbols-rounded {
-      font-size: var(--pb-icon-xs);
-    }
   }
 
+  // The shorthand also drops `.ltr-nums`' tabular figures: a phone number is
+  // read, not lined up in a column, and tabular Persian digits spread it out.
   dd {
     margin: 0;
-    flex: 1;
-    font-size: var(--mat-sys-body-medium-size);
-    font-weight: var(--mat-sys-body-medium-weight);
-    letter-spacing: var(--mat-sys-body-medium-tracking);
+    font: var(--mat-sys-body-large);
+    font-weight: 500;
     line-height: 1.7;
-    word-break: break-word;
+    color: var(--mat-sys-on-surface);
+    overflow-wrap: anywhere;
   }
 }
 
