@@ -189,12 +189,20 @@
                     <span class="item__spec" dir="auto">{{ item.spec }}</span>
                   }
                 </div>
+                @let price = salePrice(item);
                 @if (
+                  price !== null ||
                   item.minQuantity !== null ||
                   (item.expiry && item.expiryState === 'ok') ||
                   item.notes
                 ) {
                   <div class="item__meta">
+                    <!-- What the front desk asks for when a patient buys one. -->
+                    @if (price !== null) {
+                      <span class="item__price">{{
+                        'inventory.salePrice' | translate: { amount: (price | faCount) }
+                      }}</span>
+                    }
                     @if (item.minQuantity !== null) {
                       <span>{{
                         'inventory.minQuantity' | translate: { count: (item.minQuantity | faNum) }

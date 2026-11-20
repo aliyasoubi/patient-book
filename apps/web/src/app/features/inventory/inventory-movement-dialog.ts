@@ -96,8 +96,9 @@ const COPY: Record<
  * recall is traced through — an implant also its tooth, one implant into one
  * tooth picked on the chart the follow-ups and the lab use, the day's others
  * joining the same follow-up — and a toothbrush, floss or a home bleaching kit
- * names the patient it was sold to and what it went for, starting from the
- * item's own price. What is taken out is checked against the shelf
+ * names the patient it was sold to, and goes at the item's own price, which is
+ * changed on the item; only an item with no price yet asks it here. What is
+ * taken out is checked against the shelf
  * here as well as by the API, which has the final word if someone else took
  * the last one meanwhile.
  */
@@ -125,6 +126,14 @@ const COPY: Record<
           <span>{{
             'inventoryMove.current' | translate: { count: faNum(item.quantity), unit: unit() }
           }}</span>
+          @if (fixedPrice !== null) {
+            <span class="form__price">
+              {{ 'inventoryMove.salePrice' | translate: { unit: unit(), amount: faCount(fixedPrice) } }}
+              @if (saleTotal(); as total) {
+                · {{ 'inventoryMove.priceTotal' | translate: { amount: total } }}
+              }
+            </span>
+          }
         </p>
         @if (formError(); as message) {
           <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
@@ -228,7 +237,7 @@ const COPY: Record<
             </div>
           }
         }
-        @if (asksPrice || kind === 'receive') {
+        @if ((asksPrice && fixedPrice === null) || kind === 'receive') {
           <pb-text-field
             [control]="form.controls.unitPrice"
             [label]="
@@ -305,6 +314,11 @@ const COPY: Record<
         color: var(--mat-sys-on-surface);
       }
     }
+    .form__price {
+      color: var(--mat-sys-on-surface);
+      font-weight: 500;
+      font-feature-settings: var(--pb-font-numeric);
+    }
   `,
 })
 export class InventoryMovementDialog {
@@ -334,13 +348,19 @@ export class InventoryMovementDialog {
   protected readonly namesPatient =
     this.kind === 'use' &&
     (this.item.usedPerPatient ?? (this.item.category === 'implant' || this.sold));
-  /** A sale says what it went for, starting from the item's price. */
+  /** A sale says what it went for. */
   protected readonly asksPrice = this.kind === 'use' && this.sold;
+  /**
+   * The item's own price, when it has one, is the sale's: shown, not asked,
+   * and changed on the item. Only an item with no price yet asks it here.
+   */
+  protected readonly fixedPrice = this.asksPrice ? (this.item.salePrice ?? null) : null;
   private readonly mustTrace = this.kind === 'receive' && this.traceable;
   /** An implant handed to a patient also goes into their implant file, by its tooth. */
   protected readonly isImplant = this.item.category === 'implant';
   private readonly mustTooth = this.kind === 'use' && this.isImplant;
   protected readonly faNum = formatPersianNumber;
+  protected readonly faCount = formatPersianCount;
   protected readonly itemLabel = [this.item.name, this.item.brand, this.item.spec]
     .filter(Boolean)
     .join(' · ');
@@ -427,6 +447,12 @@ export class InventoryMovementDialog {
       .filter((name) => !typed || fold(name).includes(typed))
       .slice(0, MAX_SUGGESTIONS)
       .map((name) => ({ value: name, label: name }));
+  });
+
+  /** At the item's own price, what more than one comes to. */
+  protected readonly saleTotal = computed(() => {
+    const n = Number(toLatinDigits(this.quantity()).trim());
+    return this.fixedPrice !== null && n > 1 ? formatPersianCount(this.fixedPrice * n) : null;
   });
 
   /** What they all come to, so nobody has to multiply. */
