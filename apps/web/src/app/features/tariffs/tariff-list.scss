@@ -142,8 +142,8 @@
 
   /*
    * When the price was set, quietly. One colour runs through it and ages
-   * with the price: the primary colour for a month, grey after, and amber
-   * past a season — a price that wants a look stands out down the list.
+   * with the price: the primary colour for three months, grey to the year,
+   * and amber past it — a price overdue for its yearly look stands out.
    */
   &__date {
     --age: var(--mat-sys-primary);

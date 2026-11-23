@@ -18,13 +18,13 @@ describe('priceDate', () => {
     });
   });
 
-  it('ages: fresh for a month, then aging, then stale past a season', () => {
+  it('ages: fresh for three months, settled to the year, overdue past it', () => {
     const after = (days: number) =>
       priceDate(handedOver, new Date(Date.parse(handedOver) + days * 86_400_000))?.age;
-    expect(after(30)).toBe('fresh');
-    expect(after(31)).toBe('aging');
-    expect(after(90)).toBe('aging');
-    expect(after(91)).toBe('stale');
+    expect(after(90)).toBe('fresh');
+    expect(after(91)).toBe('aging');
+    expect(after(365)).toBe('aging');
+    expect(after(366)).toBe('stale');
   });
 
   it('is nothing for a date never recorded', () => {

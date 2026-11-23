@@ -3,13 +3,14 @@ import { differenceInCalendarDays, format, isValid } from 'date-fns-jalali';
 import { JALALI_MONTH_KEYS, JALALI_WEEKDAY_KEYS } from '../../core/jalali/jalali-date-adapter';
 
 /**
- * How current a price is. Prices here follow the calendar: past a month they
- * start to drift, past a season they are likely out of date.
+ * How current a price is. The clinic reprices once a year as a rule, every
+ * six or even three months when it must: a price is fresh within the
+ * shortest of those, settled after it, and overdue past the year.
  */
 export type PriceAge = 'fresh' | 'aging' | 'stale';
 
-const FRESH_DAYS = 30;
-const STALE_DAYS = 90;
+const FRESH_DAYS = 90;
+const STALE_DAYS = 365;
 
 /** The day a price was set, as a desk calendar shows it, and how long ago that was. */
 export interface PriceDate {

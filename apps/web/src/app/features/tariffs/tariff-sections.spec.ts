@@ -82,7 +82,7 @@ describe('a line’s price date', () => {
   });
 
   it('dates an item by its sale price, not by when it last moved', () => {
-    const sold = item({ id: 'p', salePriceChangedAt: '2026-08-01T12:00:00+03:30' });
+    const sold = item({ id: 'p', salePriceChangedAt: '2025-08-01T12:00:00+03:30' });
     const [row] = tariffSections([], [sold], '', PRODUCTS, now)[0].rows;
     expect(row.changed?.age).toBe('stale');
     const undated = tariffSections([], [item({ id: 'q' })], '', PRODUCTS, now)[0].rows[0];
