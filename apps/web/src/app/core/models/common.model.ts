@@ -315,8 +315,30 @@ export interface InventoryItem {
   soldToPatients: boolean;
   /** What it sells for today, in rials. */
   salePrice: number | null;
+  /** When the sale price last changed (ISO); null if before that was kept. */
+  salePriceChangedAt?: string | null;
   isArchived: boolean;
   /** Bumped by every edit and every movement; sent back on an edit. */
+  version: number;
+}
+
+/**
+ * One service on the price list, in rials: one price, or a range from
+ * `price` to `maxPrice`. Items sold to patients are not here — their price is
+ * the inventory item's `salePrice`.
+ */
+export interface Tariff {
+  id: string;
+  /** The heading it is listed under: «عمومی», «ایمپلنت». */
+  category: string;
+  title: string;
+  /** The least it costs when there is a `maxPrice`; null until set. */
+  price: number | null;
+  maxPrice: number | null;
+  note: string | null;
+  /** When the price last changed (ISO): not the title or the note. */
+  priceChangedAt: string;
+  /** Sent back on an edit. */
   version: number;
 }
 

@@ -1,7 +1,6 @@
 account_circle
 add
 air
-apartment
 archive
 arrow_back
 arrow_downward
@@ -12,7 +11,6 @@ badge
 bar_chart
 box
 brightness_auto
-cake
 calendar_month
 call
 campaign
@@ -42,14 +40,12 @@ delete_sweep
 dentistry
 deployed_code
 description
-details
 diamond
 done
 edit
 edit_calendar
 edit_note
 error
-escalator_warning
 event
 event_available
 event_busy
@@ -122,16 +118,17 @@ refresh
 remove
 remove_shopping_cart
 reorder
+request_quote
 save
 scan
 schedule
-school
 science
 search
 send
 settings
 share
 shield
+shopping_bag
 shopping_cart
 sort
 speed
@@ -148,6 +145,7 @@ table
 tag
 task_alt
 timeline
+title
 tune
 unarchive
 undo
@@ -157,4 +155,3 @@ visibility
 visibility_off
 warning
 woman
-work

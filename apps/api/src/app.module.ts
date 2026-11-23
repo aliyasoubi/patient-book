@@ -17,6 +17,7 @@ import { SurgeryModule } from './modules/surgery/surgery.module';
 import { LabsModule } from './modules/labs/labs.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { TariffsModule } from './modules/tariffs/tariffs.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { PasswordChangeGuard } from './modules/auth/guards/password-change.guard';
@@ -44,6 +45,7 @@ import { AppVersionInterceptor } from './presentation/http/app-version.intercept
     LabsModule,
     InventoryModule,
     StatsModule,
+    TariffsModule,
   ],
   controllers: [HealthController],
   providers: [

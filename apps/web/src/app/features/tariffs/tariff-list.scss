@@ -1,0 +1,215 @@
+@use '../../../styles/surface';
+
+/** One heading: its name and count, then its lines in one outlined panel. */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--pb-space-1) var(--pb-space-3);
+    min-height: 40px;
+    margin-top: var(--pb-space-2);
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--pb-space-2);
+    margin: 0;
+    font: var(--mat-sys-title-medium);
+    color: var(--mat-sys-on-surface);
+  }
+
+  &__icon {
+    font-size: var(--pb-icon-sm);
+    width: var(--pb-icon-sm);
+    height: var(--pb-icon-sm);
+    color: var(--mat-sys-primary);
+  }
+
+  &__action {
+    margin-inline-start: auto;
+  }
+
+  &__rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow: hidden;
+    @include surface.outlined;
+  }
+
+  &__empty {
+    margin: 0;
+    padding: var(--pb-space-4);
+    text-align: center;
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+    @include surface.outlined;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--pb-space-2) var(--pb-space-4);
+  min-height: 56px;
+  padding-block: var(--pb-space-2);
+  /* The edit button brings its own room at the end. */
+  padding-inline: var(--pb-space-4) var(--pb-space-2);
+
+  & + & {
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  /* A line just saved glows once and settles, so the eye finds what changed. */
+  &--saved {
+    animation: row-saved 1.6s var(--pb-ease-standard);
+  }
+
+  /* A phone: the name, its price under it, and the button beside both. */
+  @media (max-width: 640px) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'what edit'
+      'price edit';
+    gap: var(--pb-space-1) var(--pb-space-2);
+    padding-block: var(--pb-space-3);
+  }
+
+  &__what {
+    grid-area: what;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    /* Each line at the page's start: a Latin title («SLA active») is still read from the right edge. */
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  &__title {
+    font: var(--mat-sys-title-small);
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--pb-space-3);
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  /* The price, and under it the day it was set, both at the line's end. */
+  &__price {
+    flex: 0 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: end;
+
+    @media (max-width: 640px) {
+      grid-area: price;
+      align-items: flex-start;
+      text-align: start;
+    }
+  }
+
+  /* Read out at the desk: the figure carries the line, the unit stays quiet. */
+  &__figure {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 var(--pb-space-1);
+  }
+
+  &__amount {
+    font: var(--mat-sys-title-medium);
+    font-weight: 600;
+    font-feature-settings: var(--pb-font-numeric);
+  }
+
+  &__currency {
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  /*
+   * When the price was set, quietly. One colour runs through it and ages
+   * with the price: the primary colour for three months, grey to the year,
+   * and amber past it — a price overdue for its yearly look stands out.
+   */
+  &__date {
+    --age: var(--mat-sys-primary);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: var(--mat-sys-label-small);
+    color: var(--mat-sys-on-surface-variant);
+    font-feature-settings: var(--pb-font-numeric);
+    cursor: default;
+
+    &[data-age='aging'] {
+      --age: var(--mat-sys-outline);
+    }
+
+    &[data-age='stale'] {
+      --age: var(--pb-on-warning-container);
+
+      color: var(--pb-on-warning-container);
+    }
+  }
+
+  &__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--age);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--age) 18%, transparent);
+  }
+
+  /* A price just set: its dot breathes a few times, then rests. */
+  &--saved &__dot {
+    animation: dot-breathe 0.8s var(--pb-ease-standard) 2;
+  }
+
+  &__unset {
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__edit {
+    grid-area: edit;
+    flex: 0 0 auto;
+    align-self: center;
+  }
+}
+
+@keyframes row-saved {
+  from {
+    background-color: var(--mat-sys-primary-container);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row--saved,
+  .row--saved .row__dot {
+    animation: none;
+  }
+}
+
+@keyframes dot-breathe {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--age) 25%, transparent);
+  }
+}

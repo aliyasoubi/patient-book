@@ -25,7 +25,7 @@ import type { PatientSuggestion } from '../patients/data/patient.model';
 import { dropPickOnRetype } from '../../shared/form-sync';
 import { formatPersianCount, formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import { inventoryUnitLabel, TRACEABLE_CATEGORIES } from '../../shared/labels';
-import { rialInput, rialValid, rialValue } from '../../shared/rial';
+import { rialValid, rialValue } from '../../shared/rial';
 import { toLatinDigits } from '../../shared/validators';
 import { expiryEnd, isPast } from './stock-sheets';
 
@@ -96,8 +96,8 @@ const COPY: Record<
  * recall is traced through — an implant also its tooth, one implant into one
  * tooth picked on the chart the follow-ups and the lab use, the day's others
  * joining the same follow-up — and a toothbrush, floss or a home bleaching kit
- * names the patient it was sold to, and goes at the item's own price, which is
- * changed on the item; only an item with no price yet asks it here. What is
+ * names the patient it was sold to, and goes at its price on the tariff list,
+ * which is set on the tariff page and never asked here. What is
  * taken out is checked against the shelf
  * here as well as by the API, which has the final word if someone else took
  * the last one meanwhile.
@@ -128,7 +128,9 @@ const COPY: Record<
           }}</span>
           @if (fixedPrice !== null) {
             <span class="form__price">
-              {{ 'inventoryMove.salePrice' | translate: { unit: unit(), amount: faCount(fixedPrice) } }}
+              {{
+                'inventoryMove.salePrice' | translate: { unit: unit(), amount: faCount(fixedPrice) }
+              }}
               @if (saleTotal(); as total) {
                 · {{ 'inventoryMove.priceTotal' | translate: { amount: total } }}
               }
@@ -137,6 +139,18 @@ const COPY: Record<
         </p>
         @if (formError(); as message) {
           <pb-banner tone="error" size="compact" icon="error" role="alert">{{ message }}</pb-banner>
+        }
+        <!-- A sale goes at its tariff price; with none there yet, it waits for one. -->
+        @if (unpriced) {
+          <div class="form__unpriced">
+            <pb-banner tone="warning" size="compact" icon="request_quote" role="alert">
+              {{ 'inventoryMove.noTariffPrice' | translate }}
+            </pb-banner>
+            <!-- A router link leaves the dialog open over the next page: close it too. -->
+            <pb-button variant="stroked" icon="request_quote" link="/tariffs" (click)="ref.close()">
+              {{ 'inventoryMove.setTariffPrice' | translate }}
+            </pb-button>
+          </div>
         }
         <!-- Not refused, but rarely meant: said before it is saved. -->
         @if (expiredBatch()) {
@@ -237,13 +251,10 @@ const COPY: Record<
             </div>
           }
         }
-        @if ((asksPrice && fixedPrice === null) || kind === 'receive') {
+        @if (kind === 'receive') {
           <pb-text-field
             [control]="form.controls.unitPrice"
-            [label]="
-              (asksPrice ? 'inventoryMove.unitPrice' : 'inventoryMove.buyPrice')
-                | translate: { unit: unit() }
-            "
+            [label]="'inventoryMove.buyPrice' | translate: { unit: unit() }"
             [hint]="priceHint()"
             inputmode="numeric"
             [grouped]="true"
@@ -265,6 +276,7 @@ const COPY: Record<
           variant="text"
           type="submit"
           [icon]="copy.icon"
+          [disabled]="unpriced"
           [loading]="saving()"
           [loadingText]="'common.saving' | translate"
         >
@@ -279,6 +291,12 @@ const COPY: Record<
       display: flex;
       flex-direction: column;
       gap: var(--pb-space-3);
+    }
+    .form__unpriced {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--pb-space-2);
     }
     .form__teeth {
       display: flex;
@@ -348,13 +366,11 @@ export class InventoryMovementDialog {
   protected readonly namesPatient =
     this.kind === 'use' &&
     (this.item.usedPerPatient ?? (this.item.category === 'implant' || this.sold));
-  /** A sale says what it went for. */
-  protected readonly asksPrice = this.kind === 'use' && this.sold;
-  /**
-   * The item's own price, when it has one, is the sale's: shown, not asked,
-   * and changed on the item. Only an item with no price yet asks it here.
-   */
-  protected readonly fixedPrice = this.asksPrice ? (this.item.salePrice ?? null) : null;
+  private readonly isSale = this.kind === 'use' && this.sold;
+  /** A sale's price: the item's on the tariff list, shown here and never asked. */
+  protected readonly fixedPrice = this.isSale ? (this.item.salePrice ?? null) : null;
+  /** A sale of an item with no tariff price yet: it waits until one is set there. */
+  protected readonly unpriced = this.isSale && this.fixedPrice === null;
   private readonly mustTrace = this.kind === 'receive' && this.traceable;
   /** An implant handed to a patient also goes into their implant file, by its tooth. */
   protected readonly isImplant = this.item.category === 'implant';
@@ -415,10 +431,8 @@ export class InventoryMovementDialog {
       ],
     ],
     tooth: this.fb.nonNullable.control<number[]>([], this.mustTooth ? Validators.required : null),
-    unitPrice: [
-      this.asksPrice ? rialInput(this.item.salePrice) : '',
-      this.asksPrice ? [Validators.required, rialValid] : rialValid,
-    ],
+    /** A delivery's cost; a sale's price comes from the tariff list. */
+    unitPrice: ['', rialValid],
     supplier: ['', Validators.maxLength(120)],
     note: ['', Validators.maxLength(300)],
   });
@@ -680,7 +694,7 @@ export class InventoryMovementDialog {
   }
 
   protected submit(): void {
-    if (this.saving()) return;
+    if (this.saving() || this.unpriced) return;
     this.submitted.set(true);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -708,7 +722,8 @@ export class InventoryMovementDialog {
               tooth: (this.isImplant && raw.tooth.join(' ')) || null,
             }
           : {}),
-        ...(price !== null ? { unitPrice: price } : {}),
+        // A sale sends none: the API takes the item's price on the tariff list.
+        ...(this.kind === 'receive' && price !== null ? { unitPrice: price } : {}),
         note: raw.note.trim() || null,
       })
       .subscribe({
@@ -720,7 +735,6 @@ export class InventoryMovementDialog {
               ERR_INVENTORY_INSUFFICIENT_STOCK: 'quantity',
               ERR_PATIENT_NOT_FOUND: 'patient',
               ERR_INVENTORY_PATIENT_REQUIRED: 'patient',
-              ERR_INVENTORY_PRICE_REQUIRED: 'unitPrice',
               ERR_INVENTORY_LOT_EXPIRED: 'lotId',
               ERR_INVENTORY_TOOTH_REQUIRED: 'tooth',
               ERR_INVENTORY_IMPLANT_ONE_TOOTH: 'tooth',

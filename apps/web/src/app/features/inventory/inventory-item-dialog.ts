@@ -25,7 +25,6 @@ import {
   inventoryCategoryLabel,
   inventoryUnitLabel,
 } from '../../shared/labels';
-import { rialInput, rialValid, rialValue } from '../../shared/rial';
 import { toLatinDigits } from '../../shared/validators';
 import { formatPersianNumber } from '../../shared/pipes/persian-number.pipe';
 import {
@@ -241,16 +240,17 @@ export const MAX_SUGGESTIONS = 8;
           >
             {{ 'inventoryForm.soldToPatients' | translate }}
           </pb-checkbox-field>
+          <!-- Its price is the tariff list's, set on that page and used at every sale. -->
           @if (soldToPatients()) {
-            <pb-text-field
+            <pb-banner
               class="pb-field-grid__full"
-              [control]="form.controls.salePrice"
-              [label]="'inventoryForm.salePrice' | translate"
-              [hint]="'inventoryForm.salePriceHint' | translate"
-              inputmode="numeric"
-              [grouped]="true"
-              [ltr]="true"
-            />
+              tone="neutral"
+              size="compact"
+              icon="request_quote"
+              role="note"
+            >
+              {{ 'inventoryForm.salePriceInTariffs' | translate }}
+            </pb-banner>
           }
           <pb-textarea-field
             class="pb-field-grid__full"
@@ -333,7 +333,6 @@ export class InventoryItemDialog {
     notes: [this.item?.notes ?? '', Validators.maxLength(2000)],
     // Another size of a toothbrush is a toothbrush too.
     soldToPatients: [this.base?.soldToPatients ?? false],
-    salePrice: [rialInput(this.base?.salePrice), rialValid],
   });
 
   /** Everything on the shelves, for the suggestions. */
@@ -495,7 +494,6 @@ export class InventoryItemDialog {
       minQuantity: countValue(raw.minQuantity),
       notes: blank(raw.notes),
       soldToPatients: raw.soldToPatients,
-      salePrice: rialValue(raw.salePrice),
     };
     this.saving.set(true);
     this.formError.set(null);

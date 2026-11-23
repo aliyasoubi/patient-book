@@ -409,9 +409,14 @@ export class InventoryService {
         if (namesPatient(item) && !dto.patientId && !dto.patientFileNo) {
           throw AppException.badRequest(ErrorCode.InventoryPatientRequired);
         }
-        // A sale says what it went for; the form asks, and so does this.
-        if (item.soldToPatients && (dto.unitPrice ?? null) === null) {
-          throw AppException.badRequest(ErrorCode.InventoryPriceRequired);
+        // A sale goes at the item's price on the tariff list unless it says
+        // otherwise, and a sale with neither is refused: the price is set on
+        // the tariff page, not at the shelf.
+        if (item.soldToPatients) {
+          dto.unitPrice ??= item.salePrice;
+          if (dto.unitPrice === null) {
+            throw AppException.badRequest(ErrorCode.InventoryPriceRequired);
+          }
         }
         if (item.category === InventoryCategory.Implant) {
           const teeth = toothNumbers(toLatinDigits(dto.tooth ?? ''));
@@ -887,7 +892,13 @@ export class InventoryService {
     if (dto.soldToPatients !== undefined) {
       item.soldToPatients = dto.soldToPatients;
     }
-    if (dto.salePrice !== undefined) item.salePrice = dto.salePrice ?? null;
+    if (
+      dto.salePrice !== undefined &&
+      (dto.salePrice ?? null) !== (item.salePrice ?? null)
+    ) {
+      item.salePrice = dto.salePrice ?? null;
+      item.salePriceChangedAt = new Date();
+    }
     // One spelling for a brand and one form for a size, however typed.
     item.brand = canonicalBrand(item.brand);
     item.spec = normalizeSpec(item.category, item.spec);
@@ -930,6 +941,8 @@ export class InventoryService {
       notes: i.notes,
       soldToPatients: i.soldToPatients,
       salePrice: i.salePrice,
+      /** When the sale price last changed: how current it is on the tariff list. */
+      salePriceChangedAt: i.salePriceChangedAt,
       /** A use must name its patient: an implant, a membrane, or an item sold to patients. */
       usedPerPatient: namesPatient(i),
       isArchived: i.deletedAt !== null,
