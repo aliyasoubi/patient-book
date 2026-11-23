@@ -1,5 +1,6 @@
 import type { InventoryItem, Tariff } from '../../core/models/common.model';
 import { toLatinDigits } from '../../shared/validators';
+import { priceDate, type PriceDate } from './price-date';
 
 /** The section of items sold to patients, apart from any heading typed for a service. */
 export const PRODUCTS = '__products';
@@ -13,6 +14,8 @@ export interface TariffRow {
   /** In rials; the least it costs when there is a `maxPrice`. */
   price: number | null;
   maxPrice: number | null;
+  /** When the price last changed, as the list shows it; null with no price or no date. */
+  changed: PriceDate | null;
   service: Tariff | null;
   product: InventoryItem | null;
 }
@@ -54,6 +57,7 @@ export function tariffSections(
   stock: readonly InventoryItem[],
   query: string,
   group: string | null,
+  now: Date = new Date(),
 ): TariffSection[] {
   const words = foldKey(query).split(' ').filter(Boolean);
   const matches = (...texts: (string | null)[]): boolean => {
@@ -73,6 +77,7 @@ export function tariffSections(
         detail: t.note,
         price: t.price,
         maxPrice: t.maxPrice,
+        changed: t.price !== null ? priceDate(t.priceChangedAt, now) : null,
         service: t,
         product: null,
       });
@@ -90,6 +95,7 @@ export function tariffSections(
         detail: [i.brand, i.spec].filter(Boolean).join(' · ') || null,
         price: i.salePrice,
         maxPrice: null,
+        changed: i.salePrice !== null ? priceDate(i.salePriceChangedAt ?? null, now) : null,
         service: null,
         product: i,
       }));

@@ -67,6 +67,29 @@ describe('tariffSections', () => {
   });
 });
 
+describe('a line’s price date', () => {
+  const now = new Date('2026-11-30T12:00:00+03:30');
+
+  it('carries the day its price was set, and none while it has no price', () => {
+    const dated = {
+      ...service('x', 'عمومی', 'ترمیم'),
+      priceChangedAt: '2026-11-23T12:00:00+03:30',
+    };
+    const unpriced = { ...dated, id: 'y', title: 'فایبر پست', price: null };
+    const [section] = tariffSections([dated, unpriced], [], '', 'عمومی', now);
+    expect(section.rows[0].changed).toMatchObject({ day: 2, monthKey: 'month.azar', days: 7 });
+    expect(section.rows[1].changed).toBeNull();
+  });
+
+  it('dates an item by its sale price, not by when it last moved', () => {
+    const sold = item({ id: 'p', salePriceChangedAt: '2026-08-01T12:00:00+03:30' });
+    const [row] = tariffSections([], [sold], '', PRODUCTS, now)[0].rows;
+    expect(row.changed?.age).toBe('stale');
+    const undated = tariffSections([], [item({ id: 'q' })], '', PRODUCTS, now)[0].rows[0];
+    expect(undated.changed).toBeNull();
+  });
+});
+
 describe('tariffCategories', () => {
   it('lists each heading once, in list order', () => {
     expect(tariffCategories(services)).toEqual(['عمومی', 'ایمپلنت', 'زیبایی']);

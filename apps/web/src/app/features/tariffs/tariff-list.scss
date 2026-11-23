@@ -105,21 +105,28 @@
     color: var(--mat-sys-on-surface-variant);
   }
 
-  /* Read out at the desk: the figure carries the line, the unit stays quiet. */
+  /* The price, and under it the day it was set, both at the line's end. */
   &__price {
     flex: 0 1 auto;
     display: flex;
-    align-items: baseline;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 0 var(--pb-space-1);
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
     text-align: end;
 
     @media (max-width: 640px) {
       grid-area: price;
-      justify-content: flex-start;
+      align-items: flex-start;
       text-align: start;
     }
+  }
+
+  /* Read out at the desk: the figure carries the line, the unit stays quiet. */
+  &__figure {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 var(--pb-space-1);
   }
 
   &__amount {
@@ -131,6 +138,46 @@
   &__currency {
     font: var(--mat-sys-body-small);
     color: var(--mat-sys-on-surface-variant);
+  }
+
+  /*
+   * When the price was set, quietly. One colour runs through it and ages
+   * with the price: the primary colour for a month, grey after, and amber
+   * past a season — a price that wants a look stands out down the list.
+   */
+  &__date {
+    --age: var(--mat-sys-primary);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: var(--mat-sys-label-small);
+    color: var(--mat-sys-on-surface-variant);
+    font-feature-settings: var(--pb-font-numeric);
+    cursor: default;
+
+    &[data-age='aging'] {
+      --age: var(--mat-sys-outline);
+    }
+
+    &[data-age='stale'] {
+      --age: var(--pb-on-warning-container);
+
+      color: var(--pb-on-warning-container);
+    }
+  }
+
+  &__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--age);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--age) 18%, transparent);
+  }
+
+  /* A price just set: its dot breathes a few times, then rests. */
+  &--saved &__dot {
+    animation: dot-breathe 0.8s var(--pb-ease-standard) 2;
   }
 
   &__unset {
@@ -155,7 +202,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .row--saved {
+  .row--saved,
+  .row--saved .row__dot {
     animation: none;
+  }
+}
+
+@keyframes dot-breathe {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--age) 25%, transparent);
   }
 }

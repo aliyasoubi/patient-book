@@ -315,6 +315,8 @@ export interface InventoryItem {
   soldToPatients: boolean;
   /** What it sells for today, in rials. */
   salePrice: number | null;
+  /** When the sale price last changed (ISO); null if before that was kept. */
+  salePriceChangedAt?: string | null;
   isArchived: boolean;
   /** Bumped by every edit and every movement; sent back on an edit. */
   version: number;
@@ -334,6 +336,8 @@ export interface Tariff {
   price: number | null;
   maxPrice: number | null;
   note: string | null;
+  /** When the price last changed (ISO): not the title or the note. */
+  priceChangedAt: string;
   /** Sent back on an edit. */
   version: number;
 }

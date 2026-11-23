@@ -16,6 +16,9 @@ type Row = [
  * figures times ten, in rials like every price in the app. The fibre post had
  * a cross where its price goes, so it starts without one.
  */
+/** The day the list was handed over, 2 Azar 1405: what its prices date from. */
+const HANDED_OVER = '2026-11-23T12:00:00+03:30';
+
 const TARIFFS: Row[] = [
   ['عمومی', 'ترمیم', 130_000_000, 150_000_000, null],
   ['عمومی', 'اندو تخصصی', 140_000_000, 160_000_000, null],
@@ -51,7 +54,8 @@ const TARIFFS: Row[] = [
 /**
  * The clinic's price list for its services. What it sells to patients is not
  * a line here: that price is the inventory item's `salePrice`, which the
- * tariff page edits in place.
+ * tariff page edits in place. Each price keeps the day it last changed —
+ * prices follow the calendar, and the list says how current it is.
  */
 export class Tariffs1793100000000 implements MigrationInterface {
   name = 'Tariffs1793100000000';
@@ -67,6 +71,7 @@ export class Tariffs1793100000000 implements MigrationInterface {
         "maxPrice"         bigint,
         "note"             varchar(300),
         "sortOrder"        integer NOT NULL DEFAULT 0,
+        "priceChangedAt"   timestamptz NOT NULL DEFAULT now(),
         "createdAt"        timestamptz NOT NULL DEFAULT now(),
         "updatedAt"        timestamptz NOT NULL DEFAULT now(),
         "version"          integer NOT NULL DEFAULT 1,
@@ -82,8 +87,9 @@ export class Tariffs1793100000000 implements MigrationInterface {
     ] of TARIFFS.entries()) {
       await q.query(
         `INSERT INTO "tariffs"
-           ("category", "title", "normalizedTitle", "price", "maxPrice", "note", "sortOrder")
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+           ("category", "title", "normalizedTitle", "price", "maxPrice", "note",
+            "sortOrder", "priceChangedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
           normalizeForDisplay(category),
           normalizeForDisplay(title),
@@ -92,12 +98,22 @@ export class Tariffs1793100000000 implements MigrationInterface {
           maxPrice,
           note,
           i + 1,
+          HANDED_OVER,
         ],
       );
     }
+
+    // An item's sale price changes on the tariff page too. Null until it
+    // does: when a price already set was last changed is not on record.
+    await q.query(
+      `ALTER TABLE "inventory_items" ADD COLUMN "salePriceChangedAt" timestamptz`,
+    );
   }
 
   public async down(q: QueryRunner): Promise<void> {
+    await q.query(
+      `ALTER TABLE "inventory_items" DROP COLUMN "salePriceChangedAt"`,
+    );
     await q.query(`DROP TABLE "tariffs"`);
   }
 }

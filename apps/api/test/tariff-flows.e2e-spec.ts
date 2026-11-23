@@ -35,6 +35,7 @@ interface TariffBody {
   price: number | null;
   maxPrice: number | null;
   note: string | null;
+  priceChangedAt: string;
   version: number;
 }
 
@@ -177,6 +178,16 @@ describeIfWritable('tariff flows (e2e)', () => {
       maxPrice: 160_000_000,
       version: line.version + 1,
     });
+    // The price is dated by its own change; a note leaves the date alone.
+    expect(Date.parse(updated.priceChangedAt)).toBeGreaterThan(
+      Date.parse(line.priceChangedAt),
+    );
+    const noted = (
+      await asStaff(http().patch(`/api/tariffs/${line.id}`))
+        .send({ note: 'هر دندان', expectedVersion: updated.version })
+        .expect(200)
+    ).body as TariffBody;
+    expect(noted.priceChangedAt).toBe(updated.priceChangedAt);
 
     const stale = await asStaff(http().patch(`/api/tariffs/${line.id}`))
       .send({ price: 130_000_000, expectedVersion: line.version })
@@ -186,7 +197,7 @@ describeIfWritable('tariff flows (e2e)', () => {
     );
 
     const below = await asStaff(http().patch(`/api/tariffs/${line.id}`))
-      .send({ maxPrice: 110_000_000, expectedVersion: updated.version })
+      .send({ maxPrice: 110_000_000, expectedVersion: noted.version })
       .expect(400);
     expect((below.body as { code: string }).code).toBe(
       ErrorCode.TariffRangeInvalid,
@@ -195,7 +206,7 @@ describeIfWritable('tariff flows (e2e)', () => {
     // The same figure at both ends is one price.
     const single = (
       await asStaff(http().patch(`/api/tariffs/${line.id}`))
-        .send({ maxPrice: 120_000_000, expectedVersion: updated.version })
+        .send({ maxPrice: 120_000_000, expectedVersion: noted.version })
         .expect(200)
     ).body as TariffBody;
     expect(single).toMatchObject({ price: 120_000_000, maxPrice: null });

@@ -892,7 +892,13 @@ export class InventoryService {
     if (dto.soldToPatients !== undefined) {
       item.soldToPatients = dto.soldToPatients;
     }
-    if (dto.salePrice !== undefined) item.salePrice = dto.salePrice ?? null;
+    if (
+      dto.salePrice !== undefined &&
+      (dto.salePrice ?? null) !== (item.salePrice ?? null)
+    ) {
+      item.salePrice = dto.salePrice ?? null;
+      item.salePriceChangedAt = new Date();
+    }
     // One spelling for a brand and one form for a size, however typed.
     item.brand = canonicalBrand(item.brand);
     item.spec = normalizeSpec(item.category, item.spec);
@@ -935,6 +941,8 @@ export class InventoryService {
       notes: i.notes,
       soldToPatients: i.soldToPatients,
       salePrice: i.salePrice,
+      /** When the sale price last changed: how current it is on the tariff list. */
+      salePriceChangedAt: i.salePriceChangedAt,
       /** A use must name its patient: an implant, a membrane, or an item sold to patients. */
       usedPerPatient: namesPatient(i),
       isArchived: i.deletedAt !== null,

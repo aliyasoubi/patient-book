@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged, forkJoin, map } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -17,7 +18,7 @@ import type { InventoryItem, Tariff } from '../../core/models/common.model';
 import { ConfirmDialog, ConfirmData } from '../../shared/components/confirm-dialog';
 import { EmptyState } from '../../shared/components/empty-state';
 import { LoadError } from '../../shared/components/load-error';
-import { PersianCountPipe } from '../../shared/pipes/persian-number.pipe';
+import { PersianCountPipe, PersianNumberPipe } from '../../shared/pipes/persian-number.pipe';
 import {
   PbButton,
   PbFilterChips,
@@ -52,10 +53,12 @@ const SAVED_MARK_MS = 1600;
     ReactiveFormsModule,
     MatIconModule,
     MatProgressBarModule,
+    MatTooltipModule,
     TranslatePipe,
     EmptyState,
     LoadError,
     PersianCountPipe,
+    PersianNumberPipe,
     PbButton,
     PbFilterChips,
     PbIconButton,

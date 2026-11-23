@@ -74,18 +74,43 @@
                   @if (row.price === null) {
                     <span class="row__unset">{{ 'tariffs.noPrice' | translate }}</span>
                   } @else {
-                    <span class="row__amount">
-                      @if (row.maxPrice !== null) {
-                        {{
-                          'tariffs.range'
-                            | translate
-                              : { from: (row.price | faCount), to: (row.maxPrice | faCount) }
-                        }}
-                      } @else {
-                        {{ row.price | faCount }}
-                      }
+                    <span class="row__figure">
+                      <span class="row__amount">
+                        @if (row.maxPrice !== null) {
+                          {{
+                            'tariffs.range'
+                              | translate
+                                : { from: (row.price | faCount), to: (row.maxPrice | faCount) }
+                          }}
+                        } @else {
+                          {{ row.price | faCount }}
+                        }
+                      </span>
+                      <span class="row__currency">{{ 'tariffs.rial' | translate }}</span>
                     </span>
-                    <span class="row__currency">{{ 'tariffs.rial' | translate }}</span>
+                    <!-- The day this price was set, under it. Its dot ages with it: the
+                         primary colour for a month, then grey, and amber past a season. -->
+                    @if (row.changed; as changed) {
+                      <span
+                        class="row__date"
+                        [attr.data-age]="changed.age"
+                        [matTooltip]="
+                          changed.ago.key | translate: { count: (changed.ago.count | faNum) }
+                        "
+                        matTooltipPosition="above"
+                      >
+                        <span class="row__dot" aria-hidden="true"></span>
+                        {{
+                          'tariffs.updatedOn'
+                            | translate
+                              : {
+                                  day: (changed.day | faNum),
+                                  month: (changed.monthKey | translate),
+                                  year: (changed.year | faNum),
+                                }
+                        }}
+                      </span>
+                    }
                   }
                 </div>
 

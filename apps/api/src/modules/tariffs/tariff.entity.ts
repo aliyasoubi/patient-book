@@ -56,6 +56,13 @@ export class Tariff {
   @Column({ type: 'varchar', length: 300, nullable: true })
   note!: string | null;
 
+  /**
+   * When the price last changed — not the title or the note. Prices follow
+   * the calendar, so the list says how current each one is.
+   */
+  @Column({ type: 'timestamptz', default: () => 'now()' })
+  priceChangedAt!: Date;
+
   /** List order: the practice's own list as it was written, new lines after. */
   @Column({ type: 'int', default: 0 })
   sortOrder!: number;

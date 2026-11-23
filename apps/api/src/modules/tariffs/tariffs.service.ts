@@ -52,6 +52,7 @@ export class TariffsService {
         price: null,
         maxPrice: null,
         note: null,
+        priceChangedAt: new Date(),
       });
       await this.assign(manager, tariff, dto);
       tariff.sortOrder = ((await tariffs.maximum('sortOrder')) ?? 0) + 1;
@@ -169,6 +170,9 @@ export class TariffsService {
       maxPrice: dto.maxPrice !== undefined ? dto.maxPrice : tariff.maxPrice,
     });
     if (!range) throw AppException.badRequest(ErrorCode.TariffRangeInvalid);
+    if (range.price !== tariff.price || range.maxPrice !== tariff.maxPrice) {
+      tariff.priceChangedAt = new Date();
+    }
     tariff.price = range.price;
     tariff.maxPrice = range.maxPrice;
     if (dto.note !== undefined) tariff.note = dto.note ?? null;
@@ -182,6 +186,8 @@ export class TariffsService {
       price: t.price,
       maxPrice: t.maxPrice,
       note: t.note,
+      /** When the price last changed: how current the list is. */
+      priceChangedAt: t.priceChangedAt,
       /** Optimistic-concurrency token; send back as `expectedVersion` on update. */
       version: t.version,
     };

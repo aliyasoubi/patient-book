@@ -707,7 +707,14 @@
     "removeTitle": "برداشتن از اقلام فروشی",
     "removeMessage": "«{{name}}» از اقلام فروشی برداشته می‌شود. کالا و موجودی‌اش در انبار می‌ماند و مصرف آن دیگر نام بیمار و قیمت نمی‌خواهد.",
     "removeConfirm": "بردار",
-    "removed": "کالا از اقلام فروشی برداشته شد."
+    "removed": "کالا از اقلام فروشی برداشته شد.",
+    "agoToday": "امروز",
+    "agoYesterday": "دیروز",
+    "agoDays": "{{count}} روز پیش",
+    "agoWeeks": "{{count}} هفته پیش",
+    "agoMonths": "{{count}} ماه پیش",
+    "agoYears": "{{count}} سال پیش",
+    "updatedOn": "به‌روزرسانی {{day}} {{month}} {{year}}"
   },
   "tariffForm": {
     "createTitle": "خدمت جدید",

@@ -80,9 +80,16 @@ export class InventoryItem {
   @Column({ type: 'boolean', default: false })
   soldToPatients!: boolean;
 
-  /** What it sells for today, in rials: where a sale starts from. */
+  /** What it sells for today, in rials: its price on the tariff list. */
   @Column({ type: 'int', nullable: true })
   salePrice!: number | null;
+
+  /**
+   * When `salePrice` last changed. Not `updatedAt`, which every movement
+   * moves; null for a price set before this was kept.
+   */
+  @Column({ type: 'timestamptz', nullable: true })
+  salePriceChangedAt!: Date | null;
 
   /**
    * Category, folded name, brand and spec — see `identityKey`. Unique among
