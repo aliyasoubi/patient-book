@@ -137,6 +137,14 @@ export class ApiErrorTranslator {
         return this.t('error.inventoryLotExpired');
       case 'ERR_INVENTORY_COUNT_UNTRACED':
         return this.t('error.inventoryCountUntraced', params);
+      case 'ERR_TARIFF_NOT_FOUND':
+        return this.t('error.tariffNotFound');
+      case 'ERR_TARIFF_MODIFIED':
+        return this.t('error.tariffModified');
+      case 'ERR_TARIFF_TITLE_TAKEN':
+        return this.t('error.tariffTitleTaken', params);
+      case 'ERR_TARIFF_RANGE_INVALID':
+        return this.t('error.tariffRangeInvalid');
       case 'ERR_NOT_FOUND':
         return this.t('error.notFound');
 

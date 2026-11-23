@@ -139,6 +139,11 @@ export const routes: Routes = [
         title: translatedTitle('route.inventoryOrder'),
       },
       {
+        path: 'tariffs',
+        loadComponent: () => import('./features/tariffs/tariff-list').then((m) => m.TariffList),
+        title: translatedTitle('route.tariffs'),
+      },
+      {
         path: 'stats',
         loadComponent: () => import('./features/stats/stats').then((m) => m.Stats),
         title: translatedTitle('route.stats'),

@@ -967,13 +967,19 @@ describeIfWritable('inventory flows (e2e)', () => {
     ).body as ItemBody;
     expect(sold.movements[0].unitPrice).toBe(900_000);
 
+    // Sent no price, a sale goes at the item's price on the tariff list.
+    const listed = (
+      await move(item.id, { kind: 'use', quantity: 1, patientId }).expect(200)
+    ).body as ItemBody;
+    expect(listed.movements[0].unitPrice).toBe(1_000_000);
+
     const repriced = (
       await asStaff(http().patch(`/api/inventory/items/${item.id}`))
-        .send({ salePrice: 2_000_000, expectedVersion: sold.version })
+        .send({ salePrice: 2_000_000, expectedVersion: listed.version })
         .expect(200)
     ).body as ItemBody;
     expect(repriced.salePrice).toBe(2_000_000);
-    expect(repriced.movements[0].unitPrice).toBe(900_000);
+    expect(repriced.movements[0].unitPrice).toBe(1_000_000);
 
     // A typo of extra zeros is refused, not stored.
     await move(item.id, {

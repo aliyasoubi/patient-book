@@ -409,9 +409,14 @@ export class InventoryService {
         if (namesPatient(item) && !dto.patientId && !dto.patientFileNo) {
           throw AppException.badRequest(ErrorCode.InventoryPatientRequired);
         }
-        // A sale says what it went for; the form asks, and so does this.
-        if (item.soldToPatients && (dto.unitPrice ?? null) === null) {
-          throw AppException.badRequest(ErrorCode.InventoryPriceRequired);
+        // A sale goes at the item's price on the tariff list unless it says
+        // otherwise, and a sale with neither is refused: the price is set on
+        // the tariff page, not at the shelf.
+        if (item.soldToPatients) {
+          dto.unitPrice ??= item.salePrice;
+          if (dto.unitPrice === null) {
+            throw AppException.badRequest(ErrorCode.InventoryPriceRequired);
+          }
         }
         if (item.category === InventoryCategory.Implant) {
           const teeth = toothNumbers(toLatinDigits(dto.tooth ?? ''));

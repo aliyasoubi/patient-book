@@ -99,8 +99,9 @@ export enum ErrorCode {
    */
   InventoryPatientRequired = 'ERR_INVENTORY_PATIENT_REQUIRED',
   /**
-   * An item sold to patients taken out without what it went for: the sale
-   * shows in the patient's file by its price. Zero is a price; none is not.
+   * An item sold to patients taken out with no price on the tariff list and
+   * none sent: the sale shows in the patient's file by its price. Zero is a
+   * price; none is not.
    */
   InventoryPriceRequired = 'ERR_INVENTORY_PRICE_REQUIRED',
   /**
@@ -127,6 +128,15 @@ export enum ErrorCode {
    * on the box.
    */
   InventoryCountUntraced = 'ERR_INVENTORY_COUNT_UNTRACED',
+
+  // -- Tariffs ----------------------------------------------------------
+  TariffNotFound = 'ERR_TARIFF_NOT_FOUND',
+  /** As {@link ErrorCode.PatientModified}, for a line of the price list. */
+  TariffModified = 'ERR_TARIFF_MODIFIED',
+  /** Another line already has this title: one service, one price. `params.title`. */
+  TariffTitleTaken = 'ERR_TARIFF_TITLE_TAKEN',
+  /** A top price with no price under it, or one below its own bottom. */
+  TariffRangeInvalid = 'ERR_TARIFF_RANGE_INVALID',
 
   // -- Value objects ----------------------------------------------------
   NationalIdLength = 'ERR_NATIONAL_ID_LENGTH',

@@ -320,6 +320,24 @@ export interface InventoryItem {
   version: number;
 }
 
+/**
+ * One service on the price list, in rials: one price, or a range from
+ * `price` to `maxPrice`. Items sold to patients are not here — their price is
+ * the inventory item's `salePrice`.
+ */
+export interface Tariff {
+  id: string;
+  /** The heading it is listed under: «عمومی», «ایمپلنت». */
+  category: string;
+  title: string;
+  /** The least it costs when there is a `maxPrice`; null until set. */
+  price: number | null;
+  maxPrice: number | null;
+  note: string | null;
+  /** Sent back on an edit. */
+  version: number;
+}
+
 /** One batch of an item on the shelf. */
 export interface InventoryLot {
   id: string;

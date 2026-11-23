@@ -80,6 +80,13 @@ function navItems(): NavItem[] {
       icon: 'inventory',
       primary: false,
     },
+    // What the front desk quotes: services, and what is sold to take home.
+    {
+      path: '/tariffs',
+      label: 'nav.tariffs',
+      icon: 'request_quote',
+      primary: false,
+    },
     // The practice's numbers: looked at now and then, not worked from, so
     // it sits at the end with settings rather than among the registers.
     {

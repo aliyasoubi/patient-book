@@ -1,0 +1,112 @@
+<pb-page class="tariffs">
+  <pb-page-header [title]="'tariffs.title' | translate" [subtitle]="'tariffs.subtitle' | translate">
+    @if (canEdit()) {
+      <pb-button icon="add" (click)="addService()" [collapseBelow]="560">
+        {{ 'tariffs.newService' | translate }}
+      </pb-button>
+    }
+  </pb-page-header>
+
+  <pb-list-toolbar>
+    <pb-search-field
+      [control]="search"
+      [placeholder]="'tariffs.searchPlaceholder' | translate"
+      [ariaLabel]="'tariffs.searchAria' | translate"
+    />
+    <!-- One tap to a heading — «what do implants cost?» — and again for the whole list. -->
+    @if (!loading() && groupOptions().length > 1) {
+      <pb-filter-chips
+        [options]="groupOptions()"
+        [selected]="group() ? [group()!] : []"
+        (selectedChange)="setGroup($event)"
+        [ariaLabel]="'tariffs.groupsAria' | translate"
+      />
+    }
+  </pb-list-toolbar>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (failed()) {
+    <pb-load-error [message]="'tariffs.loadFailed' | translate" (retry)="load()" />
+  }
+
+  @if (!loading() && !failed() && sections().length === 0) {
+    <pb-empty-state
+      icon="request_quote"
+      [title]="'tariffs.emptyTitle' | translate"
+      [hint]="(narrowed() ? 'filters.changeThem' : 'tariffs.emptyHint') | translate"
+    />
+  }
+
+  @if (!loading() && !failed()) {
+    @for (section of sections(); track section.key) {
+      <section class="group" animate.enter="pb-enter">
+        <div class="group__head">
+          <h2 class="group__title">
+            @if (section.key === PRODUCTS) {
+              <mat-icon class="group__icon" aria-hidden="true">shopping_bag</mat-icon>
+              {{ 'tariffs.products' | translate }}
+            } @else {
+              <span dir="auto">{{ section.key }}</span>
+            }
+          </h2>
+          @if (section.key === PRODUCTS && canEdit()) {
+            <pb-button class="group__action" variant="text" icon="add" (click)="addProduct()">
+              {{ 'tariffs.addProduct' | translate }}
+            </pb-button>
+          }
+        </div>
+
+        @if (section.rows.length) {
+          <ul class="group__rows">
+            @for (row of section.rows; track row.id) {
+              <li class="row" [class.row--saved]="savedId() === row.id">
+                <div class="row__what">
+                  <span class="row__title" dir="auto">{{ row.title }}</span>
+                  @if (row.detail) {
+                    <span class="row__meta" dir="auto">{{ row.detail }}</span>
+                  }
+                </div>
+
+                <div class="row__price">
+                  @if (row.price === null) {
+                    <span class="row__unset">{{ 'tariffs.noPrice' | translate }}</span>
+                  } @else {
+                    <span class="row__amount">
+                      @if (row.maxPrice !== null) {
+                        {{
+                          'tariffs.range'
+                            | translate
+                              : { from: (row.price | faCount), to: (row.maxPrice | faCount) }
+                        }}
+                      } @else {
+                        {{ row.price | faCount }}
+                      }
+                    </span>
+                    <span class="row__currency">{{ 'tariffs.rial' | translate }}</span>
+                  }
+                </div>
+
+                @if (canEdit()) {
+                  <pb-icon-button
+                    class="row__edit"
+                    icon="edit"
+                    [ariaLabel]="'tariffs.editOne' | translate: { name: row.title }"
+                    [tooltip]="
+                      (row.product ? 'tariffProduct.editTitle' : 'tariffForm.editTitle') | translate
+                    "
+                    (click)="edit(row)"
+                  />
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="group__empty">{{ 'tariffs.productsEmpty' | translate }}</p>
+        }
+      </section>
+    }
+  }
+</pb-page>

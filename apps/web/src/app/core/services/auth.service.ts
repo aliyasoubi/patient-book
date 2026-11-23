@@ -21,6 +21,11 @@ const PERMISSIONS = {
   editLabs: ['admin', 'dentist', 'receptionist'],
   /** The stock: items, deliveries, use and counts. Any staff role, like the lab board. */
   editInventory: ['admin', 'dentist', 'receptionist'],
+  /**
+   * The price list, and what items sold to patients go for: the stock's
+   * roles, since those prices are the stock's.
+   */
+  editTariffs: ['admin', 'dentist', 'receptionist'],
   manageUsers: ['admin'],
   viewHistory: ['admin', 'dentist'],
 } as const satisfies Record<string, readonly UserRole[]>;
