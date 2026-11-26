@@ -111,7 +111,12 @@ command -v docker >/dev/null || fail "docker is not installed"
 # -- encryption key ---------------------------------------------------------
 # Generated once, never rotated automatically: rotating would silently orphan
 # every existing backup, which is the opposite of what this script is for.
+# For the same reason a key that went missing is not quietly replaced: the
+# backups already here need that key, and a new one would read none of them.
 if [[ ! -f "$KEY_FILE" ]]; then
+  if [[ -n "$(find "$BACKUP_DIR" -name '*.enc' -print -quit 2>/dev/null)" ]]; then
+    fail "the backup key $KEY_FILE is missing, and the backups in $BACKUP_DIR need it. Put it back from its safe copy. Only to start over with a new key: move those backups somewhere else first"
+  fi
   mkdir -p "$(dirname "$KEY_FILE")"
   chmod 700 "$(dirname "$KEY_FILE")"
   ( umask 077; openssl rand -base64 48 >"$KEY_FILE" )
@@ -181,15 +186,15 @@ if [[ "$(wc -l <"$LOG_FILE")" -gt 2000 ]]; then
   tail -n 2000 "$LOG_FILE" >"$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
 fi
 # A recovery (pb-restore.sh) keeps the database it replaced as a fallback and
-# may leave the one it restored into, and a drill killed mid-way leaves its
-# throwaway copy. Each is a full set of patient records that nothing else will
+# may leave the one it restored into, and a restore or a drill killed mid-way
+# leaves its work copy. Each is a full set of patient records that nothing else will
 # drop, so every run names them until someone does (README: "What the server
 # keeps"). Named, never dropped here: the fallback is kept on purpose, for as
 # long as someone is unsure.
 leftovers="$(docker compose -f "$COMPOSE_FILE" exec -T db \
   psql --username="$DB_USER" --dbname=postgres -tAc \
   "SELECT datname FROM pg_database
-    WHERE datname IN ('${DB_NAME}_before_restore', '${DB_NAME}_restore')
+    WHERE datname IN ('${DB_NAME}_before_restore', '${DB_NAME}_restore', '${DB_NAME}_restoring')
        OR datname LIKE '${DB_NAME//_/\\_}\_drill\_%'" 2>>"$LOG_FILE" | tr '\n' ' ' || true)"
 if [[ -n "${leftovers// /}" ]]; then
   log "WARNING: spare copies of the database still on this server: $leftovers"

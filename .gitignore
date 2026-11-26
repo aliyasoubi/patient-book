@@ -1,9 +1,13 @@
 # ── Patient data ───────────────────────────────────────────────────────
-data/*.xlsx
-data/*.xls
-data/*.csv
-data/*.json
+# Everything put in data/, at any depth.
+data/*
 !data/.gitkeep
+# Every workbook, wherever it lands. The practice's come macro-enabled too
+# (.xlsm), and export.sh writes patient-book-<date>.xlsx in the folder it is
+# run from, which may be the checkout. No workbook is tracked.
+*.xlsx
+*.xlsm
+*.xls
 
 # Database dumps carry the same records.
 *.sql

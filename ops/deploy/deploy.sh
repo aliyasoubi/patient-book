@@ -35,15 +35,29 @@ echo "→ building images for $PB_VERSION"
 compose build
 
 # After the build, so a failed build costs no dump, and right before `up`,
-# which runs the migrations. No dump, no deploy. A first deploy has no
-# database running yet, and nothing to keep.
+# which runs the migrations. No dump, no deploy.
+#
+# Whether there is anything to keep is asked of the database itself, started
+# on its own first. Whether its container runs says nothing: one that was
+# stopped, or removed by `compose down`, leaves its volume and every record in
+# it behind, and `up` would migrate them undumped. A first deploy finds no
+# migrations table, and nothing to keep. A question that gets no answer stops
+# the deploy; guessing "first deploy" would be the one wrong guess.
 #
 # The backup key is root-only. The deploy button runs this over SSH with no
 # terminal, where sudo cannot ask for a password: there it must be allowed
 # without one, which install.sh sets up for this one command. Run by hand in
 # a terminal, sudo may ask as usual.
 readonly PREDEPLOY=("$REPO_ROOT/ops/deploy/pb-backup.sh" predeploy)
-if [[ -n "$(compose ps --status running --quiet db 2>/dev/null)" ]]; then
+echo "→ starting the database"
+compose up -d --wait db >/dev/null
+migrated="$(compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -tA' \
+  <<<"SELECT to_regclass('public.migrations') IS NOT NULL")" || migrated=""
+if [[ "$migrated" != t && "$migrated" != f ]]; then
+  echo "✗  could not tell whether the database holds records, so nothing was migrated" >&2
+  exit 1
+fi
+if [[ "$migrated" == t ]]; then
   echo "→ backing up the database before migrations"
   if [[ $EUID -eq 0 ]]; then
     "${PREDEPLOY[@]}"
@@ -55,7 +69,7 @@ if [[ -n "$(compose ps --status running --quiet db 2>/dev/null)" ]]; then
     exit 1
   fi
 else
-  echo "→ no database running yet — no backup to take"
+  echo "→ a new, empty database — no backup to take"
 fi
 
 echo "→ starting stack"

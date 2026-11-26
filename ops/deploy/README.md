@@ -113,7 +113,10 @@ workbook, after a deploy has run the inventory migrations:
 The same script loads the normalized stock list (`inventory-normalized.xlsx`:
 one «Inventory» table with codes, reorder levels and lots) — it tells the two
 apart by that sheet. Add `--replace` to swap the whole inventory for the
-workbook in one transaction; its preview says what it replaces.
+workbook in one transaction; its preview says what it replaces. A replace
+deletes every stock card's history, so `--replace --apply` first takes a
+backup into `predeploy/`, the way back if it was a mistake. A workbook with
+no items is refused either way.
 
 The preview writes nothing; read it before `--apply`. `--apply` refuses an
 inventory that already has items. Each item's opening count is a line on its
@@ -381,7 +384,9 @@ once to get it; until then every deploy says so.
 deliberately outside the directory bind-mounted into the API container: a
 compromise of the web application should not hand over the key that decrypts
 every backup of the records it holds. Copy it somewhere off this server —
-without it, every backup is unreadable.
+without it, every backup is unreadable. Should it go missing while backups
+are here, the next backup run (and so the next deploy) stops and says so,
+rather than make a new key that could read none of them.
 
 Because dumps are encrypted before they are written, pointing the destination
 at a cloud-synced folder is a supported setup; the sync provider never holds
@@ -451,7 +456,8 @@ sudo du -sh /srv/patient-book/home/PatientBookBackups/*
 The one thing no run removes on its own is a spare copy of the database: the
 `patient_book_before_restore` a recovery leaves as its fallback, a
 `patient_book_restore` that was never switched to, or a
-`patient_book_drill_…` left by a drill that was killed half-way. Each holds
+`patient_book_restoring` or `patient_book_drill_…` left by a restore or a
+drill that was killed half-way. Each holds
 every patient record, so as long as one exists, every backup and every deploy
 prints a warning naming it. Once you no longer need it:
 
@@ -495,11 +501,14 @@ sudo ./ops/deploy/pb-restore.sh /srv/patient-book/home/PatientBookBackups/daily/
 
 `sudo` because the key and the backups are root-only. It reads the whole file
 through first, so a wrong key or a damaged or cut-short file stops it before
-anything is created. Then it restores into `patient_book_restore`, runs
-`migrate` against it — which grants the API's role (the dump carries no
-grants), and applies any migration newer than the backup, naming it — reads
-every table back as that role, and prints each table's rows in the backup
-beside the live database's.
+anything is created. Then it restores into a work database,
+`patient_book_restoring`, runs `migrate` against it — which grants the API's
+role (the dump carries no grants), and applies any migration newer than the
+backup, naming it — and reads every table back as that role. Only once all of
+that has passed is it renamed `patient_book_restore`, the one `--switch`
+takes; a step that fails, or a Ctrl-C, drops the work database instead, so a
+half-loaded copy can never be switched to. Last, it prints each table's rows
+in the backup beside the live database's.
 
 **2. Look before you switch.** Compare the counts with what you expect, and
 spot-check a patient or two:

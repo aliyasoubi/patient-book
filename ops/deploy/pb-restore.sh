@@ -23,6 +23,10 @@ die() {
 
 readonly RESTORE_DB="${DB_NAME}_restore"
 readonly BEFORE_DB="${DB_NAME}_before_restore"
+# Where a restore runs until every check has passed. Only then is it renamed
+# to $RESTORE_DB, so a load, a migrate or a read that fails half-way never
+# leaves behind something --switch would take for a good restore.
+readonly WORK_DB="${DB_NAME}_restoring"
 readonly SELF="./ops/deploy/pb-restore.sh"
 readonly DROP_HINT="docker compose -f compose.prod.yml exec -T db psql -U $DB_USER -d postgres -c 'DROP DATABASE"
 
@@ -55,6 +59,20 @@ COMMIT;
 SQL
 }
 
+drop_work_db() {
+  db_psql postgres -qc "DROP DATABASE IF EXISTS \"$WORK_DB\" WITH (FORCE)" >/dev/null 2>&1
+}
+
+# Sessions left on it (autovacuum is already busy after a big load) would
+# block the rename, so they are closed first, as in swap().
+rename_db() {
+  db_psql postgres -q >/dev/null <<SQL
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+ WHERE datname = '$1' AND pid <> pg_backend_pid();
+ALTER DATABASE "$1" RENAME TO "$2";
+SQL
+}
+
 # `up` rather than `start`: it runs `migrate` again against the database now
 # under the live name, and recreates a container whose image was rebuilt —
 # which is what rolling back to an older release relies on (README). It never
@@ -78,17 +96,27 @@ restore() {
     die "$RESTORE_DB is already here, from an earlier run. Switch to it ($SELF --switch), or drop it and run this again:
      $DROP_HINT $RESTORE_DB;'"
   fi
+  # Left by a run that was cut off before it could clean up (the machine went
+  # down). It never passed the checks, and holds nothing the backup does not.
+  if db_exists "$WORK_DB"; then
+    echo "→ dropping $WORK_DB, an unfinished restore left by an earlier run"
+    drop_work_db || die "could not drop $WORK_DB"
+  fi
 
   echo "→ reading $(basename "$file") through once"
   verify_backup "$file"
-  echo "→ restoring it into $RESTORE_DB (the live $DB_NAME is not touched)"
-  restore_into "$RESTORE_DB" "$file"
+  echo "→ restoring it into $WORK_DB (the live $DB_NAME is not touched)"
+  trap drop_work_db EXIT
+  trap 'exit 1' INT TERM HUP
+  restore_into "$WORK_DB" "$file"
   echo "→ granting the API's role on it"
-  grant_runtime_role "$RESTORE_DB"
+  grant_runtime_role "$WORK_DB"
 
   local restored live=""
-  restored="$(count_as_app_role "$RESTORE_DB")" ||
-    die "$DB_APP_USER cannot read every table of $RESTORE_DB"
+  restored="$(count_as_app_role "$WORK_DB")" ||
+    die "$DB_APP_USER cannot read every table of the restored database"
+  rename_db "$WORK_DB" "$RESTORE_DB" || die "could not rename $WORK_DB to $RESTORE_DB"
+  trap - EXIT INT TERM HUP
   if db_exists "$DB_NAME"; then
     live="$(db_psql "$DB_NAME" -tAc "SELECT format('SELECT %L, count(*) FROM public.%I;', tablename, tablename)
                                        FROM pg_tables WHERE schemaname = 'public'" |
