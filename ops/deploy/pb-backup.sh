@@ -224,28 +224,39 @@ prune "$DAILY_DIR" "$KEEP_DAILY"
 prune "$WEEKLY_DIR" "$KEEP_WEEKLY"
 
 # -- offsite mirror: rclone remote ------------------------------------------
+# A copy that does not go through is named, not fatal. The dump above is
+# good and stays the newest local backup, and failing the run would also
+# skip the restore test that follows it — for as long as the provider stays
+# out of reach. last-offsite-success stops moving instead, and the status
+# script flags it once it is a day old.
+offsite_warn() {
+  log "WARNING: $*"
+  echo "warning: $*" >&2
+}
+# Same "keep N newest" rule as the local prune(), via `rclone lsf`, and only
+# ever over this script's own file names. A listing that fails (or a first
+# run, with no directory yet) comes back empty, so nothing is removed.
+rclone_prune() {
+  local dir="$1" keep="$2"
+  { rclone lsf "$dir" --files-only --include 'patient-book-*.sql.gz.enc' 2>/dev/null || true; } |
+    sort -r | tail -n +$((keep + 1)) |
+    while IFS= read -r old; do rclone deletefile "$dir/$old" || true; done
+}
 if [[ -n "$OFFSITE_REMOTE" ]]; then
-  command -v rclone >/dev/null || fail "PB_OFFSITE_REMOTE is set but rclone is not installed"
-  rclone copyto "$TARGET" "$OFFSITE_REMOTE/daily/$(basename "$TARGET")" \
-    || fail "rclone copy to $OFFSITE_REMOTE failed"
-  if [[ -f "$WEEKLY_DIR/$(basename "$TARGET")" ]]; then
-    rclone copyto "$TARGET" "$OFFSITE_REMOTE/weekly/$(basename "$TARGET")" \
-      || fail "rclone weekly copy to $OFFSITE_REMOTE failed"
+  if ! command -v rclone >/dev/null; then
+    offsite_warn "PB_OFFSITE_REMOTE is set but rclone is not installed"
+  elif ! rclone copyto "$TARGET" "$OFFSITE_REMOTE/daily/$(basename "$TARGET")"; then
+    offsite_warn "copying $(basename "$TARGET") to $OFFSITE_REMOTE failed"
+  elif [[ -f "$WEEKLY_DIR/$(basename "$TARGET")" ]] &&
+    ! rclone copyto "$TARGET" "$OFFSITE_REMOTE/weekly/$(basename "$TARGET")"; then
+    offsite_warn "the weekly copy to $OFFSITE_REMOTE failed"
+  else
+    rclone_prune "$OFFSITE_REMOTE/daily" "$KEEP_DAILY" || true
+    rclone_prune "$OFFSITE_REMOTE/weekly" "$KEEP_WEEKLY" || true
+    date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-offsite-success"
+    chmod 644 "$BACKUP_DIR/last-offsite-success"
+    log "mirrored $(basename "$TARGET") to $OFFSITE_REMOTE"
   fi
-  # Same "keep N newest" rule as the local prune(), just via `rclone lsf`
-  # instead of `ls`. A missing remote directory (first run) lists as empty
-  # rather than failing.
-  rclone_prune() {
-    local dir="$1" keep="$2"
-    { rclone lsf "$dir" --files-only 2>/dev/null || true; } | sort -r \
-      | tail -n +$((keep + 1)) \
-      | while IFS= read -r old; do rclone deletefile "$dir/$old" || true; done
-  }
-  rclone_prune "$OFFSITE_REMOTE/daily" "$KEEP_DAILY"
-  rclone_prune "$OFFSITE_REMOTE/weekly" "$KEEP_WEEKLY"
-  date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-offsite-success"
-  chmod 644 "$BACKUP_DIR/last-offsite-success"
-  log "mirrored $(basename "$TARGET") to $OFFSITE_REMOTE"
 fi
 
 # -- offsite mirror: local/mounted directory ---------------------------------

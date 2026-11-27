@@ -406,27 +406,45 @@ openssl dgst -sha256 -r backup.key | cut -c1-16
 The setup above still keeps every copy on this one VPS: losing the disk loses
 the database and every backup with it. Closing that gap needs a copy that
 lives somewhere else — the easiest way on a headless box is
-[`rclone`](https://rclone.org), which pushes straight to Dropbox, Google
-Drive, or almost anything else with no mount and no daemon to keep alive:
+[`rclone`](https://rclone.org), which pushes straight to Google Drive,
+Dropbox, or almost anything else with no mount and no daemon to keep alive.
+The dumps are encrypted before they leave, so the provider holds nothing
+readable; the key never goes there.
+
+First check the server can reach the provider at all; some are blocked from
+some networks (from this practice's VPS, Dropbox is; Google Drive is not).
+Any HTTP code is fine, `000` means unreachable:
 
 ```bash
-sudo apt install rclone
-rclone config                 # choose "n" for new remote, then Dropbox or
-                               # Drive; it opens a one-time authorization link
+curl -s -o /dev/null --max-time 10 -w '%{http_code}\n' https://www.googleapis.com/drive/v3/about
 ```
 
-That saves a token under `/root/.config/rclone/rclone.conf`. Name the remote
-whatever you like during `rclone config` (the examples here use `dropbox`);
-then add one line to `.env`:
+The server has no browser to sign in with, so the remote is authorized on a
+computer that has one, then copied over. On that computer (a Mac here), with
+`drive.file` access, rclone can see only the files it puts there, not the
+rest of the Drive:
 
 ```bash
-PB_OFFSITE_REMOTE=dropbox:PatientBookBackups
+brew install rclone
+rclone config create pb-gdrive drive scope=drive.file   # signs in in the browser
+ssh root@<server> 'mkdir -p -m 700 /root/.config/rclone'
+scp ~/.config/rclone/rclone.conf root@<server>:/root/.config/rclone/rclone.conf
+```
+
+(If that computer already has other rclone remotes, copy just the
+`[pb-gdrive]` section instead.) On the server, `sudo apt install rclone`,
+then one line in `.env`:
+
+```bash
+PB_OFFSITE_REMOTE=pb-gdrive:PatientBookBackups
 ```
 
 The next nightly run copies the new dump straight there with `rclone copyto`
-— no local mount, nothing else to install. `last-offsite-success` in the
-backup directory records the last successful mirror, and a failed one fails
-the whole run, so a broken remote is as visible as a failed backup.
+and keeps the same number of daily and weekly copies there as here.
+`last-offsite-success` in the backup directory records the last successful
+copy. A copy that fails is logged and warned about, but the run still counts
+the local backup and still runs the restore test; the status script flags the
+off-server copy once it is a day old.
 
 Already have a network share or an `rclone mount` and would rather point at a
 real path instead of shelling out to `rclone` per file? Set `PB_OFFSITE_DIR`
