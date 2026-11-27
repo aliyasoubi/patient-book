@@ -72,7 +72,12 @@ trap 'fail "unexpected error on line $LINENO"' ERR
 # -- encryption key ---------------------------------------------------------
 # Generated once, never rotated automatically: rotating would silently orphan
 # every existing backup, which is the opposite of what this script is for.
+# For the same reason a key that went missing is not quietly replaced: the
+# backups already here need that key, and a new one would read none of them.
 if [[ ! -f "$KEY_FILE" ]]; then
+  if [[ -n "$(find "$BACKUP_DIR" -name '*.enc' -print -quit 2>/dev/null)" ]]; then
+    fail "the backup key $KEY_FILE is missing, and the backups in $BACKUP_DIR need it. Put it back from its safe copy. Only to start over with a new key: move those backups somewhere else first"
+  fi
   mkdir -p "$(dirname "$KEY_FILE")"
   ( umask 077; openssl rand -base64 48 >"$KEY_FILE" )
   chmod 600 "$KEY_FILE"

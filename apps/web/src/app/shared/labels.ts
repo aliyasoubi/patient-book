@@ -108,6 +108,7 @@ export const IMPLANT_BRAND_KEYS = [
   'tri',
   'dio',
   'superline',
+  'dentis',
 ] as const;
 
 export function referralKindLabel(kind: string): string {

@@ -71,6 +71,12 @@ async function main(): Promise<void> {
     console.error('\n✗  Nothing written: fix the errors above first.');
     process.exit(1);
   }
+  // Never what anyone means: with --replace it would delete every item and its
+  // whole stock card, and load nothing in their place.
+  if (!result.items.length) {
+    console.error('\n✗  Nothing written: the workbook lists no items.');
+    process.exit(1);
+  }
   if (!apply && !replace) {
     console.log(
       `\nPreview only. Re-run with --apply to write these ${result.items.length} items.`,

@@ -100,6 +100,8 @@ const IMPLANT_BRANDS: Array<[RegExp, string]> = [
   [/\btri\b|تی ?ار ?ای/i, 'TRI'],
   [/دیو|dio/i, 'دیو'],
   [/سوپرلاین|superline/i, 'سوپرلاین'],
+  // Not Dentium («دنتیوم»): a system of its own, on the practice's price list.
+  [/دنتیس|\bdentis\b/i, 'دنتیس'],
 ];
 
 /** The brands staff can pick directly, in the order offered on the form. */

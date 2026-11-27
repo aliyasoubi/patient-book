@@ -14,6 +14,10 @@
 # --replace says this workbook is the new source of truth: then the current
 # items and their stock cards are deleted and the workbook loaded in one
 # transaction. Run it after deploy.sh, which runs the migrations.
+#
+# A replace deletes the stock cards' whole history, so --replace --apply first
+# takes a backup into predeploy/, the same dump deploy.sh takes: the newest
+# file there is the way back (README: "Real recovery").
 
 set -euo pipefail
 
@@ -39,6 +43,11 @@ cd "$REPO_ROOT"
 [[ -f .env ]] || { echo "✗  no .env — see .env.production.example" >&2; exit 1; }
 
 compose() { docker compose -f "$COMPOSE_FILE" "$@"; }
+
+if [[ " ${flags[*]-} " == *" --replace "* && " ${flags[*]-} " == *" --apply "* ]]; then
+  echo "→ backing up the database before replacing the inventory"
+  sudo "$REPO_ROOT/ops/deploy/pb-backup.sh" predeploy
+fi
 
 # The container runs as uid 1000 with no capabilities: it reads a short-lived,
 # world-readable copy, removed again whatever happens.

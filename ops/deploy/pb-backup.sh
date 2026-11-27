@@ -111,7 +111,12 @@ command -v docker >/dev/null || fail "docker is not installed"
 # -- encryption key ---------------------------------------------------------
 # Generated once, never rotated automatically: rotating would silently orphan
 # every existing backup, which is the opposite of what this script is for.
+# For the same reason a key that went missing is not quietly replaced: the
+# backups already here need that key, and a new one would read none of them.
 if [[ ! -f "$KEY_FILE" ]]; then
+  if [[ -n "$(find "$BACKUP_DIR" -name '*.enc' -print -quit 2>/dev/null)" ]]; then
+    fail "the backup key $KEY_FILE is missing, and the backups in $BACKUP_DIR need it. Put it back from its safe copy. Only to start over with a new key: move those backups somewhere else first"
+  fi
   mkdir -p "$(dirname "$KEY_FILE")"
   chmod 700 "$(dirname "$KEY_FILE")"
   ( umask 077; openssl rand -base64 48 >"$KEY_FILE" )
@@ -181,15 +186,15 @@ if [[ "$(wc -l <"$LOG_FILE")" -gt 2000 ]]; then
   tail -n 2000 "$LOG_FILE" >"$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
 fi
 # A recovery (pb-restore.sh) keeps the database it replaced as a fallback and
-# may leave the one it restored into, and a drill killed mid-way leaves its
-# throwaway copy. Each is a full set of patient records that nothing else will
+# may leave the one it restored into, and a restore or a drill killed mid-way
+# leaves its work copy. Each is a full set of patient records that nothing else will
 # drop, so every run names them until someone does (README: "What the server
 # keeps"). Named, never dropped here: the fallback is kept on purpose, for as
 # long as someone is unsure.
 leftovers="$(docker compose -f "$COMPOSE_FILE" exec -T db \
   psql --username="$DB_USER" --dbname=postgres -tAc \
   "SELECT datname FROM pg_database
-    WHERE datname IN ('${DB_NAME}_before_restore', '${DB_NAME}_restore')
+    WHERE datname IN ('${DB_NAME}_before_restore', '${DB_NAME}_restore', '${DB_NAME}_restoring')
        OR datname LIKE '${DB_NAME//_/\\_}\_drill\_%'" 2>>"$LOG_FILE" | tr '\n' ' ' || true)"
 if [[ -n "${leftovers// /}" ]]; then
   log "WARNING: spare copies of the database still on this server: $leftovers"
@@ -219,28 +224,39 @@ prune "$DAILY_DIR" "$KEEP_DAILY"
 prune "$WEEKLY_DIR" "$KEEP_WEEKLY"
 
 # -- offsite mirror: rclone remote ------------------------------------------
+# A copy that does not go through is named, not fatal. The dump above is
+# good and stays the newest local backup, and failing the run would also
+# skip the restore test that follows it — for as long as the provider stays
+# out of reach. last-offsite-success stops moving instead, and the status
+# script flags it once it is a day old.
+offsite_warn() {
+  log "WARNING: $*"
+  echo "warning: $*" >&2
+}
+# Same "keep N newest" rule as the local prune(), via `rclone lsf`, and only
+# ever over this script's own file names. A listing that fails (or a first
+# run, with no directory yet) comes back empty, so nothing is removed.
+rclone_prune() {
+  local dir="$1" keep="$2"
+  { rclone lsf "$dir" --files-only --include 'patient-book-*.sql.gz.enc' 2>/dev/null || true; } |
+    sort -r | tail -n +$((keep + 1)) |
+    while IFS= read -r old; do rclone deletefile "$dir/$old" || true; done
+}
 if [[ -n "$OFFSITE_REMOTE" ]]; then
-  command -v rclone >/dev/null || fail "PB_OFFSITE_REMOTE is set but rclone is not installed"
-  rclone copyto "$TARGET" "$OFFSITE_REMOTE/daily/$(basename "$TARGET")" \
-    || fail "rclone copy to $OFFSITE_REMOTE failed"
-  if [[ -f "$WEEKLY_DIR/$(basename "$TARGET")" ]]; then
-    rclone copyto "$TARGET" "$OFFSITE_REMOTE/weekly/$(basename "$TARGET")" \
-      || fail "rclone weekly copy to $OFFSITE_REMOTE failed"
+  if ! command -v rclone >/dev/null; then
+    offsite_warn "PB_OFFSITE_REMOTE is set but rclone is not installed"
+  elif ! rclone copyto "$TARGET" "$OFFSITE_REMOTE/daily/$(basename "$TARGET")"; then
+    offsite_warn "copying $(basename "$TARGET") to $OFFSITE_REMOTE failed"
+  elif [[ -f "$WEEKLY_DIR/$(basename "$TARGET")" ]] &&
+    ! rclone copyto "$TARGET" "$OFFSITE_REMOTE/weekly/$(basename "$TARGET")"; then
+    offsite_warn "the weekly copy to $OFFSITE_REMOTE failed"
+  else
+    rclone_prune "$OFFSITE_REMOTE/daily" "$KEEP_DAILY" || true
+    rclone_prune "$OFFSITE_REMOTE/weekly" "$KEEP_WEEKLY" || true
+    date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-offsite-success"
+    chmod 644 "$BACKUP_DIR/last-offsite-success"
+    log "mirrored $(basename "$TARGET") to $OFFSITE_REMOTE"
   fi
-  # Same "keep N newest" rule as the local prune(), just via `rclone lsf`
-  # instead of `ls`. A missing remote directory (first run) lists as empty
-  # rather than failing.
-  rclone_prune() {
-    local dir="$1" keep="$2"
-    { rclone lsf "$dir" --files-only 2>/dev/null || true; } | sort -r \
-      | tail -n +$((keep + 1)) \
-      | while IFS= read -r old; do rclone deletefile "$dir/$old" || true; done
-  }
-  rclone_prune "$OFFSITE_REMOTE/daily" "$KEEP_DAILY"
-  rclone_prune "$OFFSITE_REMOTE/weekly" "$KEEP_WEEKLY"
-  date '+%Y-%m-%d %H:%M:%S' >"$BACKUP_DIR/last-offsite-success"
-  chmod 644 "$BACKUP_DIR/last-offsite-success"
-  log "mirrored $(basename "$TARGET") to $OFFSITE_REMOTE"
 fi
 
 # -- offsite mirror: local/mounted directory ---------------------------------

@@ -98,6 +98,12 @@ describe('extractImplantBrand', () => {
     expect(extractImplantBrand('TRI، شش راست پایین')).toBe('TRI');
   });
 
+  it('keeps Dentis apart from Dentium', () => {
+    expect(extractImplantBrand('Dentis')).toBe('دنتیس');
+    expect(extractImplantBrand('دنتیس، ۶ راست پایین')).toBe('دنتیس');
+    expect(extractImplantBrand('Dentium')).toBe('دنتیوم');
+  });
+
   it('returns null when no known system is named', () => {
     expect(extractImplantBrand('۶ راست پایین')).toBeNull();
     expect(extractImplantBrand('')).toBeNull();

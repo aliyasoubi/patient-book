@@ -84,7 +84,7 @@ fi
 
 if spares="$(docker compose -f "$COMPOSE_FILE" exec -T db psql --username="$DB_USER" --dbname=postgres -tAc \
   "SELECT datname FROM pg_database
-    WHERE datname IN ('${DB_NAME}_before_restore', '${DB_NAME}_restore')
+    WHERE datname IN ('${DB_NAME}_before_restore', '${DB_NAME}_restore', '${DB_NAME}_restoring')
        OR datname LIKE '${DB_NAME//_/\\_}\_drill\_%'" 2>/dev/null)"; then
   if [[ -n "$spares" ]]; then
     note "spare copies" "${spares//$'\n'/ }: each holds every record; drop once unneeded (README)"
