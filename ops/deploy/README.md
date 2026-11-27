@@ -419,21 +419,27 @@ Any HTTP code is fine, `000` means unreachable:
 curl -s -o /dev/null --max-time 10 -w '%{http_code}\n' https://www.googleapis.com/drive/v3/about
 ```
 
-The server has no browser to sign in with, so the remote is authorized on a
-computer that has one, then copied over. On that computer (a Mac here), with
-`drive.file` access, rclone can see only the files it puts there, not the
-rest of the Drive:
+rclone runs on the server, which has no browser for the Google sign-in. An
+SSH tunnel lends it yours: rclone waits for the sign-in on port 53682 of the
+server, and the tunnel brings that port to the computer you connect from.
+The token lands on the server alone, and nothing is installed elsewhere.
+With `drive.file` access, rclone sees only the files it puts in the Drive,
+not the rest of it.
 
 ```bash
-brew install rclone
-rclone config create pb-gdrive drive scope=drive.file   # signs in in the browser
-ssh root@<server> 'mkdir -p -m 700 /root/.config/rclone'
-scp ~/.config/rclone/rclone.conf root@<server>:/root/.config/rclone/rclone.conf
+sudo apt install rclone                         # on the server, once
 ```
 
-(If that computer already has other rclone remotes, copy just the
-`[pb-gdrive]` section instead.) On the server, `sudo apt install rclone`,
-then one line in `.env`:
+Then, from a computer with a browser:
+
+```bash
+ssh -L 53682:localhost:53682 root@<server>
+rclone config create pb-gdrive drive scope=drive.file   # in that session
+```
+
+Open the `http://127.0.0.1:53682/auth…` link it prints in that computer's
+browser and sign in; the token is saved to `/root/.config/rclone/rclone.conf`.
+Then one line in `.env`:
 
 ```bash
 PB_OFFSITE_REMOTE=pb-gdrive:PatientBookBackups
